@@ -66,7 +66,7 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
     }
 
     res.json({
-      platform: 'uPromptPay',
+      platform: 'PromptPay',
       version: '1.1.0',
       domain: 'https://www.upromptpay.com',
       uptime: process.uptime(),

@@ -1,6 +1,6 @@
 {
-  "name": "uPromptPay",
-  "short_name": "uPromptPay",
+  "name": "PromptPay",
+  "short_name": "PromptPay",
   "description": "AI-Powered Mobile Payments — Pay by Phone",
   "start_url": "/",
   "display": "standalone",

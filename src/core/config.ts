@@ -51,7 +51,7 @@ export const CONFIG = {
     domain: env('DOMAIN', 'upromptpay.com'),
     domainUrl: env('DOMAIN_URL', 'https://www.upromptpay.com'),
     contactEmail: env('CONTACT_EMAIL', 'info@upromptpay.com'),
-    name: 'uPromptPay',
+    name: 'PromptPay',
     version: '1.4.0',
   },
 
@@ -202,7 +202,7 @@ export const CONFIG = {
     linkBaseUrl: env('PAYTAG_LINK_URL', 'https://upromptpay.com/pay'),
   },
 
-  // ── Wallet & uPromptPay (Nexus) ──
+  // ── Wallet & PromptPay (Nexus) ──
   wallet: {
     maxBalanceUsd: parseFloat(env('WALLET_MAX_BALANCE_USD', '50000')),
     maxTransferUsd: parseFloat(env('WALLET_MAX_TRANSFER_USD', '10000')),
@@ -217,7 +217,7 @@ export const CONFIG = {
     tokenExpiryMs: parseInt(env('AUTH_TOKEN_EXPIRY_MS', '86400000')),
     ownerEmail: env('OWNER_EMAIL', 'info@upromptpay.com'),
     ownerPassword: env('OWNER_PASSWORD', 'admin'),
-    ownerDisplayName: env('OWNER_DISPLAY_NAME', 'uPromptPay Admin'),
+    ownerDisplayName: env('OWNER_DISPLAY_NAME', 'PromptPay Admin'),
   },
 
   // ── Secret Admin Panel ──

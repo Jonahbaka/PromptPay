@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // Agent: Nexus — User Payment Hub, Card Management, Bills,
-//        Wallet, uPromptPay, Smart Split, Pay Forward
+//        Wallet, PromptPay, Smart Split, Pay Forward
 // 21 tools across 5 groups
 // ═══════════════════════════════════════════════════════════════
 
@@ -156,7 +156,7 @@ const transactionHistorySchema = z.object({
   limit: z.number().min(1).max(100).optional().default(20),
 });
 
-// Group E: uPromptPay
+// Group E: PromptPay
 const upromptpaySchema = z.object({
   userId: z.string().min(1),
   prompt: z.string().min(3),
@@ -893,7 +893,7 @@ export const walletTools: ToolDefinition[] = [
             amount: String(amountCents),
             currency: params.currency,
             destination: params.toUserId, // Stripe Connected Account ID
-            description: `P2P transfer via uPromptPay`,
+            description: `P2P transfer via PromptPay`,
           }));
 
           if (transferResult.id) {
@@ -1104,10 +1104,10 @@ export const walletTools: ToolDefinition[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // GROUP E: uPromptPay — THE INNOVATION
+  // GROUP E: PromptPay — THE INNOVATION
   // ═══════════════════════════════════════════════════════════
 
-  // ─── 13. uPromptPay ────────────────────────────────────────
+  // ─── 13. PromptPay ────────────────────────────────────────
   {
     name: 'upromptpay',
     description: 'Pay anything, to anyone, with just a natural language prompt. The AI parses intent, finds recipient, selects the optimal payment method, and executes. "Pay my rent $1500 to John every month" — done.',
@@ -1117,7 +1117,7 @@ export const walletTools: ToolDefinition[] = [
     riskLevel: 'high',
     execute: async (input, ctx) => {
       const params = upromptpaySchema.parse(input);
-      ctx.logger.info(`[Nexus] uPromptPay: "${params.prompt}"`);
+      ctx.logger.info(`[Nexus] PromptPay: "${params.prompt}"`);
 
       // ── Step 1: Parse intent from natural language ──
       const prompt = params.prompt.toLowerCase();
@@ -1724,7 +1724,7 @@ export const walletTools: ToolDefinition[] = [
   // ─── 19. Request Money ──────────────────────────────────────
   {
     name: 'request_money',
-    description: 'Request money from someone via email, phone, or $paytag. Generates a payment link they must open to pay — they need to download uPromptPay if they don\'t have it (viral acquisition loop).',
+    description: 'Request money from someone via email, phone, or $paytag. Generates a payment link they must open to pay — they need to download PromptPay if they don\'t have it (viral acquisition loop).',
     category: 'virality',
     inputSchema: requestMoneySchema,
     requiresApproval: false,
@@ -1747,7 +1747,7 @@ export const walletTools: ToolDefinition[] = [
       });
 
       const shareText = params.message
-        ? `${params.message} — Pay $${params.amount} on uPromptPay: ${paymentLink}`
+        ? `${params.message} — Pay $${params.amount} on PromptPay: ${paymentLink}`
         : `You owe me $${params.amount}! Pay here: ${paymentLink}`;
 
       return {
@@ -1761,7 +1761,7 @@ export const walletTools: ToolDefinition[] = [
           shareText,
           status: 'pending',
           message: `Payment request sent! Share this link: ${paymentLink}`,
-          viralNote: 'If they don\'t have uPromptPay yet, the link prompts them to sign up — that\'s how we grow!',
+          viralNote: 'If they don\'t have PromptPay yet, the link prompts them to sign up — that\'s how we grow!',
         },
       };
     },
@@ -1806,7 +1806,7 @@ export const walletTools: ToolDefinition[] = [
           expiresAt,
           shareText: params.amount
             ? `Pay me $${params.amount} for ${params.label}: ${url}`
-            : `Send me money on uPromptPay: ${url}`,
+            : `Send me money on PromptPay: ${url}`,
           message: `Payment link created! Share: ${url}`,
         },
       };
@@ -1853,7 +1853,7 @@ export const walletTools: ToolDefinition[] = [
           paytag: `$${tag}`,
           profileUrl,
           qrUrl,
-          shareText: `Send me money on uPromptPay: $${tag} — ${profileUrl}`,
+          shareText: `Send me money on PromptPay: $${tag} — ${profileUrl}`,
           message: `Your PayTag $${tag} is claimed! Share it everywhere — anyone can pay you at ${profileUrl}`,
         },
       };

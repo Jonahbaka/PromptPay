@@ -159,7 +159,7 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
         model: model || CONFIG.anthropic.model,
         max_tokens: Math.min(maxTokens || 4096, CONFIG.anthropic.maxTokens),
         temperature: temperature ?? 0.7,
-        system: system || 'You are a helpful AI assistant powered by uPromptPay.',
+        system: system || 'You are a helpful AI assistant powered by PromptPay.',
         messages: messages as Anthropic.MessageParam[],
       });
 

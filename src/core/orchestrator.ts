@@ -43,7 +43,7 @@ const SUB_AGENT_CONFIGS: Record<string, SubAgentConfig> = {
   wallet_ops: {
     role: 'wallet_ops',
     name: 'Nexus',
-    description: 'User payment hub — card/bank management, recurring bill autopay, wallet (P2P transfers, top-up, withdraw), transaction history, uPromptPay, smart split, pay forward',
+    description: 'User payment hub — card/bank management, recurring bill autopay, wallet (P2P transfers, top-up, withdraw), transaction history, PromptPay, smart split, pay forward',
     capabilities: ['add_card', 'remove_card', 'set_default', 'bill_autopay', 'wallet_topup', 'wallet_transfer', 'wallet_withdraw', 'transaction_history', 'upromptpay', 'smart_split', 'pay_forward'],
     tools: ['add_payment_method', 'list_payment_methods', 'remove_payment_method', 'set_default_payment_method', 'create_bill_schedule', 'list_bill_schedules', 'cancel_bill_schedule', 'bill_pay_now', 'wallet_topup', 'wallet_transfer', 'wallet_withdraw', 'transaction_history', 'upromptpay', 'smart_split', 'pay_forward'],
     temperature: 0.2,

@@ -153,7 +153,7 @@ const usdcSendSchema = z.object({
   amount: z.number().positive().describe('Amount in USDC'),
   recipientAddress: z.string().min(1).describe('Wallet address or email'),
   chain: z.enum(['SOL', 'ETH', 'AVAX', 'MATIC']).default('SOL').describe('Blockchain network'),
-  description: z.string().optional().default('uPromptPay USDC transfer'),
+  description: z.string().optional().default('PromptPay USDC transfer'),
 });
 
 const usdcReceiveSchema = z.object({
@@ -1225,7 +1225,7 @@ export const usPaymentTools: ToolDefinition[] = [
           targetAccount: recipient.id,
           quoteUuid: params.quoteId,
           customerTransactionId: `UPP-${Date.now().toString(36).toUpperCase()}`,
-          details: { reference: 'uPromptPay Transfer' },
+          details: { reference: 'PromptPay Transfer' },
         }, 'POST');
 
         if (!transfer.id) {

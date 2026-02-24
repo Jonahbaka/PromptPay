@@ -66,7 +66,7 @@ export type TaskType =
   | 'apple_pay_payment'
   | 'google_pay_payment'
   | 'express_checkout'
-  // Wallet & uPromptPay (Nexus)
+  // Wallet & PromptPay (Nexus)
   | 'wallet_topup'
   | 'wallet_transfer'
   | 'wallet_withdraw'

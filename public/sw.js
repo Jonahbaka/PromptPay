@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
-// uPromptPay Service Worker — PWA + Offline Support
+// PromptPay Service Worker — PWA + Offline Support
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'upromptpay-v1.3';
+const CACHE_NAME = 'promptpay-v1.4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -73,7 +73,7 @@ self.addEventListener('push', (event) => {
   if (!event.data) return;
   const data = event.data.json();
   event.waitUntil(
-    self.registration.showNotification(data.title || 'uPromptPay', {
+    self.registration.showNotification(data.title || 'PromptPay', {
       body: data.body || 'You have a new notification',
       icon: '/icons/icon-192.svg',
       badge: '/icons/icon-192.svg',

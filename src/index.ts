@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// uPromptPay v1.4 :: Entry Point
+// PromptPay v1.4 :: Entry Point
 // Multi-tenant fintech platform — 5 agents, 59 tools, 9 hooks
 // PWA + Pay by Phone + Fees + Cross-Border + Agent Network + Virality
 // https://www.upromptpay.com
@@ -32,7 +32,7 @@ import { financialTools } from './agents/financial/index.js';
 async function main(): Promise<void> {
   const logger = createLogger('promptpay');
   logger.info('═══════════════════════════════════════════');
-  logger.info(' uPromptPay v1.4 — Starting...');
+  logger.info(' PromptPay v1.4 — Starting...');
   logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
   logger.info('═══════════════════════════════════════════');
 
@@ -141,7 +141,7 @@ async function main(): Promise<void> {
 
   server.listen(CONFIG.gateway.port, CONFIG.gateway.host, () => {
     logger.info('═══════════════════════════════════════════');
-    logger.info(` uPromptPay v1.4 ONLINE`);
+    logger.info(` PromptPay v1.4 ONLINE`);
     logger.info(` Local:  http://${CONFIG.gateway.host}:${CONFIG.gateway.port}`);
     logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
     logger.info(` Tools: ${orchestrator.getState().toolCount}`);

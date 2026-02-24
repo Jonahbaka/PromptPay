@@ -975,7 +975,7 @@ export const paymentTools: ToolDefinition[] = [
           merchantName: params.merchantName,
           amount: params.amount || 'open (customer enters amount)',
           currency: params.currency,
-          instructions: 'Print this QR code or display on screen. Customers scan with uPromptPay app to pay instantly.',
+          instructions: 'Print this QR code or display on screen. Customers scan with PromptPay app to pay instantly.',
           message: params.amount
             ? `QR code for ${params.merchantName}: ${params.currency.toUpperCase()} ${params.amount}. Share or print the QR URL.`
             : `Open-amount QR code for ${params.merchantName}. Customer enters amount when scanning.`,

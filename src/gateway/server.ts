@@ -134,7 +134,7 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
       <rect x="48" y="48" width="24" height="24" fill="#7c3aed"/>
       <rect x="184" y="48" width="24" height="24" fill="#7c3aed"/>
       <rect x="48" y="184" width="24" height="24" fill="#7c3aed"/>
-      <text x="128" y="140" font-family="monospace" font-size="10" fill="#7c3aed" text-anchor="middle">uPromptPay</text>
+      <text x="128" y="140" font-family="monospace" font-size="10" fill="#7c3aed" text-anchor="middle">PromptPay</text>
       <text x="128" y="252" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">${payload.length > 40 ? payload.slice(0, 40) + '...' : payload}</text>
     </svg>`;
     res.set('Content-Type', 'image/svg+xml');
