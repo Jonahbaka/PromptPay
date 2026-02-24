@@ -1450,6 +1450,22 @@ let animatedBalance = 0;
 let authToken = localStorage.getItem('upromptpay_token') || null;
 let currentUser = null;
 
+// ── Token Expiry Check (client-side) ──
+function isTokenExpired(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return true;
+    const payload = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+    return !payload.exp || payload.exp < Date.now();
+  } catch { return true; }
+}
+
+// Auto-clear expired token on load
+if (authToken && isTokenExpired(authToken)) {
+  localStorage.removeItem('upromptpay_token');
+  authToken = null;
+}
+
 // ── Auth Helpers ──
 function getAuthHeaders() {
   const headers = { 'Content-Type': 'application/json' };
@@ -1457,9 +1473,26 @@ function getAuthHeaders() {
   return headers;
 }
 
-function authFetch(url, options = {}) {
+async function authFetch(url, options = {}) {
+  // Auto-clear expired tokens before making requests
+  if (authToken && isTokenExpired(authToken)) {
+    localStorage.removeItem('upromptpay_token');
+    authToken = null;
+    currentUser = null;
+    document.getElementById('auth-gate').classList.remove('hidden');
+    document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
+    return new Response(JSON.stringify({ error: 'Token expired' }), { status: 401 });
+  }
   options.headers = { ...getAuthHeaders(), ...(options.headers || {}) };
-  return fetch(url, options);
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    localStorage.removeItem('upromptpay_token');
+    authToken = null;
+    currentUser = null;
+    document.getElementById('auth-gate').classList.remove('hidden');
+    document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
+  }
+  return res;
 }
 
 // ── Auth Gate ──
@@ -1578,6 +1611,12 @@ function showApp() {
 
 async function validateToken() {
   if (!authToken) return false;
+  // Client-side expiry check — avoids 401 server hit entirely
+  if (isTokenExpired(authToken)) {
+    localStorage.removeItem('upromptpay_token');
+    authToken = null;
+    return false;
+  }
   try {
     const res = await authFetch(API_BASE + '/api/auth/me');
     if (res.ok) {
@@ -1585,7 +1624,7 @@ async function validateToken() {
       currentUser = data.user || data;
       return true;
     }
-    // Token invalid
+    // Token invalid on server
     localStorage.removeItem('upromptpay_token');
     authToken = null;
     return false;
@@ -2040,17 +2079,25 @@ function populateActivity() {
 
 // ── Init ──
 (async function initApp() {
+  // Check if we had a token that was auto-cleared as expired
+  const hadToken = !!localStorage.getItem('upromptpay_had_session');
   if (authToken) {
+    localStorage.setItem('upromptpay_had_session', '1');
     const valid = await validateToken();
     if (valid) {
       showApp();
     } else {
-      // Token invalid, show login
+      // Token invalid, show login with message
       document.getElementById('auth-gate').classList.remove('hidden');
+      document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
     }
   } else {
-    // No token, show login gate
     document.getElementById('auth-gate').classList.remove('hidden');
+    // Show expired message only if user had a previous session
+    if (hadToken) {
+      localStorage.removeItem('upromptpay_had_session');
+      document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
+    }
   }
 })();
 </script>

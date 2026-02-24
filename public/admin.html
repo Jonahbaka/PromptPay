@@ -561,8 +561,22 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 
 // ── Auth helpers ──
+function isTokenExpired(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return true;
+    const payload = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
+    return !payload.exp || payload.exp < Date.now();
+  } catch { return true; }
+}
+
 function getToken() {
-  return localStorage.getItem('uppAdminToken');
+  const token = localStorage.getItem('uppAdminToken');
+  if (token && isTokenExpired(token)) {
+    localStorage.removeItem('uppAdminToken');
+    return null;
+  }
+  return token;
 }
 function setToken(token) {
   localStorage.setItem('uppAdminToken', token);
@@ -575,10 +589,14 @@ function clearToken() {
 async function api(path, options = {}) {
   try {
     const token = getToken();
-    const headers = options.headers || {};
-    if (token) {
-      headers['Authorization'] = 'Bearer ' + token;
+    if (!token) {
+      clearToken();
+      currentUser = null;
+      showAuthGate('Session expired. Please sign in again.');
+      return null;
     }
+    const headers = options.headers || {};
+    headers['Authorization'] = 'Bearer ' + token;
     if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
       options.body = JSON.stringify(options.body);
@@ -587,7 +605,7 @@ async function api(path, options = {}) {
     if (res.status === 401 || res.status === 403) {
       clearToken();
       currentUser = null;
-      showAuthGate();
+      showAuthGate('Session expired. Please sign in again.');
       return null;
     }
     return await res.json();
@@ -605,11 +623,13 @@ function fmtTime(s) {
 }
 
 // ── Auth Gate ──
-function showAuthGate() {
+function showAuthGate(message) {
   document.getElementById('auth-gate').classList.remove('hidden');
   document.querySelector('.sidebar').style.display = 'none';
   document.querySelector('.main').style.display = 'none';
   document.getElementById('sidebar-bottom').style.display = 'none';
+  const errorEl = document.getElementById('login-error');
+  if (errorEl) errorEl.textContent = message || '';
 }
 
 function hideAuthGate() {
@@ -721,19 +741,29 @@ function onAuthenticated() {
 
 // ── Init: check stored token ──
 async function initAuth() {
-  const token = getToken();
-  if (!token) {
+  const rawToken = localStorage.getItem('uppAdminToken');
+
+  // No token at all — fresh visit
+  if (!rawToken) {
     showAuthGate();
     return;
   }
-  // Validate token
+
+  // Token exists but expired — auto-clear, show friendly message
+  if (isTokenExpired(rawToken)) {
+    localStorage.removeItem('uppAdminToken');
+    showAuthGate('Your session has expired. Please sign in again.');
+    return;
+  }
+
+  // Token looks valid client-side — verify with server
   try {
     const res = await fetch(API + '/api/auth/me', {
-      headers: { 'Authorization': 'Bearer ' + token }
+      headers: { 'Authorization': 'Bearer ' + rawToken }
     });
     if (!res.ok) {
       clearToken();
-      showAuthGate();
+      showAuthGate('Your session is no longer valid. Please sign in again.');
       return;
     }
     const data = await res.json();
@@ -741,7 +771,7 @@ async function initAuth() {
     onAuthenticated();
   } catch(e) {
     clearToken();
-    showAuthGate();
+    showAuthGate('Connection error. Please sign in again.');
   }
 }
 
