@@ -29,7 +29,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   // ── Register ──
   router.post('/api/auth/register', (req: Request, res: Response) => {
     try {
-      const { email, password, displayName } = req.body;
+      const { email, password, displayName, country } = req.body;
       if (!email || !password || !displayName) {
         res.status(400).json({ error: 'email, password, and displayName are required' });
         return;
@@ -46,9 +46,9 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       const passwordHash = hashPassword(password);
 
       db.prepare(`
-        INSERT INTO users (id, tenant_id, email, password_hash, display_name, role, status, created_at, updated_at)
-        VALUES (?, NULL, ?, ?, ?, 'user', 'active', ?, ?)
-      `).run(id, email, passwordHash, displayName, now, now);
+        INSERT INTO users (id, tenant_id, email, password_hash, display_name, country, role, status, created_at, updated_at)
+        VALUES (?, NULL, ?, ?, ?, ?, 'user', 'active', ?, ?)
+      `).run(id, email, passwordHash, displayName, country || '', now, now);
 
       // Create default settings
       db.prepare(`
@@ -61,7 +61,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       deps.logger.info(`User registered: ${email}`, { userId: id });
 
       res.status(201).json({
-        user: { id, email, displayName, role: 'user' },
+        user: { id, email, displayName, role: 'user', country: country || '' },
         token,
       });
     } catch (err) {
@@ -81,8 +81,8 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       }
 
       const user = db.prepare(
-        'SELECT id, tenant_id, email, password_hash, display_name, role, status FROM users WHERE email = ?'
-      ).get(email) as { id: string; tenant_id: string | null; email: string; password_hash: string; display_name: string; role: string; status: string } | undefined;
+        'SELECT id, tenant_id, email, password_hash, display_name, country, role, status FROM users WHERE email = ?'
+      ).get(email) as { id: string; tenant_id: string | null; email: string; password_hash: string; display_name: string; country: string; role: string; status: string } | undefined;
 
       if (!user) {
         res.status(401).json({ error: 'Invalid email or password' });
@@ -118,6 +118,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
           id: user.id,
           email: user.email,
           displayName: user.display_name,
+          country: user.country || '',
           role: user.role,
           tenantId: user.tenant_id,
         },
@@ -133,7 +134,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   // ── Get Current User ──
   router.get('/api/auth/me', authenticate, (req: Request, res: Response) => {
     const user = db.prepare(
-      'SELECT id, tenant_id, email, display_name, role, status, last_login_at, created_at FROM users WHERE id = ?'
+      'SELECT id, tenant_id, email, display_name, country, role, status, last_login_at, created_at FROM users WHERE id = ?'
     ).get(req.auth!.userId) as Record<string, unknown> | undefined;
 
     if (!user) {
@@ -142,6 +143,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
         id: req.auth!.userId,
         email: 'admin@promptpay.app',
         displayName: 'System Admin',
+        country: '',
         role: req.auth!.role,
         tenantId: req.auth!.tenantId,
       });
@@ -152,6 +154,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       id: user.id,
       email: user.email,
       displayName: user.display_name,
+      country: user.country || '',
       role: user.role,
       tenantId: user.tenant_id,
       status: user.status,
@@ -196,8 +199,14 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
 
   // ── Update User Settings ──
   router.put('/api/user/settings', authenticate, (req: Request, res: Response) => {
-    const { preferredChannels, notificationEnabled, language, timezone, aiModelProvider, aiModelName } = req.body;
+    const { preferredChannels, notificationEnabled, language, timezone, aiModelProvider, aiModelName, country } = req.body;
     const now = new Date().toISOString();
+
+    // Update country on user record if provided
+    if (country !== undefined) {
+      db.prepare('UPDATE users SET country = ?, updated_at = ? WHERE id = ?')
+        .run(country, now, req.auth!.userId);
+    }
 
     // Validate channels if provided
     if (preferredChannels) {

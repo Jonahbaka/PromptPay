@@ -801,6 +801,44 @@
         <input type="email" id="register-email" placeholder="you@example.com" required autocomplete="email">
       </div>
       <div class="auth-field">
+        <label>Country</label>
+        <select id="register-country" required style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;">
+          <option value="">Select your country</option>
+          <optgroup label="Africa">
+            <option value="NG">Nigeria</option>
+            <option value="GH">Ghana</option>
+            <option value="KE">Kenya</option>
+            <option value="UG">Uganda</option>
+            <option value="ZA">South Africa</option>
+            <option value="TZ">Tanzania</option>
+            <option value="CM">Cameroon</option>
+            <option value="CI">Ivory Coast</option>
+            <option value="SN">Senegal</option>
+            <option value="ET">Ethiopia</option>
+          </optgroup>
+          <optgroup label="Americas">
+            <option value="US">United States</option>
+            <option value="CA">Canada</option>
+            <option value="MX">Mexico</option>
+            <option value="BR">Brazil</option>
+          </optgroup>
+          <optgroup label="Europe">
+            <option value="GB">United Kingdom</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="IT">Italy</option>
+            <option value="ES">Spain</option>
+            <option value="NL">Netherlands</option>
+          </optgroup>
+          <optgroup label="Asia & Pacific">
+            <option value="IN">India</option>
+            <option value="PH">Philippines</option>
+            <option value="AU">Australia</option>
+            <option value="JP">Japan</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="auth-field">
         <label>Password</label>
         <input type="password" id="register-password" placeholder="Create a password" required minlength="6" autocomplete="new-password">
       </div>
@@ -906,9 +944,11 @@
           </div>
           <div class="quick-label">Wallet</div>
         </div>
-        <div class="quick-item" onclick="openAirtimeModal()">
-          <div class="quick-icon qi-orange">📱</div>
-          <div class="quick-label">Top Up Phone</div>
+        <div class="quick-item" id="airtime-quick-btn" onclick="openAirtimeModal()">
+          <div class="quick-icon qi-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+          <div class="quick-label">Top Up</div>
         </div>
         <div class="quick-item" onclick="openRequestModal()">
           <div class="quick-icon qi-blue">💸</div>
@@ -928,7 +968,7 @@
           <div class="ai-avatar">&#9889;</div>
           <div>
             <div class="ai-name">uPromptPay Agent</div>
-            <div class="ai-status">Online &mdash; 5 agents ready</div>
+            <div class="ai-status">Online &mdash; 59 tools ready</div>
           </div>
         </div>
         <div class="ai-suggestion">
@@ -939,33 +979,11 @@
       <!-- Transactions -->
       <div class="section-header fade-up" style="animation-delay:0.2s">
         <div class="section-title">Recent Activity</div>
-        <div class="section-link">See All</div>
+        <div class="section-link" onclick="navigateTo('activity')">See All</div>
       </div>
       <div class="tx-list fade-up" style="animation-delay:0.25s" id="tx-list">
-        <div class="tx-item">
-          <div class="tx-icon qi-green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
-          <div class="tx-info"><div class="tx-name">Payment Received</div><div class="tx-desc">From Alex Johnson</div></div>
-          <div class="tx-amount"><div class="tx-value tx-positive">+$250.00</div><div class="tx-time">2m ago</div></div>
-        </div>
-        <div class="tx-item">
-          <div class="tx-icon qi-blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-          <div class="tx-info"><div class="tx-name">Netflix Subscription</div><div class="tx-desc">Monthly bill</div></div>
-          <div class="tx-amount"><div class="tx-value tx-negative">-$15.99</div><div class="tx-time">1h ago</div></div>
-        </div>
-        <div class="tx-item">
-          <div class="tx-icon qi-violet"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
-          <div class="tx-info"><div class="tx-name">Sent to Sarah</div><div class="tx-desc">P2P transfer</div></div>
-          <div class="tx-amount"><div class="tx-value tx-negative">-$50.00</div><div class="tx-time">3h ago</div></div>
-        </div>
-        <div class="tx-item">
-          <div class="tx-icon qi-orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-          <div class="tx-info"><div class="tx-name">Auto-Save</div><div class="tx-desc">Round-up savings</div></div>
-          <div class="tx-amount"><div class="tx-value tx-negative">-$3.47</div><div class="tx-time">5h ago</div></div>
-        </div>
-        <div class="tx-item">
-          <div class="tx-icon qi-yellow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-          <div class="tx-info"><div class="tx-name">Cashback Reward</div><div class="tx-desc">3.2% on groceries</div></div>
-          <div class="tx-amount"><div class="tx-value tx-positive">+$4.80</div><div class="tx-time">Yesterday</div></div>
+        <div style="padding:30px 0;text-align:center;color:var(--text3);font-size:13px">
+          No transactions yet. Send money or top up to get started.
         </div>
       </div>
 
@@ -978,7 +996,7 @@
           <div class="ai-avatar" style="width:36px;height:36px;border-radius:10px;font-size:16px">&#9889;</div>
           <div>
             <div style="font-size:15px;font-weight:600">uPromptPay Agent</div>
-            <div class="ai-status" style="font-size:11px">5 agents &middot; 45 tools online</div>
+            <div class="ai-status" style="font-size:11px">5 agents &middot; 59 tools online</div>
           </div>
         </div>
 
@@ -1012,58 +1030,20 @@
         <div class="section-link">+ Add</div>
       </div>
 
-      <div class="card-carousel">
-        <div class="payment-card pc-violet">
-          <div class="pc-brand">uPromptPay Virtual</div>
-          <div class="pc-number">&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 4242</div>
-          <div class="pc-row">
-            <div><div class="pc-label">Cardholder</div><div class="pc-val">uPromptPay User</div></div>
-            <div><div class="pc-label">Expires</div><div class="pc-val">12/28</div></div>
-          </div>
-        </div>
-        <div class="payment-card pc-blue">
-          <div class="pc-brand">Apple Pay</div>
-          <div class="pc-number">&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 8910</div>
-          <div class="pc-row">
-            <div><div class="pc-label">Linked</div><div class="pc-val">Checking Account</div></div>
-            <div><div class="pc-label">Status</div><div class="pc-val" style="color:var(--emerald)">Active</div></div>
-          </div>
-        </div>
-        <div class="payment-card pc-green">
-          <div class="pc-brand">M-Pesa</div>
-          <div class="pc-number">+254 &bull;&bull;&bull; &bull;&bull;&bull; 789</div>
-          <div class="pc-row">
-            <div><div class="pc-label">Provider</div><div class="pc-val">Safaricom</div></div>
-            <div><div class="pc-label">Status</div><div class="pc-val" style="color:var(--emerald)">Active</div></div>
-          </div>
+      <div class="card-carousel" id="payment-cards">
+        <div style="min-width:280px;padding:30px 24px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3)" onclick="navigateTo('ai');document.getElementById('chat-input').value='Link a payment method';sendMessage()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span style="font-size:13px">Add Payment Method</span>
         </div>
       </div>
 
       <div class="section-header">
         <div class="section-title">Savings Goals</div>
-        <div class="section-link">+ New Goal</div>
+        <div class="section-link" onclick="navigateTo('ai');document.getElementById('chat-input').value='Create a savings goal';sendMessage()">+ New Goal</div>
       </div>
       <div id="savings-goals">
-        <div class="goal-card">
-          <div class="goal-header">
-            <div class="goal-name">&#127968; Emergency Fund</div>
-            <div class="goal-amount">$2,450 / $5,000</div>
-          </div>
-          <div class="goal-bar"><div class="goal-fill" style="width:49%;background:var(--gradient2)"></div></div>
-        </div>
-        <div class="goal-card">
-          <div class="goal-header">
-            <div class="goal-name">&#9992;&#65039; Vacation</div>
-            <div class="goal-amount">$890 / $3,000</div>
-          </div>
-          <div class="goal-bar"><div class="goal-fill" style="width:30%;background:linear-gradient(90deg,#06b6d4,#3b82f6)"></div></div>
-        </div>
-        <div class="goal-card">
-          <div class="goal-header">
-            <div class="goal-name">&#128187; New Laptop</div>
-            <div class="goal-amount">$1,200 / $1,500</div>
-          </div>
-          <div class="goal-bar"><div class="goal-fill" style="width:80%;background:linear-gradient(90deg,#10b981,#06b6d4)"></div></div>
+        <div style="padding:20px 0;text-align:center;color:var(--text3);font-size:13px">
+          No savings goals yet. Ask the AI to create one for you.
         </div>
       </div>
 
@@ -1119,49 +1099,49 @@
       <div class="streak-card">
         <div class="streak-fire">&#128293;</div>
         <div>
-          <div class="streak-count" id="user-streak">7</div>
+          <div class="streak-count" id="user-streak">0</div>
           <div class="streak-label">Day Streak</div>
         </div>
-        <div class="streak-multiplier" id="streak-mult">1.35x</div>
+        <div class="streak-multiplier" id="streak-mult">1.0x</div>
       </div>
 
       <!-- Loyalty Tier -->
-      <div class="tier-card tier-silver" id="tier-card">
+      <div class="tier-card tier-bronze" id="tier-card">
         <div class="tier-info">
           <div>
-            <div class="tier-name" id="tier-name">Silver</div>
-            <div class="tier-points" id="tier-points">2,450 points</div>
+            <div class="tier-name" id="tier-name">Bronze</div>
+            <div class="tier-points" id="tier-points">0 points</div>
           </div>
           <div style="font-size:32px">&#11088;</div>
         </div>
         <div class="tier-progress">
-          <div class="tier-bar"><div class="tier-fill" id="tier-fill" style="width:49%;background:linear-gradient(90deg,#94a3b8,#cbd5e1)"></div></div>
-          <div class="tier-next" id="tier-next">2,550 pts to Gold</div>
+          <div class="tier-bar"><div class="tier-fill" id="tier-fill" style="width:0%;background:linear-gradient(90deg,#b87333,#d4a76a)"></div></div>
+          <div class="tier-next" id="tier-next">5,000 pts to Silver</div>
         </div>
       </div>
 
       <!-- Achievements -->
       <div class="section-header">
         <div class="section-title">Achievements</div>
-        <div class="section-link" id="ach-count">4/15</div>
+        <div class="section-link" id="ach-count">0/15</div>
       </div>
       <div class="achievements-grid" id="achievements-grid">
-        <div class="achievement">
+        <div class="achievement locked">
           <div class="ach-icon">&#128176;</div>
           <div class="ach-name">First Payment</div>
           <div class="ach-pts">100 pts</div>
         </div>
-        <div class="achievement">
+        <div class="achievement locked">
           <div class="ach-icon">&#128293;</div>
           <div class="ach-name">7-Day Streak</div>
           <div class="ach-pts">250 pts</div>
         </div>
-        <div class="achievement">
+        <div class="achievement locked">
           <div class="ach-icon">&#128279;</div>
           <div class="ach-name">First Referral</div>
           <div class="ach-pts">500 pts</div>
         </div>
-        <div class="achievement">
+        <div class="achievement locked">
           <div class="ach-icon">&#127968;</div>
           <div class="ach-name">Savings $100</div>
           <div class="ach-pts">200 pts</div>
@@ -1176,6 +1156,39 @@
           <div class="ach-name">$10K Volume</div>
           <div class="ach-pts">10,000 pts</div>
         </div>
+      </div>
+
+      <!-- Country/Region Setting -->
+      <div class="section-header" style="margin-top:24px">
+        <div class="section-title">Your Region</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius);padding:18px;margin-bottom:16px;">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Country</label>
+        <select id="profile-country" onchange="updateUserCountry(this.value)" style="width:100%;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-xs);color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;">
+          <option value="">Not set</option>
+          <optgroup label="Africa">
+            <option value="NG">Nigeria</option>
+            <option value="GH">Ghana</option>
+            <option value="KE">Kenya</option>
+            <option value="UG">Uganda</option>
+            <option value="ZA">South Africa</option>
+            <option value="TZ">Tanzania</option>
+          </optgroup>
+          <optgroup label="Americas">
+            <option value="US">United States</option>
+            <option value="CA">Canada</option>
+          </optgroup>
+          <optgroup label="Europe">
+            <option value="GB">United Kingdom</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+          </optgroup>
+          <optgroup label="Asia & Pacific">
+            <option value="IN">India</option>
+            <option value="AU">Australia</option>
+          </optgroup>
+        </select>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px">This determines available features like airtime top-up (Africa only).</div>
       </div>
 
     </div>
@@ -1274,6 +1287,32 @@
         <div class="settings-section-title">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           Language &amp; Region
+        </div>
+        <div class="settings-field">
+          <label>Country</label>
+          <select id="settings-country" onchange="updateUserCountry(this.value)">
+            <option value="">Not set</option>
+            <optgroup label="Africa">
+              <option value="NG">Nigeria</option>
+              <option value="GH">Ghana</option>
+              <option value="KE">Kenya</option>
+              <option value="UG">Uganda</option>
+              <option value="ZA">South Africa</option>
+            </optgroup>
+            <optgroup label="Americas">
+              <option value="US">United States</option>
+              <option value="CA">Canada</option>
+            </optgroup>
+            <optgroup label="Europe">
+              <option value="GB">United Kingdom</option>
+              <option value="DE">Germany</option>
+              <option value="FR">France</option>
+            </optgroup>
+            <optgroup label="Asia & Pacific">
+              <option value="IN">India</option>
+              <option value="AU">Australia</option>
+            </optgroup>
+          </select>
         </div>
         <div class="settings-row">
           <div class="settings-field">
@@ -1455,25 +1494,49 @@
 <div class="modal-overlay" id="airtime-modal" onclick="if(event.target===this)closeAirtimeModal()">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <h3 style="margin-bottom: 4px;">📱 Top Up Phone</h3>
-    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 16px;">Buy airtime or data — instant delivery, 2% fee</p>
-    <select id="airtime-country" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px;">
-      <option value="NG">🇳🇬 Nigeria</option>
-      <option value="GH">🇬🇭 Ghana</option>
-      <option value="UG">🇺🇬 Uganda</option>
-      <option value="KE">🇰🇪 Kenya</option>
-    </select>
-    <input id="airtime-phone" type="tel" placeholder="Phone number (e.g., 2347012345678)" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;">
-      <button onclick="setAirtimeAmount(100)" style="padding: 10px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.3); background: rgba(124,58,237,0.1); color: white; cursor: pointer;">100</button>
-      <button onclick="setAirtimeAmount(200)" style="padding: 10px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.3); background: rgba(124,58,237,0.1); color: white; cursor: pointer;">200</button>
-      <button onclick="setAirtimeAmount(500)" style="padding: 10px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.3); background: rgba(124,58,237,0.1); color: white; cursor: pointer;">500</button>
-      <button onclick="setAirtimeAmount(1000)" style="padding: 10px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.3); background: rgba(124,58,237,0.1); color: white; cursor: pointer;">1000</button>
+    <h3 style="margin-bottom: 4px;">Top Up Phone</h3>
+    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 16px;">Buy airtime or data instantly - 2% convenience fee</p>
+
+    <!-- Buy for self or someone else -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="airtime-self-btn" onclick="setAirtimeRecipient('self')" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(124,58,237,0.4);background:rgba(124,58,237,0.15);color:white;cursor:pointer;font-size:13px;font-weight:600;">For myself</button>
+      <button id="airtime-other-btn" onclick="setAirtimeRecipient('other')" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:var(--text2);cursor:pointer;font-size:13px;">For someone else</button>
     </div>
-    <input id="airtime-amount" type="number" placeholder="Amount in local currency" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-      <button onclick="executeAirtime('airtime')" style="padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 600; cursor: pointer;">Buy Airtime</button>
-      <button onclick="executeAirtime('data')" style="padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 600; cursor: pointer;">Buy Data</button>
+
+    <!-- Country -->
+    <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Country</label>
+    <select id="airtime-country" onchange="updateCarriers()" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;font-size:1rem;margin-bottom:12px;-webkit-appearance:none;appearance:none;">
+      <option value="NG">Nigeria (+234)</option>
+      <option value="GH">Ghana (+233)</option>
+      <option value="UG">Uganda (+256)</option>
+      <option value="KE">Kenya (+254)</option>
+    </select>
+
+    <!-- Carrier -->
+    <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Carrier / Operator</label>
+    <select id="airtime-carrier" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;font-size:1rem;margin-bottom:12px;-webkit-appearance:none;appearance:none;">
+      <!-- Populated by updateCarriers() -->
+    </select>
+
+    <!-- Phone Number -->
+    <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px"><span id="airtime-phone-label">Your phone number</span></label>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <span id="airtime-dial-code" style="padding:14px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text2);font-size:1rem;white-space:nowrap;">+234</span>
+      <input id="airtime-phone" type="tel" placeholder="8012345678" style="flex:1;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;font-size:1rem;box-sizing:border-box;">
+    </div>
+
+    <!-- Amount presets (updated per country currency) -->
+    <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Amount (<span id="airtime-currency-label">NGN</span>)</label>
+    <div id="airtime-presets" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+      <!-- Populated by updateCarriers() -->
+    </div>
+    <input id="airtime-amount" type="number" placeholder="Custom amount" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;font-size:1rem;margin-bottom:4px;box-sizing:border-box;">
+    <div id="airtime-fee-display" style="font-size:12px;color:var(--text3);margin-bottom:14px;text-align:right;">Fee: 2% convenience charge</div>
+
+    <!-- Action buttons -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button onclick="executeAirtime('airtime')" style="padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#f97316,#ea580c);color:white;font-weight:600;cursor:pointer;font-size:14px;">Buy Airtime</button>
+      <button onclick="executeAirtime('data')" style="padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;font-weight:600;cursor:pointer;font-size:14px;">Buy Data</button>
     </div>
   </div>
 </div>
@@ -1618,10 +1681,12 @@ async function handleRegister(e) {
   e.preventDefault();
   const displayName = document.getElementById('register-name').value.trim();
   const email = document.getElementById('register-email').value.trim();
+  const country = document.getElementById('register-country').value;
   const password = document.getElementById('register-password').value;
   const errorEl = document.getElementById('register-error');
   const submitBtn = document.getElementById('register-submit');
   errorEl.textContent = '';
+  if (!country) { errorEl.textContent = 'Please select your country'; return; }
   submitBtn.disabled = true;
   submitBtn.textContent = 'Creating account...';
 
@@ -1629,7 +1694,7 @@ async function handleRegister(e) {
     const res = await fetch(API_BASE + '/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, displayName })
+      body: JSON.stringify({ email, password, displayName, country })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -1671,12 +1736,29 @@ function showApp() {
     document.querySelector('.header-name').textContent = name;
     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     document.querySelector('.header-avatar').textContent = initials || 'PP';
+    // Save country for geo-gating
+    if (currentUser.country) {
+      localStorage.setItem('upromptpay_country', currentUser.country);
+    }
   }
+  // Geo-gate: hide airtime button for US/Europe users
+  applyAirtimeGeoGate();
   loadData();
   connectWebSocket();
-  populateActivity();
   updateTokenMatrix();
   loadSettings();
+}
+
+function applyAirtimeGeoGate() {
+  const country = getUserCountry();
+  const airtimeBtn = document.getElementById('airtime-quick-btn');
+  if (airtimeBtn) {
+    if (NON_AIRTIME_COUNTRIES.includes(country)) {
+      airtimeBtn.style.display = 'none';
+    } else {
+      airtimeBtn.style.display = '';
+    }
+  }
 }
 
 async function validateToken() {
@@ -1940,15 +2022,13 @@ async function loadData() {
   try {
     const res = await authFetch(API_BASE + '/health');
     if (res.ok) {
-      const data = await res.json();
-      // Simulated balance from orchestrator state
-      const tools = data.orchestrator?.toolCount || 45;
-      animateBalance(12847.53);
-      document.getElementById('balance-change').textContent = '+$184.27 today';
+      animateBalance(0);
+      document.getElementById('balance-change').textContent = 'No activity yet';
     }
   } catch (e) {
     console.log('Server connecting...');
-    animateBalance(12847.53);
+    animateBalance(0);
+    document.getElementById('balance-change').textContent = 'Connecting...';
   }
 }
 
@@ -2080,14 +2160,14 @@ function formatAIResponse(text) {
 function getSmartFallback(text) {
   const type = detectTaskType(text);
   const responses = {
-    p2p_transfer: "I'd process that transfer through our Nexus wallet agent. The payment would be routed via Stripe for US recipients or M-Pesa/Flutterwave for African regions. Connect your API key to enable live transactions.",
-    bill_payment: "I can handle bill payments through Mercury (our payment agent). It supports auto-pay scheduling, round-up savings, and cashback rewards on eligible bills.",
-    balance_check: "Your current balance is $12,847.53. You have $2,450 in savings goals and $184.27 earned today from cashback and received payments.",
-    savings_query: "You have 3 active savings goals: Emergency Fund ($2,450/$5,000 - 49%), Vacation ($890/$3,000 - 30%), and New Laptop ($1,200/$1,500 - 80%). Auto-save round-ups are active.",
-    wallet_query: "You have 3 payment methods linked: uPromptPay Virtual Card (*4242), Apple Pay (*8910), and M-Pesa (+254***789). All are active and healthy.",
-    referral_query: "Share your referral code to earn $5 cashback per signup. Multi-tier rewards: you also earn when your referrals refer others!",
-    loyalty_query: "You're at Silver tier with 2,450 points. 2,550 more to reach Gold (10% fee discount). Your 7-day streak gives you a 1.35x points multiplier!",
-    general_query: "I'm your uPromptPay AI assistant powered by 5 specialized agents and 45 tools. I can help with payments, bills, savings, and financial insights. What would you like to do?"
+    p2p_transfer: "I'll process that transfer through our Nexus wallet agent. Payments are routed via Stripe for US/EU recipients or M-Pesa/Flutterwave for African regions. Just tell me the recipient and amount.",
+    bill_payment: "I can handle bill payments through Mercury (our payment agent). Just tell me what bill you want to pay and the amount.",
+    balance_check: "I'm checking your balance now. Your wallet balance will update as you make deposits and transactions.",
+    savings_query: "You can create savings goals and I'll help you track them. Would you like to set up a new savings goal?",
+    wallet_query: "You can link payment methods like M-Pesa, bank cards, or mobile money. Would you like to add a payment method?",
+    referral_query: "Share your referral link to earn $5 per signup. You both get $5 when they make their first $5+ transaction!",
+    loyalty_query: "You earn loyalty points on every transaction. Points unlock fee discounts and rewards at higher tiers (Bronze > Silver > Gold > Platinum).",
+    general_query: "I'm your uPromptPay AI assistant powered by 5 specialized agents and 59 tools. I can help with payments, bills, airtime top-up, cross-border transfers, and more. What would you like to do?"
   };
   return responses[type] || responses.general_query;
 }
@@ -2193,35 +2273,13 @@ function handleTaskResult(msg) {
 
 // ── Populate Activity Page ──
 function populateActivity() {
-  const txs = [
-    { name: 'Payment Received', desc: 'From Alex Johnson', amount: '+$250.00', time: '2m ago', positive: true, color: 'green' },
-    { name: 'Netflix Subscription', desc: 'Monthly bill', amount: '-$15.99', time: '1h ago', positive: false, color: 'blue' },
-    { name: 'Sent to Sarah', desc: 'P2P transfer', amount: '-$50.00', time: '3h ago', positive: false, color: 'violet' },
-    { name: 'Auto-Save Round-up', desc: 'Emergency Fund', amount: '-$3.47', time: '5h ago', positive: false, color: 'orange' },
-    { name: 'Cashback Reward', desc: '3.2% on groceries', amount: '+$4.80', time: 'Yesterday', positive: true, color: 'yellow' },
-    { name: 'Electricity Bill', desc: 'ConEdison autopay', amount: '-$87.50', time: 'Yesterday', positive: false, color: 'blue' },
-    { name: 'Referral Bonus', desc: 'Mike signed up', amount: '+$5.00', time: '2 days ago', positive: true, color: 'pink' },
-    { name: 'Coffee Shop', desc: 'Starbucks', amount: '-$6.75', time: '2 days ago', positive: false, color: 'orange' },
-    { name: 'Salary Deposit', desc: 'Direct deposit', amount: '+$3,500.00', time: '3 days ago', positive: true, color: 'green' },
-    { name: 'Loyalty Reward', desc: 'Points redemption', amount: '+$10.00', time: '4 days ago', positive: true, color: 'yellow' },
-  ];
-
-  const icons = {
-    green: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
-    blue: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
-    violet: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
-    orange: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-    yellow: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-    pink: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-  };
-
-  document.getElementById('activity-tx-list').innerHTML = txs.map(tx => `
-    <div class="tx-item">
-      <div class="tx-icon qi-${tx.color}">${icons[tx.color]}</div>
-      <div class="tx-info"><div class="tx-name">${tx.name}</div><div class="tx-desc">${tx.desc}</div></div>
-      <div class="tx-amount"><div class="tx-value ${tx.positive ? 'tx-positive' : 'tx-negative'}">${tx.amount}</div><div class="tx-time">${tx.time}</div></div>
+  document.getElementById('activity-tx-list').innerHTML = `
+    <div style="padding:40px 0;text-align:center;color:var(--text3)">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:12px;opacity:0.3"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <div style="font-size:14px;margin-bottom:4px">No transactions yet</div>
+      <div style="font-size:12px">Your payment history will appear here</div>
     </div>
-  `).join('');
+  `;
 }
 
 // ── Init ──
@@ -2248,29 +2306,194 @@ function populateActivity() {
   }
 })();
 
+// ── Carrier Database per Country ──
+const CARRIER_DATA = {
+  NG: {
+    dialCode: '+234', currency: 'NGN', name: 'Nigeria',
+    presets: [100, 200, 500, 1000, 2000, 5000],
+    carriers: [
+      { id: 'mtn_ng', name: 'MTN Nigeria', prefixes: ['0803','0806','0703','0706','0810','0813','0814','0816','0903','0906','0913','0916'] },
+      { id: 'airtel_ng', name: 'Airtel Nigeria', prefixes: ['0802','0808','0708','0812','0701','0902','0907','0901','0912'] },
+      { id: 'glo_ng', name: 'Glo (Globacom)', prefixes: ['0805','0807','0705','0815','0811','0905','0915'] },
+      { id: '9mobile_ng', name: '9mobile (Etisalat)', prefixes: ['0809','0818','0817','0908','0909'] },
+    ]
+  },
+  GH: {
+    dialCode: '+233', currency: 'GHS', name: 'Ghana',
+    presets: [1, 2, 5, 10, 20, 50],
+    carriers: [
+      { id: 'mtn_gh', name: 'MTN Ghana', prefixes: ['024','025','053','054','055','059'] },
+      { id: 'vodafone_gh', name: 'Vodafone Ghana (Telecel)', prefixes: ['020','050'] },
+      { id: 'airteltigo_gh', name: 'AirtelTigo Ghana', prefixes: ['026','027','056','057'] },
+    ]
+  },
+  UG: {
+    dialCode: '+256', currency: 'UGX', name: 'Uganda',
+    presets: [500, 1000, 2000, 5000, 10000, 20000],
+    carriers: [
+      { id: 'mtn_ug', name: 'MTN Uganda', prefixes: ['077','078','076'] },
+      { id: 'airtel_ug', name: 'Airtel Uganda', prefixes: ['070','075','074'] },
+      { id: 'africell_ug', name: 'Africell Uganda', prefixes: ['079'] },
+    ]
+  },
+  KE: {
+    dialCode: '+254', currency: 'KES', name: 'Kenya',
+    presets: [20, 50, 100, 200, 500, 1000],
+    carriers: [
+      { id: 'safaricom_ke', name: 'Safaricom', prefixes: ['070','071','072','079','011','010'] },
+      { id: 'airtel_ke', name: 'Airtel Kenya', prefixes: ['073','078','010'] },
+      { id: 'telkom_ke', name: 'Telkom Kenya', prefixes: ['077'] },
+    ]
+  }
+};
+
+// Countries where airtime purchase should be hidden (US, Europe)
+const NON_AIRTIME_COUNTRIES = ['US','CA','GB','DE','FR','IT','ES','NL','AU','JP'];
+
+let airtimeRecipient = 'self'; // 'self' or 'other'
+
 // ── Airtime Modal ──
 function openAirtimeModal() {
+  // Check if user country supports airtime
+  const userCountry = getUserCountry();
+  if (NON_AIRTIME_COUNTRIES.includes(userCountry)) {
+    showToast('Airtime top-up is available for Africa only');
+    return;
+  }
   document.getElementById('airtime-modal').classList.add('active');
+  // Set default country from user profile
+  if (userCountry && CARRIER_DATA[userCountry]) {
+    document.getElementById('airtime-country').value = userCountry;
+  }
+  updateCarriers();
+  setAirtimeRecipient('self');
 }
 function closeAirtimeModal() {
   document.getElementById('airtime-modal').classList.remove('active');
 }
+function setAirtimeRecipient(mode) {
+  airtimeRecipient = mode;
+  const selfBtn = document.getElementById('airtime-self-btn');
+  const otherBtn = document.getElementById('airtime-other-btn');
+  const phoneLabel = document.getElementById('airtime-phone-label');
+  if (mode === 'self') {
+    selfBtn.style.borderColor = 'rgba(124,58,237,0.4)';
+    selfBtn.style.background = 'rgba(124,58,237,0.15)';
+    selfBtn.style.color = 'white';
+    otherBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+    otherBtn.style.background = 'rgba(255,255,255,0.03)';
+    otherBtn.style.color = 'var(--text2)';
+    phoneLabel.textContent = 'Your phone number';
+  } else {
+    otherBtn.style.borderColor = 'rgba(124,58,237,0.4)';
+    otherBtn.style.background = 'rgba(124,58,237,0.15)';
+    otherBtn.style.color = 'white';
+    selfBtn.style.borderColor = 'rgba(255,255,255,0.1)';
+    selfBtn.style.background = 'rgba(255,255,255,0.03)';
+    selfBtn.style.color = 'var(--text2)';
+    phoneLabel.textContent = "Recipient's phone number";
+  }
+  document.getElementById('airtime-phone').value = '';
+  document.getElementById('airtime-phone').placeholder = mode === 'self' ? 'Your number' : "Recipient's number";
+}
+
+function getUserCountry() {
+  // Check user profile first, then localStorage
+  if (currentUser && currentUser.country) return currentUser.country;
+  return localStorage.getItem('upromptpay_country') || '';
+}
+
+function updateCarriers() {
+  const country = document.getElementById('airtime-country').value;
+  const data = CARRIER_DATA[country];
+  if (!data) return;
+
+  // Update dial code
+  document.getElementById('airtime-dial-code').textContent = data.dialCode;
+
+  // Update currency label
+  document.getElementById('airtime-currency-label').textContent = data.currency;
+
+  // Update carriers dropdown
+  const carrierSelect = document.getElementById('airtime-carrier');
+  carrierSelect.innerHTML = '<option value="auto">Auto-detect from number</option>';
+  data.carriers.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    carrierSelect.appendChild(opt);
+  });
+
+  // Update amount presets
+  const presetsDiv = document.getElementById('airtime-presets');
+  presetsDiv.innerHTML = data.presets.slice(0, 4).map(v =>
+    `<button onclick="setAirtimeAmount(${v})" style="padding:10px;border-radius:10px;border:1px solid rgba(124,58,237,0.3);background:rgba(124,58,237,0.1);color:white;cursor:pointer;font-size:13px;">${data.currency === 'UGX' ? (v >= 1000 ? (v/1000)+'K' : v) : v}</button>`
+  ).join('');
+
+  // Update phone placeholder
+  const phone = document.getElementById('airtime-phone');
+  const prefixHint = data.carriers[0]?.prefixes[0] || '';
+  phone.placeholder = prefixHint ? `e.g. ${prefixHint}1234567` : 'Phone number';
+}
+
 function setAirtimeAmount(val) {
   document.getElementById('airtime-amount').value = val;
+  const country = document.getElementById('airtime-country').value;
+  const data = CARRIER_DATA[country];
+  const fee = Math.round(val * 0.02 * 100) / 100;
+  document.getElementById('airtime-fee-display').textContent = `Fee: ${fee} ${data?.currency || ''} (2%) | Total: ${val + fee} ${data?.currency || ''}`;
 }
+
+function autoDetectCarrier(phone, country) {
+  const data = CARRIER_DATA[country];
+  if (!data) return null;
+  // Normalize: remove leading +countrycode or leading 0
+  let normalized = phone.replace(/\s|-/g, '');
+  if (normalized.startsWith(data.dialCode.replace('+', ''))) {
+    normalized = '0' + normalized.slice(data.dialCode.length - 1);
+  }
+  for (const carrier of data.carriers) {
+    for (const prefix of carrier.prefixes) {
+      if (normalized.startsWith(prefix)) return carrier;
+    }
+  }
+  return null;
+}
+
 async function executeAirtime(type) {
   const country = document.getElementById('airtime-country').value;
-  const phone = document.getElementById('airtime-phone').value;
+  const carrierVal = document.getElementById('airtime-carrier').value;
+  const dialCode = CARRIER_DATA[country]?.dialCode?.replace('+', '') || '';
+  let phone = document.getElementById('airtime-phone').value.trim().replace(/\s|-/g, '');
   const amount = parseFloat(document.getElementById('airtime-amount').value);
-  if (!phone || !amount) { showToast('Enter phone and amount'); return; }
+  if (!phone || !amount) { showToast('Enter phone number and amount'); return; }
+
+  // Normalize phone: prepend country code if starts with 0
+  if (phone.startsWith('0')) {
+    phone = dialCode + phone.slice(1);
+  } else if (!phone.startsWith(dialCode)) {
+    phone = dialCode + phone;
+  }
+
+  // Detect or use selected carrier
+  let carrierName = 'Auto-detect';
+  if (carrierVal !== 'auto') {
+    const data = CARRIER_DATA[country];
+    const c = data?.carriers.find(c => c.id === carrierVal);
+    if (c) carrierName = c.name;
+  } else {
+    const detected = autoDetectCarrier(phone, country);
+    if (detected) carrierName = detected.name;
+  }
+
   closeAirtimeModal();
   navigateTo('ai');
-  const toolName = type === 'data' ? 'data_bundle_purchase' : 'airtime_topup';
+  const recipientNote = airtimeRecipient === 'other' ? ' (for someone else)' : '';
   const msg = type === 'data'
-    ? `Buy ${amount} data for ${phone} in ${country}`
-    : `Buy ${amount} airtime for ${phone} in ${country}`;
-  addChatMessage(msg, 'user');
-  await sendMessage();
+    ? `Buy data bundle: ${amount} ${CARRIER_DATA[country]?.currency || ''} for ${phone} on ${carrierName} in ${CARRIER_DATA[country]?.name || country}${recipientNote}`
+    : `Buy airtime: ${amount} ${CARRIER_DATA[country]?.currency || ''} for ${phone} on ${carrierName} in ${CARRIER_DATA[country]?.name || country}${recipientNote}`;
+  document.getElementById('chat-input').value = msg;
+  sendMessage();
 }
 
 // ── Request Money Modal ──
@@ -2324,6 +2547,37 @@ function shareReferral() {
     navigator.clipboard.writeText(url).then(() => showToast('Referral link copied!'));
   }
 }
+
+// ── Country Update ──
+function updateUserCountry(country) {
+  localStorage.setItem('upromptpay_country', country);
+  if (currentUser) currentUser.country = country;
+  applyAirtimeGeoGate();
+  // Save to server
+  authFetch(API_BASE + '/api/user/settings', {
+    method: 'PUT',
+    body: JSON.stringify({ country })
+  }).catch(() => {});
+  showToast('Country updated' + (NON_AIRTIME_COUNTRIES.includes(country) ? ' - Airtime top-up not available in your region' : ''));
+}
+
+// Populate country selectors on settings load
+const origLoadSettings = loadSettings;
+loadSettings = async function() {
+  await origLoadSettings();
+  const country = getUserCountry();
+  if (country) {
+    const profileCountry = document.getElementById('profile-country');
+    if (profileCountry) profileCountry.value = country;
+    const settingsCountry = document.getElementById('settings-country');
+    if (settingsCountry) settingsCountry.value = country;
+  }
+};
+
+// Initialize airtime carrier on first load
+document.addEventListener('DOMContentLoaded', function() {
+  updateCarriers();
+});
 </script>
 
 </body>

@@ -150,6 +150,8 @@ const airtimeTopupSchema = z.object({
   amount: z.number().positive().describe('Amount in local currency (NGN, GHS, UGX, KES)'),
   countryCode: z.enum(['NG', 'GH', 'UG', 'KE']).describe('ISO country code'),
   operatorId: z.number().optional().describe('Reloadly operator ID (auto-detected if omitted)'),
+  carrierName: z.string().optional().describe('Carrier name (e.g., MTN Nigeria, Safaricom) for display purposes'),
+  recipientType: z.enum(['self', 'other']).optional().default('self').describe('Whether buying for self or someone else'),
 });
 
 const dataBundleSchema = z.object({
@@ -157,6 +159,8 @@ const dataBundleSchema = z.object({
   amount: z.number().positive().describe('Amount in local currency for data bundle'),
   countryCode: z.enum(['NG', 'GH', 'UG', 'KE']),
   operatorId: z.number().optional(),
+  carrierName: z.string().optional().describe('Carrier name for display purposes'),
+  recipientType: z.enum(['self', 'other']).optional().default('self'),
 });
 
 const merchantQrSchema = z.object({
@@ -794,7 +798,7 @@ export const paymentTools: ToolDefinition[] = [
   // ─── 9. Airtime Top-Up (Wholesale Resale) ─────────────────
   {
     name: 'airtime_topup',
-    description: 'Buy airtime/phone credits for any phone in Nigeria (MTN, Airtel, Glo, 9mobile), Ghana (MTN, Vodafone, AirtelTigo), Uganda (MTN, Airtel), Kenya (Safaricom, Airtel). We buy wholesale and sell at face value + 2% convenience fee. Instant delivery.',
+    description: 'Buy airtime/phone credits for any phone in Nigeria (MTN, Airtel, Glo, 9mobile), Ghana (MTN, Vodafone, AirtelTigo), Uganda (MTN, Airtel, Africell), Kenya (Safaricom, Airtel, Telkom). Specify carrier or auto-detect from number. Can buy for self or someone else. Wholesale purchase at face value + 2% convenience fee. Instant delivery.',
     category: 'airtime',
     inputSchema: airtimeTopupSchema,
     requiresApproval: true,
@@ -810,19 +814,20 @@ export const paymentTools: ToolDefinition[] = [
       try {
         // Auto-detect operator if not specified
         let operatorId = params.operatorId;
-        let operatorName = 'Unknown';
+        let operatorName = params.carrierName || 'Unknown';
         if (!operatorId) {
           const detect = await reloadlyRequest(
             `/operators/auto-detect/phone/${params.phoneNumber}/countries/${params.countryCode}`,
             undefined, 'GET'
           );
           operatorId = detect.operatorId as number;
-          operatorName = (detect.name as string) || 'Detected';
+          operatorName = (detect.name as string) || params.carrierName || 'Detected';
         }
 
         // We buy at wholesale discount (3-5% off), sell at face value + 2% fee
         const convenienceFee = Math.round(params.amount * 0.02 * 100) / 100;
         const totalCharged = Math.round((params.amount + convenienceFee) * 100) / 100;
+        const isForOther = params.recipientType === 'other';
 
         const result = await reloadlyRequest('/topups', {
           operatorId,
@@ -836,7 +841,7 @@ export const paymentTools: ToolDefinition[] = [
           const txId = `AIR-${Date.now().toString(36).toUpperCase()}`;
           await ctx.memory.store({
             agentId: ctx.agentId, type: 'episodic', namespace: 'airtime',
-            content: JSON.stringify({ txId, ...params, operatorName, fee: convenienceFee, status: 'completed' }),
+            content: JSON.stringify({ txId, ...params, operatorName, fee: convenienceFee, forOther: isForOther, status: 'completed' }),
             importance: 0.7, metadata: { country: params.countryCode },
           });
 
@@ -848,12 +853,13 @@ export const paymentTools: ToolDefinition[] = [
               operator: operatorName,
               phoneNumber: params.phoneNumber,
               country: params.countryCode,
+              recipientType: isForOther ? 'someone else' : 'self',
               amountDelivered: params.amount,
               convenienceFee: `${convenienceFee} (2%)`,
               totalCharged,
               discount: result.discount || '3-5% wholesale',
               status: 'completed',
-              message: `${params.amount} airtime delivered to ${params.phoneNumber} via ${operatorName}`,
+              message: `${params.amount} airtime delivered to ${params.phoneNumber} via ${operatorName}${isForOther ? ' (for someone else)' : ''}`,
             },
           };
         }
@@ -868,7 +874,7 @@ export const paymentTools: ToolDefinition[] = [
   // ─── 10. Data Bundle Purchase (Wholesale Resale) ──────────
   {
     name: 'data_bundle_purchase',
-    description: 'Buy mobile data bundles for phones in Nigeria, Ghana, Uganda, Kenya. Wholesale purchase with 2% convenience fee. Supports all major carriers: MTN, Airtel, Glo, 9mobile, Safaricom, Vodafone.',
+    description: 'Buy mobile data bundles for phones in Nigeria, Ghana, Uganda, Kenya. Specify carrier or auto-detect. Can buy for self or someone else. Wholesale purchase with 2% convenience fee. Supports all major carriers.',
     category: 'airtime',
     inputSchema: dataBundleSchema,
     requiresApproval: true,
@@ -883,18 +889,19 @@ export const paymentTools: ToolDefinition[] = [
 
       try {
         let operatorId = params.operatorId;
-        let operatorName = 'Unknown';
+        let operatorName = params.carrierName || 'Unknown';
         if (!operatorId) {
           const detect = await reloadlyRequest(
             `/operators/auto-detect/phone/${params.phoneNumber}/countries/${params.countryCode}`,
             undefined, 'GET'
           );
           operatorId = detect.operatorId as number;
-          operatorName = (detect.name as string) || 'Detected';
+          operatorName = (detect.name as string) || params.carrierName || 'Detected';
         }
 
         const convenienceFee = Math.round(params.amount * 0.02 * 100) / 100;
         const totalCharged = Math.round((params.amount + convenienceFee) * 100) / 100;
+        const isForOther = params.recipientType === 'other';
 
         const result = await reloadlyRequest('/topups', {
           operatorId,
@@ -908,7 +915,7 @@ export const paymentTools: ToolDefinition[] = [
           const txId = `DATA-${Date.now().toString(36).toUpperCase()}`;
           await ctx.memory.store({
             agentId: ctx.agentId, type: 'episodic', namespace: 'airtime',
-            content: JSON.stringify({ txId, type: 'data', ...params, operatorName, fee: convenienceFee, status: 'completed' }),
+            content: JSON.stringify({ txId, type: 'data', ...params, operatorName, fee: convenienceFee, forOther: isForOther, status: 'completed' }),
             importance: 0.7, metadata: { country: params.countryCode },
           });
 
@@ -920,11 +927,12 @@ export const paymentTools: ToolDefinition[] = [
               operator: operatorName,
               phoneNumber: params.phoneNumber,
               country: params.countryCode,
+              recipientType: isForOther ? 'someone else' : 'self',
               amountDelivered: params.amount,
               convenienceFee: `${convenienceFee} (2%)`,
               totalCharged,
               status: 'completed',
-              message: `Data bundle of ${params.amount} delivered to ${params.phoneNumber} via ${operatorName}`,
+              message: `Data bundle of ${params.amount} delivered to ${params.phoneNumber} via ${operatorName}${isForOther ? ' (for someone else)' : ''}`,
             },
           };
         }

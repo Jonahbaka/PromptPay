@@ -415,6 +415,7 @@ export class MemoryStore extends EventEmitter {
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         display_name TEXT NOT NULL,
+        country TEXT DEFAULT '',
         role TEXT NOT NULL CHECK(role IN ('owner', 'partner_admin', 'user')),
         status TEXT DEFAULT 'active' CHECK(status IN ('active', 'suspended', 'deactivated')),
         last_login_at TEXT,
@@ -494,6 +495,11 @@ export class MemoryStore extends EventEmitter {
         PRIMARY KEY (channel_type, channel_user_id)
       );
     `);
+
+    // ── Safe migrations for existing databases ──
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN country TEXT DEFAULT ''`);
+    } catch { /* column already exists */ }
   }
 
   getDb(): Database.Database {
