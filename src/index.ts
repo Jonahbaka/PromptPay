@@ -92,6 +92,28 @@ async function main(): Promise<void> {
 
   // ── 7b. Inbound Message Bridge ──
   // Route inbound Telegram/WhatsApp messages to the AI orchestrator
+  // ── Rate limit helper ──
+  function checkRateLimit(userId: string, type: 'messages' | 'channel'): { allowed: boolean; used: number; limit: number } {
+    const today = new Date().toISOString().slice(0, 10);
+    const col = type === 'channel' ? 'channel_messages_used' : 'messages_used';
+    const limit = type === 'channel' ? CONFIG.rateLimits.channelMessagesPerDay : CONFIG.rateLimits.freeMessagesPerDay;
+
+    const row = db.prepare('SELECT * FROM usage_tracking WHERE user_id = ? AND date = ?')
+      .get(userId, today) as Record<string, number> | undefined;
+
+    const used = row ? (row[col] || 0) : 0;
+    if (used >= limit) return { allowed: false, used, limit };
+
+    // Increment
+    db.prepare(`
+      INSERT INTO usage_tracking (user_id, date, ${col})
+      VALUES (?, ?, 1)
+      ON CONFLICT(user_id, date) DO UPDATE SET ${col} = ${col} + 1
+    `).run(userId, today);
+
+    return { allowed: true, used: used + 1, limit };
+  }
+
   channelManager.on('message', async (msg: ChannelMessage) => {
     if (msg.direction !== 'inbound') return;
 
@@ -101,8 +123,15 @@ async function main(): Promise<void> {
     });
 
     try {
+      // Rate limit check for channel users
+      const rateCheck = checkRateLimit(`channel:${msg.senderId}`, 'channel');
+      if (!rateCheck.allowed) {
+        await channelManager.sendMessage(msg.channelType, msg.senderId,
+          `You've reached your daily message limit (${rateCheck.limit} messages). Try again tomorrow!`);
+        return;
+      }
+
       // Look up or create a channel session
-      const sessionKey = `${msg.channelType}:${msg.senderId}`;
       let session = db.prepare(
         'SELECT * FROM channel_sessions WHERE channel_type = ? AND channel_user_id = ?'
       ).get(msg.channelType, msg.senderId) as Record<string, unknown> | undefined;
@@ -116,11 +145,11 @@ async function main(): Promise<void> {
       history.push({ role: 'user', content: msg.content });
       if (history.length > 20) history = history.slice(-20);
 
-      // Execute through orchestrator as a task
+      // Execute through orchestrator as a task (userInitiated flag triggers Haiku)
       const task = orchestrator.createTask('custom', 'medium',
         `${msg.channelType} message from ${msg.senderId}`,
         msg.content,
-        { channelType: msg.channelType, senderId: msg.senderId, history },
+        { channelType: msg.channelType, senderId: msg.senderId, history, userInitiated: true },
       );
       const result = await orchestrator.executeTask(task);
 

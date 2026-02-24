@@ -14,12 +14,23 @@ function env(key: string, fallback?: string): string {
 }
 
 export const CONFIG = {
-  // ── AI Model ──
+  // ── AI Models (tiered) ──
   anthropic: {
     apiKey: env('ANTHROPIC_API_KEY'),
     model: env('ANTHROPIC_MODEL', 'claude-opus-4-6'),
     maxTokens: 16384,
     temperature: 0.3,
+    // Tiered models: cheap model for users, powerful model for admin/orchestrator
+    userModel: env('ANTHROPIC_USER_MODEL', 'claude-haiku-4-5-20251001'),
+    userMaxTokens: parseInt(env('ANTHROPIC_USER_MAX_TOKENS', '4096')),
+    adminModel: env('ANTHROPIC_ADMIN_MODEL', 'claude-opus-4-6'),
+  },
+
+  // ── Rate Limits ──
+  rateLimits: {
+    freeMessagesPerDay: parseInt(env('RATE_LIMIT_FREE_MSGS', '50')),
+    premiumMessagesPerDay: parseInt(env('RATE_LIMIT_PREMIUM_MSGS', '500')),
+    channelMessagesPerDay: parseInt(env('RATE_LIMIT_CHANNEL_MSGS', '30')),
   },
 
   // ── Platform ──

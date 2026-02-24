@@ -84,7 +84,35 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
       }
 
       const { type, priority, title, description, payload } = parsed.data;
-      const task = deps.orchestrator.createTask(type, priority, title, description || '', payload);
+
+      // Rate limit for non-owner users
+      const userId = req.auth?.userId || 'anonymous';
+      const role = req.auth?.role || 'user';
+      if (role === 'user') {
+        const today = new Date().toISOString().slice(0, 10);
+        const row = deps.memory.getDb().prepare(
+          'SELECT messages_used FROM usage_tracking WHERE user_id = ? AND date = ?'
+        ).get(userId, today) as { messages_used: number } | undefined;
+        const used = row?.messages_used || 0;
+        if (used >= CONFIG.rateLimits.freeMessagesPerDay) {
+          res.status(429).json({
+            error: 'Daily message limit reached',
+            limit: CONFIG.rateLimits.freeMessagesPerDay,
+            used,
+            resetsAt: today + 'T00:00:00Z (next day)',
+          });
+          return;
+        }
+        deps.memory.getDb().prepare(`
+          INSERT INTO usage_tracking (user_id, date, messages_used)
+          VALUES (?, ?, 1)
+          ON CONFLICT(user_id, date) DO UPDATE SET messages_used = messages_used + 1
+        `).run(userId, today);
+      }
+
+      // Mark user tasks so orchestrator uses Haiku
+      const taskPayload = { ...payload, userInitiated: role === 'user' };
+      const task = deps.orchestrator.createTask(type, priority, title, description || '', taskPayload);
       const result = await deps.orchestrator.executeTask(task);
 
       // Broadcast via WebSocket
@@ -96,6 +124,27 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
       deps.logger.error(`Task execution error: ${message}`);
       res.status(500).json({ error: message });
     }
+  });
+
+  // ── Usage / rate limit info ──
+  app.get('/api/usage', authenticate, (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const role = req.auth!.role;
+    const today = new Date().toISOString().slice(0, 10);
+    const row = deps.memory.getDb().prepare(
+      'SELECT messages_used, tokens_used, channel_messages_used FROM usage_tracking WHERE user_id = ? AND date = ?'
+    ).get(userId, today) as Record<string, number> | undefined;
+
+    const limit = role === 'owner' ? Infinity : CONFIG.rateLimits.freeMessagesPerDay;
+    res.json({
+      messagesUsed: row?.messages_used || 0,
+      messagesLimit: limit === Infinity ? 'unlimited' : limit,
+      tokensUsed: row?.tokens_used || 0,
+      channelMessagesUsed: row?.channel_messages_used || 0,
+      channelMessagesLimit: CONFIG.rateLimits.channelMessagesPerDay,
+      date: today,
+      plan: role === 'owner' ? 'owner' : 'free',
+    });
   });
 
   // ── State queries (authenticated) ──

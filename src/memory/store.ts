@@ -359,6 +359,16 @@ export class MemoryStore extends EventEmitter {
       CREATE INDEX IF NOT EXISTS idx_devkey_hash ON developer_keys(api_key_hash);
       CREATE INDEX IF NOT EXISTS idx_devkey_user ON developer_keys(user_id);
 
+      -- ═══ USAGE TRACKING ═══
+      CREATE TABLE IF NOT EXISTS usage_tracking (
+        user_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        messages_used INTEGER DEFAULT 0,
+        tokens_used INTEGER DEFAULT 0,
+        channel_messages_used INTEGER DEFAULT 0,
+        PRIMARY KEY (user_id, date)
+      );
+
       -- ═══ CHANNEL SESSIONS ═══
       CREATE TABLE IF NOT EXISTS channel_sessions (
         channel_type TEXT NOT NULL,

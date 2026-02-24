@@ -248,8 +248,18 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
 
   // ── Direct Execution ──────────────────────────────────────
 
+  /** Resolve which model to use based on task context */
+  private resolveModel(task: Task): { model: string; maxTokens: number } {
+    const isUserTask = task.payload?.channelType || task.payload?.userInitiated;
+    if (isUserTask) {
+      return { model: CONFIG.anthropic.userModel, maxTokens: CONFIG.anthropic.userMaxTokens };
+    }
+    return { model: CONFIG.anthropic.adminModel, maxTokens: CONFIG.anthropic.maxTokens };
+  }
+
   private async executeDirect(task: Task): Promise<TaskResult> {
     const toolDefs = this.getAnthropicTools();
+    const { model, maxTokens } = this.resolveModel(task);
 
     const messages: Anthropic.MessageParam[] = [
       ...this.conversationHistory.slice(-20),
@@ -260,8 +270,8 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
     ];
 
     const response = await this.client.messages.create({
-      model: CONFIG.anthropic.model,
-      max_tokens: CONFIG.anthropic.maxTokens,
+      model,
+      max_tokens: maxTokens,
       temperature: CONFIG.anthropic.temperature,
       system: this.systemPrompt,
       tools: toolDefs.length > 0 ? toolDefs : undefined,
@@ -328,10 +338,11 @@ Available tools: ${config.tools.join(', ')}
 Execute the given task with precision.`;
 
       const subTools = this.getAnthropicToolsForAgent(config.tools);
+      const resolved = this.resolveModel(task);
 
       const response = await this.client.messages.create({
-        model: CONFIG.anthropic.model,
-        max_tokens: config.maxTokens || CONFIG.anthropic.maxTokens,
+        model: resolved.model,
+        max_tokens: config.maxTokens || resolved.maxTokens,
         temperature: config.temperature ?? CONFIG.anthropic.temperature,
         system: subPrompt,
         tools: subTools.length > 0 ? subTools : undefined,
@@ -434,7 +445,7 @@ Execute the given task with precision.`;
     const errors = recentEvents.filter(e => e.type === 'system:error' || e.type === 'agent:error').length;
 
     const response = await this.client.messages.create({
-      model: CONFIG.anthropic.model,
+      model: CONFIG.anthropic.adminModel,
       max_tokens: 4096,
       temperature: 0.5,
       system: 'You are performing a metacognitive self-evaluation of PromptPay financial operations. Be ruthlessly honest.',
