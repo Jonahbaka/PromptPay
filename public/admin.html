@@ -346,6 +346,10 @@
   <div class="nav-item" data-page="cross-border">
     <span class="nav-icon">&#128260;</span> Cross-Border
   </div>
+  <div class="nav-section" id="nav-section-executive">Executive AI</div>
+  <div class="nav-item" data-page="executive" id="nav-executive">
+    <span class="nav-icon">&#129504;</span> AI Board
+  </div>
   <div class="nav-section">System</div>
   <div class="nav-item" data-page="providers">
     <span class="nav-icon">&#9889;</span> Providers
@@ -608,6 +612,69 @@
     </div>
   </div>
 
+  <!-- ── EXECUTIVE AI BOARD ── -->
+  <div class="page" id="page-executive" style="display:none;">
+    <div class="header"><h2>Executive AI Board</h2><span class="status-badge status-online">DeepSeek Powered</span></div>
+    <p style="opacity:0.6;margin-bottom:20px">Private AI advisors with real-time platform data. Owner only.</p>
+
+    <!-- Persona Selector -->
+    <div class="grid grid-3" id="persona-grid" style="margin-bottom:20px">
+      <div class="card persona-card active" data-persona="ceo" onclick="selectPersona('ceo')" style="cursor:pointer;border:2px solid transparent">
+        <div style="font-size:24px;margin-bottom:6px">&#128081;</div>
+        <div style="font-weight:700;font-size:14px">CEO</div>
+        <div style="font-size:11px;color:var(--text2)">Strategy &amp; vision</div>
+      </div>
+      <div class="card persona-card" data-persona="cfo" onclick="selectPersona('cfo')" style="cursor:pointer;border:2px solid transparent">
+        <div style="font-size:24px;margin-bottom:6px">&#128178;</div>
+        <div style="font-weight:700;font-size:14px">CFO</div>
+        <div style="font-size:11px;color:var(--text2)">Revenue &amp; margins</div>
+      </div>
+      <div class="card persona-card" data-persona="analyst" onclick="selectPersona('analyst')" style="cursor:pointer;border:2px solid transparent">
+        <div style="font-size:24px;margin-bottom:6px">&#128200;</div>
+        <div style="font-weight:700;font-size:14px">Analyst</div>
+        <div style="font-size:11px;color:var(--text2)">Data &amp; trends</div>
+      </div>
+      <div class="card persona-card" data-persona="economist" onclick="selectPersona('economist')" style="cursor:pointer;border:2px solid transparent">
+        <div style="font-size:24px;margin-bottom:6px">&#127758;</div>
+        <div style="font-weight:700;font-size:14px">Economist</div>
+        <div style="font-size:11px;color:var(--text2)">Pricing &amp; markets</div>
+      </div>
+      <div class="card persona-card" data-persona="cto" onclick="selectPersona('cto')" style="cursor:pointer;border:2px solid transparent">
+        <div style="font-size:24px;margin-bottom:6px">&#9881;</div>
+        <div style="font-weight:700;font-size:14px">CTO</div>
+        <div style="font-size:11px;color:var(--text2)">System &amp; scale</div>
+      </div>
+      <div class="card persona-card" data-persona="growth" onclick="selectPersona('growth')" style="cursor:pointer;border:2px solid transparent">
+        <div style="font-size:24px;margin-bottom:6px">&#128640;</div>
+        <div style="font-weight:700;font-size:14px">Growth</div>
+        <div style="font-size:11px;color:var(--text2)">Users &amp; virality</div>
+      </div>
+    </div>
+
+    <!-- Suggested Prompts -->
+    <div id="exec-suggestions" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    </div>
+
+    <!-- Chat Area -->
+    <div class="card" style="min-height:400px;display:flex;flex-direction:column">
+      <div id="exec-chat" style="flex:1;overflow-y:auto;max-height:500px;padding:8px 0">
+        <div style="text-align:center;color:var(--text2);padding:40px 0;font-size:14px" id="exec-empty">Select a persona above and ask a question. The AI sees your live platform data.</div>
+      </div>
+      <div style="display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border)">
+        <input type="text" id="exec-input" placeholder="Ask your executive team..." onkeydown="if(event.key==='Enter')sendExecChat()"
+          style="flex:1;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        <button onclick="sendExecChat()" id="exec-send-btn"
+          style="padding:12px 24px;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;font-family:inherit">Send</button>
+      </div>
+    </div>
+
+    <!-- Live Context (Collapsible) -->
+    <details style="margin-top:16px">
+      <summary style="cursor:pointer;color:var(--accent2);font-size:13px;font-weight:600">View live platform data the AI sees</summary>
+      <pre id="exec-context" style="margin-top:8px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:11px;color:var(--text2);overflow-x:auto;max-height:400px;overflow-y:auto">Loading...</pre>
+    </details>
+  </div>
+
   <!-- ── CROSS-BORDER ── -->
   <div class="page" id="page-cross-border" style="display:none;">
     <div class="header"><h2>Cross-Border Transfers</h2></div>
@@ -788,22 +855,27 @@ function handleLogout() {
 function applyRoleVisibility(role) {
   const partnersNav = document.getElementById('nav-partners');
   const partnersSection = document.getElementById('nav-section-partners');
-
-  // Elements only visible to owner
-  const ownerOnlyPages = ['partners'];
+  const execNav = document.getElementById('nav-executive');
+  const execSection = document.getElementById('nav-section-executive');
 
   if (role === 'owner') {
     // Owner sees everything
     partnersNav.classList.remove('role-hidden');
     partnersSection.style.display = '';
+    execNav.classList.remove('role-hidden');
+    execSection.style.display = '';
   } else if (role === 'partner_admin') {
-    // partner_admin: hide Partners management and Config
+    // partner_admin: hide Partners, Executive AI
     partnersNav.classList.add('role-hidden');
     partnersSection.style.display = 'none';
+    execNav.classList.add('role-hidden');
+    execSection.style.display = 'none';
   } else {
-    // Default: hide partner management
+    // Default: hide partner management + executive
     partnersNav.classList.add('role-hidden');
     partnersSection.style.display = 'none';
+    execNav.classList.add('role-hidden');
+    execSection.style.display = 'none';
   }
 
   // If current active page is now hidden, reset to dashboard
@@ -1275,6 +1347,117 @@ async function loadCrossBorder() {
   }
 }
 
+// ── Executive AI Board ──
+let execPersona = 'ceo';
+let execHistory = [];
+const EXEC_SUGGESTIONS = {
+  ceo: ["What should our top 3 priorities be right now?", "Are we positioned to win against Cash App and Venmo?", "Should we focus on US or Africa growth first?"],
+  cfo: ["Are we profitable on each transaction type after provider fees?", "What's our unit economics breakdown?", "Where is money leaking in our fee structure?"],
+  analyst: ["Show me user growth trends and forecast next month", "Which transaction types are growing fastest?", "What's our daily active user trend?"],
+  economist: ["How should we price cross-border vs Wise and Remitly?", "What's our FX exposure risk across corridors?", "Are our Africa fees competitive with M-Pesa and Chipper Cash?"],
+  cto: ["Which tools have the highest failure rate?", "What breaks if we 10x our user base tomorrow?", "What's our infrastructure cost per transaction?"],
+  growth: ["What's our referral conversion rate?", "Which feature drives the most organic signups?", "How do we get our first 1000 users?"],
+};
+
+function selectPersona(p) {
+  execPersona = p;
+  execHistory = [];
+  document.querySelectorAll('.persona-card').forEach(c => {
+    c.classList.toggle('active', c.dataset.persona === p);
+    c.style.borderColor = c.dataset.persona === p ? 'var(--accent)' : 'transparent';
+  });
+  document.getElementById('exec-chat').innerHTML = '<div style="text-align:center;color:var(--text2);padding:40px 0;font-size:14px" id="exec-empty">Ask your ' + EXEC_SUGGESTIONS[p][0].split('?')[0] + '?</div>';
+  const sugEl = document.getElementById('exec-suggestions');
+  sugEl.innerHTML = (EXEC_SUGGESTIONS[p] || []).map(s =>
+    `<button onclick="askSuggestion(this)" style="padding:6px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--accent2);font-size:12px;cursor:pointer;font-family:inherit">${s}</button>`
+  ).join('');
+}
+
+function askSuggestion(btn) {
+  document.getElementById('exec-input').value = btn.textContent;
+  sendExecChat();
+}
+
+function appendExecMessage(role, content) {
+  const empty = document.getElementById('exec-empty');
+  if (empty) empty.remove();
+  const chat = document.getElementById('exec-chat');
+  const div = document.createElement('div');
+  div.style.cssText = role === 'user'
+    ? 'text-align:right;margin:12px 0'
+    : 'margin:12px 0';
+  const bubble = document.createElement('div');
+  bubble.style.cssText = role === 'user'
+    ? 'display:inline-block;background:var(--accent);color:white;padding:10px 16px;border-radius:16px 16px 4px 16px;max-width:80%;text-align:left;font-size:14px;line-height:1.5'
+    : 'background:var(--surface2);padding:14px 18px;border-radius:16px 16px 16px 4px;max-width:90%;font-size:14px;line-height:1.6;color:var(--text);white-space:pre-wrap';
+  // Basic markdown: bold, headers, bullet points
+  if (role === 'assistant') {
+    let html = content
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^### (.+)$/gm, '<div style="font-size:15px;font-weight:700;margin:12px 0 6px">$1</div>')
+      .replace(/^## (.+)$/gm, '<div style="font-size:16px;font-weight:700;margin:14px 0 8px">$1</div>')
+      .replace(/^# (.+)$/gm, '<div style="font-size:18px;font-weight:700;margin:16px 0 10px">$1</div>')
+      .replace(/^- (.+)$/gm, '<div style="padding-left:16px">&#8226; $1</div>')
+      .replace(/\n/g, '<br>');
+    bubble.innerHTML = html;
+  } else {
+    bubble.textContent = content;
+  }
+  div.appendChild(bubble);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendExecChat() {
+  const input = document.getElementById('exec-input');
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = '';
+
+  appendExecMessage('user', message);
+
+  // Show thinking indicator
+  const thinking = document.createElement('div');
+  thinking.id = 'exec-thinking';
+  thinking.style.cssText = 'margin:12px 0;color:var(--text2);font-size:13px';
+  thinking.innerHTML = '&#9881; ' + (EXEC_SUGGESTIONS[execPersona] ? execPersona.toUpperCase() : 'AI') + ' is analyzing platform data...';
+  document.getElementById('exec-chat').appendChild(thinking);
+
+  const btn = document.getElementById('exec-send-btn');
+  btn.disabled = true;
+  btn.textContent = '...';
+
+  try {
+    const data = await api('/admin/executive/chat', {
+      method: 'POST',
+      body: JSON.stringify({ persona: execPersona, message, history: execHistory }),
+    });
+    document.getElementById('exec-thinking')?.remove();
+    if (data && data.response) {
+      appendExecMessage('assistant', data.response);
+      execHistory.push({ role: 'user', content: message });
+      execHistory.push({ role: 'assistant', content: data.response });
+      if (execHistory.length > 20) execHistory = execHistory.slice(-20);
+    } else if (data && data.error) {
+      appendExecMessage('assistant', 'Error: ' + data.error);
+    }
+  } catch(e) {
+    document.getElementById('exec-thinking')?.remove();
+    appendExecMessage('assistant', 'Connection error. Check that the server is running.');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Send';
+}
+
+async function loadExecutive() {
+  selectPersona(execPersona);
+  // Load live context
+  const ctx = await api('/admin/executive/context');
+  if (ctx) {
+    document.getElementById('exec-context').textContent = JSON.stringify(ctx, null, 2);
+  }
+}
+
 // ── Page router ──
 function loadPage(page) {
   const loaders = {
@@ -1284,6 +1467,7 @@ function loadPage(page) {
     partners: loadPartners, revenue: () => loadRevenue('today'),
     providers: loadProviders, audit: loadAudit, health: loadHealth,
     'agents-network': loadAgentNetwork, 'cross-border': loadCrossBorder,
+    executive: loadExecutive,
   };
   if (loaders[page]) loaders[page]();
 }

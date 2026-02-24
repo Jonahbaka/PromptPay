@@ -26,6 +26,15 @@ export const CONFIG = {
     adminModel: env('ANTHROPIC_ADMIN_MODEL', 'claude-opus-4-6'),
   },
 
+  // ── DeepSeek (Executive AI Board — non-agentic advisory) ──
+  deepseek: {
+    apiKey: env('DEEPSEEK_API_KEY', ''),
+    model: env('DEEPSEEK_MODEL', 'deepseek-chat'),
+    baseUrl: 'https://api.deepseek.com',
+    maxTokens: 4096,
+    temperature: 0.4,
+  },
+
   // ── Rate Limits ──
   rateLimits: {
     freeMessagesPerDay: parseInt(env('RATE_LIMIT_FREE_MSGS', '50')),
@@ -52,7 +61,7 @@ export const CONFIG = {
     domainUrl: env('DOMAIN_URL', 'https://www.upromptpay.com'),
     contactEmail: env('CONTACT_EMAIL', 'info@upromptpay.com'),
     name: 'PromptPay',
-    version: '1.4.0',
+    version: '1.5.0',
   },
 
   promptpay: {

@@ -13,6 +13,91 @@ import type { FeeEngine } from '../hooks/fees.js';
 import type { DaemonLoop } from '../daemon/loop.js';
 import type { MemoryStore } from '../memory/store.js';
 import { authenticate, requireRole, getTenantFilter } from '../auth/middleware.js';
+import { readFileSync } from 'fs';
+import path from 'path';
+import { CONFIG } from '../core/config.js';
+
+const EXECUTIVE_PERSONAS: Record<string, string> = {
+  ceo: 'CEO',
+  cfo: 'CFO',
+  analyst: 'Financial Analyst',
+  economist: 'Economist',
+  cto: 'CTO',
+  growth: 'Growth Lead',
+};
+
+function gatherPlatformContext(deps: AdminDependencies) {
+  const db = deps.memory.getDb();
+  const userCount = (db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number }).c;
+  const activeToday = (db.prepare("SELECT COUNT(DISTINCT id) as c FROM users WHERE last_login_at >= date('now')").get() as { c: number }).c;
+  const txCount = (db.prepare('SELECT COUNT(*) as c FROM fee_ledger').get() as { c: number }).c;
+
+  const agents = db.prepare('SELECT * FROM agent_accounts WHERE status = ?').all('active') as Array<Record<string, unknown>>;
+  const totalFloat = agents.reduce((sum, a) => sum + ((a.float_balance as number) || 0), 0);
+  const totalCommissions = agents.reduce((sum, a) => sum + ((a.commission_earned as number) || 0), 0);
+
+  const xbTransfers = db.prepare('SELECT COUNT(*) as c FROM cross_border_transfers').get() as { c: number };
+
+  const events = deps.orchestrator.getExecutionLog(500) as Array<Record<string, unknown>>;
+  const toolInvocations = events.filter(e => e.type === 'tool:result');
+  const toolSuccesses = toolInvocations.filter(e => (e.payload as Record<string, unknown>)?.success).length;
+
+  return {
+    users: { total: userCount, activeToday },
+    revenue: {
+      today: deps.feeEngine.getRevenueSummary('today'),
+      thisMonth: deps.feeEngine.getRevenueSummary('month'),
+    },
+    transactions: { totalRecorded: txCount },
+    agentNetwork: { activeAgents: agents.length, totalFloat, totalCommissions },
+    crossBorder: { totalTransfers: xbTransfers.c },
+    toolHealth: {
+      totalInvocations: toolInvocations.length,
+      successRate: toolInvocations.length > 0 ? Math.round((toolSuccesses / toolInvocations.length) * 100) : 100,
+    },
+    system: {
+      uptimeSeconds: Math.round(process.uptime()),
+      circuitBreakers: deps.circuitBreakers.getState().map(b => ({ tool: b.toolName, state: b.state, failures: b.failureCount })),
+      memoryStats: deps.memory.getStats(),
+    },
+    feeConfig: CONFIG.fees,
+    platformVersion: CONFIG.platform.version,
+  };
+}
+
+async function callDeepSeek(systemPrompt: string, messages: Array<{ role: string; content: string }>): Promise<{ text: string; usage: { input: number; output: number } }> {
+  const res = await fetch(`${CONFIG.deepseek.baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${CONFIG.deepseek.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: CONFIG.deepseek.model,
+      max_tokens: CONFIG.deepseek.maxTokens,
+      temperature: CONFIG.deepseek.temperature,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages,
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`DeepSeek API error ${res.status}: ${errBody}`);
+  }
+
+  const data = await res.json() as {
+    choices: Array<{ message: { content: string } }>;
+    usage: { prompt_tokens: number; completion_tokens: number };
+  };
+
+  return {
+    text: data.choices[0]?.message?.content || '',
+    usage: { input: data.usage?.prompt_tokens || 0, output: data.usage?.completion_tokens || 0 },
+  };
+}
 
 export interface AdminDependencies {
   orchestrator: {
@@ -427,6 +512,88 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
     });
   });
 
-  deps.logger.info('Admin portal: 23 routes registered');
+  // ═══════════════════════════════════════════════════════
+  // 24. GET /admin/executive/context — Live platform data for AI
+  // ═══════════════════════════════════════════════════════
+  router.get('/admin/executive/context', requireRole('owner'), (_req: Request, res: Response) => {
+    try {
+      const context = gatherPlatformContext(deps);
+      res.json(context);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Executive context error: ${msg}`);
+      res.status(500).json({ error: 'Failed to gather platform context' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // 25. POST /admin/executive/chat — Executive AI Board (DeepSeek)
+  // ═══════════════════════════════════════════════════════
+  router.post('/admin/executive/chat', requireRole('owner'), async (req: Request, res: Response) => {
+    try {
+      const { persona, message, history } = req.body as {
+        persona: string;
+        message: string;
+        history?: Array<{ role: string; content: string }>;
+      };
+
+      if (!persona || !EXECUTIVE_PERSONAS[persona]) {
+        res.status(400).json({ error: `Invalid persona. Use: ${Object.keys(EXECUTIVE_PERSONAS).join(', ')}` });
+        return;
+      }
+      if (!message || message.trim().length === 0) {
+        res.status(400).json({ error: 'message is required' });
+        return;
+      }
+      if (!CONFIG.deepseek.apiKey) {
+        res.status(503).json({ error: 'DeepSeek API key not configured. Set DEEPSEEK_API_KEY in .env' });
+        return;
+      }
+
+      const personaName = EXECUTIVE_PERSONAS[persona];
+      const context = gatherPlatformContext(deps);
+
+      // Load soul.md (proprietary system prompt)
+      let soulPrompt = '';
+      try {
+        const soulPath = path.join(process.cwd(), 'config', 'soul.md');
+        soulPrompt = readFileSync(soulPath, 'utf-8');
+      } catch {
+        soulPrompt = 'You are an AI executive advisor for PromptPay, a fintech platform. Analyze the live data provided and give actionable business advice.';
+      }
+
+      const systemPrompt = `${soulPrompt}\n\n## Active Persona: ${personaName}\n\nYou are now acting as the ${personaName}. Stay fully in this role.\n\n## Live Platform Data (Real-Time)\n\n\`\`\`json\n${JSON.stringify(context, null, 2)}\n\`\`\``;
+
+      // Build message history (max 20 messages)
+      const msgs: Array<{ role: string; content: string }> = [];
+      if (history && Array.isArray(history)) {
+        const trimmed = history.slice(-20);
+        for (const m of trimmed) {
+          if (m.role === 'user' || m.role === 'assistant') {
+            msgs.push({ role: m.role, content: m.content });
+          }
+        }
+      }
+      msgs.push({ role: 'user', content: message });
+
+      const result = await callDeepSeek(systemPrompt, msgs);
+
+      deps.auditTrail.record('admin', 'executive_chat', persona, { messageLength: message.length });
+      deps.logger.info(`[Executive] ${personaName} consulted, ${result.usage.input + result.usage.output} tokens`);
+
+      res.json({
+        persona,
+        personaName,
+        response: result.text,
+        usage: result.usage,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Executive chat error: ${msg}`);
+      res.status(500).json({ error: `Executive AI error: ${msg}` });
+    }
+  });
+
+  deps.logger.info('Admin portal: 25 routes registered');
   return router;
 }

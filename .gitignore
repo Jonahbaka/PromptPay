@@ -7,3 +7,4 @@ logs/
 coverage/
 *.log
 .DS_Store
+config/soul.md
