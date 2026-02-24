@@ -38,10 +38,19 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     res.status(404).send('Not found');
   });
 
-  // Serve admin dashboard at secret path only
+  // Serve admin dashboard at secret path only (no-cache to prevent stale JS)
   const secretAdminPath = `/${CONFIG.admin.secretPath}`;
   app.get(secretAdminPath, (_req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
     res.sendFile(path.join(publicDir, 'admin.html'));
+  });
+
+  // Serve index.html with no-cache as well
+  app.get('/', (_req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.sendFile(path.join(publicDir, 'index.html'));
   });
 
   app.use(express.static(publicDir));
