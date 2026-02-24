@@ -7,13 +7,18 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import { WebSocketServer, type WebSocket } from 'ws';
 import { createServer, type Server } from 'http';
 import { v4 as uuid } from 'uuid';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import type { LoggerHandle } from '../core/types.js';
 import { CONFIG } from '../core/config.js';
 import type { Orchestrator } from '../core/orchestrator.js';
 import { TaskSchema } from '../core/types.js';
+import { authenticate } from '../auth/middleware.js';
+import type { MemoryStore } from '../memory/store.js';
 
 export interface GatewayDependencies {
   orchestrator: Orchestrator;
+  memory: MemoryStore;
   logger: LoggerHandle;
 }
 
@@ -24,36 +29,44 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
 
   app.use(express.json({ limit: '10mb' }));
 
+  // ── Serve static frontend ──
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const publicDir = path.resolve(__dirname, '..', '..', 'public');
+
+  // Block direct access to admin.html — it's only served at the secret path
+  app.get('/admin.html', (_req: Request, res: Response) => {
+    res.status(404).send('Not found');
+  });
+
+  // Serve admin dashboard at secret path only
+  const secretAdminPath = `/${CONFIG.admin.secretPath}`;
+  app.get(secretAdminPath, (_req: Request, res: Response) => {
+    res.sendFile(path.join(publicDir, 'admin.html'));
+  });
+
+  app.use(express.static(publicDir));
+
   // ── Request logging ──
   app.use((req: Request, _res: Response, next: NextFunction) => {
     deps.logger.debug(`${req.method} ${req.path}`);
     next();
   });
 
-  // ── Auth middleware ──
-  const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-    const token = req.headers.authorization?.replace('Bearer ', '') || req.query.token;
-    if (token !== CONFIG.gateway.secret && CONFIG.gateway.secret !== 'promptpay-local') {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    next();
-  };
-
-  // ── Health ──
+  // ── Health (public) ──
   app.get('/health', (_req: Request, res: Response) => {
     const state = deps.orchestrator.getState();
     res.json({
       status: 'healthy',
-      platform: 'PromptPay',
-      version: '1.0.0',
+      platform: CONFIG.platform.name,
+      version: CONFIG.platform.version,
+      domain: CONFIG.platform.domainUrl,
       uptime: process.uptime(),
       orchestrator: state,
     });
   });
 
-  // ── Task submission ──
-  app.post('/api/task', authMiddleware, async (req: Request, res: Response) => {
+  // ── Task submission (authenticated) ──
+  app.post('/api/task', authenticate, async (req: Request, res: Response) => {
     try {
       const parsed = TaskSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -76,20 +89,20 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     }
   });
 
-  // ── State queries ──
-  app.get('/api/state', authMiddleware, (_req: Request, res: Response) => {
+  // ── State queries (authenticated) ──
+  app.get('/api/state', authenticate, (_req: Request, res: Response) => {
     res.json(deps.orchestrator.getState());
   });
 
-  app.get('/api/agents', authMiddleware, (_req: Request, res: Response) => {
+  app.get('/api/agents', authenticate, (_req: Request, res: Response) => {
     res.json(deps.orchestrator.getAgents());
   });
 
-  app.get('/api/tasks', authMiddleware, (_req: Request, res: Response) => {
+  app.get('/api/tasks', authenticate, (_req: Request, res: Response) => {
     res.json(deps.orchestrator.getTasks());
   });
 
-  app.get('/api/events', authMiddleware, (req: Request, res: Response) => {
+  app.get('/api/events', authenticate, (req: Request, res: Response) => {
     const limit = parseInt(String(req.query.limit || '100'));
     res.json(deps.orchestrator.getExecutionLog(limit));
   });
@@ -99,7 +112,7 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     const clientId = uuid();
     deps.logger.info(`WS client connected: ${clientId}`);
 
-    ws.send(JSON.stringify({ type: 'connected', clientId, platform: 'PromptPay' }));
+    ws.send(JSON.stringify({ type: 'connected', clientId, platform: CONFIG.platform.name }));
 
     ws.on('message', async (data: Buffer) => {
       try {

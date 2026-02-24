@@ -23,8 +23,16 @@ export const CONFIG = {
   },
 
   // ── Platform ──
+  platform: {
+    domain: env('DOMAIN', 'upromptpay.com'),
+    domainUrl: env('DOMAIN_URL', 'https://www.upromptpay.com'),
+    contactEmail: env('CONTACT_EMAIL', 'info@upromptpay.com'),
+    name: 'uPromptPay',
+    version: '1.1.0',
+  },
+
   promptpay: {
-    apiUrl: env('PROMPTPAY_API_URL', 'https://promptpay.app/api'),
+    apiUrl: env('PROMPTPAY_API_URL', 'https://www.upromptpay.com/api'),
     webhookSecret: env('PROMPTPAY_WEBHOOK_SECRET', ''),
   },
 
@@ -141,6 +149,20 @@ export const CONFIG = {
     maxBillAmountUsd: parseFloat(env('WALLET_MAX_BILL_USD', '25000')),
     p2pEnabled: env('WALLET_P2P_ENABLED', 'true') === 'true',
     payForwardEnabled: env('WALLET_PAY_FORWARD_ENABLED', 'true') === 'true',
+  },
+
+  // ── Auth ──
+  auth: {
+    jwtSecret: env('AUTH_SECRET', env('GATEWAY_SECRET', 'promptpay-local')),
+    tokenExpiryMs: parseInt(env('AUTH_TOKEN_EXPIRY_MS', '86400000')),
+    ownerEmail: env('OWNER_EMAIL', 'info@upromptpay.com'),
+    ownerPassword: env('OWNER_PASSWORD', 'admin'),
+    ownerDisplayName: env('OWNER_DISPLAY_NAME', 'uPromptPay Admin'),
+  },
+
+  // ── Secret Admin Panel ──
+  admin: {
+    secretPath: env('ADMIN_SECRET_PATH', 'cpanel-0a1e97aa2be2774809b4f988'),
   },
 
   // ══════════════════════════════════════════════════════════

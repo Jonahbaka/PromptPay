@@ -269,6 +269,76 @@ export class MemoryStore extends EventEmitter {
         created_at TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_reminders_due ON payment_reminders(scheduled_for, status);
+
+      -- ═══════════════════════════════════════════════════
+      -- MULTI-TENANCY & AUTH
+      -- ═══════════════════════════════════════════════════
+
+      -- ═══ TENANTS (Bank Partners) ═══
+      CREATE TABLE IF NOT EXISTS tenants (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT UNIQUE NOT NULL,
+        display_name TEXT NOT NULL,
+        logo_url TEXT,
+        primary_color TEXT DEFAULT '#6366f1',
+        contact_email TEXT NOT NULL,
+        contact_phone TEXT,
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'active', 'suspended', 'deactivated')),
+        tier TEXT DEFAULT 'standard' CHECK(tier IN ('standard', 'premium', 'enterprise')),
+        config TEXT DEFAULT '{}',
+        created_at TEXT NOT NULL,
+        activated_at TEXT,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_tenant_slug ON tenants(slug);
+      CREATE INDEX IF NOT EXISTS idx_tenant_status ON tenants(status);
+
+      -- ═══ USERS ═══
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        display_name TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('owner', 'partner_admin', 'user')),
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'suspended', 'deactivated')),
+        last_login_at TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_email ON users(email);
+      CREATE INDEX IF NOT EXISTS idx_user_tenant ON users(tenant_id);
+      CREATE INDEX IF NOT EXISTS idx_user_role ON users(role);
+
+      -- ═══ USER SETTINGS ═══
+      CREATE TABLE IF NOT EXISTS user_settings (
+        user_id TEXT PRIMARY KEY,
+        ai_model_api_key TEXT,
+        ai_model_provider TEXT DEFAULT 'anthropic',
+        ai_model_name TEXT,
+        preferred_channels TEXT DEFAULT '',
+        notification_enabled INTEGER DEFAULT 1,
+        language TEXT DEFAULT 'en',
+        timezone TEXT DEFAULT 'UTC',
+        metadata TEXT DEFAULT '{}',
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      -- ═══ AUTH TOKENS ═══
+      CREATE TABLE IF NOT EXISTS auth_tokens (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        token_hash TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        revoked INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_auth_token_hash ON auth_tokens(token_hash);
+      CREATE INDEX IF NOT EXISTS idx_auth_token_user ON auth_tokens(user_id);
     `);
   }
 
@@ -392,6 +462,30 @@ export class MemoryStore extends EventEmitter {
     }
 
     this.logger.info(`Seeded ${rules.length} default cashback rules`);
+  }
+
+  seedOwnerAccount(hashFn: (pw: string) => string): void {
+    const existing = this.db.prepare("SELECT id FROM users WHERE role = 'owner'").get();
+    if (existing) return;
+
+    const email = CONFIG.auth.ownerEmail;
+    const password = CONFIG.auth.ownerPassword;
+    const displayName = CONFIG.auth.ownerDisplayName;
+
+    const now = new Date().toISOString();
+    const id = uuid();
+    this.db.prepare(`
+      INSERT INTO users (id, tenant_id, email, password_hash, display_name, role, status, created_at, updated_at)
+      VALUES (?, NULL, ?, ?, ?, 'owner', 'active', ?, ?)
+    `).run(id, email, hashFn(password), displayName, now, now);
+
+    // Create default settings for owner
+    this.db.prepare(`
+      INSERT INTO user_settings (user_id, ai_model_provider, preferred_channels, updated_at)
+      VALUES (?, 'anthropic', 'email', ?)
+    `).run(id, now);
+
+    this.logger.info(`Seeded owner account: ${email}`);
   }
 
   close(): void {

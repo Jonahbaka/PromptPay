@@ -1,6 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
-// PromptPay v1.0 :: Entry Point
-// Standalone fintech platform — 5 agents, 45 tools, 9 hooks
+// uPromptPay v1.1 :: Entry Point
+// Multi-tenant fintech platform — 5 agents, 45 tools, 9 hooks
+// Bank partnership system + user settings
+// https://www.upromptpay.com
 // ═══════════════════════════════════════════════════════════════
 
 import { CONFIG } from './core/config.js';
@@ -12,11 +14,14 @@ import { CircuitBreakerRegistry } from './healing/circuit-breaker.js';
 import { createGateway } from './gateway/server.js';
 import { createWebhookRoutes } from './gateway/routes.js';
 import { createAdminRoutes } from './gateway/admin-routes.js';
+import { createUserRoutes } from './gateway/user-routes.js';
+import { createPartnerRoutes } from './gateway/partner-routes.js';
 import { ChannelManager } from './channels/manager.js';
 import { TelegramChannel } from './channels/telegram.js';
 import { SmsChannel } from './channels/sms.js';
 import { HookEngine } from './hooks/engine.js';
 import { DaemonLoop } from './daemon/loop.js';
+import { hashPassword } from './auth/tokens.js';
 
 // Import agent tools
 import { walletTools } from './agents/wallet/index.js';
@@ -28,7 +33,8 @@ import { financialTools } from './agents/financial/index.js';
 async function main(): Promise<void> {
   const logger = createLogger('promptpay');
   logger.info('═══════════════════════════════════════════');
-  logger.info(' PromptPay v1.0 — Starting...');
+  logger.info(' uPromptPay v1.1 — Starting...');
+  logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
   logger.info('═══════════════════════════════════════════');
 
   // ── 1. Memory Store ──
@@ -39,10 +45,11 @@ async function main(): Promise<void> {
   // Seed data
   memory.seedAchievements();
   memory.seedDefaultCashbackRules();
+  memory.seedOwnerAccount(hashPassword);
 
   // ── 2. Audit Trail ──
   const auditTrail = new AuditTrail(db, logger);
-  auditTrail.record('system', 'boot', 'promptpay', { version: '1.0.0' });
+  auditTrail.record('system', 'boot', 'upromptpay', { version: CONFIG.platform.version, domain: CONFIG.platform.domainUrl });
 
   // ── 3. Circuit Breakers ──
   const circuitBreakers = new CircuitBreakerRegistry(CONFIG.healing, logger);
@@ -78,14 +85,13 @@ async function main(): Promise<void> {
   channelManager.register(new SmsChannel(logger));
 
   // ── 8. Gateway ──
-  const { app, server } = createGateway({ orchestrator, logger });
+  const { app, server } = createGateway({ orchestrator, memory, logger });
 
   // Webhook routes
   const webhookRouter = createWebhookRoutes({
     logger,
     onPaymentEvent: (provider, event) => {
       auditTrail.record('webhook', `${provider}_event`, provider, event);
-      // Trigger hook engine for completed payments
       const eventType = event.type as string || '';
       if (eventType.includes('succeeded') || eventType.includes('completed')) {
         const userId = (event.metadata as Record<string, string>)?.userId;
@@ -105,7 +111,15 @@ async function main(): Promise<void> {
   });
   app.use(webhookRouter);
 
-  // Admin routes
+  // User routes (auth, settings, API key management)
+  const userRouter = createUserRoutes({ memory, logger });
+  app.use(userRouter);
+
+  // Partner routes (bank partnership management)
+  const partnerRouter = createPartnerRoutes({ memory, auditTrail, hookEngine, logger });
+  app.use(partnerRouter);
+
+  // Admin routes (dashboard, hooks, providers, audit)
   const adminRouter = createAdminRoutes({
     orchestrator: orchestrator as unknown as Parameters<typeof createAdminRoutes>[0]['orchestrator'],
     memory, auditTrail, hookEngine, circuitBreakers,
@@ -124,11 +138,14 @@ async function main(): Promise<void> {
 
   server.listen(CONFIG.gateway.port, CONFIG.gateway.host, () => {
     logger.info('═══════════════════════════════════════════');
-    logger.info(` PromptPay v1.0 ONLINE`);
-    logger.info(` http://${CONFIG.gateway.host}:${CONFIG.gateway.port}`);
+    logger.info(` uPromptPay v1.1 ONLINE`);
+    logger.info(` Local:  http://${CONFIG.gateway.host}:${CONFIG.gateway.port}`);
+    logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
     logger.info(` Tools: ${orchestrator.getState().toolCount}`);
     logger.info(` Hooks: 9 modules active`);
-    logger.info(` Admin: /admin/dashboard`);
+    logger.info(` Auth: Multi-tenant (Owner + Partner + User)`);
+    logger.info(` Admin: /${CONFIG.admin.secretPath}`);
+    logger.info(` Owner: ${CONFIG.auth.ownerEmail}`);
     logger.info('═══════════════════════════════════════════');
 
     auditTrail.record('system', 'online', 'promptpay', {

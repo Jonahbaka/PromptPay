@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>uPromptPay Admin</title>
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --surface: #111827;
+      --surface2: #1a2332;
+      --border: #1e293b;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --accent: #6366f1;
+      --accent2: #818cf8;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --orange: #f97316;
+      --cyan: #06b6d4;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    /* ── Layout ── */
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+      background: var(--surface); border-right: 1px solid var(--border);
+      padding: 20px 0; overflow-y: auto; z-index: 10;
+    }
+    .main { margin-left: 240px; padding: 24px 32px; }
+    /* ── Sidebar ── */
+    .logo {
+      padding: 0 20px 24px; border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .logo h1 { font-size: 20px; font-weight: 700; }
+    .logo h1 span { color: var(--accent); }
+    .logo p { font-size: 11px; color: var(--text2); margin-top: 4px; }
+    .nav-section { padding: 8px 12px; font-size: 10px; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--text2); margin-top: 8px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 8px 20px;
+      cursor: pointer; font-size: 13px; color: var(--text2);
+      transition: all 0.15s; border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { color: var(--accent2); border-left-color: var(--accent);
+      background: rgba(99, 102, 241, 0.08); }
+    .nav-icon { width: 18px; text-align: center; font-size: 14px; }
+    /* ── Header ── */
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px;
+    }
+    .header h2 { font-size: 24px; font-weight: 600; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    }
+    .status-online { background: rgba(34,197,94,0.12); color: var(--green); }
+    .status-offline { background: rgba(239,68,68,0.12); color: var(--red); }
+    /* ── Cards ── */
+    .grid { display: grid; gap: 16px; margin-bottom: 24px; }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+    }
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text2); }
+    .card-icon { font-size: 18px; }
+    .card-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+    .card-sub { font-size: 12px; color: var(--text2); }
+    /* ── Stat colors ── */
+    .val-green { color: var(--green); }
+    .val-blue { color: var(--blue); }
+    .val-purple { color: var(--purple); }
+    .val-orange { color: var(--orange); }
+    .val-cyan { color: var(--cyan); }
+    .val-yellow { color: var(--yellow); }
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 14px; color: var(--text2); font-weight: 500;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    tr:hover td { background: var(--surface2); }
+    /* ── Badges ── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 10px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-green { background: rgba(34,197,94,0.12); color: var(--green); }
+    .badge-yellow { background: rgba(234,179,8,0.12); color: var(--yellow); }
+    .badge-red { background: rgba(239,68,68,0.12); color: var(--red); }
+    .badge-blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .badge-purple { background: rgba(168,85,247,0.12); color: var(--purple); }
+    /* ── Sections ── */
+    .section { margin-bottom: 28px; }
+    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px; }
+    /* ── Page panels ── */
+    .page { display: none; }
+    .page.active { display: block; }
+    /* ── Progress bars ── */
+    .progress-bar {
+      height: 6px; background: var(--surface2); border-radius: 3px;
+      overflow: hidden; margin-top: 8px;
+    }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    /* ── Loading ── */
+    .loading { text-align: center; padding: 40px; color: var(--text2); }
+    .spin { animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── Responsive ── */
+    @media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 16px; }
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    }
+    /* ── WS indicator ── */
+    .ws-dot {
+      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+      margin-right: 6px;
+    }
+    .ws-connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .ws-disconnected { background: var(--red); }
+    /* ── Agent cards ── */
+    .agent-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px; position: relative;
+    }
+    .agent-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .agent-role { font-size: 11px; color: var(--text2); text-transform: uppercase;
+      letter-spacing: 0.5px; }
+    .agent-tools { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+    .tool-chip {
+      padding: 2px 8px; font-size: 10px; border-radius: 6px;
+      background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+    }
+    /* ── Chart placeholder ── */
+    .chart-area {
+      height: 200px; background: var(--surface2); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text2); font-size: 13px;
+    }
+    /* ── Auth Gate / Login Screen ── */
+    .auth-gate {
+      position: fixed; inset: 0; z-index: 1000;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-gate.hidden { display: none; }
+    .login-box {
+      width: 100%; max-width: 400px; padding: 40px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .login-logo {
+      text-align: center; margin-bottom: 32px;
+    }
+    .login-logo h1 { font-size: 28px; font-weight: 700; }
+    .login-logo h1 span { color: var(--accent); }
+    .login-logo p { font-size: 12px; color: var(--text2); margin-top: 6px; }
+    .login-field { margin-bottom: 18px; }
+    .login-field label {
+      display: block; font-size: 12px; color: var(--text2);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin-bottom: 6px; font-weight: 500;
+    }
+    .login-field input {
+      width: 100%; padding: 10px 14px; font-size: 14px;
+      background: var(--surface2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      outline: none; transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .login-field input:focus { border-color: var(--accent); }
+    .login-btn {
+      width: 100%; padding: 12px; font-size: 14px; font-weight: 600;
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 8px; cursor: pointer; transition: background 0.15s;
+      font-family: inherit;
+    }
+    .login-btn:hover { background: var(--accent2); }
+    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .login-error {
+      color: var(--red); font-size: 12px; text-align: center;
+      margin-bottom: 14px; min-height: 18px;
+    }
+    /* ── Sidebar Logout ── */
+    .sidebar-bottom {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 12px; border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .sidebar-user {
+      font-size: 11px; color: var(--text2); padding: 0 8px;
+      margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sidebar-user strong { color: var(--text); font-size: 12px; display: block; }
+    .logout-btn {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding: 8px 12px; font-size: 12px;
+      background: transparent; color: var(--red); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 8px; cursor: pointer; transition: all 0.15s;
+      font-family: inherit;
+    }
+    .logout-btn:hover { background: rgba(239,68,68,0.08); }
+    /* ── Partner action buttons ── */
+    .btn-sm {
+      padding: 4px 12px; font-size: 11px; font-weight: 600;
+      border: none; border-radius: 6px; cursor: pointer;
+      transition: opacity 0.15s; font-family: inherit;
+    }
+    .btn-sm:hover { opacity: 0.85; }
+    .btn-approve { background: rgba(34,197,94,0.15); color: var(--green); }
+    .btn-suspend { background: rgba(239,68,68,0.15); color: var(--red); }
+    /* ── Credentials modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 2000;
+      background: rgba(0,0,0,0.6); display: flex;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      width: 100%; max-width: 460px; padding: 32px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .modal-box h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+    .modal-box .creds-block {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px; font-size: 13px;
+      font-family: monospace; margin-bottom: 16px; word-break: break-all;
+    }
+    .modal-box .creds-block div { margin-bottom: 6px; }
+    .modal-box .creds-block strong { color: var(--accent2); }
+    .modal-close-btn {
+      padding: 10px 24px; background: var(--accent); color: #fff;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 13px;
+      font-weight: 600; font-family: inherit;
+    }
+    /* ── Nav item hidden by role ── */
+    .nav-item.role-hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ AUTH GATE ═══ -->
+<div class="auth-gate" id="auth-gate">
+  <div class="login-box">
+    <div class="login-logo">
+      <h1>u<span>PromptPay</span></h1>
+      <p>Admin Operations Console</p>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="login-field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" placeholder="info@upromptpay.com" required autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="Enter password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn" id="login-btn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══ CREDENTIALS MODAL ═══ -->
+<div class="modal-overlay hidden" id="creds-modal">
+  <div class="modal-box">
+    <h3>Partner Approved</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Admin credentials have been generated for this partner:</p>
+    <div class="creds-block" id="creds-content"></div>
+    <button class="modal-close-btn" onclick="closeCredsModal()">Close</button>
+  </div>
+</div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+  <div class="logo">
+    <h1>u<span>PromptPay</span></h1>
+    <p>Operations Intelligence v1.0</p>
+  </div>
+  <div class="nav-section">Overview</div>
+  <div class="nav-item active" data-page="dashboard">
+    <span class="nav-icon">&#9632;</span> Dashboard
+  </div>
+  <div class="nav-item" data-page="agents">
+    <span class="nav-icon">&#9881;</span> Agents
+  </div>
+  <div class="nav-item" data-page="tasks">
+    <span class="nav-icon">&#9776;</span> Tasks
+  </div>
+  <div class="nav-section">Engagement</div>
+  <div class="nav-item" data-page="streaks">
+    <span class="nav-icon">&#128293;</span> Streaks
+  </div>
+  <div class="nav-item" data-page="cashback">
+    <span class="nav-icon">&#128176;</span> Cashback
+  </div>
+  <div class="nav-item" data-page="referrals">
+    <span class="nav-icon">&#128279;</span> Referrals
+  </div>
+  <div class="nav-item" data-page="achievements">
+    <span class="nav-icon">&#127942;</span> Achievements
+  </div>
+  <div class="nav-item" data-page="loyalty">
+    <span class="nav-icon">&#11088;</span> Loyalty
+  </div>
+  <div class="nav-item" data-page="insights">
+    <span class="nav-icon">&#128200;</span> Insights
+  </div>
+  <div class="nav-section" id="nav-section-partners">Partners</div>
+  <div class="nav-item" data-page="partners" id="nav-partners">
+    <span class="nav-icon">&#129309;</span> Partners
+  </div>
+  <div class="nav-section">System</div>
+  <div class="nav-item" data-page="providers">
+    <span class="nav-icon">&#9889;</span> Providers
+  </div>
+  <div class="nav-item" data-page="audit">
+    <span class="nav-icon">&#128274;</span> Audit Trail
+  </div>
+  <div class="nav-item" data-page="health">
+    <span class="nav-icon">&#128154;</span> Health
+  </div>
+  <div class="sidebar-bottom" id="sidebar-bottom" style="display:none">
+    <div class="sidebar-user" id="sidebar-user"></div>
+    <button class="logout-btn" onclick="handleLogout()">
+      <span>&#9211;</span> Sign Out
+    </button>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="header">
+      <h2>Dashboard</h2>
+      <div>
+        <span class="ws-dot ws-disconnected" id="ws-indicator"></span>
+        <span id="ws-status" style="font-size:12px;color:var(--text2)">Connecting...</span>
+        &nbsp;&nbsp;
+        <span class="status-badge status-online" id="server-status">ONLINE</span>
+      </div>
+    </div>
+
+    <div class="grid grid-4" id="top-stats">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Total Tools</span><span class="card-icon">&#9881;</span></div>
+        <div class="card-value val-blue" id="stat-tools">--</div>
+        <div class="card-sub">Across 5 agents</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Uptime</span><span class="card-icon">&#9200;</span></div>
+        <div class="card-value val-green" id="stat-uptime">--</div>
+        <div class="card-sub">Server runtime</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Audit Entries</span><span class="card-icon">&#128274;</span></div>
+        <div class="card-value val-purple" id="stat-audit">--</div>
+        <div class="card-sub">Hash-chained log</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Hook Modules</span><span class="card-icon">&#128293;</span></div>
+        <div class="card-value val-orange">9</div>
+        <div class="card-sub">Engagement engines</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">&#9881; Payment Agents</div>
+      <div class="grid grid-3" id="agents-grid">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-title">&#128293; Hooks Summary</div>
+        <div id="hooks-summary" class="loading"><span class="spin">&#8987;</span> Loading...</div>
+      </div>
+      <div class="card">
+        <div class="section-title">&#9889; Provider Status</div>
+        <div id="providers-summary" class="loading"><span class="spin">&#8987;</span> Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AGENTS ── -->
+  <div class="page" id="page-agents">
+    <div class="header"><h2>Payment Agents</h2></div>
+    <div class="grid grid-2" id="agents-detail-grid"></div>
+  </div>
+
+  <!-- ── TASKS ── -->
+  <div class="page" id="page-tasks">
+    <div class="header"><h2>Task Queue</h2></div>
+    <div class="card"><div class="table-wrap"><table id="tasks-table">
+      <thead><tr><th>ID</th><th>Type</th><th>Priority</th><th>Title</th><th>Agent</th><th>Status</th></tr></thead>
+      <tbody id="tasks-body"><tr><td colspan="6" style="color:var(--text2);text-align:center">No tasks yet</td></tr></tbody>
+    </table></div></div>
+  </div>
+
+  <!-- ── STREAKS ── -->
+  <div class="page" id="page-streaks">
+    <div class="header"><h2>&#128293; Streak Engine</h2></div>
+    <div class="grid grid-4" id="streaks-stats"></div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Leaderboard</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>User</th><th>Current Streak</th><th>Longest</th><th>Multiplier</th></tr></thead>
+        <tbody id="streaks-leaderboard"><tr><td colspan="4" style="color:var(--text2);text-align:center">No active streaks</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ── CASHBACK ── -->
+  <div class="page" id="page-cashback">
+    <div class="header"><h2>&#128176; Cashback Engine</h2></div>
+    <div class="grid grid-4" id="cashback-stats"></div>
+  </div>
+
+  <!-- ── REFERRALS ── -->
+  <div class="page" id="page-referrals">
+    <div class="header"><h2>&#128279; Referral Engine</h2></div>
+    <div class="grid grid-4" id="referrals-stats"></div>
+  </div>
+
+  <!-- ── ACHIEVEMENTS ── -->
+  <div class="page" id="page-achievements">
+    <div class="header"><h2>&#127942; Achievement Engine</h2></div>
+    <div class="grid grid-3" id="achievements-stats"></div>
+  </div>
+
+  <!-- ── LOYALTY ── -->
+  <div class="page" id="page-loyalty">
+    <div class="header"><h2>&#11088; Loyalty Program</h2></div>
+    <div class="grid grid-4" id="loyalty-stats"></div>
+  </div>
+
+  <!-- ── INSIGHTS ── -->
+  <div class="page" id="page-insights">
+    <div class="header"><h2>&#128200; Spending Insights</h2></div>
+    <div class="grid grid-3" id="insights-stats"></div>
+  </div>
+
+  <!-- ── PARTNERS ── -->
+  <div class="page" id="page-partners">
+    <div class="header"><h2>&#129309; Partner Management</h2></div>
+    <div class="grid grid-4" id="partners-stats">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Total Partners</span><span class="card-icon">&#129309;</span></div>
+        <div class="card-value val-blue" id="stat-partners-total">--</div>
+        <div class="card-sub">All registered partners</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Active</span><span class="card-icon">&#10003;</span></div>
+        <div class="card-value val-green" id="stat-partners-active">--</div>
+        <div class="card-sub">Approved &amp; operating</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Pending</span><span class="card-icon">&#9203;</span></div>
+        <div class="card-value val-yellow" id="stat-partners-pending">--</div>
+        <div class="card-sub">Awaiting approval</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Total Users</span><span class="card-icon">&#128101;</span></div>
+        <div class="card-value val-purple" id="stat-partners-users">--</div>
+        <div class="card-sub">Across all partners</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:4px">
+      <div class="section-title">Partner Applications</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Contact Email</th><th>Status</th><th>Users</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="partners-body">
+            <tr><td colspan="5" style="color:var(--text2);text-align:center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROVIDERS ── -->
+  <div class="page" id="page-providers">
+    <div class="header"><h2>&#9889; Payment Providers</h2></div>
+    <div class="grid grid-4" id="providers-grid"></div>
+  </div>
+
+  <!-- ── AUDIT ── -->
+  <div class="page" id="page-audit">
+    <div class="header">
+      <h2>&#128274; Audit Trail</h2>
+      <button onclick="verifyChain()" style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px">Verify Chain</button>
+    </div>
+    <div id="chain-result" style="margin-bottom:12px"></div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Hash</th></tr></thead>
+      <tbody id="audit-body"><tr><td colspan="6" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+    </table></div></div>
+  </div>
+
+  <!-- ── HEALTH ── -->
+  <div class="page" id="page-health">
+    <div class="header"><h2>&#128154; System Health</h2></div>
+    <div class="grid grid-3" id="health-stats"></div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Circuit Breakers</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Provider</th><th>State</th><th>Failures</th><th>Action</th></tr></thead>
+        <tbody id="breakers-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = '';
+let ws = null;
+let currentUser = null;
+
+// ── Navigation ──
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    if (item.classList.contains('role-hidden')) return;
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    const page = item.dataset.page;
+    document.getElementById('page-' + page).classList.add('active');
+    loadPage(page);
+  });
+});
+
+// ── Auth helpers ──
+function getToken() {
+  return localStorage.getItem('uppAdminToken');
+}
+function setToken(token) {
+  localStorage.setItem('uppAdminToken', token);
+}
+function clearToken() {
+  localStorage.removeItem('uppAdminToken');
+}
+
+// ── API helpers (auth-aware) ──
+async function api(path, options = {}) {
+  try {
+    const token = getToken();
+    const headers = options.headers || {};
+    if (token) {
+      headers['Authorization'] = 'Bearer ' + token;
+    }
+    if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+      options.body = JSON.stringify(options.body);
+    }
+    const res = await fetch(API + path, { ...options, headers });
+    if (res.status === 401 || res.status === 403) {
+      clearToken();
+      currentUser = null;
+      showAuthGate();
+      return null;
+    }
+    return await res.json();
+  } catch(e) {
+    console.error('API error:', path, e);
+    return null;
+  }
+}
+
+function fmt(n) { return n != null ? n.toLocaleString() : '--'; }
+function fmtTime(s) {
+  if (!s) return '--';
+  const h = Math.floor(s/3600); const m = Math.floor((s%3600)/60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m ${Math.floor(s%60)}s`;
+}
+
+// ── Auth Gate ──
+function showAuthGate() {
+  document.getElementById('auth-gate').classList.remove('hidden');
+  document.querySelector('.sidebar').style.display = 'none';
+  document.querySelector('.main').style.display = 'none';
+  document.getElementById('sidebar-bottom').style.display = 'none';
+}
+
+function hideAuthGate() {
+  document.getElementById('auth-gate').classList.add('hidden');
+  document.querySelector('.sidebar').style.display = '';
+  document.querySelector('.main').style.display = '';
+  document.getElementById('sidebar-bottom').style.display = '';
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errorEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+
+  errorEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+
+  try {
+    const res = await fetch(API + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.token) {
+      errorEl.textContent = data.message || data.error || 'Invalid credentials';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+      return;
+    }
+    setToken(data.token);
+    currentUser = data.user;
+    onAuthenticated();
+  } catch(err) {
+    errorEl.textContent = 'Connection error. Please try again.';
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+}
+
+function handleLogout() {
+  clearToken();
+  currentUser = null;
+  if (ws) { try { ws.close(); } catch(e) {} ws = null; }
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Sign In';
+  showAuthGate();
+}
+
+// ── Role-based sidebar visibility ──
+function applyRoleVisibility(role) {
+  const partnersNav = document.getElementById('nav-partners');
+  const partnersSection = document.getElementById('nav-section-partners');
+
+  // Elements only visible to owner
+  const ownerOnlyPages = ['partners'];
+
+  if (role === 'owner') {
+    // Owner sees everything
+    partnersNav.classList.remove('role-hidden');
+    partnersSection.style.display = '';
+  } else if (role === 'partner_admin') {
+    // partner_admin: hide Partners management and Config
+    partnersNav.classList.add('role-hidden');
+    partnersSection.style.display = 'none';
+  } else {
+    // Default: hide partner management
+    partnersNav.classList.add('role-hidden');
+    partnersSection.style.display = 'none';
+  }
+
+  // If current active page is now hidden, reset to dashboard
+  const activeNav = document.querySelector('.nav-item.active');
+  if (activeNav && activeNav.classList.contains('role-hidden')) {
+    activeNav.classList.remove('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const dashNav = document.querySelector('.nav-item[data-page="dashboard"]');
+    dashNav.classList.add('active');
+    document.getElementById('page-dashboard').classList.add('active');
+    loadPage('dashboard');
+  }
+}
+
+// ── Post-authentication setup ──
+function onAuthenticated() {
+  hideAuthGate();
+
+  // Update sidebar user info
+  const userEl = document.getElementById('sidebar-user');
+  if (currentUser) {
+    const displayName = currentUser.name || currentUser.email || 'Admin';
+    const roleBadge = currentUser.role === 'owner' ? 'Owner' : currentUser.role === 'partner_admin' ? 'Partner Admin' : currentUser.role;
+    userEl.innerHTML = '<strong>' + displayName + '</strong>' + roleBadge;
+  }
+
+  // Apply role visibility
+  applyRoleVisibility(currentUser ? currentUser.role : 'partner_admin');
+
+  // Start the dashboard
+  loadDashboard();
+  connectWs();
+}
+
+// ── Init: check stored token ──
+async function initAuth() {
+  const token = getToken();
+  if (!token) {
+    showAuthGate();
+    return;
+  }
+  // Validate token
+  try {
+    const res = await fetch(API + '/api/auth/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) {
+      clearToken();
+      showAuthGate();
+      return;
+    }
+    const data = await res.json();
+    currentUser = data.user || data;
+    onAuthenticated();
+  } catch(e) {
+    clearToken();
+    showAuthGate();
+  }
+}
+
+// ── Static agent data (since agents spawn on-demand) ──
+const AGENTS = [
+  { name: 'Nexus', role: 'wallet_ops', desc: 'Wallet, P2P, Bills, uPromptPay', tools: 15, color: '#6366f1' },
+  { name: 'Janus', role: 'us_payment_ops', desc: 'Stripe, ACH, Apple/Google Pay', tools: 12, color: '#3b82f6' },
+  { name: 'Mercury', role: 'payment_ops', desc: 'M-Pesa, MTN MoMo, Flutterwave', tools: 8, color: '#06b6d4' },
+  { name: 'Plutus', role: 'banking_ops', desc: 'Mono, Stitch Open Banking', tools: 6, color: '#22c55e' },
+  { name: 'Atlas', role: 'financial_ops', desc: 'Credit, Disputes, Optimization', tools: 4, color: '#a855f7' },
+];
+
+// ── Dashboard ──
+async function loadDashboard() {
+  const data = await api('/admin/dashboard');
+  if (!data) return;
+
+  const orch = data.orchestrator || {};
+  document.getElementById('stat-tools').textContent = fmt(orch.toolCount || 45);
+  document.getElementById('stat-uptime').textContent = fmtTime(data.uptime);
+  document.getElementById('stat-audit').textContent = fmt(data.auditEntries);
+
+  // Agents grid
+  const grid = document.getElementById('agents-grid');
+  grid.innerHTML = AGENTS.map(a => `
+    <div class="agent-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:36px;height:36px;border-radius:10px;background:${a.color}20;display:flex;align-items:center;justify-content:center;font-size:18px;color:${a.color}">&#9881;</div>
+        <div>
+          <div class="agent-name">${a.name}</div>
+          <div class="agent-role">${a.role}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${a.desc}</div>
+      <div style="font-size:13px"><strong>${a.tools}</strong> <span style="color:var(--text2)">tools registered</span></div>
+    </div>
+  `).join('');
+
+  // Hooks summary
+  const hooks = data.hooks || {};
+  const hooksEl = document.getElementById('hooks-summary');
+  hooksEl.innerHTML = Object.entries(hooks).map(([name, stats]) => {
+    const s = stats || {};
+    const mainStat = Object.values(s)[0] || 0;
+    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="text-transform:capitalize">${name}</span>
+      <span style="color:var(--accent2);font-weight:600">${typeof mainStat === 'number' ? fmt(mainStat) : '--'}</span>
+    </div>`;
+  }).join('');
+
+  // Providers
+  const provData = await api('/admin/providers');
+  const provEl = document.getElementById('providers-summary');
+  if (provData && provData.providers) {
+    provEl.innerHTML = provData.providers.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="text-transform:capitalize">${p.name.replace('_',' ')}</span>
+        <span class="badge ${p.status === 'healthy' ? 'badge-green' : p.status === 'degraded' ? 'badge-yellow' : 'badge-red'}">${p.status}</span>
+      </div>
+    `).join('');
+  }
+}
+
+// ── Agents detail ──
+async function loadAgents() {
+  const grid = document.getElementById('agents-detail-grid');
+  grid.innerHTML = AGENTS.map(a => `
+    <div class="agent-card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:48px;height:48px;border-radius:12px;background:${a.color}20;display:flex;align-items:center;justify-content:center;font-size:24px;color:${a.color}">&#9881;</div>
+        <div>
+          <div class="agent-name">${a.name}</div>
+          <div class="agent-role">${a.role}</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${a.desc}</div>
+      <div style="font-size:14px;margin-bottom:4px"><strong>${a.tools}</strong> tools</div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${(a.tools/15)*100}%;background:${a.color}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Tasks ──
+async function loadTasks() {
+  const data = await api('/admin/tasks');
+  const body = document.getElementById('tasks-body');
+  if (!data || !data.tasks || data.tasks.length === 0) {
+    body.innerHTML = '<tr><td colspan="6" style="color:var(--text2);text-align:center">No tasks in queue</td></tr>';
+    return;
+  }
+  body.innerHTML = data.tasks.map(t => `<tr>
+    <td style="font-family:monospace;font-size:11px">${(t.id || '').slice(0,8)}</td>
+    <td><span class="badge badge-blue">${t.type}</span></td>
+    <td><span class="badge ${t.priority==='critical'?'badge-red':t.priority==='high'?'badge-yellow':'badge-blue'}">${t.priority}</span></td>
+    <td>${t.title}</td>
+    <td>${t.assignedAgent || '-'}</td>
+    <td>${t.result ? (t.result.success ? '<span class="badge badge-green">done</span>' : '<span class="badge badge-red">failed</span>') : '<span class="badge badge-yellow">pending</span>'}</td>
+  </tr>`).join('');
+}
+
+// ── Streaks ──
+async function loadStreaks() {
+  const data = await api('/admin/hooks/streaks');
+  if (!data) return;
+  const s = data.stats || {};
+  document.getElementById('streaks-stats').innerHTML = `
+    <div class="card"><div class="card-header"><span class="card-title">Total Users</span></div><div class="card-value val-blue">${fmt(s.totalUsers)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Active Streaks</span></div><div class="card-value val-green">${fmt(s.activeStreaks)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Avg Streak</span></div><div class="card-value val-purple">${s.avgStreak || 0}</div><div class="card-sub">days</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Max Streak</span></div><div class="card-value val-orange">${s.maxStreak || 0}</div><div class="card-sub">days</div></div>
+  `;
+  const lb = data.leaderboard || [];
+  const tbody = document.getElementById('streaks-leaderboard');
+  if (lb.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text2);text-align:center">No active streaks</td></tr>';
+  } else {
+    tbody.innerHTML = lb.map((r,i) => `<tr>
+      <td>${i<3?['&#129351;','&#129352;','&#129353;'][i]:''} ${r.user_id || r.userId}</td>
+      <td><strong>${r.current_streak || r.currentStreak}</strong> days</td>
+      <td>${r.longest_streak || r.longestStreak}</td>
+      <td><span class="badge badge-purple">${(r.multiplier || 1).toFixed(2)}x</span></td>
+    </tr>`).join('');
+  }
+}
+
+// ── Cashback ──
+async function loadCashback() {
+  const data = await api('/admin/hooks/cashback');
+  if (!data) return;
+  document.getElementById('cashback-stats').innerHTML = `
+    <div class="card"><div class="card-header"><span class="card-title">Total Rules</span></div><div class="card-value val-blue">${fmt(data.totalRules)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Active Rules</span></div><div class="card-value val-green">${fmt(data.activeRules)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Total Cashback</span></div><div class="card-value val-purple">$${(data.totalCashbackIssued||0).toFixed(2)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Pending</span></div><div class="card-value val-yellow">$${(data.pendingCashback||0).toFixed(2)}</div></div>
+  `;
+}
+
+// ── Referrals ──
+async function loadReferrals() {
+  const data = await api('/admin/hooks/referrals');
+  if (!data) return;
+  document.getElementById('referrals-stats').innerHTML = `
+    <div class="card"><div class="card-header"><span class="card-title">Total Codes</span></div><div class="card-value val-blue">${fmt(data.totalCodes)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Total Referrals</span></div><div class="card-value val-green">${fmt(data.totalReferrals)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Bonuses Paid</span></div><div class="card-value val-purple">$${(data.totalBonusesPaid||0).toFixed(2)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Pending</span></div><div class="card-value val-yellow">$${(data.pendingBonuses||0).toFixed(2)}</div></div>
+  `;
+}
+
+// ── Achievements ──
+async function loadAchievements() {
+  const data = await api('/admin/hooks/achievements');
+  if (!data) return;
+  document.getElementById('achievements-stats').innerHTML = `
+    <div class="card"><div class="card-header"><span class="card-title">Definitions</span></div><div class="card-value val-blue">${fmt(data.totalDefinitions)}</div><div class="card-sub">milestone types</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Total Unlocks</span></div><div class="card-value val-green">${fmt(data.totalUnlocks)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Most Popular</span></div><div class="card-value val-purple" style="font-size:16px">${data.mostUnlocked && data.mostUnlocked[0] ? data.mostUnlocked[0].name : 'N/A'}</div></div>
+  `;
+}
+
+// ── Loyalty ──
+async function loadLoyalty() {
+  const data = await api('/admin/hooks/loyalty');
+  if (!data) return;
+  document.getElementById('loyalty-stats').innerHTML = `
+    <div class="card"><div class="card-header"><span class="card-title">Accounts</span></div><div class="card-value val-blue">${fmt(data.totalAccounts)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Points Issued</span></div><div class="card-value val-green">${fmt(data.totalPointsIssued)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Redeemed</span></div><div class="card-value val-purple">${fmt(data.totalRedeemed)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Tier Distribution</span></div>
+      <div style="margin-top:8px;font-size:13px">
+        ${Object.entries(data.tierDistribution||{}).map(([tier,count]) =>
+          `<div style="display:flex;justify-content:space-between;padding:3px 0"><span style="text-transform:capitalize">${tier}</span><strong>${count}</strong></div>`
+        ).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ── Insights ──
+async function loadInsights() {
+  const data = await api('/admin/hooks/insights');
+  if (!data) return;
+  document.getElementById('insights-stats').innerHTML = `
+    <div class="card"><div class="card-header"><span class="card-title">Insights Generated</span></div><div class="card-value val-blue">${fmt(data.totalInsightsGenerated)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Users with Insights</span></div><div class="card-value val-green">${fmt(data.usersWithInsights)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Avg Savings Rate</span></div><div class="card-value val-purple">${data.avgSavingsRate||0}%</div></div>
+  `;
+}
+
+// ── Partners ──
+async function loadPartners() {
+  const data = await api('/api/partners');
+  if (!data) return;
+  const partners = data.partners || data || [];
+  const list = Array.isArray(partners) ? partners : [];
+
+  // Compute stats
+  const total = list.length;
+  const active = list.filter(p => p.status === 'approved' || p.status === 'active').length;
+  const pending = list.filter(p => p.status === 'pending').length;
+  const totalUsers = list.reduce((sum, p) => sum + (p.users || p.userCount || 0), 0);
+
+  document.getElementById('stat-partners-total').textContent = fmt(total);
+  document.getElementById('stat-partners-active').textContent = fmt(active);
+  document.getElementById('stat-partners-pending').textContent = fmt(pending);
+  document.getElementById('stat-partners-users').textContent = fmt(totalUsers);
+
+  // Render table
+  const body = document.getElementById('partners-body');
+  if (list.length === 0) {
+    body.innerHTML = '<tr><td colspan="5" style="color:var(--text2);text-align:center">No partner applications</td></tr>';
+    return;
+  }
+  body.innerHTML = list.map(p => {
+    const status = p.status || 'pending';
+    const statusBadge = status === 'approved' || status === 'active'
+      ? 'badge-green' : status === 'pending'
+      ? 'badge-yellow' : status === 'suspended'
+      ? 'badge-red' : 'badge-blue';
+    const users = p.users || p.userCount || 0;
+    const id = p.id || p._id;
+    let actions = '';
+    if (status === 'pending') {
+      actions = `<button class="btn-sm btn-approve" onclick="approvePartner('${id}')">Approve</button>`;
+    } else if (status === 'approved' || status === 'active') {
+      actions = `<button class="btn-sm btn-suspend" onclick="suspendPartner('${id}')">Suspend</button>`;
+    } else if (status === 'suspended') {
+      actions = `<button class="btn-sm btn-approve" onclick="approvePartner('${id}')">Reactivate</button>`;
+    }
+    return `<tr>
+      <td><strong>${p.name || p.companyName || '--'}</strong></td>
+      <td>${p.contactEmail || p.email || '--'}</td>
+      <td><span class="badge ${statusBadge}">${status}</span></td>
+      <td>${fmt(users)}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function approvePartner(id) {
+  const data = await api('/api/partners/' + id + '/approve', { method: 'PUT' });
+  if (data && data.credentials) {
+    showCredsModal(data.credentials);
+  } else if (data) {
+    showCredsModal(data);
+  }
+  loadPartners();
+}
+
+async function suspendPartner(id) {
+  await api('/api/partners/' + id + '/suspend', { method: 'PUT' });
+  loadPartners();
+}
+
+function showCredsModal(creds) {
+  const el = document.getElementById('creds-content');
+  el.innerHTML = `
+    <div><strong>Email:</strong> ${creds.email || creds.adminEmail || '--'}</div>
+    <div><strong>Password:</strong> ${creds.password || creds.tempPassword || '--'}</div>
+    ${creds.apiKey ? '<div><strong>API Key:</strong> ' + creds.apiKey + '</div>' : ''}
+    ${creds.partnerId ? '<div><strong>Partner ID:</strong> ' + creds.partnerId + '</div>' : ''}
+  `;
+  document.getElementById('creds-modal').classList.remove('hidden');
+}
+
+function closeCredsModal() {
+  document.getElementById('creds-modal').classList.add('hidden');
+}
+
+// ── Providers ──
+async function loadProviders() {
+  const data = await api('/admin/providers');
+  if (!data) return;
+  document.getElementById('providers-grid').innerHTML = (data.providers||[]).map(p => `
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" style="text-transform:capitalize">${p.name.replace('_',' ')}</span>
+        <span class="badge ${p.status==='healthy'?'badge-green':p.status==='degraded'?'badge-yellow':'badge-red'}">${p.status}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:4px">
+        Circuit: <strong>${p.circuitBreaker.state}</strong> &middot; Failures: ${p.circuitBreaker.failures}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Audit ──
+async function loadAudit() {
+  const data = await api('/admin/audit?limit=50');
+  if (!data) return;
+  const body = document.getElementById('audit-body');
+  body.innerHTML = (data.entries||[]).map(e => `<tr>
+    <td>${e.sequenceNumber}</td>
+    <td style="font-size:11px">${new Date(e.timestamp).toLocaleString()}</td>
+    <td><span class="badge badge-blue">${e.actor}</span></td>
+    <td>${e.action}</td>
+    <td>${e.target}</td>
+    <td style="font-family:monospace;font-size:10px;color:var(--text2)">${(e.hash||'').slice(0,16)}...</td>
+  </tr>`).join('');
+}
+
+async function verifyChain() {
+  const data = await api('/admin/audit/verify');
+  const el = document.getElementById('chain-result');
+  if (data && data.valid) {
+    el.innerHTML = `<span class="badge badge-green">&#10003; Chain Valid</span> &mdash; ${data.totalEntries} entries verified`;
+  } else {
+    el.innerHTML = `<span class="badge badge-red">&#10007; Chain Broken</span> at entry #${data?.brokenAt || '?'}`;
+  }
+}
+
+// ── Health ──
+async function loadHealth() {
+  const data = await api('/admin/health');
+  if (!data) return;
+  const orch = data.orchestrator || {};
+  document.getElementById('health-stats').innerHTML = `
+    <div class="card"><div class="card-header"><span class="card-title">Status</span></div>
+      <div class="card-value val-green">${data.status}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Uptime</span></div>
+      <div class="card-value val-blue">${fmtTime(data.uptime)}</div></div>
+    <div class="card"><div class="card-header"><span class="card-title">Tools</span></div>
+      <div class="card-value val-purple">${orch.tools || '--'}</div></div>
+  `;
+  const breakers = data.circuitBreakers || [];
+  document.getElementById('breakers-body').innerHTML = breakers.map(b => `<tr>
+    <td style="text-transform:capitalize">${b.toolName.replace('_',' ')}</td>
+    <td><span class="badge ${b.state==='closed'?'badge-green':b.state==='half_open'?'badge-yellow':'badge-red'}">${b.state}</span></td>
+    <td>${b.failureCount}</td>
+    <td><button onclick="resetBreaker('${b.toolName}')" style="padding:4px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px">Reset</button></td>
+  </tr>`).join('');
+}
+
+async function resetBreaker(name) {
+  await api('/admin/health/circuit-breakers/' + name + '/reset', { method: 'POST' });
+  loadHealth();
+}
+
+// ── Page router ──
+function loadPage(page) {
+  const loaders = {
+    dashboard: loadDashboard, agents: loadAgents, tasks: loadTasks,
+    streaks: loadStreaks, cashback: loadCashback, referrals: loadReferrals,
+    achievements: loadAchievements, loyalty: loadLoyalty, insights: loadInsights,
+    partners: loadPartners,
+    providers: loadProviders, audit: loadAudit, health: loadHealth,
+  };
+  if (loaders[page]) loaders[page]();
+}
+
+// ── WebSocket ──
+function connectWs() {
+  try {
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${protocol}//${location.host}/ws`);
+    ws.onopen = () => {
+      document.getElementById('ws-indicator').className = 'ws-dot ws-connected';
+      document.getElementById('ws-status').textContent = 'Live';
+    };
+    ws.onclose = () => {
+      document.getElementById('ws-indicator').className = 'ws-dot ws-disconnected';
+      document.getElementById('ws-status').textContent = 'Disconnected';
+      setTimeout(connectWs, 3000);
+    };
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'task:result') loadDashboard();
+      } catch(err) {}
+    };
+  } catch(e) {
+    setTimeout(connectWs, 3000);
+  }
+}
+
+// ── Auto-refresh ──
+setInterval(() => {
+  if (!getToken()) return;
+  const activePage = document.querySelector('.page.active');
+  if (activePage) {
+    const id = activePage.id.replace('page-', '');
+    loadPage(id);
+  }
+}, 30000);
+
+// ── Init ──
+initAuth();
+</script>
+
+</body>
+</html>

@@ -298,7 +298,11 @@ export interface HealthCheckResult {
 
 // ── Channel / Messaging ─────────────────────────────────────
 
-export type ChannelType = 'telegram' | 'sms' | 'webchat';
+export type ChannelType =
+  | 'telegram' | 'sms' | 'webchat'
+  | 'whatsapp' | 'signal' | 'viber' | 'line'
+  | 'wechat' | 'messenger' | 'slack' | 'discord'
+  | 'email' | 'push';
 
 export interface ChannelMessage {
   id: string;
@@ -498,6 +502,64 @@ export interface GovernancePolicy {
   authority: AuthorityLevel;
   maxAutoApproveValue?: number;
   auditRequired: boolean;
+}
+
+// ── Access Control & Multi-Tenancy ──────────────────────────
+
+export type UserRole = 'owner' | 'partner_admin' | 'user';
+export type TenantStatus = 'pending' | 'active' | 'suspended' | 'deactivated';
+
+export type CommunicationChannel =
+  | 'whatsapp' | 'telegram' | 'sms' | 'signal' | 'viber'
+  | 'line' | 'wechat' | 'messenger' | 'slack' | 'discord'
+  | 'email' | 'push';
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  displayName: string;
+  logoUrl: string | null;
+  primaryColor: string;
+  contactEmail: string;
+  contactPhone: string | null;
+  status: TenantStatus;
+  tier: 'standard' | 'premium' | 'enterprise';
+  config: Record<string, unknown>;
+  createdAt: string;
+  activatedAt: string | null;
+  updatedAt: string;
+}
+
+export interface User {
+  id: string;
+  tenantId: string | null;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  status: 'active' | 'suspended' | 'deactivated';
+  lastLoginAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserSettings {
+  userId: string;
+  aiModelApiKey: string | null;
+  aiModelProvider: string;
+  aiModelName: string | null;
+  preferredChannels: CommunicationChannel[];
+  notificationEnabled: boolean;
+  language: string;
+  timezone: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface AuthPayload {
+  userId: string;
+  tenantId: string | null;
+  role: UserRole;
+  exp: number;
 }
 
 // ── Zod Schemas ─────────────────────────────────────────────

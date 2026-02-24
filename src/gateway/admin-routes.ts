@@ -11,6 +11,7 @@ import type { ChannelManager } from '../channels/manager.js';
 import type { HookEngine } from '../hooks/engine.js';
 import type { DaemonLoop } from '../daemon/loop.js';
 import type { MemoryStore } from '../memory/store.js';
+import { authenticate, requireRole, getTenantFilter } from '../auth/middleware.js';
 
 export interface AdminDependencies {
   orchestrator: {
@@ -32,11 +33,16 @@ export interface AdminDependencies {
 
 export function createAdminRoutes(deps: AdminDependencies): Router {
   const router = Router();
+  const db = deps.memory.getDb();
+
+  // All admin routes require authentication + owner or partner_admin role
+  router.use('/admin', authenticate, requireRole('owner', 'partner_admin'));
 
   // ═══════════════════════════════════════════════════════
   // 1. GET /admin/dashboard — Full dashboard summary
   // ═══════════════════════════════════════════════════════
-  router.get('/admin/dashboard', (_req: Request, res: Response) => {
+  router.get('/admin/dashboard', (req: Request, res: Response) => {
+    const tenantId = getTenantFilter(req.auth!);
     const state = deps.orchestrator.getState();
     const memStats = deps.memory.getStats();
     const hookStats = deps.hookEngine.getStats();
@@ -44,9 +50,23 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
     const breakers = deps.circuitBreakers.getState();
     const auditCount = deps.auditTrail.getCount();
 
+    // Partner count (owner only)
+    let partnerStats = null;
+    if (!tenantId) {
+      const row = db.prepare(`
+        SELECT COUNT(*) as total,
+          COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+          COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending
+        FROM tenants
+      `).get() as Record<string, number>;
+      const userCount = (db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number }).c;
+      partnerStats = { ...row, totalUsers: userCount };
+    }
+
     res.json({
-      platform: 'PromptPay',
-      version: '1.0.0',
+      platform: 'uPromptPay',
+      version: '1.1.0',
+      domain: 'https://www.upromptpay.com',
       uptime: process.uptime(),
       orchestrator: state,
       memory: memStats,
@@ -54,6 +74,9 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
       channels,
       circuitBreakers: breakers.map(b => ({ name: b.toolName, state: b.state, failures: b.failureCount })),
       auditEntries: auditCount,
+      partners: partnerStats,
+      role: req.auth!.role,
+      tenantId,
     });
   });
 
@@ -280,9 +303,9 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
   });
 
   // ═══════════════════════════════════════════════════════
-  // 19. GET /admin/config — Config (secrets masked)
+  // 19. GET /admin/config — Config (secrets masked) [Owner only]
   // ═══════════════════════════════════════════════════════
-  router.get('/admin/config', (_req: Request, res: Response) => {
+  router.get('/admin/config', requireRole('owner'), (_req: Request, res: Response) => {
     const config = deps.config as Record<string, Record<string, unknown>>;
     const masked: Record<string, unknown> = {};
 
