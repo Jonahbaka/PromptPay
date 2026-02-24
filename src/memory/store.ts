@@ -339,6 +339,36 @@ export class MemoryStore extends EventEmitter {
       );
       CREATE INDEX IF NOT EXISTS idx_auth_token_hash ON auth_tokens(token_hash);
       CREATE INDEX IF NOT EXISTS idx_auth_token_user ON auth_tokens(user_id);
+
+      -- ═══ DEVELOPER API KEYS ═══
+      CREATE TABLE IF NOT EXISTS developer_keys (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        api_key_hash TEXT NOT NULL UNIQUE,
+        api_key_prefix TEXT NOT NULL,
+        ai_provider TEXT DEFAULT 'anthropic',
+        ai_api_key TEXT,
+        rate_limit INTEGER DEFAULT 100,
+        requests_today INTEGER DEFAULT 0,
+        last_request_at TEXT,
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'revoked')),
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_devkey_hash ON developer_keys(api_key_hash);
+      CREATE INDEX IF NOT EXISTS idx_devkey_user ON developer_keys(user_id);
+
+      -- ═══ CHANNEL SESSIONS ═══
+      CREATE TABLE IF NOT EXISTS channel_sessions (
+        channel_type TEXT NOT NULL,
+        channel_user_id TEXT NOT NULL,
+        user_id TEXT,
+        conversation TEXT DEFAULT '[]',
+        last_message_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (channel_type, channel_user_id)
+      );
     `);
   }
 

@@ -1195,27 +1195,51 @@
         <div class="section-link" onclick="navigateTo('home')">Back</div>
       </div>
 
-      <!-- AI Model Configuration -->
+      <!-- AI — Platform Provided -->
       <div class="settings-section">
         <div class="settings-section-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z"/></svg>
-          AI Model Configuration
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          AI Assistant
+        </div>
+        <div style="padding:12px 0;color:var(--text2);font-size:13px;line-height:1.6">
+          AI is powered by uPromptPay — no setup needed. Chat with our AI assistant, get financial insights, and manage payments all through natural conversation.
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;padding:10px 14px;background:rgba(124,58,237,0.1);border-radius:12px;font-size:13px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span style="color:var(--text)">AI is included free with your account</span>
+        </div>
+      </div>
+
+      <!-- Developer API (hidden by default, shown for power users) -->
+      <div class="settings-section" id="developer-section" style="display:none">
+        <div class="settings-section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Developer API
+        </div>
+        <div style="padding:8px 0;color:var(--text2);font-size:13px;line-height:1.5">
+          Build apps with our AI API. Use your own model keys or our platform key.
         </div>
         <div class="settings-field">
-          <label>AI Provider</label>
+          <label>API Key Name</label>
+          <input type="text" id="dev-key-name" placeholder="My App">
+        </div>
+        <div class="settings-field">
+          <label>Your AI Provider (optional)</label>
           <select id="settings-provider">
+            <option value="platform">Platform (uPromptPay)</option>
             <option value="anthropic">Anthropic (Claude)</option>
             <option value="openai">OpenAI (GPT)</option>
             <option value="google">Google (Gemini)</option>
           </select>
         </div>
         <div class="settings-field">
-          <label>API Key</label>
-          <input type="password" id="settings-api-key" placeholder="sk-... or your API key">
+          <label>Your AI API Key (optional)</label>
+          <input type="password" id="settings-api-key" placeholder="sk-... leave blank to use platform key">
         </div>
-        <button class="settings-btn settings-btn-primary" onclick="saveApiKey()" style="margin-top:4px">
-          Save API Key
+        <button class="settings-btn settings-btn-primary" onclick="generateDevKey()" style="margin-top:4px">
+          Generate API Key
         </button>
+        <div id="dev-keys-list" style="margin-top:12px"></div>
       </div>
 
       <!-- Communication Channels -->
@@ -1326,6 +1350,15 @@
       <button class="settings-btn settings-btn-primary settings-btn-full" onclick="savePreferences()">
         Save Preferences
       </button>
+
+      <!-- Developer Mode Toggle -->
+      <div style="margin-top:20px;padding:14px;background:var(--surface);border-radius:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleDevMode()">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Developer Mode</div>
+          <div style="font-size:12px;color:var(--text2)">Access API keys to build with uPromptPay</div>
+        </div>
+        <div class="toggle-switch" id="dev-mode-toggle"></div>
+      </div>
 
       <div style="height:24px"></div>
     </div>
@@ -1668,25 +1701,54 @@ function getSelectedChannels() {
   return channels;
 }
 
-async function saveApiKey() {
+async function generateDevKey() {
+  const name = document.getElementById('dev-key-name').value.trim();
+  if (!name) { showToast('Enter a name for your API key'); return; }
   const provider = document.getElementById('settings-provider').value;
   const apiKey = document.getElementById('settings-api-key').value.trim();
-  if (!apiKey) return;
 
   try {
-    const res = await authFetch(API_BASE + '/api/user/settings/api-key', {
-      method: 'PUT',
-      body: JSON.stringify({ apiKey, provider })
+    const res = await authFetch(API_BASE + '/api/developer/keys', {
+      method: 'POST',
+      body: JSON.stringify({ name, aiProvider: provider, aiApiKey: apiKey || undefined })
     });
     if (res.ok) {
-      showToast('API key saved successfully');
+      const data = await res.json();
+      showToast('API key generated! Copy it now.');
+      document.getElementById('dev-key-name').value = '';
       document.getElementById('settings-api-key').value = '';
+      // Show the key once
+      const list = document.getElementById('dev-keys-list');
+      list.innerHTML = '<div style="padding:12px;background:rgba(34,197,94,0.1);border-radius:12px;margin-bottom:8px;word-break:break-all;font-size:12px;font-family:monospace">' +
+        '<div style="font-weight:600;color:var(--text);margin-bottom:4px">Your new API key (copy now!):</div>' +
+        '<div style="color:#22c55e">' + data.apiKey + '</div>' +
+        '</div>' + list.innerHTML;
+      loadDevKeys();
     } else {
-      showToast('Failed to save API key');
+      showToast('Failed to generate key');
     }
   } catch (e) {
-    showToast('API key saved locally');
+    showToast('Error generating key');
   }
+}
+
+async function loadDevKeys() {
+  try {
+    const res = await authFetch(API_BASE + '/api/developer/keys');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.keys || data.keys.length === 0) return;
+    const list = document.getElementById('dev-keys-list');
+    const existing = list.querySelector('.dev-keys-existing');
+    const html = data.keys.map(k =>
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface);border-radius:10px;margin-bottom:6px">' +
+      '<div><div style="font-size:13px;font-weight:600;color:var(--text)">' + k.name + '</div>' +
+      '<div style="font-size:11px;color:var(--text2)">' + k.api_key_prefix + ' · ' + k.ai_provider + '</div></div>' +
+      '<div style="font-size:11px;color:' + (k.status === 'active' ? '#22c55e' : '#ef4444') + '">' + k.status + '</div></div>'
+    ).join('');
+    if (existing) existing.innerHTML = html;
+    else list.insertAdjacentHTML('beforeend', '<div class="dev-keys-existing">' + html + '</div>');
+  } catch(e) {}
 }
 
 async function savePreferences() {
@@ -1748,6 +1810,23 @@ function applySettings(settings) {
   if (settings.provider) {
     document.getElementById('settings-provider').value = settings.provider;
   }
+}
+
+function toggleDevMode() {
+  const toggle = document.getElementById('dev-mode-toggle');
+  const section = document.getElementById('developer-section');
+  const isOn = toggle.classList.toggle('on');
+  section.style.display = isOn ? '' : 'none';
+  localStorage.setItem('upromptpay_devmode', isOn ? '1' : '0');
+  if (isOn) loadDevKeys();
+}
+
+// Restore dev mode state
+if (localStorage.getItem('upromptpay_devmode') === '1') {
+  const toggle = document.getElementById('dev-mode-toggle');
+  if (toggle) { toggle.classList.add('on'); }
+  const section = document.getElementById('developer-section');
+  if (section) { section.style.display = ''; }
 }
 
 function showToast(message) {

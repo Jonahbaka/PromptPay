@@ -279,12 +279,13 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
 
   // ── List Available Channels ──
   router.get('/api/user/channels', authenticate, (_req: Request, res: Response) => {
+    const active = ['telegram', 'whatsapp', 'sms', 'email'];
     res.json({
       channels: ALL_CHANNELS.map(ch => ({
         id: ch,
         name: ch.charAt(0).toUpperCase() + ch.slice(1),
-        available: ['telegram', 'sms', 'email'].includes(ch), // Currently active
-        comingSoon: !['telegram', 'sms', 'email'].includes(ch),
+        available: active.includes(ch),
+        comingSoon: !active.includes(ch),
       })),
     });
   });
