@@ -52,7 +52,7 @@ export const CONFIG = {
     domainUrl: env('DOMAIN_URL', 'https://www.upromptpay.com'),
     contactEmail: env('CONTACT_EMAIL', 'info@upromptpay.com'),
     name: 'uPromptPay',
-    version: '1.3.0',
+    version: '1.4.0',
   },
 
   promptpay: {
@@ -164,6 +164,42 @@ export const CONFIG = {
   stitch: {
     clientId: env('STITCH_CLIENT_ID', ''),
     clientSecret: env('STITCH_CLIENT_SECRET', ''),
+  },
+
+  // ── Reloadly (Mercury — Airtime/Data) ──
+  reloadly: {
+    clientId: env('RELOADLY_CLIENT_ID', ''),
+    clientSecret: env('RELOADLY_CLIENT_SECRET', ''),
+    environment: env('RELOADLY_ENV', 'sandbox') as 'sandbox' | 'production',
+  },
+
+  // ── Wise (Janus — Cross-Border) ──
+  wise: {
+    apiKey: env('WISE_API_KEY', ''),
+    profileId: env('WISE_PROFILE_ID', ''),
+    environment: env('WISE_ENV', 'sandbox') as 'sandbox' | 'production',
+  },
+
+  // ── Circle USDC (Janus — Stablecoin Rails) ──
+  circle: {
+    apiKey: env('CIRCLE_API_KEY', ''),
+    environment: env('CIRCLE_ENV', 'sandbox') as 'sandbox' | 'production',
+  },
+
+  // ── Agent Network (Nexus — Africa Cash-In/Cash-Out) ──
+  agentNetwork: {
+    enabled: env('AGENT_NETWORK_ENABLED', 'true') === 'true',
+    commissionPercent: parseFloat(env('AGENT_COMMISSION_PERCENT', '0.75')),
+    maxFloatUsd: parseFloat(env('AGENT_MAX_FLOAT', '10000')),
+    minFloatUsd: parseFloat(env('AGENT_MIN_FLOAT', '50')),
+  },
+
+  // ── PayTag (Virality) ──
+  paytag: {
+    enabled: env('PAYTAG_ENABLED', 'true') === 'true',
+    minLength: 3,
+    maxLength: 20,
+    linkBaseUrl: env('PAYTAG_LINK_URL', 'https://upromptpay.com/pay'),
   },
 
   // ── Wallet & uPromptPay (Nexus) ──

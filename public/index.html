@@ -860,6 +860,11 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
           <span id="balance-change">+$0.00 today</span>
         </div>
+        <div id="paytag-display" style="margin: 8px 0; display: none;">
+          <span style="font-size: 1.1rem; font-weight: 600; color: #7c3aed; cursor: pointer;" onclick="copyPaytag()">
+            <span id="user-paytag">$yourname</span> <span style="font-size: 0.75rem; opacity: 0.6;">tap to copy</span>
+          </span>
+        </div>
         <div class="balance-actions">
           <button class="bal-btn bal-btn-primary" onclick="openSendModal()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -901,17 +906,13 @@
           </div>
           <div class="quick-label">Wallet</div>
         </div>
-        <div class="quick-item">
-          <div class="quick-icon qi-orange">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <div class="quick-label">Savings</div>
+        <div class="quick-item" onclick="openAirtimeModal()">
+          <div class="quick-icon qi-orange">📱</div>
+          <div class="quick-label">Top Up Phone</div>
         </div>
-        <div class="quick-item">
-          <div class="quick-icon qi-yellow">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          </div>
-          <div class="quick-label">Rewards</div>
+        <div class="quick-item" onclick="openRequestModal()">
+          <div class="quick-icon qi-blue">💸</div>
+          <div class="quick-label">Request Money</div>
         </div>
         <div class="quick-item">
           <div class="quick-icon qi-red">
@@ -1239,6 +1240,21 @@
         </div>
       </div>
 
+      <!-- PayTag & Sharing -->
+      <div style="background: rgba(124,58,237,0.1); border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(124,58,237,0.2);">
+        <h4 style="margin: 0 0 12px 0; font-size: 1rem;">Your $PayTag</h4>
+        <div id="settings-paytag" style="font-size: 1.3rem; font-weight: 700; color: #7c3aed; margin-bottom: 8px;">Not set</div>
+        <button onclick="document.getElementById('paytag-modal').classList.add('active')" style="padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(124,58,237,0.3); background: transparent; color: #7c3aed; cursor: pointer; font-size: 0.85rem;">Change PayTag</button>
+        <button onclick="sharePaytag()" style="padding: 8px 16px; border-radius: 8px; border: none; background: #7c3aed; color: white; cursor: pointer; font-size: 0.85rem; margin-left: 8px;">Share</button>
+      </div>
+
+      <!-- Referral -->
+      <div style="background: rgba(255,255,255,0.03); border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.06);">
+        <h4 style="margin: 0 0 8px 0; font-size: 1rem;">Invite Friends — Earn $5</h4>
+        <p style="font-size: 0.85rem; opacity: 0.6; margin: 0 0 12px 0;">You both get $5 when they make their first $5+ transaction</p>
+        <button onclick="shareReferral()" style="padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 600; cursor: pointer;">Share Invite Link</button>
+      </div>
+
       <!-- Install App -->
       <div class="settings-section" id="install-app-section">
         <div class="settings-section-title">
@@ -1432,6 +1448,61 @@
       Pay Now
     </button>
     <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
+  </div>
+</div>
+
+<!-- Airtime Modal -->
+<div class="modal-overlay" id="airtime-modal" onclick="if(event.target===this)closeAirtimeModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom: 4px;">📱 Top Up Phone</h3>
+    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 16px;">Buy airtime or data — instant delivery, 2% fee</p>
+    <select id="airtime-country" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px;">
+      <option value="NG">🇳🇬 Nigeria</option>
+      <option value="GH">🇬🇭 Ghana</option>
+      <option value="UG">🇺🇬 Uganda</option>
+      <option value="KE">🇰🇪 Kenya</option>
+    </select>
+    <input id="airtime-phone" type="tel" placeholder="Phone number (e.g., 2347012345678)" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;">
+      <button onclick="setAirtimeAmount(100)" style="padding: 10px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.3); background: rgba(124,58,237,0.1); color: white; cursor: pointer;">100</button>
+      <button onclick="setAirtimeAmount(200)" style="padding: 10px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.3); background: rgba(124,58,237,0.1); color: white; cursor: pointer;">200</button>
+      <button onclick="setAirtimeAmount(500)" style="padding: 10px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.3); background: rgba(124,58,237,0.1); color: white; cursor: pointer;">500</button>
+      <button onclick="setAirtimeAmount(1000)" style="padding: 10px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.3); background: rgba(124,58,237,0.1); color: white; cursor: pointer;">1000</button>
+    </div>
+    <input id="airtime-amount" type="number" placeholder="Amount in local currency" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+      <button onclick="executeAirtime('airtime')" style="padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: 600; cursor: pointer;">Buy Airtime</button>
+      <button onclick="executeAirtime('data')" style="padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 600; cursor: pointer;">Buy Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- Request Money Modal -->
+<div class="modal-overlay" id="request-modal" onclick="if(event.target===this)closeRequestModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom: 4px;">💸 Request Money</h3>
+    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 16px;">Send a payment request — they need uPromptPay to pay</p>
+    <input id="request-contact" type="text" placeholder="Email, phone, or $paytag" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
+    <input id="request-amount" type="number" placeholder="Amount ($)" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
+    <input id="request-message" type="text" placeholder="What's it for? (optional)" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
+    <button onclick="executeRequestMoney()" style="width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; font-weight: 600; font-size: 1rem; cursor: pointer;">Send Request</button>
+  </div>
+</div>
+
+<!-- PayTag Setup Modal -->
+<div class="modal-overlay" id="paytag-modal" onclick="if(event.target===this)closePaytagModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom: 4px;">Claim Your $PayTag</h3>
+    <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 16px;">Like Cash App's $cashtag — your unique payment identity</p>
+    <div style="display: flex; align-items: center; gap: 4px; margin-bottom: 12px;">
+      <span style="font-size: 1.5rem; font-weight: 700; color: #7c3aed;">$</span>
+      <input id="paytag-input" type="text" placeholder="yourname" maxlength="20" style="flex: 1; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1.1rem; font-weight: 600; box-sizing: border-box;">
+    </div>
+    <p id="paytag-hint" style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 16px;">Letters, numbers, and underscores only. 3-20 characters.</p>
+    <button onclick="claimPaytag()" style="width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; font-weight: 600; font-size: 1rem; cursor: pointer;">Claim $PayTag</button>
   </div>
 </div>
 
@@ -2065,8 +2136,7 @@ function openSendModal() {
   document.getElementById('send-modal').classList.add('active');
 }
 function openRequestModal() {
-  // Reuse send modal with different title in future
-  document.getElementById('send-modal').classList.add('active');
+  document.getElementById('request-modal').classList.add('active');
 }
 function showQrModal() {
   document.getElementById('qr-modal').classList.add('active');
@@ -2177,6 +2247,83 @@ function populateActivity() {
     }
   }
 })();
+
+// ── Airtime Modal ──
+function openAirtimeModal() {
+  document.getElementById('airtime-modal').classList.add('active');
+}
+function closeAirtimeModal() {
+  document.getElementById('airtime-modal').classList.remove('active');
+}
+function setAirtimeAmount(val) {
+  document.getElementById('airtime-amount').value = val;
+}
+async function executeAirtime(type) {
+  const country = document.getElementById('airtime-country').value;
+  const phone = document.getElementById('airtime-phone').value;
+  const amount = parseFloat(document.getElementById('airtime-amount').value);
+  if (!phone || !amount) { showToast('Enter phone and amount'); return; }
+  closeAirtimeModal();
+  navigateTo('ai');
+  const toolName = type === 'data' ? 'data_bundle_purchase' : 'airtime_topup';
+  const msg = type === 'data'
+    ? `Buy ${amount} data for ${phone} in ${country}`
+    : `Buy ${amount} airtime for ${phone} in ${country}`;
+  addChatMessage(msg, 'user');
+  await sendMessage();
+}
+
+// ── Request Money Modal ──
+function closeRequestModal() {
+  document.getElementById('request-modal').classList.remove('active');
+}
+async function executeRequestMoney() {
+  const contact = document.getElementById('request-contact').value;
+  const amount = parseFloat(document.getElementById('request-amount').value);
+  const message = document.getElementById('request-message').value;
+  if (!contact || !amount) { showToast('Enter contact and amount'); return; }
+  closeRequestModal();
+  navigateTo('ai');
+  const msg = `Request $${amount} from ${contact}${message ? ': ' + message : ''}`;
+  addChatMessage(msg, 'user');
+  await sendMessage();
+}
+
+// ── PayTag ──
+function closePaytagModal() {
+  document.getElementById('paytag-modal').classList.remove('active');
+}
+async function claimPaytag() {
+  const tag = document.getElementById('paytag-input').value.trim().toLowerCase();
+  if (!tag || tag.length < 3) { showToast('PayTag must be at least 3 characters'); return; }
+  if (!/^[a-zA-Z0-9_]+$/.test(tag)) { showToast('Letters, numbers, and underscores only'); return; }
+  closePaytagModal();
+  navigateTo('ai');
+  const msg = `Claim my PayTag: $${tag}`;
+  addChatMessage(msg, 'user');
+  await sendMessage();
+}
+function copyPaytag() {
+  const tag = document.getElementById('user-paytag').textContent;
+  navigator.clipboard.writeText(tag).then(() => showToast('$PayTag copied!'));
+}
+function sharePaytag() {
+  const tag = document.getElementById('user-paytag').textContent || document.getElementById('settings-paytag').textContent;
+  const url = `https://upromptpay.com/pay/${tag}`;
+  if (navigator.share) {
+    navigator.share({ title: 'Pay me on uPromptPay', text: `Send me money: ${tag}`, url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => showToast('Link copied!'));
+  }
+}
+function shareReferral() {
+  const url = 'https://upromptpay.com/?ref=invite';
+  if (navigator.share) {
+    navigator.share({ title: 'Join uPromptPay', text: 'Sign up and we both get $5!', url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => showToast('Referral link copied!'));
+  }
+}
 </script>
 
 </body>

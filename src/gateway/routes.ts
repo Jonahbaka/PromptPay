@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay :: Webhook Routes
-// Stripe, M-Pesa, Flutterwave webhook handlers
+// Stripe, M-Pesa, Flutterwave, Paystack, Reloadly, Wise webhook handlers
 // ═══════════════════════════════════════════════════════════════
 
 import { Router, type Request, type Response } from 'express';
@@ -57,6 +57,30 @@ export function createWebhookRoutes(deps: WebhookDependencies): Router {
 
     if (deps.onPaymentEvent) {
       deps.onPaymentEvent('paystack', event);
+    }
+
+    res.json({ status: 'ok' });
+  });
+
+  // ── Reloadly Webhooks (Airtime status) ──
+  router.post('/webhooks/reloadly', (req: Request, res: Response) => {
+    deps.logger.info('[Webhook] Reloadly event received');
+    const event = req.body as Record<string, unknown>;
+
+    if (deps.onPaymentEvent) {
+      deps.onPaymentEvent('reloadly', event);
+    }
+
+    res.json({ status: 'ok' });
+  });
+
+  // ── Wise Webhooks (Transfer status) ──
+  router.post('/webhooks/wise', (req: Request, res: Response) => {
+    deps.logger.info('[Webhook] Wise event received');
+    const event = req.body as Record<string, unknown>;
+
+    if (deps.onPaymentEvent) {
+      deps.onPaymentEvent('wise', event);
     }
 
     res.json({ status: 'ok' });

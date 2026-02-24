@@ -1,8 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
 // Agent: Janus — US Payment Operations (Stripe-native)
-// 8 tools: charge, subscription, connect onboard, ACH transfer,
-//          Apple Pay session, Google Pay token, Payment Request
-//          API, wallet balance
+// 16 tools: charge, subscription, connect onboard, ACH transfer,
+//           Apple Pay session, Google Pay token, Payment Request
+//           API, wallet balance, Apple Pay complete, Apple Pay sub,
+//           Apple Pay express, Google Pay complete,
+//           Wise cross-border quote, Wise cross-border transfer,
+//           Circle USDC send, Circle USDC receive
 // ═══════════════════════════════════════════════════════════════
 
 import { z } from 'zod';
@@ -28,6 +31,40 @@ async function stripeRequest(
 
   const url = `https://api.stripe.com/v1${path}${method === 'GET' && body ? `?${body.toString()}` : ''}`;
   const resp = await fetch(url, opts);
+  return await resp.json() as Record<string, unknown>;
+}
+
+// ── Wise Platform API ──
+async function wiseRequest(path: string, body?: Record<string, unknown>, method = 'GET'): Promise<Record<string, unknown>> {
+  const baseUrl = CONFIG.wise.environment === 'production'
+    ? 'https://api.wise.com' : 'https://api.sandbox.wise.com';
+  const opts: RequestInit = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${CONFIG.wise.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    signal: AbortSignal.timeout(15000),
+  };
+  if (body && method !== 'GET') opts.body = JSON.stringify(body);
+  const resp = await fetch(`${baseUrl}${path}`, opts);
+  return await resp.json() as Record<string, unknown>;
+}
+
+// ── Circle USDC API ──
+async function circleRequest(path: string, body?: Record<string, unknown>, method = 'POST'): Promise<Record<string, unknown>> {
+  const baseUrl = CONFIG.circle.environment === 'production'
+    ? 'https://api.circle.com' : 'https://api-sandbox.circle.com';
+  const opts: RequestInit = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${CONFIG.circle.apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    signal: AbortSignal.timeout(15000),
+  };
+  if (body && method !== 'GET') opts.body = JSON.stringify(body);
+  const resp = await fetch(`${baseUrl}${path}`, opts);
   return await resp.json() as Record<string, unknown>;
 }
 
@@ -95,6 +132,33 @@ const paymentRequestSchema = z.object({
 const walletBalanceSchema = z.object({
   customerId: z.string().optional(),
   currency: z.enum(['usd', 'eur', 'gbp']).optional().default('usd'),
+});
+
+const wiseQuoteSchema = z.object({
+  sourceAmount: z.number().positive(),
+  sourceCurrency: z.string().min(3).max(3).describe('e.g., USD, EUR, GBP'),
+  targetCurrency: z.string().min(3).max(3).describe('e.g., NGN, KES, GHS, UGX, INR, EUR'),
+});
+
+const wiseTransferSchema = z.object({
+  quoteId: z.string().min(1).describe('Quote ID from wise_get_quote'),
+  recipientName: z.string().min(1),
+  recipientAccount: z.string().min(1).describe('Bank account number or IBAN'),
+  recipientCountry: z.string().min(2).max(2).describe('ISO country code (NG, KE, GH, etc.)'),
+  recipientCurrency: z.string().min(3).max(3),
+  recipientBankCode: z.string().optional().describe('Bank/sort code if required'),
+});
+
+const usdcSendSchema = z.object({
+  amount: z.number().positive().describe('Amount in USDC'),
+  recipientAddress: z.string().min(1).describe('Wallet address or email'),
+  chain: z.enum(['SOL', 'ETH', 'AVAX', 'MATIC']).default('SOL').describe('Blockchain network'),
+  description: z.string().optional().default('uPromptPay USDC transfer'),
+});
+
+const usdcReceiveSchema = z.object({
+  amount: z.number().positive().optional().describe('Expected amount (optional)'),
+  chain: z.enum(['SOL', 'ETH', 'AVAX', 'MATIC']).default('SOL'),
 });
 
 // ── Tool Implementations ────────────────────────────────────
@@ -1061,6 +1125,258 @@ export const usPaymentTools: ToolDefinition[] = [
         };
       } catch (err) {
         return { success: false, data: null, error: `Google Pay payment failed: ${err}` };
+      }
+    },
+  },
+
+  // ─── 13. Wise Get Quote ──────────────────────────────────────
+  {
+    name: 'wise_get_quote',
+    description: 'Get a real-time FX quote from Wise for cross-border transfers. Mid-market rate, no hidden markup. Supports 50+ currencies including NGN, KES, GHS, UGX, INR, EUR, GBP. Shows exact fee and delivery estimate.',
+    category: 'cross_border',
+    inputSchema: wiseQuoteSchema,
+    requiresApproval: false,
+    riskLevel: 'low',
+    execute: async (input, ctx) => {
+      const params = wiseQuoteSchema.parse(input);
+      ctx.logger.info(`[Janus] Wise quote: ${params.sourceAmount} ${params.sourceCurrency} → ${params.targetCurrency}`);
+
+      if (!CONFIG.wise.apiKey) {
+        return { success: false, data: null, error: 'Wise not configured — set WISE_API_KEY and WISE_PROFILE_ID' };
+      }
+
+      try {
+        const quote = await wiseRequest(`/v3/profiles/${CONFIG.wise.profileId}/quotes`, {
+          sourceCurrency: params.sourceCurrency,
+          targetCurrency: params.targetCurrency,
+          sourceAmount: params.sourceAmount,
+          payOut: 'BANK_TRANSFER',
+          preferredPayIn: 'BALANCE',
+        }, 'POST');
+
+        if (quote.id) {
+          const paymentOptions = quote.paymentOptions as Array<Record<string, unknown>> | undefined;
+          const bankOption = paymentOptions?.find(o => o.payIn === 'BALANCE') || paymentOptions?.[0];
+          const platformFee = Math.round(params.sourceAmount * 0.03 * 100) / 100;
+
+          return {
+            success: true,
+            data: {
+              quoteId: quote.id,
+              sourceCurrency: params.sourceCurrency,
+              targetCurrency: params.targetCurrency,
+              sourceAmount: params.sourceAmount,
+              targetAmount: quote.targetAmount || bankOption?.targetAmount,
+              rate: quote.rate,
+              wiseFee: (bankOption?.fee as Record<string, unknown>)?.total || quote.fee,
+              platformFee: `${platformFee} (3% cross-border)`,
+              totalCost: Math.round((params.sourceAmount + platformFee) * 100) / 100,
+              estimatedDelivery: bankOption?.estimatedDelivery || quote.deliveryEstimate,
+              expiresAt: quote.expirationTime,
+              message: `${params.sourceAmount} ${params.sourceCurrency} = ${quote.targetAmount || '?'} ${params.targetCurrency} at rate ${quote.rate}. Wise fee: ${(bankOption?.fee as Record<string, unknown>)?.total || '?'}. Platform fee: ${platformFee}.`,
+            },
+          };
+        }
+
+        return { success: false, data: quote, error: `Wise quote failed: ${JSON.stringify(quote)}` };
+      } catch (err) {
+        return { success: false, data: null, error: `Wise quote failed: ${err}` };
+      }
+    },
+  },
+
+  // ─── 14. Wise Create Transfer ────────────────────────────────
+  {
+    name: 'wise_create_transfer',
+    description: 'Execute a cross-border transfer via Wise. Real money movement at mid-market rates. Supports bank transfers to 50+ countries. 3% platform fee + Wise fee. Get a quote first with wise_get_quote.',
+    category: 'cross_border',
+    inputSchema: wiseTransferSchema,
+    requiresApproval: true,
+    riskLevel: 'critical',
+    execute: async (input, ctx) => {
+      const params = wiseTransferSchema.parse(input);
+      ctx.logger.info(`[Janus] Wise transfer: quote=${params.quoteId} to ${params.recipientName} in ${params.recipientCountry}`);
+
+      if (!CONFIG.wise.apiKey) {
+        return { success: false, data: null, error: 'Wise not configured' };
+      }
+
+      try {
+        // Step 1: Create recipient
+        const accountDetails: Record<string, unknown> = {
+          accountNumber: params.recipientAccount,
+        };
+        if (params.recipientBankCode) accountDetails.bankCode = params.recipientBankCode;
+
+        const recipient = await wiseRequest('/v1/accounts', {
+          profile: CONFIG.wise.profileId,
+          accountHolderName: params.recipientName,
+          currency: params.recipientCurrency,
+          type: 'sort_code',
+          details: accountDetails,
+        }, 'POST');
+
+        if (!recipient.id) {
+          return { success: false, data: recipient, error: `Failed to create recipient: ${JSON.stringify(recipient)}` };
+        }
+
+        // Step 2: Create transfer
+        const transfer = await wiseRequest('/v1/transfers', {
+          targetAccount: recipient.id,
+          quoteUuid: params.quoteId,
+          customerTransactionId: `UPP-${Date.now().toString(36).toUpperCase()}`,
+          details: { reference: 'uPromptPay Transfer' },
+        }, 'POST');
+
+        if (!transfer.id) {
+          return { success: false, data: transfer, error: `Failed to create transfer: ${JSON.stringify(transfer)}` };
+        }
+
+        // Step 3: Fund the transfer
+        const funding = await wiseRequest(
+          `/v3/profiles/${CONFIG.wise.profileId}/transfers/${transfer.id}/payments`,
+          { type: 'BALANCE' },
+          'POST'
+        );
+
+        const txId = `XBORDER-${Date.now().toString(36).toUpperCase()}`;
+        await ctx.memory.store({
+          agentId: ctx.agentId, type: 'episodic', namespace: 'cross_border',
+          content: JSON.stringify({
+            txId, provider: 'wise', externalId: transfer.id,
+            sourceAmount: transfer.sourceAmount, sourceCurrency: transfer.sourceCurrency,
+            targetAmount: transfer.targetAmount, targetCurrency: transfer.targetCurrency,
+            recipientName: params.recipientName, rate: transfer.rate,
+            status: transfer.status || 'processing',
+          }),
+          importance: 0.9, metadata: { provider: 'wise', country: params.recipientCountry },
+        });
+
+        return {
+          success: true,
+          data: {
+            transactionId: txId,
+            wiseTransferId: transfer.id,
+            sourceAmount: transfer.sourceAmount,
+            sourceCurrency: transfer.sourceCurrency,
+            targetAmount: transfer.targetAmount,
+            targetCurrency: transfer.targetCurrency,
+            rate: transfer.rate,
+            recipientName: params.recipientName,
+            status: transfer.status || 'processing',
+            fundingStatus: funding.status || 'completed',
+            estimatedDelivery: transfer.estimatedDeliveryDate,
+            message: `Cross-border transfer initiated: ${transfer.sourceAmount} ${transfer.sourceCurrency} → ${transfer.targetAmount} ${transfer.targetCurrency} to ${params.recipientName}`,
+          },
+        };
+      } catch (err) {
+        return { success: false, data: null, error: `Wise transfer failed: ${err}` };
+      }
+    },
+  },
+
+  // ─── 15. USDC Send ──────────────────────────────────────────
+  {
+    name: 'usdc_send',
+    description: 'Send USDC (stablecoin) instantly to anyone worldwide. Near-zero cost, 24/7 settlement, no bank needed. 1% platform fee (vs 3% traditional cross-border). Supports Solana, Ethereum, Avalanche, Polygon chains.',
+    category: 'cross_border',
+    inputSchema: usdcSendSchema,
+    requiresApproval: true,
+    riskLevel: 'critical',
+    execute: async (input, ctx) => {
+      const params = usdcSendSchema.parse(input);
+      ctx.logger.info(`[Janus] USDC send: ${params.amount} to ${params.recipientAddress} on ${params.chain}`);
+
+      if (!CONFIG.circle.apiKey) {
+        return { success: false, data: null, error: 'Circle USDC not configured — set CIRCLE_API_KEY' };
+      }
+
+      try {
+        const fee = Math.round(params.amount * 0.01 * 100) / 100;
+        const total = Math.round((params.amount + fee) * 100) / 100;
+
+        const idempotencyKey = `upp-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+        const result = await circleRequest('/v1/transfers', {
+          idempotencyKey,
+          source: { type: 'wallet', id: 'platform' },
+          destination: { type: 'blockchain', address: params.recipientAddress, chain: params.chain },
+          amount: { amount: String(params.amount), currency: 'USD' },
+        });
+
+        const txId = `USDC-${Date.now().toString(36).toUpperCase()}`;
+        await ctx.memory.store({
+          agentId: ctx.agentId, type: 'episodic', namespace: 'cross_border',
+          content: JSON.stringify({
+            txId, provider: 'circle_usdc', externalId: (result.data as Record<string, unknown>)?.id || result.id,
+            amount: params.amount, chain: params.chain, recipientAddress: params.recipientAddress,
+            fee, status: 'processing',
+          }),
+          importance: 0.9, metadata: { provider: 'circle_usdc', chain: params.chain },
+        });
+
+        return {
+          success: true,
+          data: {
+            transactionId: txId,
+            circleTransferId: (result.data as Record<string, unknown>)?.id || result.id,
+            amount: params.amount,
+            fee: `${fee} (1%)`,
+            total,
+            currency: 'USDC',
+            chain: params.chain,
+            recipientAddress: params.recipientAddress,
+            status: 'processing',
+            message: `Sending ${params.amount} USDC on ${params.chain}. Fee: ${fee} (1%). Arrives in seconds, not days.`,
+            advantage: 'Traditional cross-border: 3-5 days, 3-5% fee. USDC: seconds, 1% fee.',
+          },
+        };
+      } catch (err) {
+        return { success: false, data: null, error: `USDC send failed: ${err}` };
+      }
+    },
+  },
+
+  // ─── 16. USDC Receive ───────────────────────────────────────
+  {
+    name: 'usdc_receive',
+    description: 'Generate a USDC deposit address to receive stablecoin payments from anywhere. Instant settlement, zero receive fee.',
+    category: 'cross_border',
+    inputSchema: usdcReceiveSchema,
+    requiresApproval: false,
+    riskLevel: 'low',
+    execute: async (input, ctx) => {
+      const params = usdcReceiveSchema.parse(input);
+      ctx.logger.info(`[Janus] USDC receive: ${params.amount || 'any'} on ${params.chain}`);
+
+      if (!CONFIG.circle.apiKey) {
+        return { success: false, data: null, error: 'Circle USDC not configured — set CIRCLE_API_KEY' };
+      }
+
+      try {
+        const result = await circleRequest('/v1/wallets/addresses', {
+          currency: 'USD',
+          chain: params.chain,
+          idempotencyKey: `recv-${ctx.agentId}-${params.chain}`,
+        });
+
+        const addressData = (result.data as Record<string, unknown>) || result;
+
+        return {
+          success: true,
+          data: {
+            depositAddress: addressData.address || 'pending_generation',
+            chain: params.chain,
+            currency: 'USDC',
+            expectedAmount: params.amount || 'any amount',
+            receiveFee: 'Free',
+            status: 'ready',
+            instructions: `Send USDC on ${params.chain} to the address above. Funds arrive in seconds and auto-convert to wallet balance.`,
+            supportedChains: ['SOL (fastest, cheapest)', 'ETH (most common)', 'AVAX', 'MATIC'],
+          },
+        };
+      } catch (err) {
+        return { success: false, data: null, error: `USDC receive setup failed: ${err}` };
       }
     },
   },

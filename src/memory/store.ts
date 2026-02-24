@@ -289,6 +289,102 @@ export class MemoryStore extends EventEmitter {
       CREATE INDEX IF NOT EXISTS idx_fee_created ON fee_ledger(created_at);
 
       -- ═══════════════════════════════════════════════════
+      -- AGENT NETWORK & VIRALITY
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS agent_accounts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL UNIQUE,
+        float_balance REAL DEFAULT 0,
+        commission_earned REAL DEFAULT 0,
+        location_country TEXT,
+        location_city TEXT,
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'suspended', 'deactivated')),
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS agent_transactions (
+        id TEXT PRIMARY KEY,
+        agent_id TEXT NOT NULL,
+        customer_id TEXT,
+        type TEXT NOT NULL CHECK(type IN ('cash_in', 'cash_out', 'airtime', 'commission', 'float_topup')),
+        amount REAL NOT NULL,
+        commission REAL DEFAULT 0,
+        currency TEXT DEFAULT 'usd',
+        status TEXT DEFAULT 'completed',
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_agent_tx_agent ON agent_transactions(agent_id);
+      CREATE INDEX IF NOT EXISTS idx_agent_tx_created ON agent_transactions(created_at);
+
+      CREATE TABLE IF NOT EXISTS user_paytags (
+        user_id TEXT PRIMARY KEY,
+        paytag TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_paytag ON user_paytags(paytag);
+
+      CREATE TABLE IF NOT EXISTS payment_links (
+        id TEXT PRIMARY KEY,
+        creator_id TEXT NOT NULL,
+        amount REAL,
+        currency TEXT DEFAULT 'usd',
+        label TEXT,
+        expires_at TEXT,
+        claimed_by TEXT,
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'claimed', 'expired')),
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_plink_creator ON payment_links(creator_id);
+
+      CREATE TABLE IF NOT EXISTS payment_requests (
+        id TEXT PRIMARY KEY,
+        requester_id TEXT NOT NULL,
+        target_contact TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'usd',
+        message TEXT,
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'paid', 'declined', 'expired')),
+        created_at TEXT NOT NULL,
+        paid_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_preq_requester ON payment_requests(requester_id);
+
+      CREATE TABLE IF NOT EXISTS airtime_transactions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        operator TEXT,
+        phone TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT,
+        country TEXT,
+        provider TEXT,
+        external_id TEXT,
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'completed', 'failed')),
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_airtime_user ON airtime_transactions(user_id);
+
+      CREATE TABLE IF NOT EXISTS cross_border_transfers (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        external_id TEXT,
+        source_amount REAL,
+        source_currency TEXT,
+        target_amount REAL,
+        target_currency TEXT,
+        recipient_name TEXT,
+        recipient_account TEXT,
+        fx_rate REAL,
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
+        created_at TEXT NOT NULL,
+        completed_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_xborder_user ON cross_border_transfers(user_id);
+      CREATE INDEX IF NOT EXISTS idx_xborder_status ON cross_border_transfers(status);
+
+      -- ═══════════════════════════════════════════════════
       -- MULTI-TENANCY & AUTH
       -- ═══════════════════════════════════════════════════
 

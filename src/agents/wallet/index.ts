@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // Agent: Nexus — User Payment Hub, Card Management, Bills,
 //        Wallet, uPromptPay, Smart Split, Pay Forward
-// 15 tools across 5 groups
+// 21 tools across 5 groups
 // ═══════════════════════════════════════════════════════════════
 
 import { z } from 'zod';
@@ -191,6 +191,40 @@ const payForwardSchema = z.object({
     currency: z.string(),
     recipientInfo: z.record(z.string(), z.unknown()),
   }).optional(),
+});
+
+// Group F: Agent Network
+const agentCashInSchema = z.object({
+  customerId: z.string().min(1).describe('Customer user ID, phone, or $paytag'),
+  amount: z.number().positive(),
+  currency: z.string().default('usd'),
+});
+
+const agentCashOutSchema = z.object({
+  customerId: z.string().min(1),
+  amount: z.number().positive(),
+  currency: z.string().default('usd'),
+});
+
+const agentFloatCheckSchema = z.object({});
+
+// Group G: Virality
+const requestMoneySchema = z.object({
+  targetContact: z.string().min(1).describe('Email, phone number, or $paytag of the person to request from'),
+  amount: z.number().positive(),
+  currency: z.string().default('usd'),
+  message: z.string().optional().default(''),
+});
+
+const generatePaymentLinkSchema = z.object({
+  amount: z.number().positive().optional().describe('Fixed amount (omit for open amount)'),
+  currency: z.string().default('usd'),
+  label: z.string().optional().default('Payment'),
+  expiresInHours: z.number().default(72),
+});
+
+const claimPaytagSchema = z.object({
+  paytag: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers, and underscores'),
 });
 
 // ── Tool Implementations ────────────────────────────────────
@@ -849,6 +883,42 @@ export const walletTools: ToolDefinition[] = [
         return { success: false, data: null, error: `Amount exceeds max transfer ($${CONFIG.wallet.maxTransferUsd})` };
       }
 
+      // Stripe Connect real P2P (if enabled)
+      if (CONFIG.stripe.connectEnabled && CONFIG.stripe.secretKey) {
+        ctx.logger.info(`[Nexus] Stripe Connect P2P: ${params.amount} ${params.currency}`);
+        try {
+          const amountCents = Math.round(params.amount * 100);
+          // Create transfer via Stripe Connect
+          const transferResult = await stripeRequest('/transfers', new URLSearchParams({
+            amount: String(amountCents),
+            currency: params.currency,
+            destination: params.toUserId, // Stripe Connected Account ID
+            description: `P2P transfer via uPromptPay`,
+          }));
+
+          if (transferResult.id) {
+            const fee = params.amount > 50 ? Math.round(params.amount * 0.01 * 100) / 100 : 0;
+            const total = Math.round((params.amount + fee) * 100) / 100;
+            return {
+              success: true,
+              data: {
+                transferId: transferResult.id,
+                amount: params.amount,
+                fee: fee > 0 ? `$${fee.toFixed(2)} (1%)` : 'Free (P2P under $50)',
+                total,
+                currency: params.currency,
+                status: 'completed',
+                method: 'stripe_connect',
+                message: `Sent $${params.amount} via Stripe Connect. ${fee > 0 ? `Fee: $${fee.toFixed(2)}.` : 'No fee (under $50).'}`
+              },
+            };
+          }
+        } catch (err) {
+          ctx.logger.warn(`[Nexus] Stripe Connect failed, falling back to wallet: ${err}`);
+          // Fall through to SQLite wallet transfer
+        }
+      }
+
       // Get sender wallet
       const senderRecords = await ctx.memory.recall(`wallet:${params.fromUserId}`, 'wallets', 1);
       if (senderRecords.length === 0) {
@@ -1440,6 +1510,353 @@ export const walletTools: ToolDefinition[] = [
           return { success: true, data: { deleted: params.ruleId } };
         }
       }
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // GROUP F: AGENT NETWORK (Cash-In / Cash-Out)
+  // ═══════════════════════════════════════════════════════════
+
+  // ─── 16. Agent Cash-In ──────────────────────────────────────
+  {
+    name: 'agent_cash_in',
+    description: 'PromptPay Agent: Accept cash from a customer and credit their wallet. Agent must be registered. Commission (0.75%) earned on each transaction. For Nigeria, Ghana, Uganda, Kenya agent network.',
+    category: 'agent_network',
+    inputSchema: agentCashInSchema,
+    requiresApproval: true,
+    riskLevel: 'high',
+    execute: async (input, ctx) => {
+      const params = agentCashInSchema.parse(input);
+      const userId = ctx.agentId; // The agent performing the action
+      ctx.logger.info(`[Nexus] Agent cash-in: ${params.amount} for customer ${params.customerId}`);
+
+      if (!CONFIG.agentNetwork.enabled) {
+        return { success: false, data: null, error: 'Agent network is not enabled' };
+      }
+
+      // Verify agent exists (check agent_accounts via memory)
+      const agents = await ctx.memory.recall('agent', 'agent_accounts', 10);
+      const agentEntry = agents.find(a => {
+        const data = JSON.parse(a.content);
+        return data.userId === userId && data.status === 'active';
+      });
+
+      if (!agentEntry) return { success: false, data: null, error: 'You are not a registered agent. Apply for agent status first.' };
+
+      const agent = JSON.parse(agentEntry.content);
+      if (agent.floatBalance < params.amount) {
+        return { success: false, data: null, error: `Insufficient float. Your balance: ${agent.floatBalance}, needed: ${params.amount}` };
+      }
+
+      // Deduct from agent float
+      const commission = Math.round(params.amount * CONFIG.agentNetwork.commissionPercent / 100 * 100) / 100;
+      agent.floatBalance = Math.round((agent.floatBalance - params.amount) * 100) / 100;
+      agent.commissionEarned = Math.round((agent.commissionEarned + commission) * 100) / 100;
+
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'semantic', namespace: 'agent_accounts',
+        content: JSON.stringify(agent), importance: 0.9, metadata: { userId },
+      });
+
+      // Credit customer wallet
+      const wallets = await ctx.memory.recall('wallet', 'wallets', 20);
+      let walletEntry = wallets.find(w => {
+        const data = JSON.parse(w.content);
+        return data.userId === params.customerId;
+      });
+
+      let wallet: Record<string, unknown>;
+      if (walletEntry) {
+        wallet = JSON.parse(walletEntry.content);
+        wallet.balance = Math.round(((wallet.balance as number) + params.amount) * 100) / 100;
+      } else {
+        wallet = { userId: params.customerId, balance: params.amount, currency: params.currency, status: 'active', createdAt: new Date().toISOString() };
+      }
+      wallet.lastTransactionAt = new Date().toISOString();
+
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'semantic', namespace: 'wallets',
+        content: JSON.stringify(wallet), importance: 0.9, metadata: { userId: params.customerId },
+      });
+
+      const txId = `CASHIN-${Date.now().toString(36).toUpperCase()}`;
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'episodic', namespace: 'agent_transactions',
+        content: JSON.stringify({ txId, type: 'cash_in', agentUserId: userId, customerId: params.customerId, amount: params.amount, commission, currency: params.currency }),
+        importance: 0.8, metadata: { type: 'cash_in' },
+      });
+
+      return {
+        success: true,
+        data: {
+          transactionId: txId,
+          type: 'cash_in',
+          customerCredited: params.amount,
+          agentCommission: commission,
+          agentFloatRemaining: agent.floatBalance,
+          customerNewBalance: wallet.balance,
+          currency: params.currency,
+          message: `Cash-in: ${params.amount} ${params.currency} credited to customer. Commission: ${commission}. Float remaining: ${agent.floatBalance}`,
+        },
+      };
+    },
+  },
+
+  // ─── 17. Agent Cash-Out ─────────────────────────────────────
+  {
+    name: 'agent_cash_out',
+    description: 'PromptPay Agent: Give cash to a customer by deducting from their wallet. Agent earns 0.75% commission. Customer gets physical cash.',
+    category: 'agent_network',
+    inputSchema: agentCashOutSchema,
+    requiresApproval: true,
+    riskLevel: 'critical',
+    execute: async (input, ctx) => {
+      const params = agentCashOutSchema.parse(input);
+      const userId = ctx.agentId;
+      ctx.logger.info(`[Nexus] Agent cash-out: ${params.amount} for customer ${params.customerId}`);
+
+      if (!CONFIG.agentNetwork.enabled) {
+        return { success: false, data: null, error: 'Agent network is not enabled' };
+      }
+
+      const agents = await ctx.memory.recall('agent', 'agent_accounts', 10);
+      const agentEntry = agents.find(a => {
+        const data = JSON.parse(a.content);
+        return data.userId === userId && data.status === 'active';
+      });
+      if (!agentEntry) return { success: false, data: null, error: 'Not a registered agent' };
+      const agent = JSON.parse(agentEntry.content);
+
+      // Check customer wallet
+      const wallets = await ctx.memory.recall('wallet', 'wallets', 20);
+      const walletEntry = wallets.find(w => {
+        const data = JSON.parse(w.content);
+        return data.userId === params.customerId;
+      });
+      if (!walletEntry) return { success: false, data: null, error: 'Customer wallet not found' };
+
+      const wallet = JSON.parse(walletEntry.content);
+      if ((wallet.balance as number) < params.amount) {
+        return { success: false, data: null, error: `Customer insufficient balance: ${wallet.balance}` };
+      }
+
+      const commission = Math.round(params.amount * CONFIG.agentNetwork.commissionPercent / 100 * 100) / 100;
+      wallet.balance = Math.round(((wallet.balance as number) - params.amount) * 100) / 100;
+      wallet.lastTransactionAt = new Date().toISOString();
+      agent.commissionEarned = Math.round((agent.commissionEarned + commission) * 100) / 100;
+
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'semantic', namespace: 'wallets',
+        content: JSON.stringify(wallet), importance: 0.9, metadata: { userId: params.customerId },
+      });
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'semantic', namespace: 'agent_accounts',
+        content: JSON.stringify(agent), importance: 0.9, metadata: { userId },
+      });
+
+      const txId = `CASHOUT-${Date.now().toString(36).toUpperCase()}`;
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'episodic', namespace: 'agent_transactions',
+        content: JSON.stringify({ txId, type: 'cash_out', agentUserId: userId, customerId: params.customerId, amount: params.amount, commission, currency: params.currency }),
+        importance: 0.8, metadata: { type: 'cash_out' },
+      });
+
+      return {
+        success: true,
+        data: {
+          transactionId: txId,
+          type: 'cash_out',
+          cashGiven: params.amount,
+          agentCommission: commission,
+          customerNewBalance: wallet.balance,
+          currency: params.currency,
+          message: `Cash-out: ${params.amount} ${params.currency} given to customer. Commission: ${commission}. Customer balance: ${wallet.balance}`,
+        },
+      };
+    },
+  },
+
+  // ─── 18. Agent Float Check ──────────────────────────────────
+  {
+    name: 'agent_float_check',
+    description: 'Check your agent float balance, commission earned, and transaction summary. For registered PromptPay agents.',
+    category: 'agent_network',
+    inputSchema: agentFloatCheckSchema,
+    requiresApproval: false,
+    riskLevel: 'low',
+    execute: async (_input, ctx) => {
+      ctx.logger.info(`[Nexus] Agent float check`);
+
+      const agents = await ctx.memory.recall('agent', 'agent_accounts', 10);
+      const agentEntry = agents.find(a => {
+        const data = JSON.parse(a.content);
+        return data.userId === ctx.agentId;
+      });
+
+      if (!agentEntry) return { success: false, data: null, error: 'Not a registered agent' };
+      const agent = JSON.parse(agentEntry.content);
+
+      const txs = await ctx.memory.recall('transactions', 'agent_transactions', 50);
+      const todayTxs = txs.filter(t => {
+        const data = JSON.parse(t.content);
+        return data.agentUserId === ctx.agentId && t.createdAt.toISOString().startsWith(new Date().toISOString().slice(0, 10));
+      });
+
+      return {
+        success: true,
+        data: {
+          floatBalance: agent.floatBalance,
+          commissionEarned: agent.commissionEarned,
+          status: agent.status,
+          location: `${agent.locationCity || ''}, ${agent.locationCountry || ''}`,
+          transactionsToday: todayTxs.length,
+          maxFloat: CONFIG.agentNetwork.maxFloatUsd,
+          commissionRate: `${CONFIG.agentNetwork.commissionPercent}%`,
+        },
+      };
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // GROUP G: VIRALITY (Request Money, Payment Links, PayTag)
+  // ═══════════════════════════════════════════════════════════
+
+  // ─── 19. Request Money ──────────────────────────────────────
+  {
+    name: 'request_money',
+    description: 'Request money from someone via email, phone, or $paytag. Generates a payment link they must open to pay — they need to download uPromptPay if they don\'t have it (viral acquisition loop).',
+    category: 'virality',
+    inputSchema: requestMoneySchema,
+    requiresApproval: false,
+    riskLevel: 'low',
+    execute: async (input, ctx) => {
+      const params = requestMoneySchema.parse(input);
+      ctx.logger.info(`[Nexus] Request money: ${params.amount} from ${params.targetContact}`);
+
+      const reqId = `REQ-${Date.now().toString(36).toUpperCase()}`;
+      const paymentLink = `${CONFIG.paytag.linkBaseUrl}/request/${reqId}`;
+
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'episodic', namespace: 'payment_requests',
+        content: JSON.stringify({
+          id: reqId, requesterId: ctx.agentId, targetContact: params.targetContact,
+          amount: params.amount, currency: params.currency, message: params.message,
+          status: 'pending', createdAt: new Date().toISOString(),
+        }),
+        importance: 0.7, metadata: { type: 'payment_request' },
+      });
+
+      const shareText = params.message
+        ? `${params.message} — Pay $${params.amount} on uPromptPay: ${paymentLink}`
+        : `You owe me $${params.amount}! Pay here: ${paymentLink}`;
+
+      return {
+        success: true,
+        data: {
+          requestId: reqId,
+          amount: params.amount,
+          currency: params.currency,
+          targetContact: params.targetContact,
+          paymentLink,
+          shareText,
+          status: 'pending',
+          message: `Payment request sent! Share this link: ${paymentLink}`,
+          viralNote: 'If they don\'t have uPromptPay yet, the link prompts them to sign up — that\'s how we grow!',
+        },
+      };
+    },
+  },
+
+  // ─── 20. Generate Payment Link ──────────────────────────────
+  {
+    name: 'generate_payment_link',
+    description: 'Generate a shareable payment link or QR code. Share on social media, text, or print. Anyone can pay you — even without the app (they sign up to pay).',
+    category: 'virality',
+    inputSchema: generatePaymentLinkSchema,
+    requiresApproval: false,
+    riskLevel: 'low',
+    execute: async (input, ctx) => {
+      const params = generatePaymentLinkSchema.parse(input);
+      ctx.logger.info(`[Nexus] Payment link: ${params.amount || 'open'} ${params.currency}`);
+
+      const linkId = `LINK-${Date.now().toString(36).toUpperCase()}`;
+      const expiresAt = new Date(Date.now() + params.expiresInHours * 3600000).toISOString();
+      const url = `${CONFIG.paytag.linkBaseUrl}/${linkId}`;
+      const qrUrl = `${CONFIG.paytag.linkBaseUrl}/qr/${encodeURIComponent(url)}`;
+
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'episodic', namespace: 'payment_links',
+        content: JSON.stringify({
+          id: linkId, creatorId: ctx.agentId, amount: params.amount,
+          currency: params.currency, label: params.label, expiresAt,
+          status: 'active', createdAt: new Date().toISOString(),
+        }),
+        importance: 0.6, metadata: { type: 'payment_link' },
+      });
+
+      return {
+        success: true,
+        data: {
+          linkId,
+          url,
+          qrUrl,
+          amount: params.amount || 'open (payer chooses)',
+          currency: params.currency,
+          label: params.label,
+          expiresAt,
+          shareText: params.amount
+            ? `Pay me $${params.amount} for ${params.label}: ${url}`
+            : `Send me money on uPromptPay: ${url}`,
+          message: `Payment link created! Share: ${url}`,
+        },
+      };
+    },
+  },
+
+  // ─── 21. Claim PayTag ───────────────────────────────────────
+  {
+    name: 'claim_paytag',
+    description: 'Claim your unique $PayTag — a shareable payment identity like Cash App\'s $cashtag. Put it in your social media bio, share with friends. Anyone sends money to your $tag.',
+    category: 'virality',
+    inputSchema: claimPaytagSchema,
+    requiresApproval: false,
+    riskLevel: 'low',
+    execute: async (input, ctx) => {
+      const params = claimPaytagSchema.parse(input);
+      const tag = params.paytag.toLowerCase();
+      ctx.logger.info(`[Nexus] Claim PayTag: $${tag}`);
+
+      if (tag.length < CONFIG.paytag.minLength || tag.length > CONFIG.paytag.maxLength) {
+        return { success: false, data: null, error: `PayTag must be ${CONFIG.paytag.minLength}-${CONFIG.paytag.maxLength} characters` };
+      }
+
+      // Check if tag is taken
+      const existing = await ctx.memory.recall(tag, 'paytags', 5);
+      const taken = existing.some(e => {
+        const data = JSON.parse(e.content);
+        return data.paytag === tag;
+      });
+      if (taken) return { success: false, data: null, error: `$${tag} is already taken. Try another.` };
+
+      const profileUrl = `${CONFIG.paytag.linkBaseUrl}/$${tag}`;
+      const qrUrl = `${CONFIG.paytag.linkBaseUrl}/qr/${encodeURIComponent(profileUrl)}`;
+
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'semantic', namespace: 'paytags',
+        content: JSON.stringify({ userId: ctx.agentId, paytag: tag, createdAt: new Date().toISOString() }),
+        importance: 0.9, metadata: { paytag: tag },
+      });
+
+      return {
+        success: true,
+        data: {
+          paytag: `$${tag}`,
+          profileUrl,
+          qrUrl,
+          shareText: `Send me money on uPromptPay: $${tag} — ${profileUrl}`,
+          message: `Your PayTag $${tag} is claimed! Share it everywhere — anyone can pay you at ${profileUrl}`,
+        },
+      };
     },
   },
 ];

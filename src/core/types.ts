@@ -112,7 +112,7 @@ export interface TaskResult {
 export interface ToolDefinition {
   name: string;
   description: string;
-  category: 'financial' | 'payment' | 'banking' | 'us_payment' | 'wallet' | 'messaging' | 'system' | 'hooks';
+  category: 'financial' | 'payment' | 'banking' | 'us_payment' | 'wallet' | 'messaging' | 'system' | 'hooks' | 'agent_network' | 'virality' | 'airtime' | 'merchant' | 'cross_border';
   inputSchema: z.ZodType;
   requiresApproval: boolean;
   riskLevel: 'low' | 'medium' | 'high' | 'critical';

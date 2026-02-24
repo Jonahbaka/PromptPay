@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
 // Agent: Mercury — Mobile POS Payments for Africa & India
-// 8 tools: M-Pesa, MTN MoMo, Flutterwave, Paystack, Razorpay,
-//          status check, refund, provider health
+// 12 tools: M-Pesa, MTN MoMo, Flutterwave, Paystack, Razorpay,
+//           status check, refund, provider health, airtime, data,
+//           merchant QR generate, merchant QR pay
 // ═══════════════════════════════════════════════════════════════
 
 import { z } from 'zod';
@@ -40,6 +41,45 @@ async function mtnMomoGetToken(): Promise<string> {
   });
   const data = await resp.json() as Record<string, string>;
   return data.access_token;
+}
+
+// ── Reloadly Airtime API ──
+let reloadlyToken: string | null = null;
+let reloadlyTokenExpiry = 0;
+
+async function reloadlyGetToken(): Promise<string> {
+  if (reloadlyToken && Date.now() < reloadlyTokenExpiry) return reloadlyToken;
+  const res = await fetch('https://auth.reloadly.com/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      client_id: CONFIG.reloadly.clientId,
+      client_secret: CONFIG.reloadly.clientSecret,
+      grant_type: 'client_credentials',
+      audience: CONFIG.reloadly.environment === 'production'
+        ? 'https://topups.reloadly.com' : 'https://topups-sandbox.reloadly.com',
+    }),
+  });
+  const data = await res.json() as Record<string, unknown>;
+  reloadlyToken = data.access_token as string;
+  reloadlyTokenExpiry = Date.now() + ((data.expires_in as number) * 1000) - 60000;
+  return reloadlyToken;
+}
+
+async function reloadlyRequest(path: string, body?: Record<string, unknown>, method = 'POST'): Promise<Record<string, unknown>> {
+  const token = await reloadlyGetToken();
+  const baseUrl = CONFIG.reloadly.environment === 'production'
+    ? 'https://topups.reloadly.com' : 'https://topups-sandbox.reloadly.com';
+  const res = await fetch(`${baseUrl}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/com.reloadly.topups-v1+json',
+    },
+    ...(body && method !== 'GET' ? { body: JSON.stringify(body) } : {}),
+  });
+  return await res.json() as Record<string, unknown>;
 }
 
 // ── Schemas ─────────────────────────────────────────────────
@@ -103,6 +143,31 @@ const paymentRefundSchema = z.object({
 
 const providerStatusSchema = z.object({
   providers: z.array(z.enum(['mpesa', 'mtn_momo', 'flutterwave', 'paystack', 'razorpay'])).optional(),
+});
+
+const airtimeTopupSchema = z.object({
+  phoneNumber: z.string().min(10).describe('Phone number with country code (e.g., 2347012345678 for Nigeria)'),
+  amount: z.number().positive().describe('Amount in local currency (NGN, GHS, UGX, KES)'),
+  countryCode: z.enum(['NG', 'GH', 'UG', 'KE']).describe('ISO country code'),
+  operatorId: z.number().optional().describe('Reloadly operator ID (auto-detected if omitted)'),
+});
+
+const dataBundleSchema = z.object({
+  phoneNumber: z.string().min(10).describe('Phone number with country code'),
+  amount: z.number().positive().describe('Amount in local currency for data bundle'),
+  countryCode: z.enum(['NG', 'GH', 'UG', 'KE']),
+  operatorId: z.number().optional(),
+});
+
+const merchantQrSchema = z.object({
+  merchantName: z.string().min(1).describe('Business or merchant name'),
+  amount: z.number().positive().optional().describe('Fixed amount (omit for dynamic/open amount)'),
+  currency: z.string().default('usd'),
+});
+
+const merchantQrPaySchema = z.object({
+  qrPayload: z.string().min(1).describe('Scanned QR code payload string'),
+  payerUserId: z.string().min(1),
 });
 
 // ── Tool Implementations ────────────────────────────────────
@@ -723,6 +788,267 @@ export const paymentTools: ToolDefinition[] = [
           },
         },
       };
+    },
+  },
+
+  // ─── 9. Airtime Top-Up (Wholesale Resale) ─────────────────
+  {
+    name: 'airtime_topup',
+    description: 'Buy airtime/phone credits for any phone in Nigeria (MTN, Airtel, Glo, 9mobile), Ghana (MTN, Vodafone, AirtelTigo), Uganda (MTN, Airtel), Kenya (Safaricom, Airtel). We buy wholesale and sell at face value + 2% convenience fee. Instant delivery.',
+    category: 'airtime',
+    inputSchema: airtimeTopupSchema,
+    requiresApproval: true,
+    riskLevel: 'high',
+    execute: async (input, ctx) => {
+      const params = airtimeTopupSchema.parse(input);
+      ctx.logger.info(`[Mercury] Airtime top-up: ${params.countryCode} ${params.phoneNumber} ${params.amount}`);
+
+      if (!CONFIG.reloadly.clientId) {
+        return { success: false, data: null, error: 'Airtime not configured — set RELOADLY_CLIENT_ID/SECRET' };
+      }
+
+      try {
+        // Auto-detect operator if not specified
+        let operatorId = params.operatorId;
+        let operatorName = 'Unknown';
+        if (!operatorId) {
+          const detect = await reloadlyRequest(
+            `/operators/auto-detect/phone/${params.phoneNumber}/countries/${params.countryCode}`,
+            undefined, 'GET'
+          );
+          operatorId = detect.operatorId as number;
+          operatorName = (detect.name as string) || 'Detected';
+        }
+
+        // We buy at wholesale discount (3-5% off), sell at face value + 2% fee
+        const convenienceFee = Math.round(params.amount * 0.02 * 100) / 100;
+        const totalCharged = Math.round((params.amount + convenienceFee) * 100) / 100;
+
+        const result = await reloadlyRequest('/topups', {
+          operatorId,
+          amount: params.amount,
+          useLocalAmount: true,
+          recipientPhone: { countryCode: params.countryCode, number: params.phoneNumber },
+          senderPhone: { countryCode: 'US', number: '0000000000' },
+        });
+
+        if (result.transactionId) {
+          const txId = `AIR-${Date.now().toString(36).toUpperCase()}`;
+          await ctx.memory.store({
+            agentId: ctx.agentId, type: 'episodic', namespace: 'airtime',
+            content: JSON.stringify({ txId, ...params, operatorName, fee: convenienceFee, status: 'completed' }),
+            importance: 0.7, metadata: { country: params.countryCode },
+          });
+
+          return {
+            success: true,
+            data: {
+              transactionId: txId,
+              externalId: result.transactionId,
+              operator: operatorName,
+              phoneNumber: params.phoneNumber,
+              country: params.countryCode,
+              amountDelivered: params.amount,
+              convenienceFee: `${convenienceFee} (2%)`,
+              totalCharged,
+              discount: result.discount || '3-5% wholesale',
+              status: 'completed',
+              message: `${params.amount} airtime delivered to ${params.phoneNumber} via ${operatorName}`,
+            },
+          };
+        }
+
+        return { success: false, data: result, error: `Airtime delivery failed: ${result.message || JSON.stringify(result)}` };
+      } catch (err) {
+        return { success: false, data: null, error: `Airtime top-up failed: ${err}` };
+      }
+    },
+  },
+
+  // ─── 10. Data Bundle Purchase (Wholesale Resale) ──────────
+  {
+    name: 'data_bundle_purchase',
+    description: 'Buy mobile data bundles for phones in Nigeria, Ghana, Uganda, Kenya. Wholesale purchase with 2% convenience fee. Supports all major carriers: MTN, Airtel, Glo, 9mobile, Safaricom, Vodafone.',
+    category: 'airtime',
+    inputSchema: dataBundleSchema,
+    requiresApproval: true,
+    riskLevel: 'high',
+    execute: async (input, ctx) => {
+      const params = dataBundleSchema.parse(input);
+      ctx.logger.info(`[Mercury] Data bundle: ${params.countryCode} ${params.phoneNumber} ${params.amount}`);
+
+      if (!CONFIG.reloadly.clientId) {
+        return { success: false, data: null, error: 'Data bundles not configured — set RELOADLY_CLIENT_ID/SECRET' };
+      }
+
+      try {
+        let operatorId = params.operatorId;
+        let operatorName = 'Unknown';
+        if (!operatorId) {
+          const detect = await reloadlyRequest(
+            `/operators/auto-detect/phone/${params.phoneNumber}/countries/${params.countryCode}`,
+            undefined, 'GET'
+          );
+          operatorId = detect.operatorId as number;
+          operatorName = (detect.name as string) || 'Detected';
+        }
+
+        const convenienceFee = Math.round(params.amount * 0.02 * 100) / 100;
+        const totalCharged = Math.round((params.amount + convenienceFee) * 100) / 100;
+
+        const result = await reloadlyRequest('/topups', {
+          operatorId,
+          amount: params.amount,
+          useLocalAmount: true,
+          recipientPhone: { countryCode: params.countryCode, number: params.phoneNumber },
+          senderPhone: { countryCode: 'US', number: '0000000000' },
+        });
+
+        if (result.transactionId) {
+          const txId = `DATA-${Date.now().toString(36).toUpperCase()}`;
+          await ctx.memory.store({
+            agentId: ctx.agentId, type: 'episodic', namespace: 'airtime',
+            content: JSON.stringify({ txId, type: 'data', ...params, operatorName, fee: convenienceFee, status: 'completed' }),
+            importance: 0.7, metadata: { country: params.countryCode },
+          });
+
+          return {
+            success: true,
+            data: {
+              transactionId: txId,
+              externalId: result.transactionId,
+              operator: operatorName,
+              phoneNumber: params.phoneNumber,
+              country: params.countryCode,
+              amountDelivered: params.amount,
+              convenienceFee: `${convenienceFee} (2%)`,
+              totalCharged,
+              status: 'completed',
+              message: `Data bundle of ${params.amount} delivered to ${params.phoneNumber} via ${operatorName}`,
+            },
+          };
+        }
+
+        return { success: false, data: result, error: `Data bundle failed: ${result.message || JSON.stringify(result)}` };
+      } catch (err) {
+        return { success: false, data: null, error: `Data bundle purchase failed: ${err}` };
+      }
+    },
+  },
+
+  // ─── 11. Merchant QR Code Generate ────────────────────────
+  {
+    name: 'merchant_qr_generate',
+    description: 'Generate a payment QR code for a merchant. Customers scan to pay instantly — replaces POS terminals. Supports fixed or open amounts. Like PIX/UPI model.',
+    category: 'merchant',
+    inputSchema: merchantQrSchema,
+    requiresApproval: false,
+    riskLevel: 'low',
+    execute: async (input, ctx) => {
+      const params = merchantQrSchema.parse(input);
+      ctx.logger.info(`[Mercury] QR generate: ${params.merchantName} ${params.amount || 'open'} ${params.currency}`);
+
+      const ref = 'QR-' + Date.now().toString(36).toUpperCase();
+      const qrPayload = `upromptpay://pay?merchant=${encodeURIComponent(params.merchantName)}&amount=${params.amount || ''}&currency=${params.currency}&ref=${ref}`;
+      const qrUrl = `${CONFIG.paytag.linkBaseUrl}/qr/${encodeURIComponent(qrPayload)}`;
+
+      await ctx.memory.store({
+        agentId: ctx.agentId, type: 'semantic', namespace: 'merchant_qr',
+        content: JSON.stringify({ ref, merchantName: params.merchantName, amount: params.amount, currency: params.currency, qrPayload }),
+        importance: 0.7, metadata: { type: 'qr_code' },
+      });
+
+      return {
+        success: true,
+        data: {
+          ref,
+          qrPayload,
+          qrUrl,
+          merchantName: params.merchantName,
+          amount: params.amount || 'open (customer enters amount)',
+          currency: params.currency,
+          instructions: 'Print this QR code or display on screen. Customers scan with uPromptPay app to pay instantly.',
+          message: params.amount
+            ? `QR code for ${params.merchantName}: ${params.currency.toUpperCase()} ${params.amount}. Share or print the QR URL.`
+            : `Open-amount QR code for ${params.merchantName}. Customer enters amount when scanning.`,
+        },
+      };
+    },
+  },
+
+  // ─── 12. Merchant QR Pay (Scan & Pay) ─────────────────────
+  {
+    name: 'merchant_qr_pay',
+    description: 'Pay a merchant by scanning their QR code. Deducts from wallet, replaces POS terminal. 2.5% merchant fee applies.',
+    category: 'merchant',
+    inputSchema: merchantQrPaySchema,
+    requiresApproval: true,
+    riskLevel: 'high',
+    execute: async (input, ctx) => {
+      const params = merchantQrPaySchema.parse(input);
+      ctx.logger.info(`[Mercury] QR pay: ${params.payerUserId} scanning QR`);
+
+      try {
+        // Parse QR payload
+        const url = new URL(params.qrPayload.replace('upromptpay://', 'https://upromptpay.com/'));
+        const merchant = decodeURIComponent(url.searchParams.get('merchant') || '');
+        const amount = parseFloat(url.searchParams.get('amount') || '0');
+        const currency = url.searchParams.get('currency') || 'usd';
+        const ref = url.searchParams.get('ref') || '';
+
+        if (!merchant) return { success: false, data: null, error: 'Invalid QR code — no merchant found' };
+        if (!amount || amount <= 0) return { success: false, data: null, error: 'QR code has no amount — open-amount QR requires amount input' };
+
+        const fee = Math.round(amount * 0.025 * 100) / 100;
+        const total = Math.round((amount + fee) * 100) / 100;
+
+        // Check payer wallet balance
+        const wallets = await ctx.memory.recall('wallet', 'wallets', 5);
+        const walletEntry = wallets.find(w => {
+          const data = JSON.parse(w.content);
+          return data.userId === params.payerUserId;
+        });
+
+        if (!walletEntry) return { success: false, data: null, error: 'No wallet found. Top up your wallet first.' };
+
+        const wallet = JSON.parse(walletEntry.content);
+        if (wallet.balance < total) {
+          return { success: false, data: null, error: `Insufficient balance. Need ${total} ${currency}, have ${wallet.balance}` };
+        }
+
+        // Deduct from wallet
+        wallet.balance = Math.round((wallet.balance - total) * 100) / 100;
+        wallet.lastTransactionAt = new Date().toISOString();
+        await ctx.memory.store({
+          agentId: ctx.agentId, type: 'semantic', namespace: 'wallets',
+          content: JSON.stringify(wallet), importance: 0.9, metadata: { userId: params.payerUserId },
+        });
+
+        const txId = `QRPAY-${Date.now().toString(36).toUpperCase()}`;
+        await ctx.memory.store({
+          agentId: ctx.agentId, type: 'episodic', namespace: 'transactions',
+          content: JSON.stringify({ txId, type: 'qr_payment', merchant, amount, fee, total, currency, ref, payerId: params.payerUserId }),
+          importance: 0.8, metadata: { type: 'qr_payment' },
+        });
+
+        return {
+          success: true,
+          data: {
+            transactionId: txId,
+            merchant,
+            amount,
+            fee: `${fee} (2.5%)`,
+            total,
+            currency,
+            ref,
+            newBalance: wallet.balance,
+            status: 'completed',
+            message: `Paid ${merchant}: ${currency.toUpperCase()} ${amount}. Fee: ${fee}. New balance: ${wallet.balance}`,
+          },
+        };
+      } catch (err) {
+        return { success: false, data: null, error: `QR payment failed: ${err}` };
+      }
     },
   },
 ];

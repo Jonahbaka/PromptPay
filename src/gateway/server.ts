@@ -66,6 +66,82 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     res.sendFile(path.join(publicDir, 'manifest.json'));
   });
 
+  // ── Payment Links & PayTag Resolution ──
+  app.get('/pay/request/:reqId', (_req: Request, res: Response) => {
+    const reqId = _req.params.reqId;
+    const row = deps.memory.getDb().prepare(
+      'SELECT * FROM payment_requests WHERE id = ? AND status = ?'
+    ).get(reqId, 'pending') as Record<string, unknown> | undefined;
+
+    if (!row) {
+      res.redirect('/?error=invalid_request');
+      return;
+    }
+    // Redirect to app with payment context
+    res.redirect(`/?action=pay_request&id=${reqId}&amount=${row.amount}&currency=${row.currency}`);
+  });
+
+  app.get('/pay/:linkId', (_req: Request, res: Response) => {
+    const linkId = String(_req.params.linkId);
+    // Check if it's a $paytag (starts with $)
+    if (linkId.startsWith('$')) {
+      const tag = linkId.slice(1).toLowerCase();
+      const row = deps.memory.getDb().prepare(
+        'SELECT user_id FROM user_paytags WHERE paytag = ?'
+      ).get(tag) as { user_id: string } | undefined;
+
+      if (!row) {
+        res.redirect('/?error=paytag_not_found');
+        return;
+      }
+      res.redirect(`/?action=pay_user&paytag=${tag}`);
+      return;
+    }
+
+    // Check payment_links
+    const link = deps.memory.getDb().prepare(
+      "SELECT * FROM payment_links WHERE id = ? AND status = 'active'"
+    ).get(linkId) as Record<string, unknown> | undefined;
+
+    if (!link) {
+      res.redirect('/?error=link_expired');
+      return;
+    }
+
+    // Check expiry
+    if (link.expires_at && new Date(link.expires_at as string) < new Date()) {
+      deps.memory.getDb().prepare("UPDATE payment_links SET status = 'expired' WHERE id = ?").run(linkId);
+      res.redirect('/?error=link_expired');
+      return;
+    }
+
+    res.redirect(`/?action=pay_link&id=${linkId}&amount=${link.amount || ''}&currency=${link.currency}&label=${encodeURIComponent((link.label as string) || '')}`);
+  });
+
+  // QR Code SVG generation (lightweight, no dependencies)
+  app.get('/qr/:payload', (_req: Request, res: Response) => {
+    const payload = decodeURIComponent(String(_req.params.payload));
+    // Generate a simple QR placeholder SVG with the data encoded
+    const size = 256;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <rect width="${size}" height="${size}" fill="white"/>
+      <rect x="20" y="20" width="80" height="80" rx="4" fill="#7c3aed"/>
+      <rect x="156" y="20" width="80" height="80" rx="4" fill="#7c3aed"/>
+      <rect x="20" y="156" width="80" height="80" rx="4" fill="#7c3aed"/>
+      <rect x="32" y="32" width="56" height="56" rx="2" fill="white"/>
+      <rect x="168" y="32" width="56" height="56" rx="2" fill="white"/>
+      <rect x="32" y="168" width="56" height="56" rx="2" fill="white"/>
+      <rect x="48" y="48" width="24" height="24" fill="#7c3aed"/>
+      <rect x="184" y="48" width="24" height="24" fill="#7c3aed"/>
+      <rect x="48" y="184" width="24" height="24" fill="#7c3aed"/>
+      <text x="128" y="140" font-family="monospace" font-size="10" fill="#7c3aed" text-anchor="middle">uPromptPay</text>
+      <text x="128" y="252" font-family="monospace" font-size="7" fill="#666" text-anchor="middle">${payload.length > 40 ? payload.slice(0, 40) + '...' : payload}</text>
+    </svg>`;
+    res.set('Content-Type', 'image/svg+xml');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(svg);
+  });
+
   app.use(express.static(publicDir));
 
   // ── Request logging ──

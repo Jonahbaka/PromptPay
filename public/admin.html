@@ -339,6 +339,13 @@
   <div class="nav-item" data-page="revenue">
     <span class="nav-icon">&#128176;</span> Revenue
   </div>
+  <div class="nav-section">Network</div>
+  <div class="nav-item" data-page="agents-network">
+    <span class="nav-icon">&#127758;</span> Agent Network
+  </div>
+  <div class="nav-item" data-page="cross-border">
+    <span class="nav-icon">&#128260;</span> Cross-Border
+  </div>
   <div class="nav-section">System</div>
   <div class="nav-item" data-page="providers">
     <span class="nav-icon">&#9889;</span> Providers
@@ -566,6 +573,68 @@
       <div class="table-wrap"><table>
         <thead><tr><th>Type</th><th>Count</th><th>Volume</th><th>Fees</th></tr></thead>
         <tbody id="revenue-by-type"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ── AGENT NETWORK ── -->
+  <div class="page" id="page-agents-network" style="display:none;">
+    <div class="header"><h2>Agent Network</h2></div>
+    <p style="opacity: 0.6; margin-bottom: 20px;">Cash-in/cash-out agents across Nigeria, Ghana, Uganda, Kenya</p>
+    <div class="grid grid-4" id="agent-network-stats">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Active Agents</span><span class="card-icon">&#127758;</span></div>
+        <div class="card-value val-blue" id="agent-count">0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Total Float</span><span class="card-icon">&#128176;</span></div>
+        <div class="card-value val-green" id="agent-total-float">$0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Commissions Paid</span><span class="card-icon">&#128178;</span></div>
+        <div class="card-value val-purple" id="agent-commissions">$0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Transactions Today</span><span class="card-icon">&#128200;</span></div>
+        <div class="card-value val-orange" id="agent-tx-today">0</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Agent Accounts</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Agent</th><th>Location</th><th>Float</th><th>Commission</th><th>Status</th></tr></thead>
+        <tbody id="agent-table-body"><tr><td colspan="5" style="color:var(--text2);text-align:center">No agents registered yet</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ── CROSS-BORDER ── -->
+  <div class="page" id="page-cross-border" style="display:none;">
+    <div class="header"><h2>Cross-Border Transfers</h2></div>
+    <p style="opacity: 0.6; margin-bottom: 20px;">Wise + USDC stablecoin cross-border payment monitoring</p>
+    <div class="grid grid-4" id="cross-border-stats">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Transfers</span><span class="card-icon">&#128260;</span></div>
+        <div class="card-value val-blue" id="xborder-count">0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Volume</span><span class="card-icon">&#128176;</span></div>
+        <div class="card-value val-green" id="xborder-volume">$0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Via Wise</span><span class="card-icon">&#9889;</span></div>
+        <div class="card-value val-purple" id="xborder-wise">0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Via USDC</span><span class="card-icon">&#128176;</span></div>
+        <div class="card-value val-cyan" id="xborder-usdc">0</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Recent Transfers</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>ID</th><th>Provider</th><th>From</th><th>To</th><th>Rate</th><th>Status</th></tr></thead>
+        <tbody id="xborder-table-body"><tr><td colspan="6" style="color:var(--text2);text-align:center">No transfers yet</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -1176,6 +1245,36 @@ async function loadRevenue(period) {
   }
 }
 
+// ── Agent Network ──
+async function loadAgentNetwork() {
+  const data = await api('/admin/agents-network');
+  if (!data) return;
+  document.getElementById('agent-count').textContent = fmt(data.count || 0);
+  document.getElementById('agent-total-float').textContent = '$' + Number(data.totalFloat || 0).toFixed(2);
+  document.getElementById('agent-commissions').textContent = '$' + Number(data.totalCommissions || 0).toFixed(2);
+  document.getElementById('agent-tx-today').textContent = fmt(data.transactionsToday || 0);
+  if (data.agents && data.agents.length > 0) {
+    document.getElementById('agent-table-body').innerHTML = data.agents.map(a =>
+      `<tr><td>${a.userId}</td><td>${a.locationCity || ''}, ${a.locationCountry || ''}</td><td>$${a.floatBalance}</td><td>$${a.commissionEarned}</td><td><span class="badge ${a.status === 'active' ? 'badge-green' : a.status === 'suspended' ? 'badge-red' : 'badge-yellow'}">${a.status}</span></td></tr>`
+    ).join('');
+  }
+}
+
+// ── Cross-Border ──
+async function loadCrossBorder() {
+  const data = await api('/admin/cross-border');
+  if (!data) return;
+  document.getElementById('xborder-count').textContent = fmt(data.count || 0);
+  document.getElementById('xborder-volume').textContent = '$' + Number(data.totalVolume || 0).toFixed(2);
+  document.getElementById('xborder-wise').textContent = fmt(data.wiseCount || 0);
+  document.getElementById('xborder-usdc').textContent = fmt(data.usdcCount || 0);
+  if (data.transfers && data.transfers.length > 0) {
+    document.getElementById('xborder-table-body').innerHTML = data.transfers.map(t =>
+      `<tr><td style="font-family:monospace;font-size:11px">${(t.id || '').toString().slice(0,8)}</td><td><span class="badge badge-blue">${t.provider}</span></td><td>${t.sourceAmount} ${t.sourceCurrency}</td><td>${t.targetAmount || '?'} ${t.targetCurrency || ''}</td><td>${t.fxRate || '-'}</td><td><span class="badge ${t.status === 'completed' ? 'badge-green' : t.status === 'failed' ? 'badge-red' : 'badge-yellow'}">${t.status}</span></td></tr>`
+    ).join('');
+  }
+}
+
 // ── Page router ──
 function loadPage(page) {
   const loaders = {
@@ -1184,6 +1283,7 @@ function loadPage(page) {
     achievements: loadAchievements, loyalty: loadLoyalty, insights: loadInsights,
     partners: loadPartners, revenue: () => loadRevenue('today'),
     providers: loadProviders, audit: loadAudit, health: loadHealth,
+    'agents-network': loadAgentNetwork, 'cross-border': loadCrossBorder,
   };
   if (loaders[page]) loaders[page]();
 }

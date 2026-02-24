@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// PromptPay :: Admin Portal (20 Routes)
+// PromptPay :: Admin Portal (23 Routes)
 // Dashboard, agents, tasks, audit, hooks, providers, health
 // ═══════════════════════════════════════════════════════════════
 
@@ -372,6 +372,61 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
     res.json(summary);
   });
 
-  deps.logger.info('Admin portal: 21 routes registered');
+  // ═══════════════════════════════════════════════════════
+  // 22. GET /admin/agents-network — Agent network overview
+  // ═══════════════════════════════════════════════════════
+  router.get('/admin/agents-network', (_req: Request, res: Response) => {
+    const db = deps.memory.getDb();
+    const agents = db.prepare('SELECT * FROM agent_accounts WHERE status = ?').all('active') as Array<Record<string, unknown>>;
+    const txToday = db.prepare("SELECT COUNT(*) as c FROM agent_transactions WHERE created_at >= date('now')").get() as { c: number } | undefined;
+    const totalFloat = agents.reduce((sum, a) => sum + ((a.float_balance as number) || 0), 0);
+    const totalCommissions = agents.reduce((sum, a) => sum + ((a.commission_earned as number) || 0), 0);
+
+    res.json({
+      count: agents.length,
+      totalFloat,
+      totalCommissions,
+      transactionsToday: txToday?.c ?? 0,
+      agents: agents.map(a => ({
+        userId: a.user_id,
+        floatBalance: a.float_balance,
+        commissionEarned: a.commission_earned,
+        locationCountry: a.location_country,
+        locationCity: a.location_city,
+        status: a.status,
+      })),
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // 23. GET /admin/cross-border — Cross-border transfer monitoring
+  // ═══════════════════════════════════════════════════════
+  router.get('/admin/cross-border', (_req: Request, res: Response) => {
+    const db = deps.memory.getDb();
+    const transfers = db.prepare('SELECT * FROM cross_border_transfers ORDER BY created_at DESC LIMIT 50').all() as Array<Record<string, unknown>>;
+    const wiseCount = transfers.filter(t => t.provider === 'wise').length;
+    const usdcCount = transfers.filter(t => t.provider === 'circle_usdc').length;
+    const totalVolume = transfers.reduce((sum, t) => sum + ((t.source_amount as number) || 0), 0);
+
+    res.json({
+      count: transfers.length,
+      totalVolume,
+      wiseCount,
+      usdcCount,
+      transfers: transfers.map(t => ({
+        id: t.id,
+        provider: t.provider,
+        sourceAmount: t.source_amount,
+        sourceCurrency: t.source_currency,
+        targetAmount: t.target_amount,
+        targetCurrency: t.target_currency,
+        fxRate: t.fx_rate,
+        status: t.status,
+        createdAt: t.created_at,
+      })),
+    });
+  });
+
+  deps.logger.info('Admin portal: 23 routes registered');
   return router;
 }
