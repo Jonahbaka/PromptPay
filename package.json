@@ -1,0 +1,59 @@
+{
+  "name": "promptpay",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "promptpay": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "dev:watch": "tsx watch src/index.ts",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "fintech",
+    "payments",
+    "apple-pay",
+    "google-pay",
+    "stripe",
+    "mpesa",
+    "wallet",
+    "upromptpay",
+    "ai",
+    "agents"
+  ],
+  "author": "PromptPay",
+  "license": "ISC",
+  "description": "PromptPay — AI-Powered Fintech Platform with 5 Payment Agents, 45 Tools, and Engagement Hooks",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.78.0",
+    "better-sqlite3": "^12.6.2",
+    "dotenv": "^17.3.1",
+    "eventemitter3": "^5.0.4",
+    "express": "^5.2.1",
+    "node-telegram-bot-api": "^0.67.0",
+    "pino": "^10.3.1",
+    "uuid": "^13.0.0",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.3.0",
+    "@types/node-telegram-bot-api": "^0.64.13",
+    "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
+    "@vitest/coverage-v8": "^4.0.18",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
