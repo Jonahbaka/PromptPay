@@ -111,7 +111,7 @@ export const paymentTools: ToolDefinition[] = [
   // ─── 1. M-Pesa STK Push ──────────────────────────────────
   {
     name: 'mpesa_stk_push',
-    description: 'Initiate M-Pesa Lipa Na M-Pesa (STK Push) payment via Safaricom Daraja API. Sends payment prompt to customer\'s phone. Kenya & Tanzania.',
+    description: 'Initiate M-Pesa Lipa Na M-Pesa (STK Push) payment via Safaricom Daraja API. Sends payment prompt to customer\'s phone. Kenya & Tanzania. A 2.5% merchant payment fee applies.',
     category: 'payment',
     inputSchema: mpesaStkPushSchema,
     requiresApproval: true,
@@ -158,6 +158,8 @@ export const paymentTools: ToolDefinition[] = [
         const data = await resp.json() as Record<string, unknown>;
 
         if (data.ResponseCode === '0') {
+          const fee = (params.amount * 0.025);
+          const total = params.amount + fee;
           return {
             success: true,
             data: {
@@ -166,6 +168,8 @@ export const paymentTools: ToolDefinition[] = [
               merchantRequestId: data.MerchantRequestID,
               responseDescription: data.ResponseDescription,
               status: 'pending',
+              fee: `$${fee.toFixed(2)} (2.5%)`,
+              total: `$${total.toFixed(2)}`,
             },
             metadata: { country: 'KE', currency: 'KES' },
           };
@@ -181,7 +185,7 @@ export const paymentTools: ToolDefinition[] = [
   // ─── 2. MTN MoMo Request to Pay ──────────────────────────
   {
     name: 'mtn_momo_request_to_pay',
-    description: 'Initiate MTN Mobile Money Request-to-Pay. Covers 15+ African countries: Ghana, Uganda, Cameroon, Ivory Coast, Congo, etc.',
+    description: 'Initiate MTN Mobile Money Request-to-Pay. Covers 15+ African countries: Ghana, Uganda, Cameroon, Ivory Coast, Congo, etc. A 2.5% merchant payment fee applies.',
     category: 'payment',
     inputSchema: mtnMomoSchema,
     requiresApproval: true,
@@ -223,6 +227,8 @@ export const paymentTools: ToolDefinition[] = [
         });
 
         if (resp.status === 202) {
+          const fee = (params.amount * 0.025);
+          const total = params.amount + fee;
           return {
             success: true,
             data: {
@@ -230,6 +236,8 @@ export const paymentTools: ToolDefinition[] = [
               referenceId,
               status: 'pending',
               message: 'Request-to-Pay initiated. Awaiting customer approval.',
+              fee: `$${fee.toFixed(2)} (2.5%)`,
+              total: `$${total.toFixed(2)}`,
             },
             metadata: { currency: params.currency },
           };
@@ -246,7 +254,7 @@ export const paymentTools: ToolDefinition[] = [
   // ─── 3. Flutterwave Charge ────────────────────────────────
   {
     name: 'flutterwave_charge',
-    description: 'Initiate payment via Flutterwave v3. Supports mobile money (Ghana, Uganda, Kenya), M-Pesa, card, bank transfer. Pan-African coverage.',
+    description: 'Initiate payment via Flutterwave v3. Supports mobile money (Ghana, Uganda, Kenya), M-Pesa, card, bank transfer. Pan-African coverage. A 2.5% merchant payment fee applies.',
     category: 'payment',
     inputSchema: flutterwaveChargeSchema,
     requiresApproval: true,
@@ -284,6 +292,8 @@ export const paymentTools: ToolDefinition[] = [
         const data = await resp.json() as Record<string, unknown>;
 
         if (data.status === 'success') {
+          const fee = (params.amount * 0.025);
+          const total = params.amount + fee;
           return {
             success: true,
             data: {
@@ -291,6 +301,8 @@ export const paymentTools: ToolDefinition[] = [
               paymentLink: (data.data as Record<string, unknown>)?.link,
               txRef: params.txRef,
               status: 'pending',
+              fee: `$${fee.toFixed(2)} (2.5%)`,
+              total: `$${total.toFixed(2)}`,
             },
             metadata: { currency: params.currency, type: params.paymentType },
           };
@@ -306,7 +318,7 @@ export const paymentTools: ToolDefinition[] = [
   // ─── 4. Paystack Initialize ───────────────────────────────
   {
     name: 'paystack_initialize',
-    description: 'Initialize a Paystack transaction. Nigeria, Ghana, South Africa, Kenya. Supports card, bank, mobile money, USSD, QR.',
+    description: 'Initialize a Paystack transaction. Nigeria, Ghana, South Africa, Kenya. Supports card, bank, mobile money, USSD, QR. A 2.5% merchant payment fee applies.',
     category: 'payment',
     inputSchema: paystackInitSchema,
     requiresApproval: true,
@@ -344,6 +356,8 @@ export const paymentTools: ToolDefinition[] = [
 
         if (data.status === true) {
           const txData = data.data as Record<string, unknown>;
+          const fee = (params.amount * 0.025);
+          const total = params.amount + fee;
           return {
             success: true,
             data: {
@@ -352,6 +366,8 @@ export const paymentTools: ToolDefinition[] = [
               accessCode: txData.access_code,
               reference: txData.reference,
               status: 'pending',
+              fee: `$${fee.toFixed(2)} (2.5%)`,
+              total: `$${total.toFixed(2)}`,
             },
             metadata: { currency: params.currency },
           };
@@ -367,7 +383,7 @@ export const paymentTools: ToolDefinition[] = [
   // ─── 5. Razorpay Create Order ─────────────────────────────
   {
     name: 'razorpay_create_order',
-    description: 'Create a Razorpay order for Indian payments. Supports UPI, netbanking, cards, wallets, EMI. Amount in paise.',
+    description: 'Create a Razorpay order for Indian payments. Supports UPI, netbanking, cards, wallets, EMI. Amount in paise. A 2.5% merchant payment fee applies.',
     category: 'payment',
     inputSchema: razorpayOrderSchema,
     requiresApproval: true,
@@ -404,6 +420,8 @@ export const paymentTools: ToolDefinition[] = [
         const data = await resp.json() as Record<string, unknown>;
 
         if (data.id) {
+          const fee = (params.amount * 0.025);
+          const total = params.amount + fee;
           return {
             success: true,
             data: {
@@ -413,6 +431,8 @@ export const paymentTools: ToolDefinition[] = [
               currency: data.currency,
               status: data.status,
               receipt: data.receipt,
+              fee: `$${fee.toFixed(2)} (2.5%)`,
+              total: `$${total.toFixed(2)}`,
             },
             metadata: { currency: params.currency, country: 'IN' },
           };

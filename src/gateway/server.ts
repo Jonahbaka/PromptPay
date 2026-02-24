@@ -53,6 +53,19 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     res.sendFile(path.join(publicDir, 'index.html'));
   });
 
+  // Service worker must be served from root scope
+  app.get('/sw.js', (_req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-cache');
+    res.set('Service-Worker-Allowed', '/');
+    res.sendFile(path.join(publicDir, 'sw.js'));
+  });
+
+  // Manifest
+  app.get('/manifest.json', (_req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-cache');
+    res.sendFile(path.join(publicDir, 'manifest.json'));
+  });
+
   app.use(express.static(publicDir));
 
   // ── Request logging ──
@@ -132,7 +145,7 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     const role = req.auth!.role;
     const today = new Date().toISOString().slice(0, 10);
     const row = deps.memory.getDb().prepare(
-      'SELECT messages_used, tokens_used, channel_messages_used FROM usage_tracking WHERE user_id = ? AND date = ?'
+      'SELECT messages_used, tokens_used FROM usage_tracking WHERE user_id = ? AND date = ?'
     ).get(userId, today) as Record<string, number> | undefined;
 
     const limit = role === 'owner' ? Infinity : CONFIG.rateLimits.freeMessagesPerDay;
@@ -140,8 +153,6 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
       messagesUsed: row?.messages_used || 0,
       messagesLimit: limit === Infinity ? 'unlimited' : limit,
       tokensUsed: row?.tokens_used || 0,
-      channelMessagesUsed: row?.channel_messages_used || 0,
-      channelMessagesLimit: CONFIG.rateLimits.channelMessagesPerDay,
       date: today,
       plan: role === 'owner' ? 'owner' : 'free',
     });

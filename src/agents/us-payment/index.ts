@@ -103,7 +103,7 @@ export const usPaymentTools: ToolDefinition[] = [
   // ─── 1. Stripe Charge ──────────────────────────────────────
   {
     name: 'stripe_charge',
-    description: 'Create a Stripe Payment Intent with full control: amount, currency, capture method, statement descriptor, customer. Supports Apple Pay, Google Pay, cards, ACH.',
+    description: 'Create a Stripe Payment Intent with full control: amount, currency, capture method, statement descriptor, customer. Supports Apple Pay, Google Pay, cards, ACH. A 2.5% merchant payment fee applies.',
     category: 'us_payment',
     inputSchema: stripeChargeSchema,
     requiresApproval: true,
@@ -138,6 +138,9 @@ export const usPaymentTools: ToolDefinition[] = [
         const data = await stripeRequest('/payment_intents', body);
 
         if (data.id) {
+          const feeCents = Math.round(params.amountCents * 0.025);
+          const totalCents = params.amountCents + feeCents;
+
           // Store transaction in memory
           await ctx.memory.store({
             agentId: ctx.agentId,
@@ -163,6 +166,8 @@ export const usPaymentTools: ToolDefinition[] = [
               currency: data.currency,
               status: data.status,
               captureMethod: params.captureMethod,
+              fee: `$${(feeCents / 100).toFixed(2)} (2.5%)`,
+              total: `$${(totalCents / 100).toFixed(2)}`,
             },
           };
         }
@@ -287,7 +292,7 @@ export const usPaymentTools: ToolDefinition[] = [
   // ─── 4. ACH Transfer ──────────────────────────────────────
   {
     name: 'ach_transfer',
-    description: 'Initiate an ACH bank transfer for US-based payments. Lower fees than cards (~0.8% capped). Takes 3-5 business days.',
+    description: 'Initiate an ACH bank transfer for US-based payments. Lower fees than cards. Takes 3-5 business days. A 1.0% merchant payment fee applies.',
     category: 'us_payment',
     inputSchema: achTransferSchema,
     requiresApproval: true,
@@ -316,6 +321,8 @@ export const usPaymentTools: ToolDefinition[] = [
         const data = await stripeRequest('/payment_intents', body);
 
         if (data.id) {
+          const feeCents = Math.round(params.amountCents * 0.01);
+          const totalCents = params.amountCents + feeCents;
           return {
             success: true,
             data: {
@@ -324,6 +331,8 @@ export const usPaymentTools: ToolDefinition[] = [
               amount: `$${(params.amountCents / 100).toFixed(2)}`,
               estimatedArrival: '3-5 business days',
               method: 'ACH direct debit',
+              fee: `$${(feeCents / 100).toFixed(2)} (1.0%)`,
+              total: `$${(totalCents / 100).toFixed(2)}`,
             },
           };
         }
@@ -565,7 +574,7 @@ export const usPaymentTools: ToolDefinition[] = [
   // ─── 9. Apple Pay Complete Payment ──────────────────────────
   {
     name: 'apple_pay_complete_payment',
-    description: 'Process an Apple Pay payment end-to-end. Takes a tokenized payment method, creates a PaymentIntent, confirms it, records the transaction, and returns a receipt. This is the full payment flow — not just session setup.',
+    description: 'Process an Apple Pay payment end-to-end. Takes a tokenized payment method, creates a PaymentIntent, confirms it, records the transaction, and returns a receipt. This is the full payment flow — not just session setup. A 2.5% merchant payment fee applies.',
     category: 'us_payment',
     inputSchema: z.object({
       paymentMethodId: z.string().min(1).describe('Stripe payment method ID (pm_xxx or tok_xxx from Apple Pay JS'),
@@ -679,6 +688,9 @@ export const usPaymentTools: ToolDefinition[] = [
           importance: 0.8,
         });
 
+        const feeCents = Math.round(params.amountCents * 0.025);
+        const totalCents = params.amountCents + feeCents;
+
         return {
           success: true,
           data: {
@@ -690,6 +702,8 @@ export const usPaymentTools: ToolDefinition[] = [
             receiptUrl: charge?.receipt_url || null,
             receiptEmail: params.receiptEmail || params.customerEmail || null,
             paymentMethod: 'Apple Pay',
+            fee: `$${(feeCents / 100).toFixed(2)} (2.5%)`,
+            total: `$${(totalCents / 100).toFixed(2)}`,
           },
         };
       } catch (err) {
@@ -948,7 +962,7 @@ export const usPaymentTools: ToolDefinition[] = [
   // ─── 12. Google Pay Complete Payment ────────────────────────
   {
     name: 'google_pay_complete_payment',
-    description: 'Process a Google Pay payment end-to-end. Takes a tokenized payment method from Google Pay JS, creates and confirms a Stripe PaymentIntent, records the transaction, and returns a receipt.',
+    description: 'Process a Google Pay payment end-to-end. Takes a tokenized payment method from Google Pay JS, creates and confirms a Stripe PaymentIntent, records the transaction, and returns a receipt. A 2.5% merchant payment fee applies.',
     category: 'us_payment',
     inputSchema: z.object({
       paymentMethodId: z.string().min(1).describe('Stripe payment method ID from Google Pay tokenization'),
@@ -1027,6 +1041,9 @@ export const usPaymentTools: ToolDefinition[] = [
           importance: 0.8,
         });
 
+        const feeCents = Math.round(params.amountCents * 0.025);
+        const totalCents = params.amountCents + feeCents;
+
         return {
           success: true,
           data: {
@@ -1038,6 +1055,8 @@ export const usPaymentTools: ToolDefinition[] = [
             receiptUrl: charge?.receipt_url || null,
             paymentMethod: 'Google Pay',
             merchantName: params.merchantName,
+            fee: `$${(feeCents / 100).toFixed(2)} (2.5%)`,
+            total: `$${(totalCents / 100).toFixed(2)}`,
           },
         };
       } catch (err) {

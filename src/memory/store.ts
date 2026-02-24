@@ -270,6 +270,24 @@ export class MemoryStore extends EventEmitter {
       );
       CREATE INDEX IF NOT EXISTS idx_reminders_due ON payment_reminders(scheduled_for, status);
 
+      -- ═══ FEE LEDGER ═══
+      CREATE TABLE IF NOT EXISTS fee_ledger (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        tenant_id TEXT,
+        transaction_id TEXT NOT NULL,
+        transaction_type TEXT NOT NULL,
+        amount REAL NOT NULL,
+        fee_amount REAL NOT NULL,
+        fee_percent REAL NOT NULL,
+        loyalty_discount REAL DEFAULT 0,
+        net_fee REAL NOT NULL,
+        currency TEXT DEFAULT 'usd',
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_fee_user ON fee_ledger(user_id);
+      CREATE INDEX IF NOT EXISTS idx_fee_created ON fee_ledger(created_at);
+
       -- ═══════════════════════════════════════════════════
       -- MULTI-TENANCY & AUTH
       -- ═══════════════════════════════════════════════════

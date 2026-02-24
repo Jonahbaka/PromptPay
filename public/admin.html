@@ -335,6 +335,10 @@
   <div class="nav-item" data-page="partners" id="nav-partners">
     <span class="nav-icon">&#129309;</span> Partners
   </div>
+  <div class="nav-section">Revenue</div>
+  <div class="nav-item" data-page="revenue">
+    <span class="nav-icon">&#128176;</span> Revenue
+  </div>
   <div class="nav-section">System</div>
   <div class="nav-item" data-page="providers">
     <span class="nav-icon">&#9889;</span> Providers
@@ -536,6 +540,32 @@
       <div class="table-wrap"><table>
         <thead><tr><th>Provider</th><th>State</th><th>Failures</th><th>Action</th></tr></thead>
         <tbody id="breakers-body"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ── REVENUE ── -->
+  <div class="page" id="page-revenue">
+    <div class="header"><h2>&#128176; Revenue Dashboard</h2></div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="btn btn-sm revenue-period active" data-period="today" onclick="loadRevenue('today')">Today</button>
+      <button class="btn btn-sm revenue-period" data-period="week" onclick="loadRevenue('week')">This Week</button>
+      <button class="btn btn-sm revenue-period" data-period="month" onclick="loadRevenue('month')">This Month</button>
+    </div>
+    <div class="grid grid-3" id="revenue-stats">
+      <div class="stat-card"><div class="stat-value" id="rev-volume">$0</div><div class="stat-label">Transaction Volume</div></div>
+      <div class="stat-card"><div class="stat-value" id="rev-fees" style="color:var(--green)">$0</div><div class="stat-label">Net Fee Revenue</div></div>
+      <div class="stat-card"><div class="stat-value" id="rev-count">0</div><div class="stat-label">Transactions</div></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:16px">
+      <div class="stat-card"><div class="stat-value" id="rev-gross">$0</div><div class="stat-label">Gross Fees</div></div>
+      <div class="stat-card"><div class="stat-value" id="rev-discounts" style="color:var(--yellow)">$0</div><div class="stat-label">Loyalty Discounts Given</div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Revenue by Transaction Type</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Type</th><th>Count</th><th>Volume</th><th>Fees</th></tr></thead>
+        <tbody id="revenue-by-type"></tbody>
       </table></div>
     </div>
   </div>
@@ -1112,13 +1142,47 @@ async function resetBreaker(name) {
   loadHealth();
 }
 
+// ── Revenue Dashboard ──
+async function loadRevenue(period) {
+  // Update active period button
+  document.querySelectorAll('.revenue-period').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.period === period);
+  });
+  const data = await api('/admin/revenue?period=' + period);
+  if (!data) {
+    document.getElementById('rev-volume').textContent = '$0';
+    document.getElementById('rev-fees').textContent = '$0';
+    document.getElementById('rev-count').textContent = '0';
+    document.getElementById('rev-gross').textContent = '$0';
+    document.getElementById('rev-discounts').textContent = '$0';
+    document.getElementById('revenue-by-type').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text2)">No revenue data yet</td></tr>';
+    return;
+  }
+  document.getElementById('rev-volume').textContent = '$' + Number(data.total_volume || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  document.getElementById('rev-fees').textContent = '$' + Number(data.total_fees_net || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  document.getElementById('rev-count').textContent = String(data.transaction_count || 0);
+  document.getElementById('rev-gross').textContent = '$' + Number(data.total_fees_gross || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  document.getElementById('rev-discounts').textContent = '$' + Number(data.total_discounts || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+  const byType = data.byType || [];
+  if (byType.length === 0) {
+    document.getElementById('revenue-by-type').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text2)">No transactions yet</td></tr>';
+  } else {
+    document.getElementById('revenue-by-type').innerHTML = byType.map(t => `<tr>
+      <td style="text-transform:capitalize">${(t.transaction_type || '').replace(/_/g, ' ')}</td>
+      <td>${t.count}</td>
+      <td>$${Number(t.volume || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+      <td style="color:var(--green)">$${Number(t.fees || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+    </tr>`).join('');
+  }
+}
+
 // ── Page router ──
 function loadPage(page) {
   const loaders = {
     dashboard: loadDashboard, agents: loadAgents, tasks: loadTasks,
     streaks: loadStreaks, cashback: loadCashback, referrals: loadReferrals,
     achievements: loadAchievements, loyalty: loadLoyalty, insights: loadInsights,
-    partners: loadPartners,
+    partners: loadPartners, revenue: () => loadRevenue('today'),
     providers: loadProviders, audit: loadAudit, health: loadHealth,
   };
   if (loaders[page]) loaders[page]();

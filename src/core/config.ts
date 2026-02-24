@@ -33,13 +33,26 @@ export const CONFIG = {
     channelMessagesPerDay: parseInt(env('RATE_LIMIT_CHANNEL_MSGS', '30')),
   },
 
+  // ── Transaction Fees ──
+  fees: {
+    p2pFreeThresholdUsd: parseFloat(env('FEE_P2P_FREE_THRESHOLD', '50')),
+    p2pPercent: parseFloat(env('FEE_P2P_PERCENT', '1.0')),
+    topupPercent: parseFloat(env('FEE_TOPUP_PERCENT', '1.5')),
+    withdrawPercent: parseFloat(env('FEE_WITHDRAW_PERCENT', '1.0')),
+    withdrawFlatUsd: parseFloat(env('FEE_WITHDRAW_FLAT', '0.25')),
+    billPayPercent: parseFloat(env('FEE_BILL_PAY_PERCENT', '1.5')),
+    paymentPercent: parseFloat(env('FEE_PAYMENT_PERCENT', '2.5')),
+    crossBorderPercent: parseFloat(env('FEE_CROSS_BORDER_PERCENT', '3.0')),
+    loyaltyDiscountEnabled: env('FEE_LOYALTY_DISCOUNT', 'true') === 'true',
+  },
+
   // ── Platform ──
   platform: {
     domain: env('DOMAIN', 'upromptpay.com'),
     domainUrl: env('DOMAIN_URL', 'https://www.upromptpay.com'),
     contactEmail: env('CONTACT_EMAIL', 'info@upromptpay.com'),
     name: 'uPromptPay',
-    version: '1.2.0',
+    version: '1.3.0',
   },
 
   promptpay: {

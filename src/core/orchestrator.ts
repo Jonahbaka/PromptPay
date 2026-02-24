@@ -250,7 +250,12 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
 
   /** Resolve which model to use based on task context */
   private resolveModel(task: Task): { model: string; maxTokens: number } {
-    const isUserTask = task.payload?.channelType || task.payload?.userInitiated;
+    // Partner bank custom AI model
+    if (task.payload?.tenantAiModel) {
+      return { model: task.payload.tenantAiModel as string, maxTokens: CONFIG.anthropic.maxTokens };
+    }
+
+    const isUserTask = task.payload?.userInitiated;
     if (isUserTask) {
       return { model: CONFIG.anthropic.userModel, maxTokens: CONFIG.anthropic.userMaxTokens };
     }

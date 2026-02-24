@@ -619,7 +619,7 @@ export const walletTools: ToolDefinition[] = [
   // ─── 8. Bill Pay Now ───────────────────────────────────────
   {
     name: 'bill_pay_now',
-    description: 'Immediately pay an upcoming bill — either from a schedule or as a one-time ad-hoc payment.',
+    description: 'Immediately pay an upcoming bill — either from a schedule or as a one-time ad-hoc payment. A 1.5% processing fee applies.',
     category: 'wallet',
     inputSchema: billPayNowSchema,
     requiresApproval: true,
@@ -696,15 +696,20 @@ export const walletTools: ToolDefinition[] = [
           metadata: { userId: params.userId, txId, type: 'bill' },
         });
 
+        const fee = Math.round(amount * 0.015 * 100) / 100;
+        const totalAmount = Math.round((amount + fee) * 100) / 100;
+
         return {
           success: true,
           data: {
             transactionId: txId,
             paymentIntentId: piData.id,
             amount: `$${amount.toFixed(2)}`,
+            fee: `$${fee.toFixed(2)}`,
+            total: `$${totalAmount.toFixed(2)}`,
             status: piData.status,
             description,
-            message: `Bill paid: $${amount.toFixed(2)} for ${description}`,
+            message: `Bill paid for ${description}. Amount: $${amount.toFixed(2)}, Fee (1.5%): $${fee.toFixed(2)}, Total: $${totalAmount.toFixed(2)}`,
           },
         };
       } catch (err) {
@@ -720,7 +725,7 @@ export const walletTools: ToolDefinition[] = [
   // ─── 9. Wallet Top-Up ──────────────────────────────────────
   {
     name: 'wallet_topup',
-    description: 'Add funds to your PromptPay wallet from any saved payment method (card or bank account).',
+    description: 'Add funds to your PromptPay wallet from any saved payment method (card or bank account). A 1.5% processing fee applies to all top-ups.',
     category: 'wallet',
     inputSchema: walletTopupSchema,
     requiresApproval: true,
@@ -804,14 +809,19 @@ export const walletTools: ToolDefinition[] = [
           metadata: { userId: params.userId, txId, type: 'topup' },
         });
 
+        const fee = Math.round(params.amount * 0.015 * 100) / 100;
+        const totalCharged = Math.round((params.amount + fee) * 100) / 100;
+
         return {
           success: true,
           data: {
             walletId: wallet.id,
             newBalance: `$${(wallet.balance as number).toFixed(2)}`,
             amountAdded: `$${params.amount.toFixed(2)}`,
+            fee: `$${fee.toFixed(2)}`,
+            totalCharged: `$${totalCharged.toFixed(2)}`,
             transactionId: txId,
-            message: `Wallet topped up by $${params.amount.toFixed(2)}. New balance: $${(wallet.balance as number).toFixed(2)}`,
+            message: `Wallet topped up. Amount: $${params.amount.toFixed(2)}, Fee (1.5%): $${fee.toFixed(2)}, Total charged: $${totalCharged.toFixed(2)}. New balance: $${(wallet.balance as number).toFixed(2)}`,
           },
         };
       } catch (err) {
@@ -823,7 +833,7 @@ export const walletTools: ToolDefinition[] = [
   // ─── 10. Wallet Transfer (P2P) ─────────────────────────────
   {
     name: 'wallet_transfer',
-    description: 'Transfer funds between PromptPay user wallets (P2P). Instant, zero fees.',
+    description: 'Transfer funds between PromptPay user wallets (P2P). P2P transfers under $50 are free; a 1% fee applies to transfers over $50.',
     category: 'wallet',
     inputSchema: walletTransferSchema,
     requiresApproval: true,
@@ -882,6 +892,12 @@ export const walletTools: ToolDefinition[] = [
       await ctx.memory.store({ agentId: ctx.agentId, type: 'episodic', namespace: 'transactions', content: JSON.stringify({ ...txData, userId: params.fromUserId }), importance: 0.7, metadata: { userId: params.fromUserId, txId, type: 'transfer' } });
       await ctx.memory.store({ agentId: ctx.agentId, type: 'episodic', namespace: 'transactions', content: JSON.stringify({ ...txData, userId: params.toUserId }), importance: 0.7, metadata: { userId: params.toUserId, txId, type: 'transfer' } });
 
+      const fee = params.amount > 50 ? Math.round(params.amount * 0.01 * 100) / 100 : 0;
+      const totalDeducted = Math.round((params.amount + fee) * 100) / 100;
+      const feeMessage = params.amount > 50
+        ? `Amount: $${params.amount.toFixed(2)}, Fee (1%): $${fee.toFixed(2)}, Total deducted: $${totalDeducted.toFixed(2)}`
+        : `Amount: $${params.amount.toFixed(2)}, Fee: Free (P2P under $50), Total: $${params.amount.toFixed(2)}`;
+
       return {
         success: true,
         data: {
@@ -889,9 +905,11 @@ export const walletTools: ToolDefinition[] = [
           from: params.fromUserId,
           to: params.toUserId,
           amount: `$${params.amount.toFixed(2)}`,
+          fee: `$${fee.toFixed(2)}`,
+          totalDeducted: `$${totalDeducted.toFixed(2)}`,
           senderBalance: `$${senderWallet.balance.toFixed(2)}`,
           note: params.note,
-          message: `Sent $${params.amount.toFixed(2)} to ${params.toUserId}${params.note ? ` — "${params.note}"` : ''}`,
+          message: `Sent to ${params.toUserId}. ${feeMessage}${params.note ? ` — "${params.note}"` : ''}`,
         },
       };
     },
@@ -900,7 +918,7 @@ export const walletTools: ToolDefinition[] = [
   // ─── 11. Wallet Withdraw ───────────────────────────────────
   {
     name: 'wallet_withdraw',
-    description: 'Withdraw funds from your PromptPay wallet to a bank account or debit card.',
+    description: 'Withdraw funds from your PromptPay wallet to a bank account or debit card. A fee of 1% + $0.25 applies to all withdrawals.',
     category: 'wallet',
     inputSchema: walletWithdrawSchema,
     requiresApproval: true,
@@ -939,16 +957,21 @@ export const walletTools: ToolDefinition[] = [
         importance: 0.8, metadata: { userId: params.userId, txId, type: 'withdraw' },
       });
 
+      const fee = Math.round((params.amount * 0.01 + 0.25) * 100) / 100;
+      const totalDeducted = Math.round((params.amount + fee) * 100) / 100;
+
       return {
         success: true,
         data: {
           transactionId: txId,
           amount: `$${params.amount.toFixed(2)}`,
+          fee: `$${fee.toFixed(2)}`,
+          totalDeducted: `$${totalDeducted.toFixed(2)}`,
           remainingBalance: `$${wallet.balance.toFixed(2)}`,
           destination: params.paymentMethodId,
           estimatedArrival: '1-3 business days',
           status: 'pending',
-          message: `Withdrawal of $${params.amount.toFixed(2)} initiated. Estimated arrival: 1-3 business days.`,
+          message: `Withdrawal initiated. Amount: $${params.amount.toFixed(2)}, Fee (1% + $0.25): $${fee.toFixed(2)}, Total deducted: $${totalDeducted.toFixed(2)}. Estimated arrival: 1-3 business days.`,
         },
       };
     },

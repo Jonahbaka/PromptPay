@@ -9,6 +9,7 @@ import type { AuditTrail } from '../protocols/audit-trail.js';
 import type { CircuitBreakerRegistry } from '../healing/circuit-breaker.js';
 import type { ChannelManager } from '../channels/manager.js';
 import type { HookEngine } from '../hooks/engine.js';
+import type { FeeEngine } from '../hooks/fees.js';
 import type { DaemonLoop } from '../daemon/loop.js';
 import type { MemoryStore } from '../memory/store.js';
 import { authenticate, requireRole, getTenantFilter } from '../auth/middleware.js';
@@ -26,6 +27,7 @@ export interface AdminDependencies {
   hookEngine: HookEngine;
   circuitBreakers: CircuitBreakerRegistry;
   channelManager: ChannelManager;
+  feeEngine: FeeEngine;
   daemon: DaemonLoop;
   config: Record<string, unknown>;
   logger: LoggerHandle;
@@ -356,6 +358,20 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
     res.json({ totalInvocations: toolInvocations.length, tools: analytics });
   });
 
-  deps.logger.info('Admin portal: 20 routes registered');
+  // ═══════════════════════════════════════════════════════
+  // 21. GET /admin/revenue — Revenue dashboard
+  // ═══════════════════════════════════════════════════════
+  router.get('/admin/revenue', authenticate, requireRole('owner', 'partner_admin'), (req: Request, res: Response) => {
+    const period = (req.query.period as string) || 'today';
+    const validPeriods = ['today', 'week', 'month'];
+    if (!validPeriods.includes(period)) {
+      res.status(400).json({ error: 'Invalid period. Use: today, week, month' });
+      return;
+    }
+    const summary = deps.feeEngine.getRevenueSummary(period as 'today' | 'week' | 'month');
+    res.json(summary);
+  });
+
+  deps.logger.info('Admin portal: 21 routes registered');
   return router;
 }

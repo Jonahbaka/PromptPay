@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
-// uPromptPay v1.2 :: Entry Point
+// uPromptPay v1.3 :: Entry Point
 // Multi-tenant fintech platform — 5 agents, 45 tools, 9 hooks
-// Bank partnerships + Developer API + WhatsApp & Telegram
+// PWA + Pay by Phone + Transaction Fees + Partner AI
 // https://www.upromptpay.com
 // ═══════════════════════════════════════════════════════════════
 
@@ -17,14 +17,10 @@ import { createAdminRoutes } from './gateway/admin-routes.js';
 import { createUserRoutes } from './gateway/user-routes.js';
 import { createPartnerRoutes } from './gateway/partner-routes.js';
 import { createDeveloperRoutes } from './gateway/developer-routes.js';
-import { ChannelManager } from './channels/manager.js';
-import { TelegramChannel } from './channels/telegram.js';
-import { SmsChannel } from './channels/sms.js';
-import { WhatsAppChannel } from './channels/whatsapp.js';
 import { HookEngine } from './hooks/engine.js';
+import { FeeEngine } from './hooks/fees.js';
 import { DaemonLoop } from './daemon/loop.js';
 import { hashPassword } from './auth/tokens.js';
-import type { ChannelMessage } from './core/types.js';
 
 // Import agent tools
 import { walletTools } from './agents/wallet/index.js';
@@ -36,7 +32,7 @@ import { financialTools } from './agents/financial/index.js';
 async function main(): Promise<void> {
   const logger = createLogger('promptpay');
   logger.info('═══════════════════════════════════════════');
-  logger.info(' uPromptPay v1.2 — Starting...');
+  logger.info(' uPromptPay v1.3 — Starting...');
   logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
   logger.info('═══════════════════════════════════════════');
 
@@ -82,106 +78,9 @@ async function main(): Promise<void> {
   const hookEngine = new HookEngine(db, logger);
   logger.info('Hook engine initialized (9 modules)');
 
-  // ── 7. Channels ──
-  const channelManager = new ChannelManager(logger);
-  const telegramChannel = new TelegramChannel(logger);
-  const whatsappChannel = new WhatsAppChannel(logger);
-  channelManager.register(telegramChannel);
-  channelManager.register(new SmsChannel(logger));
-  channelManager.register(whatsappChannel);
-
-  // ── 7b. Inbound Message Bridge ──
-  // Route inbound Telegram/WhatsApp messages to the AI orchestrator
-  // ── Rate limit helper ──
-  function checkRateLimit(userId: string, type: 'messages' | 'channel'): { allowed: boolean; used: number; limit: number } {
-    const today = new Date().toISOString().slice(0, 10);
-    const col = type === 'channel' ? 'channel_messages_used' : 'messages_used';
-    const limit = type === 'channel' ? CONFIG.rateLimits.channelMessagesPerDay : CONFIG.rateLimits.freeMessagesPerDay;
-
-    const row = db.prepare('SELECT * FROM usage_tracking WHERE user_id = ? AND date = ?')
-      .get(userId, today) as Record<string, number> | undefined;
-
-    const used = row ? (row[col] || 0) : 0;
-    if (used >= limit) return { allowed: false, used, limit };
-
-    // Increment
-    db.prepare(`
-      INSERT INTO usage_tracking (user_id, date, ${col})
-      VALUES (?, ?, 1)
-      ON CONFLICT(user_id, date) DO UPDATE SET ${col} = ${col} + 1
-    `).run(userId, today);
-
-    return { allowed: true, used: used + 1, limit };
-  }
-
-  channelManager.on('message', async (msg: ChannelMessage) => {
-    if (msg.direction !== 'inbound') return;
-
-    logger.info(`[Channel] Inbound ${msg.channelType} from ${msg.senderId}: ${msg.content.slice(0, 50)}`);
-    auditTrail.record('channel', 'message_in', msg.channelType, {
-      senderId: msg.senderId, contentLength: msg.content.length,
-    });
-
-    try {
-      // Rate limit check for channel users
-      const rateCheck = checkRateLimit(`channel:${msg.senderId}`, 'channel');
-      if (!rateCheck.allowed) {
-        await channelManager.sendMessage(msg.channelType, msg.senderId,
-          `You've reached your daily message limit (${rateCheck.limit} messages). Try again tomorrow!`);
-        return;
-      }
-
-      // Look up or create a channel session
-      let session = db.prepare(
-        'SELECT * FROM channel_sessions WHERE channel_type = ? AND channel_user_id = ?'
-      ).get(msg.channelType, msg.senderId) as Record<string, unknown> | undefined;
-
-      let history: Array<{ role: string; content: string }> = [];
-      if (session) {
-        try { history = JSON.parse(session.conversation as string || '[]'); } catch { history = []; }
-      }
-
-      // Keep last 20 messages for context
-      history.push({ role: 'user', content: msg.content });
-      if (history.length > 20) history = history.slice(-20);
-
-      // Execute through orchestrator as a task (userInitiated flag triggers Haiku)
-      const task = orchestrator.createTask('custom', 'medium',
-        `${msg.channelType} message from ${msg.senderId}`,
-        msg.content,
-        { channelType: msg.channelType, senderId: msg.senderId, history, userInitiated: true },
-      );
-      const result = await orchestrator.executeTask(task);
-
-      // Extract response text
-      const responseText = typeof result.output === 'string'
-        ? result.output
-        : (result.output ? JSON.stringify(result.output) : 'I received your message. How can I help you?');
-
-      // Send reply back through the same channel
-      await channelManager.sendMessage(msg.channelType, msg.senderId, responseText);
-
-      // Update conversation history
-      history.push({ role: 'assistant', content: responseText });
-      const now = new Date().toISOString();
-      db.prepare(`
-        INSERT INTO channel_sessions (channel_type, channel_user_id, conversation, last_message_at, created_at)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(channel_type, channel_user_id) DO UPDATE SET
-          conversation = ?, last_message_at = ?
-      `).run(msg.channelType, msg.senderId, JSON.stringify(history), now, now,
-        JSON.stringify(history), now);
-
-      logger.info(`[Channel] Reply sent to ${msg.senderId} via ${msg.channelType}`);
-    } catch (err) {
-      logger.error(`[Channel] Error processing inbound message: ${err}`);
-      // Try to send error message back
-      try {
-        await channelManager.sendMessage(msg.channelType, msg.senderId,
-          'Sorry, I encountered an error. Please try again.');
-      } catch { /* silent */ }
-    }
-  });
+  // ── 7. Fee Engine ──
+  const feeEngine = new FeeEngine(db, logger);
+  logger.info('Fee engine initialized');
 
   // ── 8. Gateway ──
   const { app, server } = createGateway({ orchestrator, memory, logger });
@@ -210,16 +109,6 @@ async function main(): Promise<void> {
   });
   app.use(webhookRouter);
 
-  // WhatsApp inbound webhook (Twilio sends POST to this URL)
-  app.post('/webhooks/whatsapp', (req, res) => {
-    const { From, Body, ProfileName } = req.body as Record<string, string>;
-    if (From && Body) {
-      whatsappChannel.handleInbound(From, Body, ProfileName);
-    }
-    // Twilio expects 200 OK with empty TwiML
-    res.type('text/xml').send('<Response></Response>');
-  });
-
   // User routes (auth, settings, API key management)
   const userRouter = createUserRoutes({ memory, logger });
   app.use(userRouter);
@@ -236,7 +125,9 @@ async function main(): Promise<void> {
   const adminRouter = createAdminRoutes({
     orchestrator: orchestrator as unknown as Parameters<typeof createAdminRoutes>[0]['orchestrator'],
     memory, auditTrail, hookEngine, circuitBreakers,
-    channelManager, daemon: null as unknown as DaemonLoop,
+    channelManager: null as unknown as Parameters<typeof createAdminRoutes>[0]['channelManager'],
+    daemon: null as unknown as DaemonLoop,
+    feeEngine,
     config: CONFIG, logger,
   });
   app.use(adminRouter);
@@ -246,20 +137,16 @@ async function main(): Promise<void> {
 
   // ── 10. Start everything ──
   orchestrator.start();
-  await channelManager.startAll();
   daemon.start();
-
-  const channelStatus = channelManager.getStatus();
-  const activeChannels = channelStatus.filter(c => c.active).map(c => c.channel);
 
   server.listen(CONFIG.gateway.port, CONFIG.gateway.host, () => {
     logger.info('═══════════════════════════════════════════');
-    logger.info(` uPromptPay v1.2 ONLINE`);
+    logger.info(` uPromptPay v1.3 ONLINE`);
     logger.info(` Local:  http://${CONFIG.gateway.host}:${CONFIG.gateway.port}`);
     logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
     logger.info(` Tools: ${orchestrator.getState().toolCount}`);
-    logger.info(` Hooks: 9 modules active`);
-    logger.info(` Channels: ${activeChannels.length > 0 ? activeChannels.join(', ') : 'none (configure tokens in .env)'}`);
+    logger.info(` Hooks: 9 modules + Fee Engine`);
+    logger.info(` PWA: Installable (Add to Home Screen)`);
     logger.info(` Dev API: /api/v1/chat, /api/v1/task`);
     logger.info(` Auth: Multi-tenant (Owner + Partner + User + Developer)`);
     logger.info(` Admin: /${CONFIG.admin.secretPath}`);
@@ -269,7 +156,6 @@ async function main(): Promise<void> {
     auditTrail.record('system', 'online', 'promptpay', {
       port: CONFIG.gateway.port,
       tools: orchestrator.getState().toolCount,
-      channels: activeChannels,
     });
   });
 
@@ -277,7 +163,6 @@ async function main(): Promise<void> {
   const shutdown = async (): Promise<void> => {
     logger.info('Shutting down PromptPay...');
     daemon.stop();
-    await channelManager.stopAll();
     orchestrator.stop();
     server.close();
     auditTrail.record('system', 'shutdown', 'promptpay', {});

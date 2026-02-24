@@ -6,6 +6,10 @@
   <meta name="theme-color" content="#06060a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="uPromptPay">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
   <title>uPromptPay</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -465,14 +469,6 @@
     }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-    /* ── Admin Link ── */
-    .admin-link {
-      display: block; text-align: center; padding: 16px;
-      font-size: 12px; color: var(--text3); text-decoration: none;
-      transition: color 0.2s;
-    }
-    .admin-link:hover { color: var(--accent2); }
-
     /* ── Modal Overlay ── */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7);
@@ -710,10 +706,7 @@
       font-size: 15px; border-radius: var(--radius-sm);
     }
 
-    /* ── Channel Toggle Grid ── */
-    .channels-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    }
+    /* ── Channel Toggle ── */
     .channel-toggle {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 14px;
@@ -896,17 +889,17 @@
           </div>
           <div class="quick-label">QR Code</div>
         </div>
+        <div class="quick-item" onclick="openPayByPhone()">
+          <div class="quick-icon qi-green" style="background:rgba(16,185,129,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+          <div class="quick-label">Tap to Pay</div>
+        </div>
         <div class="quick-item" onclick="navigateTo('wallet')">
           <div class="quick-icon qi-green">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><circle cx="18" cy="16" r="1"/></svg>
           </div>
           <div class="quick-label">Wallet</div>
-        </div>
-        <div class="quick-item">
-          <div class="quick-icon qi-pink">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <div class="quick-label">Referrals</div>
         </div>
         <div class="quick-item">
           <div class="quick-icon qi-orange">
@@ -975,7 +968,6 @@
         </div>
       </div>
 
-      <a href="/admin.html" class="admin-link">Admin Portal &rarr;</a>
     </div>
 
     <!-- AI CHAT -->
@@ -1185,7 +1177,6 @@
         </div>
       </div>
 
-      <a href="/admin.html" class="admin-link" style="margin-top:24px">Admin Portal &rarr;</a>
     </div>
 
     <!-- SETTINGS -->
@@ -1210,94 +1201,56 @@
         </div>
       </div>
 
-      <!-- Developer API (hidden by default, shown for power users) -->
-      <div class="settings-section" id="developer-section" style="display:none">
-        <div class="settings-section-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          Developer API
-        </div>
-        <div style="padding:8px 0;color:var(--text2);font-size:13px;line-height:1.5">
-          Build apps with our AI API. Use your own model keys or our platform key.
-        </div>
-        <div class="settings-field">
-          <label>API Key Name</label>
-          <input type="text" id="dev-key-name" placeholder="My App">
-        </div>
-        <div class="settings-field">
-          <label>Your AI Provider (optional)</label>
-          <select id="settings-provider">
-            <option value="platform">Platform (uPromptPay)</option>
-            <option value="anthropic">Anthropic (Claude)</option>
-            <option value="openai">OpenAI (GPT)</option>
-            <option value="google">Google (Gemini)</option>
-          </select>
-        </div>
-        <div class="settings-field">
-          <label>Your AI API Key (optional)</label>
-          <input type="password" id="settings-api-key" placeholder="sk-... leave blank to use platform key">
-        </div>
-        <button class="settings-btn settings-btn-primary" onclick="generateDevKey()" style="margin-top:4px">
-          Generate API Key
-        </button>
-        <div id="dev-keys-list" style="margin-top:12px"></div>
-      </div>
-
-      <!-- Communication Channels -->
+      <!-- Notifications -->
       <div class="settings-section">
         <div class="settings-section-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Communication Channels
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Notifications
         </div>
-        <div class="channels-grid" id="channels-grid">
-          <div class="channel-toggle active" data-channel="whatsapp" onclick="toggleChannel(this)">
-            <span class="channel-label">WhatsApp</span>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="channel-toggle active" data-channel="push" onclick="toggleChannel(this)">
+            <span class="channel-label">Push Notifications</span>
             <div class="toggle-switch on"></div>
-          </div>
-          <div class="channel-toggle active" data-channel="telegram" onclick="toggleChannel(this)">
-            <span class="channel-label">Telegram</span>
-            <div class="toggle-switch on"></div>
-          </div>
-          <div class="channel-toggle active" data-channel="sms" onclick="toggleChannel(this)">
-            <span class="channel-label">SMS</span>
-            <div class="toggle-switch on"></div>
-          </div>
-          <div class="channel-toggle" data-channel="signal" onclick="toggleChannel(this)">
-            <span class="channel-label">Signal</span>
-            <div class="toggle-switch"></div>
-          </div>
-          <div class="channel-toggle" data-channel="viber" onclick="toggleChannel(this)">
-            <span class="channel-label">Viber</span>
-            <div class="toggle-switch"></div>
-          </div>
-          <div class="channel-toggle" data-channel="line" onclick="toggleChannel(this)">
-            <span class="channel-label">LINE</span>
-            <div class="toggle-switch"></div>
-          </div>
-          <div class="channel-toggle" data-channel="wechat" onclick="toggleChannel(this)">
-            <span class="channel-label">WeChat</span>
-            <div class="toggle-switch"></div>
-          </div>
-          <div class="channel-toggle" data-channel="messenger" onclick="toggleChannel(this)">
-            <span class="channel-label">Messenger</span>
-            <div class="toggle-switch"></div>
-          </div>
-          <div class="channel-toggle active" data-channel="slack" onclick="toggleChannel(this)">
-            <span class="channel-label">Slack</span>
-            <div class="toggle-switch on"></div>
-          </div>
-          <div class="channel-toggle" data-channel="discord" onclick="toggleChannel(this)">
-            <span class="channel-label">Discord</span>
-            <div class="toggle-switch"></div>
           </div>
           <div class="channel-toggle active" data-channel="email" onclick="toggleChannel(this)">
-            <span class="channel-label">Email</span>
-            <div class="toggle-switch on"></div>
-          </div>
-          <div class="channel-toggle active" data-channel="push" onclick="toggleChannel(this)">
-            <span class="channel-label">Push</span>
+            <span class="channel-label">Email Alerts</span>
             <div class="toggle-switch on"></div>
           </div>
         </div>
+      </div>
+
+      <!-- Transaction Fees Info -->
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Fee Schedule
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text2)">
+          <div style="display:flex;justify-content:space-between"><span>P2P Transfer (under $50)</span><span style="color:var(--emerald);font-weight:600">Free</span></div>
+          <div style="display:flex;justify-content:space-between"><span>P2P Transfer (over $50)</span><span>1.0%</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Wallet Top-up</span><span>1.5%</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Withdrawal</span><span>1.0% + $0.25</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Bill Payment</span><span>1.5%</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Merchant Payment</span><span>2.5%</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Cross-border</span><span>3.0%</span></div>
+          <div style="margin-top:6px;padding:10px 14px;background:rgba(124,58,237,0.08);border-radius:10px;color:var(--text)">
+            Loyalty members save up to 20% on fees! Your tier discount is applied automatically.
+          </div>
+        </div>
+      </div>
+
+      <!-- Install App -->
+      <div class="settings-section" id="install-app-section">
+        <div class="settings-section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          Install App
+        </div>
+        <div style="padding:4px 0 12px;color:var(--text2);font-size:13px;line-height:1.5">
+          Add uPromptPay to your phone's home screen for instant access — no app store needed. Works like a native app with offline support.
+        </div>
+        <button class="settings-btn settings-btn-primary settings-btn-full" id="install-app-btn" onclick="installApp()">
+          Add to Home Screen
+        </button>
       </div>
 
       <!-- Language & Timezone -->
@@ -1350,15 +1303,6 @@
       <button class="settings-btn settings-btn-primary settings-btn-full" onclick="savePreferences()">
         Save Preferences
       </button>
-
-      <!-- Developer Mode Toggle -->
-      <div style="margin-top:20px;padding:14px;background:var(--surface);border-radius:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleDevMode()">
-        <div>
-          <div style="font-size:14px;font-weight:600;color:var(--text)">Developer Mode</div>
-          <div style="font-size:12px;color:var(--text2)">Access API keys to build with uPromptPay</div>
-        </div>
-        <div class="toggle-switch" id="dev-mode-toggle"></div>
-      </div>
 
       <div style="height:24px"></div>
     </div>
@@ -1466,6 +1410,28 @@
       </svg>
     </div>
     <button onclick="closeModals()" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;color:var(--text);font-size:14px;cursor:pointer;font-family:inherit">Close</button>
+  </div>
+</div>
+
+<!-- Pay by Phone Modal -->
+<div class="modal-overlay" id="pay-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Pay by Phone</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Use Apple Pay, Google Pay, or your saved cards</p>
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Amount</label>
+      <input id="pay-amount" placeholder="$0.00" type="number" step="0.01" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:24px;font-weight:700;font-family:inherit;outline:none;text-align:center">
+    </div>
+    <div style="margin-bottom:20px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">What's this for?</label>
+      <input id="pay-label" placeholder="Coffee, groceries, etc." style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <button onclick="executePayByPhone()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3);display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+      Pay Now
+    </button>
+    <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
   </div>
 </div>
 
@@ -1693,73 +1659,16 @@ function toggleChannel(el) {
   toggle.classList.toggle('on');
 }
 
-function getSelectedChannels() {
-  const channels = [];
-  document.querySelectorAll('#channels-grid .channel-toggle.active').forEach(el => {
-    channels.push(el.dataset.channel);
-  });
-  return channels;
-}
-
-async function generateDevKey() {
-  const name = document.getElementById('dev-key-name').value.trim();
-  if (!name) { showToast('Enter a name for your API key'); return; }
-  const provider = document.getElementById('settings-provider').value;
-  const apiKey = document.getElementById('settings-api-key').value.trim();
-
-  try {
-    const res = await authFetch(API_BASE + '/api/developer/keys', {
-      method: 'POST',
-      body: JSON.stringify({ name, aiProvider: provider, aiApiKey: apiKey || undefined })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      showToast('API key generated! Copy it now.');
-      document.getElementById('dev-key-name').value = '';
-      document.getElementById('settings-api-key').value = '';
-      // Show the key once
-      const list = document.getElementById('dev-keys-list');
-      list.innerHTML = '<div style="padding:12px;background:rgba(34,197,94,0.1);border-radius:12px;margin-bottom:8px;word-break:break-all;font-size:12px;font-family:monospace">' +
-        '<div style="font-weight:600;color:var(--text);margin-bottom:4px">Your new API key (copy now!):</div>' +
-        '<div style="color:#22c55e">' + data.apiKey + '</div>' +
-        '</div>' + list.innerHTML;
-      loadDevKeys();
-    } else {
-      showToast('Failed to generate key');
-    }
-  } catch (e) {
-    showToast('Error generating key');
-  }
-}
-
-async function loadDevKeys() {
-  try {
-    const res = await authFetch(API_BASE + '/api/developer/keys');
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.keys || data.keys.length === 0) return;
-    const list = document.getElementById('dev-keys-list');
-    const existing = list.querySelector('.dev-keys-existing');
-    const html = data.keys.map(k =>
-      '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface);border-radius:10px;margin-bottom:6px">' +
-      '<div><div style="font-size:13px;font-weight:600;color:var(--text)">' + k.name + '</div>' +
-      '<div style="font-size:11px;color:var(--text2)">' + k.api_key_prefix + ' · ' + k.ai_provider + '</div></div>' +
-      '<div style="font-size:11px;color:' + (k.status === 'active' ? '#22c55e' : '#ef4444') + '">' + k.status + '</div></div>'
-    ).join('');
-    if (existing) existing.innerHTML = html;
-    else list.insertAdjacentHTML('beforeend', '<div class="dev-keys-existing">' + html + '</div>');
-  } catch(e) {}
-}
-
 async function savePreferences() {
-  const preferredChannels = getSelectedChannels();
   const language = document.getElementById('settings-language').value;
   const timezone = document.getElementById('settings-timezone').value;
+  const pushEnabled = document.querySelector('[data-channel="push"]')?.classList.contains('active');
+  const emailEnabled = document.querySelector('[data-channel="email"]')?.classList.contains('active');
 
   try {
     const res = await authFetch(API_BASE + '/api/user/settings', {
       method: 'PUT',
-      body: JSON.stringify({ preferredChannels, language, timezone })
+      body: JSON.stringify({ preferredChannels: [pushEnabled && 'push', emailEnabled && 'email'].filter(Boolean), language, timezone })
     });
     if (res.ok) {
       showToast('Preferences saved successfully');
@@ -1769,12 +1678,10 @@ async function savePreferences() {
   } catch (e) {
     showToast('Saved locally. Will sync when online.');
   }
-  // Save locally as fallback
-  localStorage.setItem('upromptpay_settings', JSON.stringify({ preferredChannels, language, timezone }));
+  localStorage.setItem('upromptpay_settings', JSON.stringify({ language, timezone }));
 }
 
 async function loadSettings() {
-  // Try loading from API first
   try {
     const res = await authFetch(API_BASE + '/api/user/settings');
     if (res.ok) {
@@ -1783,8 +1690,6 @@ async function loadSettings() {
       return;
     }
   } catch (e) {}
-
-  // Fallback to localStorage
   const local = localStorage.getItem('upromptpay_settings');
   if (local) {
     try { applySettings(JSON.parse(local)); } catch(e) {}
@@ -1793,40 +1698,115 @@ async function loadSettings() {
 
 function applySettings(settings) {
   if (!settings) return;
-  if (settings.language) {
-    document.getElementById('settings-language').value = settings.language;
-  }
-  if (settings.timezone) {
-    document.getElementById('settings-timezone').value = settings.timezone;
-  }
-  if (settings.preferredChannels && Array.isArray(settings.preferredChannels)) {
-    document.querySelectorAll('#channels-grid .channel-toggle').forEach(el => {
-      const ch = el.dataset.channel;
-      const isActive = settings.preferredChannels.includes(ch);
-      el.classList.toggle('active', isActive);
-      el.querySelector('.toggle-switch').classList.toggle('on', isActive);
+  if (settings.language) document.getElementById('settings-language').value = settings.language;
+  if (settings.timezone) document.getElementById('settings-timezone').value = settings.timezone;
+}
+
+// ── PWA Install ──
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('install-app-btn');
+  if (btn) btn.textContent = 'Add to Home Screen';
+});
+
+function installApp() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then((result) => {
+      if (result.outcome === 'accepted') {
+        showToast('App installed! Find it on your home screen.');
+      }
+      deferredInstallPrompt = null;
     });
-  }
-  if (settings.provider) {
-    document.getElementById('settings-provider').value = settings.provider;
+  } else if (window.matchMedia('(display-mode: standalone)').matches) {
+    showToast('App is already installed!');
+  } else {
+    // iOS Safari or browser without install prompt
+    showToast('Tap your browser\'s Share button, then "Add to Home Screen"');
   }
 }
 
-function toggleDevMode() {
-  const toggle = document.getElementById('dev-mode-toggle');
-  const section = document.getElementById('developer-section');
-  const isOn = toggle.classList.toggle('on');
-  section.style.display = isOn ? '' : 'none';
-  localStorage.setItem('upromptpay_devmode', isOn ? '1' : '0');
-  if (isOn) loadDevKeys();
+// Hide install section if already installed as PWA
+if (window.matchMedia('(display-mode: standalone)').matches) {
+  const section = document.getElementById('install-app-section');
+  if (section) {
+    section.querySelector('.settings-section-title').insertAdjacentHTML('afterend',
+      '<div style="padding:8px 0;color:var(--emerald);font-size:13px;font-weight:500">App is installed</div>');
+    const btn = document.getElementById('install-app-btn');
+    if (btn) btn.style.display = 'none';
+  }
 }
 
-// Restore dev mode state
-if (localStorage.getItem('upromptpay_devmode') === '1') {
-  const toggle = document.getElementById('dev-mode-toggle');
-  if (toggle) { toggle.classList.add('on'); }
-  const section = document.getElementById('developer-section');
-  if (section) { section.style.display = ''; }
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(() => {
+    console.log('Service worker registered');
+  }).catch((err) => {
+    console.log('SW registration failed:', err);
+  });
+}
+
+// ── Pay by Phone (Payment Request API) ──
+async function payByPhone(amount, label, merchantId) {
+  if (!window.PaymentRequest) {
+    showToast('Payment Request API not supported in this browser');
+    return null;
+  }
+
+  const methods = [
+    {
+      supportedMethods: 'https://apple.com/apple-pay',
+      data: {
+        version: 3,
+        merchantIdentifier: 'merchant.com.upromptpay',
+        merchantCapabilities: ['supports3DS'],
+        supportedNetworks: ['visa', 'masterCard', 'amex'],
+        countryCode: 'US',
+      },
+    },
+    {
+      supportedMethods: 'https://google.com/pay',
+      data: {
+        environment: 'PRODUCTION',
+        apiVersion: 2,
+        apiVersionMinor: 0,
+        merchantInfo: { merchantId: merchantId || 'upromptpay', merchantName: 'uPromptPay' },
+        allowedPaymentMethods: [{
+          type: 'CARD',
+          parameters: { allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'], allowedCardNetworks: ['VISA', 'MASTERCARD', 'AMEX'] },
+          tokenizationSpecification: { type: 'PAYMENT_GATEWAY', parameters: { gateway: 'stripe', 'stripe:version': '2024-12-18.acacia', 'stripe:publishableKey': 'pk_live_placeholder' } },
+        }],
+      },
+    },
+    { supportedMethods: 'basic-card', data: { supportedNetworks: ['visa', 'mastercard', 'amex'] } },
+  ];
+
+  const details = {
+    total: { label: label || 'uPromptPay Payment', amount: { currency: 'USD', value: String(amount) } },
+    displayItems: [
+      { label: label || 'Payment', amount: { currency: 'USD', value: String(amount) } },
+    ],
+  };
+
+  try {
+    const request = new PaymentRequest(methods, details);
+    const canMake = await request.canMakePayment();
+    if (!canMake) {
+      showToast('No supported payment method found on this device');
+      return null;
+    }
+    const response = await request.show();
+    await response.complete('success');
+    showToast('Payment successful!');
+    return response;
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      showToast('Payment failed: ' + err.message);
+    }
+    return null;
+  }
 }
 
 function showToast(message) {
@@ -2104,6 +2084,24 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
     if (e.target === m) closeModals();
   });
 });
+
+function openPayByPhone() {
+  document.getElementById('pay-modal').classList.add('active');
+}
+
+async function executePayByPhone() {
+  const amount = parseFloat(document.getElementById('pay-amount').value);
+  const label = document.getElementById('pay-label').value.trim() || 'uPromptPay Payment';
+  if (!amount || amount <= 0) { showToast('Enter an amount'); return; }
+  closeModals();
+  const result = await payByPhone(amount, label);
+  if (result) {
+    // Route through AI chat for confirmation
+    navigateTo('ai');
+    document.getElementById('chat-input').value = `Payment of $${amount.toFixed(2)} for "${label}" completed via phone`;
+    sendMessage();
+  }
+}
 
 async function executeSend() {
   const to = document.getElementById('send-to').value;
