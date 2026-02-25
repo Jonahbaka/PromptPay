@@ -10,6 +10,7 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <script src="https://js.stripe.com/v3/"></script>
   <title>PromptPay</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1008,10 +1009,10 @@
 
         <div class="chat-input-area">
           <div class="chat-suggestions" id="chat-suggestions">
-            <div class="chat-suggestion" onclick="sendSuggestion(this)">Send $50 to Sarah</div>
-            <div class="chat-suggestion" onclick="sendSuggestion(this)">Pay electricity bill</div>
-            <div class="chat-suggestion" onclick="sendSuggestion(this)">Check my balance</div>
-            <div class="chat-suggestion" onclick="sendSuggestion(this)">Show savings goals</div>
+            <div class="chat-suggestion" onclick="openSendModal()">Send Money</div>
+            <div class="chat-suggestion" onclick="openAddCardModal()">Add Card</div>
+            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Check my balance">My Balance</div>
+            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Pay electricity bill">Pay a Bill</div>
           </div>
           <div class="chat-input-wrap">
             <input class="chat-input" id="chat-input" placeholder="Ask anything..." autocomplete="off" onkeydown="if(event.key==='Enter')sendMessage()">
@@ -1027,11 +1028,11 @@
     <div class="page" id="page-wallet">
       <div class="section-header" style="margin-bottom:18px">
         <div class="section-title">Payment Methods</div>
-        <div class="section-link">+ Add</div>
+        <div class="section-link" onclick="openAddCardModal()">+ Add</div>
       </div>
 
       <div class="card-carousel" id="payment-cards">
-        <div style="min-width:280px;padding:30px 24px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3)" onclick="navigateTo('ai');document.getElementById('chat-input').value='Link a payment method';sendMessage()">
+        <div style="min-width:280px;padding:30px 24px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3)" onclick="openAddCardModal()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           <span style="font-size:13px">Add Payment Method</span>
         </div>
@@ -1400,6 +1401,19 @@
 
 </div>
 
+<!-- Add Card Modal -->
+<div class="modal-overlay" id="add-card-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Add Payment Method</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Securely add a debit or credit card</p>
+    <div id="stripe-card-element" style="padding:16px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:16px;min-height:44px"></div>
+    <div id="card-errors" style="color:var(--red);font-size:13px;margin-bottom:16px;display:none"></div>
+    <button id="add-card-submit" onclick="submitCardForm()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Add Card</button>
+    <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
+  </div>
+</div>
+
 <!-- Send Modal -->
 <div class="modal-overlay" id="send-modal">
   <div class="modal-sheet">
@@ -1748,6 +1762,7 @@ function showApp() {
   connectWebSocket();
   updateTokenMatrix();
   loadSettings();
+  loadPaymentMethods();
 }
 
 function applyAirtimeGeoGate() {
@@ -2088,6 +2103,26 @@ function connectWebSocket() {
 }
 
 // ── AI Chat ──
+function interceptAction(text) {
+  const t = text.toLowerCase();
+  if ((t.includes('link') || t.includes('add')) && (t.includes('card') || t.includes('payment method'))) {
+    return { message: 'Opening the secure card form for you.', action: () => openAddCardModal() };
+  }
+  if (t === 'balance' || t === 'check my balance' || t === 'how much do i have' || t === 'my balance') {
+    const bal = document.getElementById('balance-display')?.textContent || '$0.00';
+    return { message: `Your current balance is **${bal}**. View details in your Wallet tab.`, action: null };
+  }
+  const sendMatch = t.match(/^send\s+\$?([\d.]+)\s+to\s+(.+)/i);
+  if (sendMatch) {
+    return { message: `Opening send form for $${sendMatch[1]} to ${sendMatch[2]}.`, action: () => {
+      const amtEl = document.getElementById('send-amount'); const toEl = document.getElementById('send-to');
+      if (amtEl) amtEl.value = sendMatch[1]; if (toEl) toEl.value = sendMatch[2];
+      openSendModal();
+    }};
+  }
+  return null;
+}
+
 async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
@@ -2095,6 +2130,15 @@ async function sendMessage() {
 
   input.value = '';
   addChatMessage(text, 'user');
+
+  // Intercept deterministic actions — no AI tokens needed
+  const intercepted = interceptAction(text);
+  if (intercepted) {
+    await simulateDelay(400);
+    addChatMessage(intercepted.message, 'ai');
+    if (intercepted.action) intercepted.action();
+    return;
+  }
 
   // Hide suggestions after first message
   document.getElementById('chat-suggestions').style.display = 'none';
@@ -2178,14 +2222,13 @@ function addTypingIndicator() {
 
 function detectTaskType(text) {
   const t = text.toLowerCase();
-  if (t.includes('send') || t.includes('transfer') || t.includes('pay ')) return 'p2p_transfer';
-  if (t.includes('bill') || t.includes('electric') || t.includes('utility')) return 'bill_payment';
-  if (t.includes('balance') || t.includes('how much')) return 'balance_check';
-  if (t.includes('saving') || t.includes('goal')) return 'savings_query';
-  if (t.includes('card') || t.includes('wallet')) return 'wallet_query';
-  if (t.includes('referr')) return 'referral_query';
-  if (t.includes('streak') || t.includes('reward') || t.includes('loyalty')) return 'loyalty_query';
-  return 'general_query';
+  if (t.includes('send') || t.includes('transfer')) return 'wallet_transfer';
+  if (t.includes('bill') || t.includes('electric') || t.includes('utility')) return 'bill_pay';
+  if (t.includes('balance') || t.includes('how much') || t.includes('history')) return 'tx_history';
+  if (t.includes('airtime') || t.includes('data') || t.includes('recharge')) return 'payment_initiate';
+  if (t.includes('card') || t.includes('payment method')) return 'payment_method_manage';
+  if (t.includes('pay ')) return 'payment_initiate';
+  return 'custom';
 }
 
 function formatAIResponse(text) {
@@ -2195,16 +2238,14 @@ function formatAIResponse(text) {
 function getSmartFallback(text) {
   const type = detectTaskType(text);
   const responses = {
-    p2p_transfer: "I'll process that transfer through our Nexus wallet agent. Payments are routed via Stripe for US/EU recipients or M-Pesa/Flutterwave for African regions. Just tell me the recipient and amount.",
-    bill_payment: "I can handle bill payments through Mercury (our payment agent). Just tell me what bill you want to pay and the amount.",
-    balance_check: "I'm checking your balance now. Your wallet balance will update as you make deposits and transactions.",
-    savings_query: "You can create savings goals and I'll help you track them. Would you like to set up a new savings goal?",
-    wallet_query: "You can link payment methods like M-Pesa, bank cards, or mobile money. Would you like to add a payment method?",
-    referral_query: "Share your referral link to earn $5 per signup. You both get $5 when they make their first $5+ transaction!",
-    loyalty_query: "You earn loyalty points on every transaction. Points unlock fee discounts and rewards at higher tiers (Bronze > Silver > Gold > Platinum).",
-    general_query: "I'm your PromptPay AI assistant powered by 5 specialized agents and 59 tools. I can help with payments, bills, airtime top-up, cross-border transfers, and more. What would you like to do?"
+    wallet_transfer: "Got it. Who are you sending to and how much?",
+    bill_pay: "I'll handle that bill. What's the bill type and amount?",
+    tx_history: `Your balance is ${document.getElementById('balance-display')?.textContent || '$0.00'}. Need transaction details?`,
+    payment_initiate: "On it. What would you like to pay for?",
+    payment_method_manage: "You can manage your cards in the Wallet tab. Need help with something specific?",
+    custom: "What would you like to do? I can send money, pay bills, buy airtime, or check your balance."
   };
-  return responses[type] || responses.general_query;
+  return responses[type] || responses.custom;
 }
 
 // ── Token Matrix (TokenForge) ──
@@ -2272,6 +2313,122 @@ document.querySelectorAll('.modal-overlay').forEach(m => {
 
 function openPayByPhone() {
   document.getElementById('pay-modal').classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════
+// STRIPE ELEMENTS (Card Linking)
+// ══════════════════════════════════════════════════════════
+
+let stripeInstance = null;
+let cardElement = null;
+let stripePublishableKey = null;
+
+async function initStripeElements() {
+  if (stripeInstance) return;
+  try {
+    const res = await authFetch(API_BASE + '/api/config/stripe-key');
+    if (!res.ok) return;
+    const { publishableKey } = await res.json();
+    if (!publishableKey) return;
+    stripePublishableKey = publishableKey;
+    stripeInstance = Stripe(publishableKey);
+    const elements = stripeInstance.elements({
+      appearance: {
+        theme: 'night',
+        variables: {
+          colorPrimary: '#7c3aed',
+          colorBackground: '#0c0c14',
+          colorText: '#f0f2f5',
+          colorTextSecondary: '#8b92a5',
+          borderRadius: '12px',
+          fontFamily: 'Inter, sans-serif',
+        },
+      },
+    });
+    cardElement = elements.create('card', {
+      style: { base: { fontSize: '16px', color: '#f0f2f5', '::placeholder': { color: '#4a5068' } } },
+    });
+  } catch (err) {
+    console.error('Stripe init failed:', err);
+  }
+}
+
+function openAddCardModal() {
+  document.getElementById('add-card-modal').classList.add('active');
+  initStripeElements().then(() => {
+    if (cardElement) {
+      cardElement.mount('#stripe-card-element');
+      cardElement.on('change', (event) => {
+        const errDiv = document.getElementById('card-errors');
+        if (event.error) { errDiv.textContent = event.error.message; errDiv.style.display = 'block'; }
+        else { errDiv.style.display = 'none'; }
+      });
+    }
+  });
+}
+
+async function submitCardForm() {
+  if (!stripeInstance || !cardElement) { showToast('Card form not ready'); return; }
+  const btn = document.getElementById('add-card-submit');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  try {
+    const { paymentMethod, error } = await stripeInstance.createPaymentMethod({ type: 'card', card: cardElement });
+    if (error) {
+      document.getElementById('card-errors').textContent = error.message;
+      document.getElementById('card-errors').style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Add Card';
+      return;
+    }
+    const res = await authFetch(API_BASE + '/api/user/payment-methods', {
+      method: 'POST', body: JSON.stringify({ paymentMethodId: paymentMethod.id }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      showToast(`${data.paymentMethod.brand} ...${data.paymentMethod.last4} added!`);
+      closeModals(); cardElement.clear(); loadPaymentMethods();
+    } else {
+      const errData = await res.json();
+      showToast(errData.error || 'Failed to add card');
+    }
+  } catch (err) { showToast('Failed to add card'); }
+  btn.disabled = false; btn.textContent = 'Add Card';
+}
+
+async function loadPaymentMethods() {
+  try {
+    const res = await authFetch(API_BASE + '/api/user/payment-methods');
+    if (!res.ok) return;
+    const { methods } = await res.json();
+    const container = document.getElementById('payment-cards');
+    container.innerHTML = '';
+    methods.forEach(pm => {
+      const card = document.createElement('div');
+      card.style.cssText = 'min-width:280px;padding:24px;border-radius:20px;background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(59,130,246,0.1));border:1px solid rgba(255,255,255,0.08);flex-shrink:0;';
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <span style="font-size:18px;font-weight:700;text-transform:capitalize">${pm.brand}</span>
+          <button onclick="removePaymentMethod('${pm.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px" title="Remove">&#10005;</button>
+        </div>
+        <div style="font-size:18px;letter-spacing:3px;margin-bottom:12px;font-family:monospace">**** **** **** ${pm.last4}</div>
+        <div style="font-size:12px;color:var(--text2)">Expires ${pm.expMonth}/${pm.expYear}</div>`;
+      container.appendChild(card);
+    });
+    // Add button at end
+    const addBtn = document.createElement('div');
+    addBtn.style.cssText = 'min-width:280px;padding:30px 24px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3);flex-shrink:0;';
+    addBtn.onclick = openAddCardModal;
+    addBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span style="font-size:13px">Add Payment Method</span>';
+    container.appendChild(addBtn);
+  } catch (err) { console.error('Failed to load payment methods:', err); }
+}
+
+async function removePaymentMethod(pmId) {
+  if (!confirm('Remove this card?')) return;
+  try {
+    const res = await authFetch(API_BASE + '/api/user/payment-methods/' + pmId, { method: 'DELETE' });
+    if (res.ok) { showToast('Card removed'); loadPaymentMethods(); }
+    else { showToast('Failed to remove card'); }
+  } catch (err) { showToast('Failed to remove card'); }
 }
 
 async function executePayByPhone() {

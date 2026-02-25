@@ -353,5 +353,161 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
     res.json({ publicKey: key });
   });
 
+  // ══════════════════════════════════════════════════════════
+  // STRIPE PAYMENT METHODS
+  // ══════════════════════════════════════════════════════════
+
+  async function stripeRequest(
+    path: string, body: URLSearchParams | null, method: 'POST' | 'GET' | 'DELETE' = 'POST'
+  ): Promise<Record<string, unknown>> {
+    const opts: RequestInit = {
+      method,
+      headers: {
+        Authorization: `Bearer ${CONFIG.stripe.secretKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      signal: AbortSignal.timeout(15000),
+    };
+    if (body && method === 'POST') opts.body = body.toString();
+    const url = `https://api.stripe.com/v1${path}${method === 'GET' && body ? `?${body.toString()}` : ''}`;
+    const resp = await fetch(url, opts);
+    return await resp.json() as Record<string, unknown>;
+  }
+
+  async function getOrCreateStripeCustomer(userId: string): Promise<string> {
+    const row = db.prepare('SELECT stripe_customer_id, email FROM users WHERE id = ?')
+      .get(userId) as { stripe_customer_id: string | null; email: string } | undefined;
+    if (row?.stripe_customer_id) return row.stripe_customer_id;
+
+    const body = new URLSearchParams();
+    body.set('metadata[user_id]', userId);
+    if (row?.email) body.set('email', row.email);
+    const customer = await stripeRequest('/customers', body);
+    if (!customer.id) throw new Error('Failed to create Stripe customer');
+
+    db.prepare('UPDATE users SET stripe_customer_id = ? WHERE id = ?')
+      .run(customer.id as string, userId);
+    return customer.id as string;
+  }
+
+  // ── Stripe Publishable Key ──
+  router.get('/api/config/stripe-key', (_req: Request, res: Response) => {
+    const key = CONFIG.stripe.publishableKey;
+    if (!key) { res.status(503).json({ error: 'Stripe not configured' }); return; }
+    res.json({ publishableKey: key });
+  });
+
+  // ── Add Payment Method ──
+  router.post('/api/user/payment-methods', authenticate, async (req: Request, res: Response) => {
+    try {
+      const { paymentMethodId } = req.body;
+      if (!paymentMethodId) {
+        res.status(400).json({ error: 'paymentMethodId is required' });
+        return;
+      }
+
+      const customerId = await getOrCreateStripeCustomer(req.auth!.userId);
+
+      // Attach payment method to customer
+      const body = new URLSearchParams();
+      body.set('customer', customerId);
+      const result = await stripeRequest(`/payment_methods/${paymentMethodId}/attach`, body);
+
+      if (result.error) {
+        res.status(400).json({ error: (result.error as Record<string, string>).message || 'Failed to add card' });
+        return;
+      }
+
+      const card = result.card as Record<string, unknown> | undefined;
+      deps.logger.info(`Payment method added for user ${req.auth!.userId}: ${result.id}`);
+      res.json({
+        success: true,
+        paymentMethod: {
+          id: result.id,
+          brand: card?.brand || 'card',
+          last4: card?.last4 || '****',
+          expMonth: card?.exp_month,
+          expYear: card?.exp_year,
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Add payment method error: ${msg}`);
+      res.status(500).json({ error: 'Failed to add payment method' });
+    }
+  });
+
+  // ── List Payment Methods ──
+  router.get('/api/user/payment-methods', authenticate, async (req: Request, res: Response) => {
+    try {
+      const row = db.prepare('SELECT stripe_customer_id FROM users WHERE id = ?')
+        .get(req.auth!.userId) as { stripe_customer_id: string | null } | undefined;
+
+      if (!row?.stripe_customer_id) {
+        res.json({ methods: [] });
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.set('customer', row.stripe_customer_id);
+      params.set('type', 'card');
+      const result = await stripeRequest('/payment_methods', params, 'GET');
+
+      const data = (result.data || []) as Array<Record<string, unknown>>;
+      const methods = data.map((pm) => {
+        const card = pm.card as Record<string, unknown> | undefined;
+        return {
+          id: pm.id,
+          brand: card?.brand || 'card',
+          last4: card?.last4 || '****',
+          expMonth: card?.exp_month,
+          expYear: card?.exp_year,
+        };
+      });
+
+      res.json({ methods });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`List payment methods error: ${msg}`);
+      res.status(500).json({ error: 'Failed to list payment methods' });
+    }
+  });
+
+  // ── Remove Payment Method ──
+  router.delete('/api/user/payment-methods/:id', authenticate, async (req: Request, res: Response) => {
+    try {
+      const result = await stripeRequest(`/payment_methods/${req.params.id}/detach`, new URLSearchParams());
+      if (result.error) {
+        res.status(400).json({ error: (result.error as Record<string, string>).message || 'Failed to remove card' });
+        return;
+      }
+      deps.logger.info(`Payment method removed: ${req.params.id}`);
+      res.json({ success: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Remove payment method error: ${msg}`);
+      res.status(500).json({ error: 'Failed to remove payment method' });
+    }
+  });
+
+  // ── Set Default Payment Method ──
+  router.post('/api/user/payment-methods/:id/default', authenticate, async (req: Request, res: Response) => {
+    try {
+      const customerId = await getOrCreateStripeCustomer(req.auth!.userId);
+      const body = new URLSearchParams();
+      body.set('invoice_settings[default_payment_method]', req.params.id as string);
+      const result = await stripeRequest(`/customers/${customerId}`, body);
+      if (result.error) {
+        res.status(400).json({ error: (result.error as Record<string, string>).message || 'Failed to set default' });
+        return;
+      }
+      res.json({ success: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Set default payment method error: ${msg}`);
+      res.status(500).json({ error: 'Failed to set default payment method' });
+    }
+  });
+
   return router;
 }

@@ -510,6 +510,10 @@ export class MemoryStore extends EventEmitter {
     try {
       this.db.exec(`ALTER TABLE users ADD COLUMN country TEXT DEFAULT ''`);
     } catch { /* column already exists */ }
+
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN stripe_customer_id TEXT DEFAULT NULL`);
+    } catch { /* column already exists */ }
   }
 
   getDb(): Database.Database {
