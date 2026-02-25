@@ -1,7 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
-// PromptPay v1.4 :: Entry Point
-// Multi-tenant fintech platform — 5 agents, 59 tools, 9 hooks
-// PWA + Pay by Phone + Fees + Cross-Border + Agent Network + Virality
+// PromptPay v2.0 :: Entry Point
+// Agentic-first platform — 9 agents (4 agentic + 5 payment), ~93 tools
+// Aria (Shopping) + Sage (Advisor) + Quant (Trading) + Otto (Assistant)
+// + Nexus + Janus + Mercury + Plutus + Atlas
 // https://www.upromptpay.com
 // ═══════════════════════════════════════════════════════════════
 
@@ -25,7 +26,13 @@ import { ChannelManager } from './channels/manager.js';
 import { EmailChannel, EmailTemplates } from './channels/email.js';
 import { PushChannel } from './channels/push.js';
 
-// Import agent tools
+// Import agentic agent tools (primary)
+import { shoppingTools } from './agents/shopping/index.js';
+import { advisorTools } from './agents/advisor/index.js';
+import { tradingTools } from './agents/trading/index.js';
+import { assistantTools } from './agents/assistant/index.js';
+
+// Import payment infrastructure agent tools
 import { walletTools } from './agents/wallet/index.js';
 import { usPaymentTools } from './agents/us-payment/index.js';
 import { paymentTools } from './agents/payment/index.js';
@@ -35,7 +42,8 @@ import { financialTools } from './agents/financial/index.js';
 async function main(): Promise<void> {
   const logger = createLogger('promptpay');
   logger.info('═══════════════════════════════════════════');
-  logger.info(' PromptPay v1.4 — Starting...');
+  logger.info(' PromptPay v2.0 — Starting...');
+  logger.info(' Agentic-First Platform');
   logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
   logger.info('═══════════════════════════════════════════');
 
@@ -61,7 +69,22 @@ async function main(): Promise<void> {
   const memoryHandle = memory.createMemoryHandle('orchestrator');
   orchestrator.setMemoryHandle(memoryHandle);
 
-  // ── 5. Register Tools (45 across 5 agents) ──
+  // ── 5. Register Tools (~93 across 9 agents) ──
+
+  // Agentic agents (primary)
+  orchestrator.registerTools(shoppingTools);
+  logger.info(`Aria (shopping): ${shoppingTools.length} tools`);
+
+  orchestrator.registerTools(advisorTools);
+  logger.info(`Sage (advisor): ${advisorTools.length} tools`);
+
+  orchestrator.registerTools(tradingTools);
+  logger.info(`Quant (trading): ${tradingTools.length} tools`);
+
+  orchestrator.registerTools(assistantTools);
+  logger.info(`Otto (assistant): ${assistantTools.length} tools`);
+
+  // Payment infrastructure agents
   orchestrator.registerTools(walletTools);
   logger.info(`Nexus (wallet): ${walletTools.length} tools`);
 
@@ -169,9 +192,10 @@ async function main(): Promise<void> {
 
   server.listen(CONFIG.gateway.port, CONFIG.gateway.host, () => {
     logger.info('═══════════════════════════════════════════');
-    logger.info(` PromptPay v1.4 ONLINE`);
+    logger.info(` PromptPay v2.0 ONLINE — Agentic-First`);
     logger.info(` Local:  http://${CONFIG.gateway.host}:${CONFIG.gateway.port}`);
     logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
+    logger.info(` Agents: 9 (Aria, Sage, Quant, Otto + Nexus, Janus, Mercury, Plutus, Atlas)`);
     logger.info(` Tools: ${orchestrator.getState().toolCount}`);
     logger.info(` Hooks: 9 modules + Fee Engine`);
     logger.info(` PWA: Installable (Add to Home Screen)`);

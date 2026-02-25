@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay :: Daemon Loop
-// Scheduled jobs: hook engine daily/weekly, self-eval, health checks
+// Scheduled jobs: hook engine, self-eval, health checks, agentic jobs
 // ═══════════════════════════════════════════════════════════════
 
 import Database from 'better-sqlite3';
+import { v4 as uuid } from 'uuid';
 import type { LoggerHandle } from '../core/types.js';
 import type { Orchestrator } from '../core/orchestrator.js';
 import type { AuditTrail } from '../protocols/audit-trail.js';
@@ -106,6 +107,95 @@ export class DaemonLoop {
       const credited = this.deps.hookEngine.referrals.creditPending();
       if (credited > 0) {
         this.deps.logger.info(`[Daemon] Credited ${credited} referral bonuses`);
+      }
+    });
+
+    // ── Agentic Agent Jobs ──
+
+    // DCA execution (every hour): execute due DCA schedules
+    this.addJob('dca_execution', 'DCA Schedule Execution', 3600000, async () => {
+      const now = new Date().toISOString();
+      const due = this.deps.db.prepare(
+        "SELECT * FROM trading_dca_schedules WHERE status = 'active' AND next_execution <= ?"
+      ).all(now) as Array<Record<string, unknown>>;
+
+      for (const schedule of due) {
+        const nextExec = new Date(Date.now() + (schedule.frequency_hours as number) * 3600000).toISOString();
+        const nowTs = new Date().toISOString();
+        const orderId = uuid();
+
+        // Create a trading order for this DCA execution
+        this.deps.db.prepare(`
+          INSERT INTO trading_orders (id, portfolio_id, symbol, side, order_type, quantity, price, status, paper_trade, filled_at, created_at)
+          VALUES (?, ?, ?, 'buy', 'market', ?, NULL, 'filled', 1, ?, ?)
+        `).run(orderId, schedule.portfolio_id, schedule.symbol, schedule.amount_usd, nowTs, nowTs);
+
+        // Update the DCA schedule counters and next execution time
+        this.deps.db.prepare(`
+          UPDATE trading_dca_schedules
+          SET executions_count = executions_count + 1,
+              total_invested = total_invested + ?,
+              next_execution = ?
+          WHERE id = ?
+        `).run(schedule.amount_usd, nextExec, schedule.id);
+        this.deps.logger.info(`[Daemon] DCA executed: ${schedule.symbol} $${schedule.amount_usd} (order ${orderId})`);
+      }
+      if (due.length > 0) {
+        this.deps.auditTrail.record('daemon', 'dca_execution', 'quant', { executed: due.length });
+      }
+    });
+
+    // Price alerts (every hour): check and trigger price alerts
+    this.addJob('price_alerts', 'Price Alert Check', 3600000, async () => {
+      const active = this.deps.db.prepare(
+        "SELECT * FROM price_alerts WHERE status = 'active'"
+      ).all() as Array<Record<string, unknown>>;
+
+      // In production, this would fetch current prices from APIs
+      // For now, just log the number of active alerts
+      if (active.length > 0) {
+        this.deps.logger.debug(`[Daemon] Monitoring ${active.length} active price alerts`);
+      }
+    });
+
+    // Subscription alerts (every 6 hours): flag upcoming renewals
+    this.addJob('subscription_alerts', 'Subscription Renewal Alerts', 21600000, async () => {
+      const upcoming = this.deps.db.prepare(`
+        SELECT * FROM subscriptions
+        WHERE status = 'active'
+          AND next_billing_date <= datetime('now', '+3 days')
+      `).all() as Array<Record<string, unknown>>;
+
+      if (upcoming.length > 0) {
+        this.deps.logger.info(`[Daemon] ${upcoming.length} subscription(s) renewing within 3 days`);
+        this.deps.auditTrail.record('daemon', 'subscription_alerts', 'otto', {
+          upcoming: upcoming.length,
+          services: upcoming.map(s => s.service_name),
+        });
+      }
+    });
+
+    // Budget checks (every 24 hours): alert on budgets exceeding threshold
+    this.addJob('budget_checks', 'Budget Threshold Alerts', 86400000, async () => {
+      const budgets = this.deps.db.prepare(`
+        SELECT b.*,
+          (SELECT COALESCE(SUM(bc.spent_amount), 0) FROM budget_categories bc WHERE bc.budget_id = b.id) as total_spent
+        FROM budgets b
+        WHERE b.status = 'active'
+      `).all() as Array<Record<string, unknown>>;
+
+      const overThreshold = budgets.filter(b => {
+        const spent = b.total_spent as number;
+        const total = b.total_amount as number;
+        return total > 0 && (spent / total) * 100 >= 80;
+      });
+
+      if (overThreshold.length > 0) {
+        this.deps.logger.info(`[Daemon] ${overThreshold.length} budget(s) exceeding 80% threshold`);
+        this.deps.auditTrail.record('daemon', 'budget_alerts', 'sage', {
+          overThreshold: overThreshold.length,
+          budgets: overThreshold.map(b => ({ name: b.name, spent: b.total_spent, total: b.total_amount })),
+        });
       }
     });
   }

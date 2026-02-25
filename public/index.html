@@ -9,9 +9,9 @@
   <meta name="apple-mobile-web-app-title" content="PromptPay">
 
   <!-- SEO -->
-  <title>PromptPay — AI-Powered Payments | Send Money by Prompt</title>
-  <meta name="description" content="PromptPay is the developer-first financial platform. Send money, pay bills, and manage finances using simple natural language commands. AI-powered, instant, secure.">
-  <meta name="keywords" content="PromptPay, AI payments, send money, mobile payments, fintech, digital wallet, pay by prompt, natural language payments, P2P payments, bill pay">
+  <title>PromptPay — AI Life Assistant | Shopping, Investing, Budgets & Payments</title>
+  <meta name="description" content="PromptPay is your AI life assistant. Shop autonomously, manage investments, track budgets, negotiate bills, and handle payments — all with natural language commands.">
+  <meta name="keywords" content="PromptPay, AI assistant, AI shopping, AI investing, budget tracker, subscription manager, digital wallet, AI payments, fintech, price comparison, DCA trading, bill negotiation">
   <meta name="author" content="PromptPay Inc.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.upromptpay.com/">
@@ -19,15 +19,15 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.upromptpay.com/">
-  <meta property="og:title" content="PromptPay — AI-Powered Payments">
-  <meta property="og:description" content="Send money, pay bills, and manage finances using simple natural language commands. The developer-first financial platform.">
+  <meta property="og:title" content="PromptPay — AI Life Assistant">
+  <meta property="og:description" content="Your AI assistant for shopping, investing, budgeting, and payments. 9 specialized agents handle your financial life autonomously.">
   <meta property="og:image" content="https://www.upromptpay.com/icons/icon-512.png">
   <meta property="og:site_name" content="PromptPay">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="PromptPay — AI-Powered Payments">
-  <meta name="twitter:description" content="Send money, pay bills, and manage finances using simple natural language commands.">
+  <meta name="twitter:title" content="PromptPay — AI Life Assistant">
+  <meta name="twitter:description" content="Your AI assistant for shopping, investing, budgeting, and payments. 9 agents handle your financial life.">
   <meta name="twitter:image" content="https://www.upromptpay.com/icons/icon-512.png">
 
   <!-- Structured Data -->
@@ -1487,27 +1487,37 @@
       </div>
 
       <div class="quick-grid fade-up" style="animation-delay:0.1s">
-        <div class="quick-item" onclick="navigateTo('ai')">
-          <div class="quick-icon qi-violet">&#129302;</div>
-          <div class="quick-label">AI Agent</div>
-        </div>
-        <div class="quick-item" onclick="openSendModal()">
-          <div class="quick-icon qi-blue">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <!-- Agentic Actions (primary) -->
+        <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Create a shopping list'}})">
+          <div class="quick-icon qi-violet" style="background:rgba(168,85,247,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           </div>
-          <div class="quick-label">Pay Bill</div>
+          <div class="quick-label">Shop</div>
         </div>
-        <div class="quick-item" onclick="showQrModal()">
-          <div class="quick-icon qi-cyan">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="21" x2="21" y2="21"/></svg>
-          </div>
-          <div class="quick-label">QR Code</div>
-        </div>
-        <div class="quick-item" onclick="openPayByPhone()">
+        <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Show my portfolio'}})">
           <div class="quick-icon qi-green" style="background:rgba(16,185,129,0.15)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
           </div>
-          <div class="quick-label">Tap to Pay</div>
+          <div class="quick-label">Invest</div>
+        </div>
+        <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Give me financial advice'}})">
+          <div class="quick-icon qi-blue" style="background:rgba(59,130,246,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div class="quick-label">Advisor</div>
+        </div>
+        <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Show my subscriptions'}})">
+          <div class="quick-icon qi-orange" style="background:rgba(249,115,22,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <div class="quick-label">Assistant</div>
+        </div>
+        <!-- Payment Actions -->
+        <div class="quick-item" onclick="openSendModal()">
+          <div class="quick-icon qi-cyan" style="background:rgba(6,182,212,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </div>
+          <div class="quick-label">Send</div>
         </div>
         <div class="quick-item" onclick="navigateTo('wallet')">
           <div class="quick-icon qi-green">
@@ -1515,15 +1525,11 @@
           </div>
           <div class="quick-label">Wallet</div>
         </div>
-        <div class="quick-item" id="airtime-quick-btn" onclick="openAirtimeModal()">
-          <div class="quick-icon qi-orange">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        <div class="quick-item" onclick="showQrModal()">
+          <div class="quick-icon qi-cyan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="21" x2="21" y2="21"/></svg>
           </div>
-          <div class="quick-label">Top Up</div>
-        </div>
-        <div class="quick-item" onclick="openRequestModal()">
-          <div class="quick-icon qi-blue">💸</div>
-          <div class="quick-label">Request Money</div>
+          <div class="quick-label">QR Code</div>
         </div>
         <div class="quick-item">
           <div class="quick-icon qi-red">
@@ -1573,16 +1579,16 @@
 
         <div class="chat-messages" id="chat-messages">
           <div class="msg msg-ai">
-            Hey! I'm your PromptPay AI assistant. I can help you send money, pay bills, check balances, manage savings, and more. Just tell me what you need in plain English.
+            Hey! I'm your PromptPay AI assistant. I can help you shop, invest, manage budgets, track subscriptions, send money, pay bills, and more. Just tell me what you need.
           </div>
         </div>
 
         <div class="chat-input-area">
           <div class="chat-suggestions" id="chat-suggestions">
-            <div class="chat-suggestion" onclick="openSendModal()">Send Money</div>
-            <div class="chat-suggestion" onclick="openAddCardModal()">Add Card</div>
-            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Check my balance">My Balance</div>
-            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Pay electricity bill">Pay a Bill</div>
+            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Create a shopping list for groceries">Shopping List</div>
+            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Show my portfolio">Investments</div>
+            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Create a monthly budget">Budget</div>
+            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Show my subscriptions">Subscriptions</div>
           </div>
           <div class="chat-input-wrap">
             <input class="chat-input" id="chat-input" placeholder="Ask anything..." autocomplete="off" onkeydown="if(event.key==='Enter')sendMessage()">
@@ -3420,6 +3426,16 @@ function addTypingIndicator() {
 
 function detectTaskType(text) {
   const t = text.toLowerCase();
+  // Agentic agents checked FIRST
+  // Shopping (Aria)
+  if (t.includes('shop') || t.includes('grocery') || t.includes('shopping list') || t.includes('buy ') || t.includes('order') || t.includes('reorder') || t.includes('price compare')) return 'shopping_list_create';
+  // Trading (Quant)
+  if (t.includes('invest') || t.includes('stock') || t.includes('crypto') || t.includes('portfolio') || t.includes('trade') || t.includes('dca') || t.includes('market')) return 'trading_portfolio';
+  // Advisory (Sage)
+  if (t.includes('budget') || t.includes('spending') || t.includes('debt') || t.includes('savings advice') || t.includes('tax') || t.includes('net worth') || t.includes('financial health') || t.includes('financial advice') || t.includes('goal')) return 'advisor_budget_create';
+  // Assistant (Otto)
+  if (t.includes('subscription') || t.includes('negotiate') || t.includes('appointment') || t.includes('document') || t.includes('price alert') || t.includes('return') || t.includes('deal') || t.includes('auto pay')) return 'assistant_subscriptions';
+  // Payment infrastructure
   if (t.includes('send') || t.includes('transfer')) return 'wallet_transfer';
   if (t.includes('bill') || t.includes('electric') || t.includes('utility')) return 'bill_pay';
   if (t.includes('balance') || t.includes('how much') || t.includes('history')) return 'tx_history';
@@ -3436,12 +3452,18 @@ function formatAIResponse(text) {
 function getSmartFallback(text) {
   const type = detectTaskType(text);
   const responses = {
+    // Agentic agents
+    shopping_list_create: "I'll help with shopping. Want me to create a list, compare prices, or track an order?",
+    trading_portfolio: "Let me pull up your portfolio. I can also look up stocks, place trades, or set up DCA.",
+    advisor_budget_create: "I can help with your finances. Want to create a budget, analyze spending, or plan a goal?",
+    assistant_subscriptions: "I'll manage that for you. I can list subscriptions, set alerts, or schedule appointments.",
+    // Payment infrastructure
     wallet_transfer: "Got it. Who are you sending to and how much?",
     bill_pay: "I'll handle that bill. What's the bill type and amount?",
     tx_history: `Your balance is ${document.getElementById('balance-display')?.textContent || '$0.00'}. Need transaction details?`,
     payment_initiate: "On it. What would you like to pay for?",
     payment_method_manage: "You can manage your cards in the Wallet tab. Need help with something specific?",
-    custom: "What would you like to do? I can send money, pay bills, buy airtime, or check your balance."
+    custom: "I can help you shop, invest, budget, manage subscriptions, send money, pay bills, and more. What do you need?"
   };
   return responses[type] || responses.custom;
 }

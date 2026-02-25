@@ -1,6 +1,6 @@
 {
   "name": "promptpay",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -31,7 +31,7 @@
   ],
   "author": "PromptPay",
   "license": "ISC",
-  "description": "PromptPay — AI-Powered Fintech Platform with 5 Payment Agents, 45 Tools, and Engagement Hooks",
+  "description": "PromptPay v2.0 — Agentic-First AI Fintech Platform with 9 Agents, ~93 Tools, and Engagement Hooks",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "better-sqlite3": "^12.6.2",

@@ -1,6 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay :: Core Orchestrator
-// Primary Claude 4.6 Opus node — 5 payment agents, 45 tools
+// DeepSeek-first, cost-optimized multi-model orchestration
+// 9 agents (4 agentic + 5 payment), ~93 tools
+// Default: DeepSeek | Escalation: Claude/GPT-4o/Gemini (premium only)
 // ═══════════════════════════════════════════════════════════════
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -13,6 +15,8 @@ import {
   ToolDefinition, ToolResult, ExecutionContext,
   MemoryHandle,
   SystemEvent, EventType, SelfEvaluation,
+  ModelTier, ModelProvider, EscalationReason, ModelRoutingDecision,
+  TransactionIntent, ConfidenceResult, SubscriptionTier,
   type LoggerHandle,
 } from './types.js';
 import { CONFIG } from './config.js';
@@ -40,6 +44,40 @@ interface SubAgentConfig {
 }
 
 const SUB_AGENT_CONFIGS: Record<string, SubAgentConfig> = {
+  // ── Agentic Agents (primary) ──
+  shopping_ops: {
+    role: 'shopping_ops',
+    name: 'Aria',
+    description: 'Shopping assistant — lists, price comparison, autonomous purchasing, order tracking, reorders, smart recommendations',
+    capabilities: ['shopping_lists', 'price_comparison', 'order_placement', 'order_tracking', 'reordering', 'recommendations'],
+    tools: ['create_shopping_list', 'add_to_list', 'find_best_price', 'place_order', 'track_order', 'reorder_items', 'compare_prices', 'smart_recommendations'],
+    temperature: 0.3,
+  },
+  advisor_ops: {
+    role: 'advisor_ops',
+    name: 'Sage',
+    description: 'Financial advisor — budgets, spending analysis, debt strategy, savings advice, tax tips, net worth, health score, goal planning',
+    capabilities: ['budgeting', 'spending_analysis', 'debt_strategy', 'savings_advice', 'tax_tips', 'net_worth', 'health_scoring', 'goal_planning'],
+    tools: ['create_budget', 'analyze_spending', 'debt_strategy', 'savings_advice', 'tax_tips', 'net_worth_snapshot', 'financial_health_score', 'goal_planning'],
+    temperature: 0.3,
+  },
+  trading_ops: {
+    role: 'trading_ops',
+    name: 'Quant',
+    description: 'Trading agent — stock/crypto trades, portfolio management, DCA automation, market signals, risk assessment, paper trading',
+    capabilities: ['market_data', 'trading', 'portfolio_management', 'dca_automation', 'risk_assessment', 'market_signals', 'paper_trading'],
+    tools: ['market_lookup', 'place_trade', 'portfolio_overview', 'set_dca_schedule', 'risk_assessment', 'market_signals', 'paper_trade', 'trading_history', 'set_stop_loss', 'rebalance_portfolio'],
+    temperature: 0.2,
+  },
+  assistant_ops: {
+    role: 'assistant_ops',
+    name: 'Otto',
+    description: 'Life assistant — subscription management, bill negotiation, appointments, document storage, price alerts, deals, return processing',
+    capabilities: ['subscription_management', 'bill_negotiation', 'appointments', 'document_storage', 'price_alerts', 'returns', 'deal_finding', 'payment_optimization'],
+    tools: ['manage_subscriptions', 'negotiate_bill', 'schedule_appointment', 'store_document', 'set_price_alert', 'process_return', 'find_deals', 'auto_pay_optimize'],
+    temperature: 0.3,
+  },
+  // ── Payment Infrastructure Agents ──
   wallet_ops: {
     role: 'wallet_ops',
     name: 'Nexus',
@@ -82,45 +120,48 @@ const SUB_AGENT_CONFIGS: Record<string, SubAgentConfig> = {
   },
 };
 
-// ── Orchestrator ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+// Orchestrator
+// ═══════════════════════════════════════════════════════════
 
 export class Orchestrator extends EventEmitter<OrchestratorEvents> {
+  private identity: AgentIdentity;
   private client: Anthropic;
   private systemPrompt: string;
+  private tools: Map<string, ToolDefinition> = new Map();
   private agents: Map<string, AgentState> = new Map();
   private tasks: Map<string, Task> = new Map();
-  private tools: Map<string, ToolDefinition> = new Map();
-  private conversationHistory: Anthropic.MessageParam[] = [];
   private executionLog: SystemEvent[] = [];
   private selfEvaluations: SelfEvaluation[] = [];
-  private isRunning = false;
-  private logger: LoggerHandle;
-  private identity: AgentIdentity;
+  private conversationHistory: Anthropic.MessageParam[] = [];
   private memoryHandle: MemoryHandle | null = null;
+  private logger: LoggerHandle;
+  isRunning = false;
 
   constructor(logger: LoggerHandle) {
     super();
     this.logger = logger;
     this.client = new Anthropic({ apiKey: CONFIG.anthropic.apiKey });
 
-    try {
-      this.systemPrompt = fs.readFileSync(CONFIG.systemPrompt.path, 'utf-8');
-    } catch {
-      this.systemPrompt = 'You are PromptPay Operations Intelligence. Manage all financial operations autonomously.';
-      this.logger.warn('System prompt file not found, using default');
-    }
-
     this.identity = {
-      id: uuid(),
+      id: 'orchestrator-primary',
       role: 'orchestrator',
       name: 'POI',
-      description: 'PromptPay Operations Intelligence — Primary Orchestrator Node',
-      capabilities: ['routing', 'sub_agent_spawning', 'self_evaluation', 'task_management'],
+      description: 'PromptPay Operations Intelligence — primary orchestrator (9 agents, ~93 tools)',
+      capabilities: ['task_routing', 'sub_agent_management', 'self_evaluation', 'multi_model_orchestration'],
       spawnedAt: new Date(),
       parentId: null,
     };
 
-    this.logger.info(`Orchestrator initialized: ${this.identity.id}`);
+    // Load system prompt
+    try {
+      this.systemPrompt = fs.readFileSync(CONFIG.systemPrompt.path, 'utf-8');
+    } catch {
+      this.systemPrompt = 'You are PromptPay Operations Intelligence, an AI-powered fintech platform with 9 agents and ~93 tools.';
+      this.logger.warn('System prompt not found, using default');
+    }
+
+    this.logger.info(`Orchestrator initialized: ${this.identity.name} (${this.identity.id})`);
   }
 
   // ── Memory Injection ───────────────────────────────────
@@ -203,7 +244,46 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
 
   private routeTask(task: Task): AgentRole {
     const routing: Record<TaskType, AgentRole> = {
-      // Financial
+      // ── Agentic Agents (primary) ──
+      // Shopping (Aria)
+      shopping_list_create: 'shopping_ops',
+      shopping_list_manage: 'shopping_ops',
+      shopping_price_compare: 'shopping_ops',
+      shopping_order_place: 'shopping_ops',
+      shopping_order_track: 'shopping_ops',
+      shopping_reorder: 'shopping_ops',
+      // Advisory (Sage)
+      advisor_budget_create: 'advisor_ops',
+      advisor_spending_analysis: 'advisor_ops',
+      advisor_debt_strategy: 'advisor_ops',
+      advisor_savings_advice: 'advisor_ops',
+      advisor_tax_tips: 'advisor_ops',
+      advisor_net_worth: 'advisor_ops',
+      advisor_health_score: 'advisor_ops',
+      advisor_goal_planning: 'advisor_ops',
+      advisor_general: 'advisor_ops',
+      // Trading (Quant)
+      trading_market_lookup: 'trading_ops',
+      trading_place_trade: 'trading_ops',
+      trading_portfolio: 'trading_ops',
+      trading_dca_schedule: 'trading_ops',
+      trading_risk_assessment: 'trading_ops',
+      trading_market_signals: 'trading_ops',
+      trading_paper_trade: 'trading_ops',
+      trading_history: 'trading_ops',
+      trading_stop_loss: 'trading_ops',
+      trading_rebalance: 'trading_ops',
+      // Assistant (Otto)
+      assistant_subscriptions: 'assistant_ops',
+      assistant_negotiate_bill: 'assistant_ops',
+      assistant_appointment: 'assistant_ops',
+      assistant_document: 'assistant_ops',
+      assistant_price_alert: 'assistant_ops',
+      assistant_process_return: 'assistant_ops',
+      assistant_find_deals: 'assistant_ops',
+      assistant_auto_pay: 'assistant_ops',
+      // ── Payment Infrastructure ──
+      // Financial (Atlas)
       financial_assessment: 'financial_ops',
       credit_repair: 'financial_ops',
       // Payments (Mercury)
@@ -235,10 +315,9 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
       upromptpay: 'wallet_ops',
       smart_split: 'wallet_ops',
       tx_history: 'wallet_ops',
-      // Messaging
+      // ── System ──
       messaging_outbound: 'orchestrator',
       messaging_inbound: 'orchestrator',
-      // System
       self_evaluation: 'orchestrator',
       health_check: 'orchestrator',
       custom: 'orchestrator',
@@ -310,7 +389,21 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
 
   // ── Sub-Agent Spawning ────────────────────────────────────
 
+  private isAgentEnabled(role: AgentRole): boolean {
+    switch (role) {
+      case 'shopping_ops': return CONFIG.shopping.enabled;
+      case 'trading_ops': return CONFIG.trading.enabled;
+      case 'advisor_ops': return CONFIG.advisor.enabled;
+      case 'assistant_ops': return CONFIG.assistant.enabled;
+      default: return true; // payment infrastructure agents are always enabled
+    }
+  }
+
   private async spawnSubAgent(role: AgentRole, task: Task): Promise<TaskResult> {
+    if (!this.isAgentEnabled(role)) {
+      return { success: false, output: null, tokensUsed: 0, executionTimeMs: 0, subTasksSpawned: [], errors: [`Agent ${role} is disabled`] };
+    }
+
     const config = SUB_AGENT_CONFIGS[role];
     if (!config) {
       return { success: false, output: null, tokensUsed: 0, executionTimeMs: 0, subTasksSpawned: [], errors: [`No config for role: ${role}`] };

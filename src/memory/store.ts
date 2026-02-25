@@ -506,6 +506,254 @@ export class MemoryStore extends EventEmitter {
       );
     `);
 
+    // ── Agentic Agent Tables ──
+    this.db.exec(`
+      -- ═══════════════════════════════════════════════════
+      -- SHOPPING (Aria)
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS shopping_lists (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'completed', 'archived')),
+        total_estimated REAL DEFAULT 0,
+        total_actual REAL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_shopping_lists_user ON shopping_lists(user_id);
+
+      CREATE TABLE IF NOT EXISTS shopping_items (
+        id TEXT PRIMARY KEY,
+        list_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        quantity INTEGER DEFAULT 1,
+        unit TEXT DEFAULT 'each',
+        estimated_price REAL,
+        actual_price REAL,
+        purchased INTEGER DEFAULT 0,
+        store TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (list_id) REFERENCES shopping_lists(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_shopping_items_list ON shopping_items(list_id);
+
+      CREATE TABLE IF NOT EXISTS shopping_orders (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        list_id TEXT,
+        store TEXT NOT NULL,
+        total_amount REAL NOT NULL,
+        currency TEXT DEFAULT 'usd',
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled')),
+        tracking_number TEXT,
+        estimated_delivery TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_shopping_orders_user ON shopping_orders(user_id);
+
+      -- ═══════════════════════════════════════════════════
+      -- ADVISORY (Sage)
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS budgets (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        total_amount REAL NOT NULL,
+        period TEXT NOT NULL CHECK(period IN ('weekly', 'monthly', 'quarterly', 'annual')),
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'paused', 'completed')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_budgets_user ON budgets(user_id);
+
+      CREATE TABLE IF NOT EXISTS budget_categories (
+        id TEXT PRIMARY KEY,
+        budget_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        allocated_amount REAL NOT NULL,
+        spent_amount REAL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (budget_id) REFERENCES budgets(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_budget_cats_budget ON budget_categories(budget_id);
+
+      CREATE TABLE IF NOT EXISTS financial_goals (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('savings', 'debt_payoff', 'investment', 'emergency_fund', 'retirement', 'custom')),
+        target_amount REAL NOT NULL,
+        current_amount REAL DEFAULT 0,
+        target_date TEXT,
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'paused', 'completed', 'cancelled')),
+        strategy TEXT DEFAULT '{}',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_financial_goals_user ON financial_goals(user_id);
+
+      -- ═══════════════════════════════════════════════════
+      -- TRADING (Quant)
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS trading_portfolios (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        cash_balance REAL DEFAULT 0,
+        total_value REAL DEFAULT 0,
+        paper_mode INTEGER DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_trading_portfolios_user ON trading_portfolios(user_id);
+
+      CREATE TABLE IF NOT EXISTS trading_positions (
+        id TEXT PRIMARY KEY,
+        portfolio_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('stock', 'crypto', 'etf')),
+        quantity REAL NOT NULL,
+        avg_cost_basis REAL NOT NULL,
+        current_price REAL,
+        unrealized_pnl REAL,
+        opened_at TEXT NOT NULL,
+        FOREIGN KEY (portfolio_id) REFERENCES trading_portfolios(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_trading_positions_portfolio ON trading_positions(portfolio_id);
+
+      CREATE TABLE IF NOT EXISTS trading_orders (
+        id TEXT PRIMARY KEY,
+        portfolio_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        side TEXT NOT NULL CHECK(side IN ('buy', 'sell')),
+        order_type TEXT NOT NULL CHECK(order_type IN ('market', 'limit', 'stop_loss')),
+        quantity REAL NOT NULL,
+        price REAL,
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'filled', 'cancelled', 'rejected')),
+        paper_trade INTEGER DEFAULT 1,
+        filled_at TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_trading_orders_portfolio ON trading_orders(portfolio_id);
+
+      CREATE TABLE IF NOT EXISTS trading_dca_schedules (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        portfolio_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        amount_usd REAL NOT NULL,
+        frequency_hours INTEGER NOT NULL,
+        next_execution TEXT NOT NULL,
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'paused', 'cancelled')),
+        executions_count INTEGER DEFAULT 0,
+        total_invested REAL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_dca_user ON trading_dca_schedules(user_id);
+      CREATE INDEX IF NOT EXISTS idx_dca_next ON trading_dca_schedules(next_execution, status);
+
+      CREATE TABLE IF NOT EXISTS trading_watchlist (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('stock', 'crypto', 'etf')),
+        target_price REAL,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        UNIQUE(user_id, symbol)
+      );
+      CREATE INDEX IF NOT EXISTS idx_watchlist_user ON trading_watchlist(user_id);
+
+      -- ═══════════════════════════════════════════════════
+      -- ASSISTANT (Otto)
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        service_name TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'usd',
+        frequency TEXT NOT NULL CHECK(frequency IN ('weekly', 'monthly', 'quarterly', 'annual')),
+        next_billing_date TEXT NOT NULL,
+        category TEXT DEFAULT 'other',
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'paused', 'cancelled')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
+
+      CREATE TABLE IF NOT EXISTS stored_documents (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        doc_type TEXT NOT NULL,
+        category TEXT DEFAULT 'other' CHECK(category IN ('receipt', 'warranty', 'contract', 'insurance', 'tax', 'other')),
+        content TEXT NOT NULL,
+        metadata TEXT DEFAULT '{}',
+        expires_at TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_stored_docs_user ON stored_documents(user_id);
+
+      CREATE TABLE IF NOT EXISTS price_alerts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        product_name TEXT NOT NULL,
+        target_price REAL NOT NULL,
+        current_price REAL,
+        source_url TEXT,
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'triggered', 'expired')),
+        created_at TEXT NOT NULL,
+        triggered_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_price_alerts_user ON price_alerts(user_id);
+      CREATE INDEX IF NOT EXISTS idx_price_alerts_status ON price_alerts(status);
+
+      CREATE TABLE IF NOT EXISTS appointments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        location TEXT,
+        scheduled_at TEXT NOT NULL,
+        duration_minutes INTEGER DEFAULT 60,
+        reminder_sent INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'scheduled' CHECK(status IN ('scheduled', 'completed', 'cancelled', 'rescheduled')),
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_appointments_user ON appointments(user_id);
+      CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(scheduled_at);
+
+      -- ═══ BILL SCHEDULES (Otto + Nexus shared) ═══
+      CREATE TABLE IF NOT EXISTS bill_schedules (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        biller_name TEXT NOT NULL,
+        account_number TEXT,
+        amount REAL NOT NULL,
+        currency TEXT DEFAULT 'usd',
+        frequency TEXT NOT NULL CHECK(frequency IN ('weekly', 'biweekly', 'monthly', 'quarterly', 'annual')),
+        next_due_date TEXT NOT NULL,
+        auto_pay INTEGER DEFAULT 0,
+        payment_method_id TEXT,
+        category TEXT DEFAULT 'other',
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'paused', 'cancelled')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_bill_schedules_user ON bill_schedules(user_id);
+      CREATE INDEX IF NOT EXISTS idx_bill_schedules_due ON bill_schedules(next_due_date, status);
+    `);
+
     // ── KYC & Domestic Banking Tables ──
     this.db.exec(`
       -- KYC verification records per user

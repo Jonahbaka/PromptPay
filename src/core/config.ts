@@ -26,13 +26,47 @@ export const CONFIG = {
     adminModel: env('ANTHROPIC_ADMIN_MODEL', 'claude-opus-4-6'),
   },
 
-  // ── DeepSeek (Executive AI Board — non-agentic advisory) ──
+  // ── DeepSeek (Default model — intent detection, entity extraction, basic tasks) ──
   deepseek: {
     apiKey: env('DEEPSEEK_API_KEY', ''),
     model: env('DEEPSEEK_MODEL', 'deepseek-chat'),
     baseUrl: 'https://api.deepseek.com',
-    maxTokens: 4096,
-    temperature: 0.4,
+    maxTokens: parseInt(env('DEEPSEEK_MAX_TOKENS', '2048')),
+    temperature: 0.3,
+  },
+
+  // ── OpenAI (Premium model — escalation target) ──
+  openai: {
+    apiKey: env('OPENAI_API_KEY', ''),
+    model: env('OPENAI_MODEL', 'gpt-4o'),
+    baseUrl: 'https://api.openai.com/v1',
+    maxTokens: parseInt(env('OPENAI_MAX_TOKENS', '4096')),
+    temperature: 0.3,
+  },
+
+  // ── Google Gemini (Premium model — escalation target) ──
+  gemini: {
+    apiKey: env('GEMINI_API_KEY', ''),
+    model: env('GEMINI_MODEL', 'gemini-2.0-flash'),
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+    maxTokens: parseInt(env('GEMINI_MAX_TOKENS', '4096')),
+    temperature: 0.3,
+  },
+
+  // ── Model Routing Strategy ──
+  modelRouting: {
+    // Default model for all conversational interactions
+    defaultProvider: env('MODEL_DEFAULT_PROVIDER', 'deepseek') as 'deepseek' | 'anthropic' | 'openai' | 'google',
+    // Premium escalation target (Claude, OpenAI, or Gemini)
+    premiumProvider: env('MODEL_PREMIUM_PROVIDER', 'anthropic') as 'anthropic' | 'openai' | 'google',
+    // Confidence threshold — below this, escalate or clarify
+    confidenceThreshold: parseFloat(env('MODEL_CONFIDENCE_THRESHOLD', '0.85')),
+    // Max conversation history tokens before compression
+    maxHistoryTokens: parseInt(env('MODEL_MAX_HISTORY_TOKENS', '4000')),
+    // Max messages to keep in conversation window
+    maxHistoryMessages: parseInt(env('MODEL_MAX_HISTORY_MESSAGES', '10')),
+    // Enable structured JSON output for transactions
+    structuredOutputEnabled: env('MODEL_STRUCTURED_OUTPUT', 'true') === 'true',
   },
 
   // ── Rate Limits ──
@@ -61,7 +95,7 @@ export const CONFIG = {
     domainUrl: env('DOMAIN_URL', 'https://www.upromptpay.com'),
     contactEmail: env('CONTACT_EMAIL', 'info@upromptpay.com'),
     name: 'PromptPay',
-    version: '1.5.0',
+    version: '2.0.0',
   },
 
   promptpay: {
@@ -416,6 +450,47 @@ export const CONFIG = {
       { code: 'housing', name: 'Housing Finance Bank' },
     ],
   } as Record<string, Array<{ code: string; name: string }>>,
+
+  // ══════════════════════════════════════════════════════════
+  // AGENTIC AGENTS
+  // ══════════════════════════════════════════════════════════
+
+  // ── Shopping (Aria) ──
+  shopping: {
+    enabled: env('SHOPPING_ENABLED', 'true') === 'true',
+    maxBudgetUsd: parseFloat(env('SHOPPING_MAX_BUDGET_USD', '10000')),
+    priceComparisonProvider: env('SHOPPING_PRICE_PROVIDER', 'internal'),
+    priceComparisonApiKey: env('SHOPPING_PRICE_API_KEY', ''),
+  },
+
+  // ── Trading (Quant) ──
+  trading: {
+    enabled: env('TRADING_ENABLED', 'true') === 'true',
+    provider: env('TRADING_PROVIDER', 'paper_only') as 'alpaca' | 'paper_only',
+    alpacaApiKey: env('ALPACA_API_KEY', ''),
+    alpacaSecretKey: env('ALPACA_SECRET_KEY', ''),
+    alpacaBaseUrl: env('ALPACA_BASE_URL', 'https://paper-api.alpaca.markets'),
+    cryptoProvider: env('CRYPTO_PROVIDER', 'none'),
+    cryptoApiKey: env('CRYPTO_API_KEY', ''),
+    maxTradeUsd: parseFloat(env('TRADING_MAX_TRADE_USD', '10000')),
+    paperTradingDefault: env('TRADING_PAPER_DEFAULT', 'true') === 'true',
+    dcaMinIntervalHours: parseInt(env('TRADING_DCA_MIN_INTERVAL_HOURS', '24')),
+  },
+
+  // ── Financial Advisor (Sage) ──
+  advisor: {
+    enabled: env('ADVISOR_ENABLED', 'true') === 'true',
+    budgetAlertThresholdPercent: parseInt(env('ADVISOR_BUDGET_ALERT_THRESHOLD', '80')),
+    insightFrequency: env('ADVISOR_INSIGHT_FREQUENCY', 'weekly') as 'daily' | 'weekly' | 'monthly',
+  },
+
+  // ── Life Assistant (Otto) ──
+  assistant: {
+    enabled: env('ASSISTANT_ENABLED', 'true') === 'true',
+    subscriptionScanEnabled: env('ASSISTANT_SUB_SCAN', 'true') === 'true',
+    priceAlertCheckIntervalMs: parseInt(env('ASSISTANT_PRICE_ALERT_INTERVAL_MS', '3600000')),
+    maxDocumentSizeMb: parseInt(env('ASSISTANT_MAX_DOC_SIZE_MB', '10')),
+  },
 
   // ── Auth ──
   auth: {

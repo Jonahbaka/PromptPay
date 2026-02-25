@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay :: Core Type Definitions
-// Fintech-focused type system for 5 payment agents + hooks
+// Agentic-first type system — 9 agents (4 agentic + 5 payment) + hooks
 // ═══════════════════════════════════════════════════════════════
 
 import { z } from 'zod';
@@ -9,6 +9,12 @@ import { z } from 'zod';
 
 export type AgentRole =
   | 'orchestrator'
+  // Agentic agents (primary)
+  | 'shopping_ops'
+  | 'advisor_ops'
+  | 'trading_ops'
+  | 'assistant_ops'
+  // Payment infrastructure agents
   | 'wallet_ops'
   | 'us_payment_ops'
   | 'payment_ops'
@@ -48,6 +54,43 @@ export type TaskType =
   | 'credit_repair'
   | 'self_evaluation'
   | 'custom'
+  // Shopping (Aria)
+  | 'shopping_list_create'
+  | 'shopping_list_manage'
+  | 'shopping_price_compare'
+  | 'shopping_order_place'
+  | 'shopping_order_track'
+  | 'shopping_reorder'
+  // Advisory (Sage)
+  | 'advisor_budget_create'
+  | 'advisor_spending_analysis'
+  | 'advisor_debt_strategy'
+  | 'advisor_savings_advice'
+  | 'advisor_tax_tips'
+  | 'advisor_net_worth'
+  | 'advisor_health_score'
+  | 'advisor_goal_planning'
+  | 'advisor_general'
+  // Trading (Quant)
+  | 'trading_market_lookup'
+  | 'trading_place_trade'
+  | 'trading_portfolio'
+  | 'trading_dca_schedule'
+  | 'trading_risk_assessment'
+  | 'trading_market_signals'
+  | 'trading_paper_trade'
+  | 'trading_history'
+  | 'trading_stop_loss'
+  | 'trading_rebalance'
+  // Assistant (Otto)
+  | 'assistant_subscriptions'
+  | 'assistant_negotiate_bill'
+  | 'assistant_appointment'
+  | 'assistant_document'
+  | 'assistant_price_alert'
+  | 'assistant_process_return'
+  | 'assistant_find_deals'
+  | 'assistant_auto_pay'
   // Payments (Mercury)
   | 'payment_initiate'
   | 'payment_status'
@@ -112,7 +155,7 @@ export interface TaskResult {
 export interface ToolDefinition {
   name: string;
   description: string;
-  category: 'financial' | 'payment' | 'banking' | 'us_payment' | 'wallet' | 'messaging' | 'system' | 'hooks' | 'agent_network' | 'virality' | 'airtime' | 'merchant' | 'cross_border';
+  category: 'financial' | 'payment' | 'banking' | 'us_payment' | 'wallet' | 'messaging' | 'system' | 'hooks' | 'agent_network' | 'virality' | 'airtime' | 'merchant' | 'cross_border' | 'shopping' | 'advisory' | 'trading' | 'assistant';
   inputSchema: z.ZodType;
   requiresApproval: boolean;
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
@@ -204,6 +247,28 @@ export type EventType =
   | 'wallet:upromptpay'
   | 'wallet:split'
   | 'wallet:pay_forward'
+  // Shopping events (Aria)
+  | 'shopping:list_created'
+  | 'shopping:order_placed'
+  | 'shopping:order_tracked'
+  | 'shopping:price_compared'
+  // Advisory events (Sage)
+  | 'advisor:budget_created'
+  | 'advisor:spending_analyzed'
+  | 'advisor:goal_set'
+  | 'advisor:health_scored'
+  // Trading events (Quant)
+  | 'trading:trade_placed'
+  | 'trading:portfolio_updated'
+  | 'trading:dca_executed'
+  | 'trading:stop_loss_triggered'
+  | 'trading:rebalanced'
+  // Assistant events (Otto)
+  | 'assistant:subscription_managed'
+  | 'assistant:bill_negotiated'
+  | 'assistant:appointment_scheduled'
+  | 'assistant:price_alert_triggered'
+  | 'assistant:deal_found'
   // Hook events
   | 'hook:streak_updated'
   | 'hook:cashback_earned'
@@ -213,6 +278,11 @@ export type EventType =
   | 'hook:loyalty_earned'
   | 'hook:insight_generated'
   | 'hook:reminder_sent'
+  // Model routing events
+  | 'model:routed'
+  | 'model:escalated'
+  | 'model:confidence_low'
+  | 'model:context_compressed'
   // Admin
   | 'admin:query'
   | 'admin:action';
@@ -493,6 +563,191 @@ export interface LoyaltyAccount {
   tier: 'bronze' | 'silver' | 'gold' | 'platinum';
 }
 
+// ── Shopping Domain (Aria) ───────────────────────────────
+
+export interface ShoppingItem {
+  id: string;
+  listId: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  estimatedPrice: number | null;
+  actualPrice: number | null;
+  purchased: boolean;
+  store: string | null;
+  notes: string | null;
+}
+
+export interface ShoppingList {
+  id: string;
+  userId: string;
+  name: string;
+  items: ShoppingItem[];
+  status: 'active' | 'completed' | 'archived';
+  totalEstimated: number;
+  totalActual: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ── Trading Domain (Quant) ──────────────────────────────
+
+export interface TradingPosition {
+  id: string;
+  portfolioId: string;
+  symbol: string;
+  type: 'stock' | 'crypto' | 'etf';
+  quantity: number;
+  avgCostBasis: number;
+  currentPrice: number | null;
+  unrealizedPnl: number | null;
+  openedAt: Date;
+}
+
+export interface TradingOrder {
+  id: string;
+  portfolioId: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  type: 'market' | 'limit' | 'stop_loss';
+  quantity: number;
+  price: number | null;
+  status: 'pending' | 'filled' | 'cancelled' | 'rejected';
+  paperTrade: boolean;
+  filledAt: Date | null;
+  createdAt: Date;
+}
+
+export interface TradingPortfolio {
+  id: string;
+  userId: string;
+  name: string;
+  cashBalance: number;
+  totalValue: number;
+  positions: TradingPosition[];
+  paperMode: boolean;
+  createdAt: Date;
+}
+
+// ── Advisory Domain (Sage) ──────────────────────────────
+
+export interface BudgetCategory {
+  id: string;
+  budgetId: string;
+  name: string;
+  allocatedAmount: number;
+  spentAmount: number;
+}
+
+export interface Budget {
+  id: string;
+  userId: string;
+  name: string;
+  totalAmount: number;
+  period: 'weekly' | 'monthly' | 'quarterly' | 'annual';
+  categories: BudgetCategory[];
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'paused' | 'completed';
+  createdAt: Date;
+}
+
+// ── Assistant Domain (Otto) ─────────────────────────────
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  serviceName: string;
+  amount: number;
+  currency: string;
+  frequency: 'weekly' | 'monthly' | 'quarterly' | 'annual';
+  nextBillingDate: string;
+  category: string;
+  status: 'active' | 'paused' | 'cancelled';
+  createdAt: Date;
+}
+
+export interface StoredDocument {
+  id: string;
+  userId: string;
+  name: string;
+  type: string;
+  category: 'receipt' | 'warranty' | 'contract' | 'insurance' | 'tax' | 'other';
+  content: string;
+  metadata: Record<string, unknown>;
+  expiresAt: string | null;
+  createdAt: Date;
+}
+
+export interface PriceAlert {
+  id: string;
+  userId: string;
+  productName: string;
+  targetPrice: number;
+  currentPrice: number | null;
+  sourceUrl: string | null;
+  status: 'active' | 'triggered' | 'expired';
+  createdAt: Date;
+  triggeredAt: Date | null;
+}
+
+// ── Multi-Model Orchestration ────────────────────────────────
+
+export type ModelTier = 'economy' | 'premium';
+export type ModelProvider = 'deepseek' | 'anthropic' | 'openai' | 'google';
+
+export type EscalationReason =
+  | 'complex_reasoning'
+  | 'multi_step_planning'
+  | 'advanced_trading'
+  | 'ambiguous_instruction'
+  | 'high_risk_action'
+  | 'compliance_reasoning'
+  | 'long_form_summary'
+  | 'low_confidence';
+
+export type TransactionAction =
+  | 'transfer'
+  | 'trade'
+  | 'buy'
+  | 'sell'
+  | 'deposit'
+  | 'withdraw'
+  | 'balance_check';
+
+export interface TransactionIntent {
+  action: TransactionAction;
+  parameters: Record<string, unknown>;
+  confidence_score: number;
+}
+
+export interface ModelRoutingDecision {
+  provider: ModelProvider;
+  model: string;
+  tier: ModelTier;
+  reason: string;
+  escalatedFrom?: ModelProvider;
+  escalationReason?: EscalationReason;
+}
+
+export interface ConfidenceResult {
+  score: number;
+  intent: TransactionIntent | null;
+  requiresEscalation: boolean;
+  escalationReason: EscalationReason | null;
+  rawResponse: string;
+}
+
+export type SubscriptionTier = 'free' | 'premium' | 'enterprise';
+
+export interface UserSubscription {
+  userId: string;
+  tier: SubscriptionTier;
+  premiumModelsEnabled: boolean;
+  maxContextTokens: number;
+  maxResponseTokens: number;
+}
+
 // ── Governance ──────────────────────────────────────────────
 
 export type AuthorityLevel = 'auto_approve' | 'log_only' | 'require_approval' | 'require_human';
@@ -567,6 +822,22 @@ export interface AuthPayload {
 export const TaskSchema = z.object({
   type: z.enum([
     'financial_assessment', 'credit_repair', 'self_evaluation', 'custom',
+    // Shopping (Aria)
+    'shopping_list_create', 'shopping_list_manage', 'shopping_price_compare',
+    'shopping_order_place', 'shopping_order_track', 'shopping_reorder',
+    // Advisory (Sage)
+    'advisor_budget_create', 'advisor_spending_analysis', 'advisor_debt_strategy',
+    'advisor_savings_advice', 'advisor_tax_tips', 'advisor_net_worth',
+    'advisor_health_score', 'advisor_goal_planning', 'advisor_general',
+    // Trading (Quant)
+    'trading_market_lookup', 'trading_place_trade', 'trading_portfolio',
+    'trading_dca_schedule', 'trading_risk_assessment', 'trading_market_signals',
+    'trading_paper_trade', 'trading_history', 'trading_stop_loss', 'trading_rebalance',
+    // Assistant (Otto)
+    'assistant_subscriptions', 'assistant_negotiate_bill', 'assistant_appointment',
+    'assistant_document', 'assistant_price_alert', 'assistant_process_return',
+    'assistant_find_deals', 'assistant_auto_pay',
+    // Payment infrastructure
     'payment_initiate', 'payment_status', 'payment_refund', 'payment_providers',
     'bank_link', 'bank_data', 'bank_debit',
     'us_payment_charge', 'us_payment_subscribe', 'us_payment_connect',
