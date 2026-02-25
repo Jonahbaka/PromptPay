@@ -506,6 +506,84 @@ export class MemoryStore extends EventEmitter {
       );
     `);
 
+    // ── KYC & Domestic Banking Tables ──
+    this.db.exec(`
+      -- KYC verification records per user
+      CREATE TABLE IF NOT EXISTS kyc_verifications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        country TEXT NOT NULL,
+        tier INTEGER DEFAULT 1,
+        status TEXT DEFAULT 'pending',
+        -- Nigeria: BVN/NIN
+        bvn TEXT DEFAULT NULL,
+        nin TEXT DEFAULT NULL,
+        -- Ghana: Ghana Card
+        ghana_card_number TEXT DEFAULT NULL,
+        -- Kenya/Uganda: National ID
+        national_id TEXT DEFAULT NULL,
+        -- Common
+        full_name TEXT DEFAULT NULL,
+        date_of_birth TEXT DEFAULT NULL,
+        phone_number TEXT DEFAULT NULL,
+        selfie_verified INTEGER DEFAULT 0,
+        proof_of_address INTEGER DEFAULT 0,
+        verified_at TEXT DEFAULT NULL,
+        rejection_reason TEXT DEFAULT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      -- Linked bank accounts
+      CREATE TABLE IF NOT EXISTS user_bank_accounts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        country TEXT NOT NULL,
+        bank_code TEXT NOT NULL,
+        bank_name TEXT NOT NULL,
+        account_number TEXT NOT NULL,
+        account_name TEXT DEFAULT NULL,
+        currency TEXT NOT NULL,
+        is_default INTEGER DEFAULT 0,
+        verified INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+
+      -- Linked mobile money wallets
+      CREATE TABLE IF NOT EXISTS user_mobile_wallets (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        country TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        phone_number TEXT NOT NULL,
+        account_name TEXT DEFAULT NULL,
+        currency TEXT NOT NULL,
+        is_default INTEGER DEFAULT 0,
+        verified INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+
+      -- Domestic transfer history (bank/mobile money)
+      CREATE TABLE IF NOT EXISTS domestic_transfers (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        country TEXT NOT NULL,
+        type TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        provider_ref TEXT DEFAULT NULL,
+        sender_account TEXT DEFAULT NULL,
+        recipient_account TEXT NOT NULL,
+        recipient_name TEXT DEFAULT NULL,
+        amount REAL NOT NULL,
+        currency TEXT NOT NULL,
+        fee REAL DEFAULT 0,
+        status TEXT DEFAULT 'pending',
+        narration TEXT DEFAULT NULL,
+        created_at TEXT NOT NULL,
+        completed_at TEXT DEFAULT NULL
+      );
+    `);
+
     // ── Safe migrations for existing databases ──
     try {
       this.db.exec(`ALTER TABLE users ADD COLUMN country TEXT DEFAULT ''`);
@@ -513,6 +591,18 @@ export class MemoryStore extends EventEmitter {
 
     try {
       this.db.exec(`ALTER TABLE users ADD COLUMN stripe_customer_id TEXT DEFAULT NULL`);
+    } catch { /* column already exists */ }
+
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN kyc_tier INTEGER DEFAULT 0`);
+    } catch { /* column already exists */ }
+
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN kyc_status TEXT DEFAULT 'none'`);
+    } catch { /* column already exists */ }
+
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN phone_number TEXT DEFAULT NULL`);
     } catch { /* column already exists */ }
   }
 

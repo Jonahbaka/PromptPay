@@ -1552,7 +1552,7 @@
         <div class="section-title">Recent Activity</div>
         <div class="section-link" onclick="navigateTo('activity')">See All</div>
       </div>
-      <div class="tx-list fade-up" style="animation-delay:0.25s" id="tx-list">
+      <div class="tx-list fade-up" style="animation-delay:0.25s" id="recent-tx-list">
         <div style="padding:30px 0;text-align:center;color:var(--text3);font-size:13px">
           No transactions yet. Send money or top up to get started.
         </div>
@@ -1596,15 +1596,49 @@
 
     <!-- WALLET -->
     <div class="page" id="page-wallet">
-      <div class="section-header" style="margin-bottom:18px">
-        <div class="section-title">Payment Methods</div>
-        <div class="section-link" onclick="openAddCardModal()">+ Add</div>
+      <!-- KYC Status Banner -->
+      <div id="kyc-banner" style="padding:12px 16px;border-radius:14px;margin-bottom:16px;display:none;cursor:pointer" onclick="openKycModal()">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div id="kyc-banner-icon" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px"></div>
+          <div style="flex:1">
+            <div id="kyc-banner-title" style="font-size:13px;font-weight:600"></div>
+            <div id="kyc-banner-desc" style="font-size:11px;opacity:0.7"></div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
       </div>
 
+      <!-- Cards Section -->
+      <div class="section-header" style="margin-bottom:18px">
+        <div class="section-title">Cards</div>
+        <div class="section-link" onclick="openAddCardModal()">+ Add</div>
+      </div>
       <div class="card-carousel" id="payment-cards">
         <div style="min-width:280px;padding:30px 24px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3)" onclick="openAddCardModal()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span style="font-size:13px">Add Payment Method</span>
+          <span style="font-size:13px">Add Card</span>
+        </div>
+      </div>
+
+      <!-- Bank Accounts Section -->
+      <div id="bank-accounts-section">
+        <div class="section-header">
+          <div class="section-title">Bank Accounts</div>
+          <div class="section-link" onclick="openBankModal()">+ Link</div>
+        </div>
+        <div id="bank-accounts-list" style="margin-bottom:16px">
+          <div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">No bank accounts linked</div>
+        </div>
+      </div>
+
+      <!-- Mobile Money Section -->
+      <div id="momo-section">
+        <div class="section-header">
+          <div class="section-title">Mobile Money</div>
+          <div class="section-link" onclick="openMomoModal()">+ Link</div>
+        </div>
+        <div id="momo-wallets-list" style="margin-bottom:16px">
+          <div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">No mobile wallets linked</div>
         </div>
       </div>
 
@@ -1984,25 +2018,70 @@
   </div>
 </div>
 
-<!-- Send Modal -->
+<!-- Send Modal (Country-Aware) -->
 <div class="modal-overlay" id="send-modal">
-  <div class="modal-sheet">
+  <div class="modal-sheet" style="max-height:90vh">
     <div class="modal-handle"></div>
-    <h3 style="margin-bottom:20px;font-size:20px;font-weight:700">Send Money</h3>
-    <div style="margin-bottom:16px">
-      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Recipient</label>
-      <input id="send-to" placeholder="Name, email, or phone" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+    <h3 style="margin-bottom:4px;font-size:20px;font-weight:700">Send Money</h3>
+    <p id="send-currency-label" style="font-size:13px;color:var(--text2);margin-bottom:16px"></p>
+
+    <!-- Transfer type tabs -->
+    <div id="send-type-tabs" style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none">
+      <button class="send-tab active" data-type="bank" onclick="switchSendType('bank')" style="padding:8px 16px;border-radius:20px;border:1px solid var(--glass-border);background:var(--gradient2);color:white;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;font-family:inherit">Bank Transfer</button>
+      <button class="send-tab" data-type="mobile_money" onclick="switchSendType('mobile_money')" style="padding:8px 16px;border-radius:20px;border:1px solid var(--glass-border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;font-family:inherit">Mobile Money</button>
+      <button class="send-tab" data-type="wallet" onclick="switchSendType('wallet')" style="padding:8px 16px;border-radius:20px;border:1px solid var(--glass-border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;font-family:inherit">PromptPay</button>
     </div>
-    <div style="margin-bottom:16px">
+
+    <!-- Bank Transfer Fields -->
+    <div id="send-bank-fields">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Bank</label>
+        <select id="send-bank" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
+          <option value="">Select bank</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Account Number</label>
+        <input id="send-account" placeholder="0000000000" maxlength="10" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+      </div>
+      <div id="send-recipient-name" style="padding:10px 16px;background:rgba(16,185,129,0.1);border-radius:10px;margin-bottom:14px;font-size:13px;color:var(--emerald);display:none"></div>
+    </div>
+
+    <!-- Mobile Money Fields -->
+    <div id="send-momo-fields" style="display:none">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Provider</label>
+        <select id="send-momo-provider" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
+          <option value="">Select provider</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Phone Number</label>
+        <input id="send-momo-phone" placeholder="+234..." type="tel" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+      </div>
+    </div>
+
+    <!-- Wallet (PromptPay) Fields -->
+    <div id="send-wallet-fields" style="display:none">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Recipient</label>
+        <input id="send-to" placeholder="Email, phone, or $PayTag" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+      </div>
+    </div>
+
+    <!-- Common: Amount + Note -->
+    <div style="margin-bottom:14px">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Amount</label>
-      <input id="send-amount" placeholder="$0.00" type="number" step="0.01" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:24px;font-weight:700;font-family:inherit;outline:none;text-align:center">
+      <input id="send-amount" placeholder="0.00" type="number" step="0.01" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:24px;font-weight:700;font-family:inherit;outline:none;text-align:center">
     </div>
+    <div id="send-fee-display" style="text-align:center;font-size:12px;color:var(--text3);margin-bottom:14px"></div>
     <div style="margin-bottom:20px">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Note (optional)</label>
       <input id="send-note" placeholder="What's this for?" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
     </div>
-    <button onclick="executeSend()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Send Payment</button>
+    <button id="send-submit-btn" onclick="executeSend()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Send Payment</button>
     <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
+    <div id="send-error" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center"></div>
   </div>
 </div>
 
@@ -2157,6 +2236,117 @@
 <!-- Settings Toast -->
 <div class="settings-saved-toast" id="settings-toast">Settings saved successfully</div>
 
+<!-- KYC Verification Modal -->
+<div class="modal-overlay" id="kyc-modal">
+  <div class="modal-sheet" style="max-height:90vh">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:4px;font-size:20px;font-weight:700">Verify Your Identity</h3>
+    <p id="kyc-subtitle" style="font-size:13px;color:var(--text2);margin-bottom:20px">Complete verification to start sending money</p>
+    <div id="kyc-tier-badge" style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,0.06);color:var(--text2);margin-bottom:16px">Unverified</div>
+
+    <!-- Country-specific KYC fields -->
+    <div id="kyc-fields">
+      <!-- Nigeria -->
+      <div id="kyc-ng" class="kyc-country-form" style="display:none">
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">BVN (Bank Verification Number)</label>
+          <input id="kyc-bvn" placeholder="22200000000" maxlength="11" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Dial *565*0# on your phone to get your BVN</div>
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">NIN (National ID Number) <span style="opacity:0.5">optional for Tier 1</span></label>
+          <input id="kyc-nin" placeholder="00000000000" maxlength="11" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        </div>
+      </div>
+
+      <!-- Ghana -->
+      <div id="kyc-gh" class="kyc-country-form" style="display:none">
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Ghana Card Number</label>
+          <input id="kyc-ghana-card" placeholder="GHA-XXXXXXXXX-X" maxlength="15" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        </div>
+      </div>
+
+      <!-- Kenya / Uganda -->
+      <div id="kyc-ke-ug" class="kyc-country-form" style="display:none">
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">National ID Number</label>
+          <input id="kyc-national-id" placeholder="Enter your national ID" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        </div>
+      </div>
+
+      <!-- US -->
+      <div id="kyc-us" class="kyc-country-form" style="display:none">
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Date of Birth</label>
+          <input id="kyc-dob" type="date" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        </div>
+      </div>
+
+      <!-- Common fields -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Full Legal Name</label>
+        <input id="kyc-fullname" placeholder="As it appears on your ID" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Phone Number</label>
+        <input id="kyc-phone" placeholder="+234..." type="tel" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+      </div>
+    </div>
+
+    <div id="kyc-limits-preview" style="padding:12px 16px;background:rgba(124,58,237,0.08);border-radius:12px;margin-bottom:16px;font-size:12px;color:var(--text2)"></div>
+
+    <button id="kyc-submit-btn" onclick="submitKyc()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Verify & Continue</button>
+    <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Skip for now</button>
+    <div id="kyc-error" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- Link Bank Account Modal -->
+<div class="modal-overlay" id="bank-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Link Bank Account</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Add your bank for instant transfers</p>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Bank</label>
+      <select id="bank-select" onchange="onBankSelect()" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
+        <option value="">Select your bank</option>
+      </select>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Account Number</label>
+      <input id="bank-account-number" placeholder="0000000000" maxlength="10" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <div id="bank-account-name" style="padding:10px 16px;background:rgba(16,185,129,0.1);border-radius:10px;margin-bottom:16px;font-size:13px;color:var(--emerald);display:none"></div>
+    <button onclick="submitBankAccount()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit">Link Account</button>
+    <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
+    <div id="bank-error" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- Link Mobile Money Modal -->
+<div class="modal-overlay" id="momo-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Link Mobile Money</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Add your mobile money wallet</p>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Provider</label>
+      <select id="momo-provider" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
+        <option value="">Select provider</option>
+      </select>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Phone Number</label>
+      <input id="momo-phone" placeholder="+233..." type="tel" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+    </div>
+    <button onclick="submitMobileWallet()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit">Link Wallet</button>
+    <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
+    <div id="momo-error" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center"></div>
+  </div>
+</div>
+
 <script>
 // ═══ PromptPay Frontend Engine ═══
 const API_BASE = '';
@@ -2167,6 +2357,11 @@ let chatHistory = [];
 let animatedBalance = 0;
 let authToken = localStorage.getItem('promptpay_token') || null;
 let currentUser = null;
+let userKyc = null;
+let countryConfig = null;
+let userBankAccounts = [];
+let userMobileWallets = [];
+let currentSendType = 'bank';
 
 // ── Token Expiry Check (client-side) ──
 function isTokenExpired(token) {
@@ -2643,13 +2838,446 @@ async function loadData() {
     const res = await authFetch(API_BASE + '/health');
     if (res.ok) {
       animateBalance(0);
-      document.getElementById('balance-change').textContent = 'No activity yet';
     }
   } catch (e) {
     console.log('Server connecting...');
     animateBalance(0);
-    document.getElementById('balance-change').textContent = 'Connecting...';
   }
+  // Load KYC status + country config
+  loadKycStatus();
+  loadTransferHistory();
+  loadBankAccounts();
+  loadMobileWallets();
+}
+
+// ══════════════════════════════════════════════════════════
+// KYC VERIFICATION SYSTEM
+// ══════════════════════════════════════════════════════════
+
+async function loadKycStatus() {
+  try {
+    const res = await authFetch(API_BASE + '/api/kyc/status');
+    if (!res.ok) return;
+    userKyc = await res.json();
+    countryConfig = { currency: userKyc.currency, currencySymbol: userKyc.currencySymbol, limits: userKyc.limits, requirements: userKyc.requirements };
+    updateKycBanner();
+    updateBalanceCurrency();
+    updateSendModal();
+    // Auto-show KYC modal for new unverified users
+    if (userKyc.tier === 0 && userKyc.country && ['NG','GH','KE','UG'].includes(userKyc.country)) {
+      setTimeout(() => openKycModal(), 1500);
+    }
+  } catch (e) { console.log('KYC load skipped'); }
+}
+
+function updateKycBanner() {
+  const banner = document.getElementById('kyc-banner');
+  if (!banner || !userKyc) return;
+  const tier = userKyc.tier || 0;
+  const country = userKyc.country || '';
+  if (!country) { banner.style.display = 'none'; return; }
+
+  banner.style.display = 'block';
+  const icon = document.getElementById('kyc-banner-icon');
+  const title = document.getElementById('kyc-banner-title');
+  const desc = document.getElementById('kyc-banner-desc');
+
+  if (tier === 0) {
+    banner.style.background = 'rgba(239,68,68,0.1)';
+    icon.textContent = '!';
+    icon.style.background = 'rgba(239,68,68,0.2)';
+    icon.style.color = '#ef4444';
+    title.textContent = 'Verification Required';
+    title.style.color = '#ef4444';
+    desc.textContent = 'Verify your identity to start sending money';
+    desc.style.color = '#ef4444';
+  } else if (tier === 1) {
+    banner.style.background = 'rgba(251,191,36,0.08)';
+    icon.textContent = '\u2713';
+    icon.style.background = 'rgba(251,191,36,0.2)';
+    icon.style.color = '#fbbf24';
+    title.textContent = 'Basic Verified';
+    title.style.color = '#fbbf24';
+    const lim = userKyc.limits?.[1];
+    desc.textContent = lim ? `Daily limit: ${userKyc.currencySymbol}${lim.dailySend.toLocaleString()} \u2022 Upgrade for more` : 'Tap to upgrade';
+    desc.style.color = '#fbbf24';
+  } else {
+    banner.style.background = 'rgba(16,185,129,0.08)';
+    icon.textContent = '\u2713';
+    icon.style.background = 'rgba(16,185,129,0.2)';
+    icon.style.color = '#10b981';
+    title.textContent = `Tier ${tier} Verified`;
+    title.style.color = '#10b981';
+    const lim = userKyc.limits?.[tier];
+    desc.textContent = lim ? `Daily limit: ${userKyc.currencySymbol}${lim.dailySend.toLocaleString()}` : 'Fully verified';
+    desc.style.color = '#10b981';
+  }
+}
+
+function updateBalanceCurrency() {
+  if (!countryConfig || !countryConfig.currencySymbol) return;
+  const sym = countryConfig.currencySymbol;
+  const el = document.getElementById('balance-display');
+  if (el && sym !== '$') el.textContent = sym + '0.00';
+  const change = document.getElementById('balance-change');
+  if (change) change.textContent = sym === '$' ? 'No activity yet' : `${sym}0.00 today`;
+}
+
+function openKycModal() {
+  const country = userKyc?.country || currentUser?.country || getUserCountry();
+  // Show correct country form
+  document.querySelectorAll('.kyc-country-form').forEach(f => f.style.display = 'none');
+  if (country === 'NG') document.getElementById('kyc-ng').style.display = 'block';
+  else if (country === 'GH') document.getElementById('kyc-gh').style.display = 'block';
+  else if (country === 'KE' || country === 'UG') document.getElementById('kyc-ke-ug').style.display = 'block';
+  else if (country === 'US') document.getElementById('kyc-us').style.display = 'block';
+
+  // Set phone placeholder based on country
+  const phonePh = { NG: '+234...', GH: '+233...', KE: '+254...', UG: '+256...', US: '+1...' };
+  const phoneEl = document.getElementById('kyc-phone');
+  if (phoneEl) phoneEl.placeholder = phonePh[country] || '+...';
+
+  // Pre-fill name
+  const nameEl = document.getElementById('kyc-fullname');
+  if (nameEl && currentUser?.displayName) nameEl.value = currentUser.displayName;
+
+  // Show limits preview
+  const preview = document.getElementById('kyc-limits-preview');
+  if (preview && userKyc?.limits) {
+    const t1 = userKyc.limits[1];
+    const sym = userKyc.currencySymbol || '$';
+    if (t1) preview.innerHTML = `After verification: Send up to <b>${sym}${t1.dailySend.toLocaleString()}/day</b> \u2022 Hold up to <b>${sym}${t1.maxBalance.toLocaleString()}</b>`;
+  }
+
+  // Update tier badge
+  const badge = document.getElementById('kyc-tier-badge');
+  if (badge) {
+    const tier = userKyc?.tier || 0;
+    badge.textContent = tier === 0 ? 'Unverified' : `Tier ${tier} \u2022 ${userKyc.limits?.[tier]?.label || 'Verified'}`;
+    badge.style.background = tier === 0 ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)';
+    badge.style.color = tier === 0 ? '#ef4444' : '#10b981';
+  }
+
+  document.getElementById('kyc-modal').classList.add('active');
+}
+
+async function submitKyc() {
+  const country = userKyc?.country || currentUser?.country || getUserCountry();
+  const btn = document.getElementById('kyc-submit-btn');
+  const errEl = document.getElementById('kyc-error');
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  const body = {
+    country,
+    full_name: document.getElementById('kyc-fullname')?.value?.trim() || null,
+    phone_number: document.getElementById('kyc-phone')?.value?.trim() || null,
+    bvn: document.getElementById('kyc-bvn')?.value?.trim() || null,
+    nin: document.getElementById('kyc-nin')?.value?.trim() || null,
+    ghana_card_number: document.getElementById('kyc-ghana-card')?.value?.trim() || null,
+    national_id: document.getElementById('kyc-national-id')?.value?.trim() || null,
+    date_of_birth: document.getElementById('kyc-dob')?.value || null,
+  };
+
+  // Validate minimum fields per country
+  if (country === 'NG' && !body.bvn) { errEl.textContent = 'BVN is required for Nigerian accounts'; btn.disabled = false; btn.textContent = 'Verify & Continue'; return; }
+  if (country === 'GH' && !body.ghana_card_number) { errEl.textContent = 'Ghana Card number is required'; btn.disabled = false; btn.textContent = 'Verify & Continue'; return; }
+  if ((country === 'KE' || country === 'UG') && !body.national_id) { errEl.textContent = 'National ID is required'; btn.disabled = false; btn.textContent = 'Verify & Continue'; return; }
+  if (!body.phone_number) { errEl.textContent = 'Phone number is required'; btn.disabled = false; btn.textContent = 'Verify & Continue'; return; }
+
+  try {
+    const res = await authFetch(API_BASE + '/api/kyc/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Verification failed'; return; }
+
+    // Update local state
+    userKyc.tier = data.tier;
+    userKyc.status = data.status;
+    updateKycBanner();
+    closeModals();
+
+    // Show success toast
+    const toast = document.getElementById('settings-toast');
+    toast.textContent = `Verified! Tier ${data.tier} \u2022 ${data.limits?.label || 'Active'}`;
+    toast.classList.add('active');
+    setTimeout(() => toast.classList.remove('active'), 3000);
+  } catch (e) {
+    errEl.textContent = 'Connection error. Try again.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify & Continue';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// BANK ACCOUNT MANAGEMENT
+// ══════════════════════════════════════════════════════════
+
+async function loadBankAccounts() {
+  try {
+    const res = await authFetch(API_BASE + '/api/bank-accounts');
+    if (!res.ok) return;
+    const data = await res.json();
+    userBankAccounts = data.accounts || [];
+    renderBankAccounts();
+  } catch (e) {}
+}
+
+function renderBankAccounts() {
+  const list = document.getElementById('bank-accounts-list');
+  const section = document.getElementById('bank-accounts-section');
+  if (!list) return;
+  // Hide section for countries without bank support
+  const country = getUserCountry();
+  if (['KE'].includes(country)) { if (section) section.style.display = 'none'; return; }
+  if (section) section.style.display = 'block';
+
+  if (userBankAccounts.length === 0) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">No bank accounts linked</div>';
+    return;
+  }
+  list.innerHTML = userBankAccounts.map(a => `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:14px;margin-bottom:8px">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(79,172,254,0.12);display:flex;align-items:center;justify-content:center;font-size:18px">\ud83c\udfe6</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.bank_name}</div>
+        <div style="font-size:12px;color:var(--text3)">\u2022\u2022\u2022\u2022 ${a.account_number.slice(-4)} ${a.is_default ? '\u2022 Default' : ''}</div>
+      </div>
+      <button onclick="removeBankAccount('${a.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:18px">\u00d7</button>
+    </div>
+  `).join('');
+}
+
+async function openBankModal() {
+  const country = getUserCountry();
+  try {
+    const res = await fetch(API_BASE + '/api/banks/' + country);
+    const data = await res.json();
+    const select = document.getElementById('bank-select');
+    select.innerHTML = '<option value="">Select your bank</option>' + (data.banks || []).map(b => `<option value="${b.code}" data-name="${b.name}">${b.name}</option>`).join('');
+  } catch (e) {}
+  document.getElementById('bank-modal').classList.add('active');
+}
+
+function onBankSelect() {
+  // Could add account name lookup here in the future
+}
+
+async function submitBankAccount() {
+  const country = getUserCountry();
+  const select = document.getElementById('bank-select');
+  const bankCode = select.value;
+  const bankName = select.selectedOptions[0]?.dataset?.name || select.selectedOptions[0]?.textContent || '';
+  const accountNumber = document.getElementById('bank-account-number').value.trim();
+  const errEl = document.getElementById('bank-error');
+  errEl.textContent = '';
+
+  if (!bankCode) { errEl.textContent = 'Please select a bank'; return; }
+  if (!accountNumber || accountNumber.length < 6) { errEl.textContent = 'Enter a valid account number'; return; }
+
+  const currencies = { NG: 'NGN', GH: 'GHS', KE: 'KES', UG: 'UGX', US: 'USD' };
+  try {
+    const res = await authFetch(API_BASE + '/api/bank-accounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ country, bank_code: bankCode, bank_name: bankName, account_number: accountNumber, currency: currencies[country] || 'USD' }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Failed to link account'; return; }
+    closeModals();
+    loadBankAccounts();
+    const toast = document.getElementById('settings-toast');
+    toast.textContent = `${bankName} linked successfully`;
+    toast.classList.add('active');
+    setTimeout(() => toast.classList.remove('active'), 3000);
+  } catch (e) { errEl.textContent = 'Connection error'; }
+}
+
+async function removeBankAccount(id) {
+  if (!confirm('Remove this bank account?')) return;
+  try {
+    await authFetch(API_BASE + '/api/bank-accounts/' + id, { method: 'DELETE' });
+    loadBankAccounts();
+  } catch (e) {}
+}
+
+// ══════════════════════════════════════════════════════════
+// MOBILE MONEY MANAGEMENT
+// ══════════════════════════════════════════════════════════
+
+async function loadMobileWallets() {
+  try {
+    const res = await authFetch(API_BASE + '/api/mobile-wallets');
+    if (!res.ok) return;
+    const data = await res.json();
+    userMobileWallets = data.wallets || [];
+    renderMobileWallets();
+  } catch (e) {}
+}
+
+function renderMobileWallets() {
+  const list = document.getElementById('momo-wallets-list');
+  const section = document.getElementById('momo-section');
+  if (!list) return;
+  const country = getUserCountry();
+  const momoCountries = ['GH', 'UG', 'KE', 'TZ', 'CM'];
+  if (!momoCountries.includes(country)) { if (section) section.style.display = 'none'; return; }
+  if (section) section.style.display = 'block';
+
+  if (userMobileWallets.length === 0) {
+    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">No mobile wallets linked</div>';
+    return;
+  }
+  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money' };
+  list.innerHTML = userMobileWallets.map(w => `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:14px;margin-bottom:8px">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(251,191,36,0.12);display:flex;align-items:center;justify-content:center;font-size:18px">\ud83d\udcf1</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600">${providerNames[w.provider] || w.provider}</div>
+        <div style="font-size:12px;color:var(--text3)">${w.phone_number} ${w.is_default ? '\u2022 Default' : ''}</div>
+      </div>
+      <button onclick="removeMobileWallet('${w.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:18px">\u00d7</button>
+    </div>
+  `).join('');
+}
+
+function openMomoModal() {
+  const country = getUserCountry();
+  const providers = { GH: ['mtn','vodafone','airteltigo'], UG: ['mtn','airtel'], KE: ['mpesa'], TZ: ['mpesa','vodacom'] };
+  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money', vodacom: 'Vodacom M-Pesa' };
+  const select = document.getElementById('momo-provider');
+  const opts = providers[country] || [];
+  select.innerHTML = '<option value="">Select provider</option>' + opts.map(p => `<option value="${p}">${providerNames[p] || p}</option>`).join('');
+  const phonePh = { GH: '+233...', UG: '+256...', KE: '+254...' };
+  document.getElementById('momo-phone').placeholder = phonePh[country] || '+...';
+  document.getElementById('momo-modal').classList.add('active');
+}
+
+async function submitMobileWallet() {
+  const country = getUserCountry();
+  const provider = document.getElementById('momo-provider').value;
+  const phone = document.getElementById('momo-phone').value.trim();
+  const errEl = document.getElementById('momo-error');
+  errEl.textContent = '';
+  if (!provider) { errEl.textContent = 'Select a provider'; return; }
+  if (!phone || phone.length < 8) { errEl.textContent = 'Enter a valid phone number'; return; }
+
+  const currencies = { GH: 'GHS', UG: 'UGX', KE: 'KES', TZ: 'TZS' };
+  try {
+    const res = await authFetch(API_BASE + '/api/mobile-wallets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ country, provider, phone_number: phone, currency: currencies[country] || 'USD' }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Failed'; return; }
+    closeModals();
+    loadMobileWallets();
+    const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money' };
+    const toast = document.getElementById('settings-toast');
+    toast.textContent = `${providerNames[provider] || provider} linked`;
+    toast.classList.add('active');
+    setTimeout(() => toast.classList.remove('active'), 3000);
+  } catch (e) { errEl.textContent = 'Connection error'; }
+}
+
+async function removeMobileWallet(id) {
+  if (!confirm('Remove this mobile wallet?')) return;
+  try {
+    await authFetch(API_BASE + '/api/mobile-wallets/' + id, { method: 'DELETE' });
+    loadMobileWallets();
+  } catch (e) {}
+}
+
+// ══════════════════════════════════════════════════════════
+// COUNTRY-AWARE SEND MONEY FLOW
+// ══════════════════════════════════════════════════════════
+
+function updateSendModal() {
+  const country = getUserCountry();
+  const momoCountries = ['GH', 'UG', 'KE', 'TZ'];
+  const bankCountries = ['NG', 'GH', 'UG', 'US'];
+  const syms = { NG: '\u20a6', GH: 'GH\u20b5', KE: 'KSh', UG: 'USh', US: '$' };
+  const sym = countryConfig?.currencySymbol || syms[country] || '$';
+
+  // Update currency label
+  const label = document.getElementById('send-currency-label');
+  if (label) label.textContent = `Send in ${countryConfig?.currency || 'USD'}`;
+
+  // Show/hide tabs based on country
+  const tabs = document.getElementById('send-type-tabs');
+  if (tabs) {
+    const bankTab = tabs.querySelector('[data-type="bank"]');
+    const momoTab = tabs.querySelector('[data-type="mobile_money"]');
+    if (bankTab) bankTab.style.display = bankCountries.includes(country) ? '' : 'none';
+    if (momoTab) momoTab.style.display = momoCountries.includes(country) ? '' : 'none';
+
+    // Default to best tab for country
+    if (country === 'KE') switchSendType('mobile_money');
+    else if (bankCountries.includes(country)) switchSendType('bank');
+    else switchSendType('wallet');
+  }
+
+  // Populate bank list in send modal
+  loadSendBanks(country);
+  loadSendMomoProviders(country);
+}
+
+async function loadSendBanks(country) {
+  try {
+    const res = await fetch(API_BASE + '/api/banks/' + country);
+    const data = await res.json();
+    const select = document.getElementById('send-bank');
+    if (select) select.innerHTML = '<option value="">Select bank</option>' + (data.banks || []).map(b => `<option value="${b.code}" data-name="${b.name}">${b.name}</option>`).join('');
+  } catch (e) {}
+}
+
+function loadSendMomoProviders(country) {
+  const providers = { GH: ['mtn','vodafone','airteltigo'], UG: ['mtn','airtel'], KE: ['mpesa'], TZ: ['mpesa'] };
+  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money' };
+  const select = document.getElementById('send-momo-provider');
+  const opts = providers[country] || [];
+  if (select) select.innerHTML = '<option value="">Select provider</option>' + opts.map(p => `<option value="${p}">${providerNames[p] || p}</option>`).join('');
+}
+
+function switchSendType(type) {
+  currentSendType = type;
+  document.getElementById('send-bank-fields').style.display = type === 'bank' ? '' : 'none';
+  document.getElementById('send-momo-fields').style.display = type === 'mobile_money' ? '' : 'none';
+  document.getElementById('send-wallet-fields').style.display = type === 'wallet' ? '' : 'none';
+
+  // Update tab styles
+  document.querySelectorAll('#send-type-tabs .send-tab').forEach(t => {
+    if (t.dataset.type === type) {
+      t.style.background = 'var(--gradient2)';
+      t.style.color = 'white';
+      t.style.borderColor = 'transparent';
+    } else {
+      t.style.background = 'transparent';
+      t.style.color = 'var(--text2)';
+      t.style.borderColor = 'var(--glass-border)';
+    }
+  });
+
+  // Update fee display
+  updateSendFee();
+}
+
+function updateSendFee() {
+  const amount = parseFloat(document.getElementById('send-amount')?.value) || 0;
+  const feeEl = document.getElementById('send-fee-display');
+  if (!feeEl || !amount) { if (feeEl) feeEl.textContent = ''; return; }
+  const sym = countryConfig?.currencySymbol || '$';
+  let feeText = '';
+  if (currentSendType === 'bank') feeText = `Fee: ${sym}${(amount * 0.01).toFixed(2)} (1%)`;
+  else if (currentSendType === 'mobile_money') feeText = `Fee: ${sym}${(amount * 0.01).toFixed(2)} (1%)`;
+  else feeText = amount <= 50 ? 'Free (under $50)' : `Fee: ${sym}${(amount * 0.01).toFixed(2)} (1%)`;
+  feeEl.textContent = feeText;
 }
 
 // ── WebSocket Connection ──
@@ -2859,6 +3487,11 @@ function simulateDelay(ms) {
 
 // ── Modals ──
 function openSendModal() {
+  updateSendModal();
+  // Add fee listener
+  const amtEl = document.getElementById('send-amount');
+  if (amtEl) amtEl.oninput = updateSendFee;
+  document.getElementById('send-error').textContent = '';
   document.getElementById('send-modal').classList.add('active');
 }
 function openRequestModal() {
@@ -3016,15 +3649,92 @@ async function executePayByPhone() {
 }
 
 async function executeSend() {
-  const to = document.getElementById('send-to').value;
-  const amount = document.getElementById('send-amount').value;
-  const note = document.getElementById('send-note').value;
-  if (!to || !amount) return;
+  const amount = parseFloat(document.getElementById('send-amount')?.value);
+  const note = document.getElementById('send-note')?.value?.trim() || '';
+  const errEl = document.getElementById('send-error');
+  const btn = document.getElementById('send-submit-btn');
+  if (errEl) errEl.textContent = '';
+  if (!amount || amount <= 0) { if (errEl) errEl.textContent = 'Enter a valid amount'; return; }
 
-  closeModals();
+  // Check KYC
+  if (!userKyc || userKyc.tier < 1) {
+    closeModals();
+    openKycModal();
+    return;
+  }
+
+  const country = getUserCountry();
+  const currencies = { NG: 'NGN', GH: 'GHS', KE: 'KES', UG: 'UGX', US: 'USD' };
+  const currency = currencies[country] || 'USD';
+
+  btn.disabled = true;
+  btn.textContent = 'Processing...';
+
+  try {
+    if (currentSendType === 'bank') {
+      const bankSelect = document.getElementById('send-bank');
+      const bankCode = bankSelect?.value;
+      const bankName = bankSelect?.selectedOptions[0]?.dataset?.name || bankSelect?.selectedOptions[0]?.textContent || '';
+      const accountNumber = document.getElementById('send-account')?.value?.trim();
+      if (!bankCode || !accountNumber) { if (errEl) errEl.textContent = 'Select bank and enter account number'; return; }
+
+      const res = await authFetch(API_BASE + '/api/transfers/bank', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bank_code: bankCode, account_number: accountNumber, account_name: bankName, amount, currency, narration: note, country }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.requiresKyc) { closeModals(); openKycModal(); return; }
+        if (errEl) errEl.textContent = data.error || 'Transfer failed';
+        return;
+      }
+      closeModals();
+      showTransferSuccess(data.transfer, bankName, accountNumber);
+
+    } else if (currentSendType === 'mobile_money') {
+      const provider = document.getElementById('send-momo-provider')?.value;
+      const phone = document.getElementById('send-momo-phone')?.value?.trim();
+      if (!provider || !phone) { if (errEl) errEl.textContent = 'Select provider and enter phone number'; return; }
+
+      const res = await authFetch(API_BASE + '/api/transfers/mobile-money', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider, phone_number: phone, amount, currency, narration: note, country }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.requiresKyc) { closeModals(); openKycModal(); return; }
+        if (errEl) errEl.textContent = data.error || 'Transfer failed';
+        return;
+      }
+      closeModals();
+      showTransferSuccess(data.transfer, provider, phone);
+
+    } else {
+      // Wallet / PromptPay transfer - route through AI
+      const to = document.getElementById('send-to')?.value?.trim();
+      if (!to) { if (errEl) errEl.textContent = 'Enter recipient'; return; }
+      closeModals();
+      navigateTo('ai');
+      document.getElementById('chat-input').value = `Send ${countryConfig?.currencySymbol || '$'}${amount} to ${to}${note ? ' for ' + note : ''}`;
+      sendMessage();
+      return;
+    }
+  } catch (e) {
+    if (errEl) errEl.textContent = 'Connection error. Try again.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Payment';
+  }
+  loadTransferHistory();
+}
+
+function showTransferSuccess(transfer, recipientLabel, recipientDetail) {
+  const sym = countryConfig?.currencySymbol || '$';
   navigateTo('ai');
-  document.getElementById('chat-input').value = `Send $${amount} to ${to}${note ? ' for ' + note : ''}`;
-  sendMessage();
+  const statusText = transfer.status === 'completed' ? 'sent' : 'initiated (pending confirmation)';
+  addChatMessage('ai', `Transfer ${statusText}!\n\n${sym}${transfer.amount.toLocaleString()} to ${recipientLabel} (${recipientDetail})\nFee: ${sym}${transfer.fee?.toFixed(2) || '0.00'}\nRef: ${transfer.id.slice(0, 8).toUpperCase()}`);
 }
 
 function handleTaskResult(msg) {
@@ -3033,15 +3743,69 @@ function handleTaskResult(msg) {
   }
 }
 
-// ── Populate Activity Page ──
+// ── Transfer History ──
+let transferHistory = [];
+
+async function loadTransferHistory() {
+  try {
+    const res = await authFetch(API_BASE + '/api/transfers?limit=30');
+    if (!res.ok) return;
+    const data = await res.json();
+    transferHistory = data.transfers || [];
+    populateActivity();
+    populateRecentActivity();
+  } catch (e) {}
+}
+
 function populateActivity() {
-  document.getElementById('activity-tx-list').innerHTML = `
-    <div style="padding:40px 0;text-align:center;color:var(--text3)">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:12px;opacity:0.3"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <div style="font-size:14px;margin-bottom:4px">No transactions yet</div>
-      <div style="font-size:12px">Your payment history will appear here</div>
-    </div>
-  `;
+  const list = document.getElementById('activity-tx-list');
+  if (!list) return;
+  if (transferHistory.length === 0) {
+    list.innerHTML = `
+      <div style="padding:40px 0;text-align:center;color:var(--text3)">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:12px;opacity:0.3"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <div style="font-size:14px;margin-bottom:4px">No transactions yet</div>
+        <div style="font-size:12px">Send money or top up to get started</div>
+      </div>`;
+    return;
+  }
+  list.innerHTML = transferHistory.map(tx => {
+    const statusColors = { completed: '#10b981', pending: '#fbbf24', failed: '#ef4444' };
+    const typeIcons = { bank: '\ud83c\udfe6', mobile_money: '\ud83d\udcf1', wallet: '\ud83d\udcb3' };
+    const date = new Date(tx.created_at);
+    const timeStr = date.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + ' ' + date.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="width:40px;height:40px;border-radius:12px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px">${typeIcons[tx.type] || '\ud83d\udcb8'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tx.recipient_name || tx.recipient_account || 'Transfer'}</div>
+          <div style="font-size:12px;color:var(--text3)">${timeStr} \u2022 ${tx.provider}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:600">-${tx.currency} ${parseFloat(tx.amount).toLocaleString()}</div>
+          <div style="font-size:11px;color:${statusColors[tx.status] || '#aaa'}">${tx.status}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function populateRecentActivity() {
+  const list = document.getElementById('recent-tx-list');
+  if (!list) return;
+  const recent = transferHistory.slice(0, 3);
+  if (recent.length === 0) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">No transactions yet. Send money or top up to get started.</div>';
+    return;
+  }
+  list.innerHTML = recent.map(tx => {
+    const date = new Date(tx.created_at);
+    const timeStr = date.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="flex:1"><div style="font-size:13px;font-weight:500">${tx.recipient_name || tx.recipient_account || 'Transfer'}</div><div style="font-size:11px;color:var(--text3)">${timeStr}</div></div>
+        <div style="font-size:13px;font-weight:600">-${tx.currency} ${parseFloat(tx.amount).toLocaleString()}</div>
+      </div>`;
+  }).join('');
 }
 
 // ── Landing Page Logic ──

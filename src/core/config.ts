@@ -234,6 +234,189 @@ export const CONFIG = {
     payForwardEnabled: env('WALLET_PAY_FORWARD_ENABLED', 'true') === 'true',
   },
 
+  // ── Country-Specific KYC & Limits ──
+  countryConfig: {
+    NG: {
+      name: 'Nigeria',
+      currency: 'NGN',
+      currencySymbol: '₦',
+      kycRequirements: {
+        tier1: ['bvn_or_nin', 'phone'],
+        tier2: ['bvn', 'nin', 'selfie'],
+        tier3: ['bvn', 'nin', 'selfie', 'proof_of_address', 'photo_id'],
+      },
+      tierLimits: {
+        0: { dailySend: 0, maxBalance: 0, label: 'Unverified' },
+        1: { dailySend: 50000, maxBalance: 300000, label: 'Basic' },
+        2: { dailySend: 200000, maxBalance: 500000, label: 'Standard' },
+        3: { dailySend: 5000000, maxBalance: 50000000, label: 'Full' },
+      },
+      providers: ['flutterwave', 'paystack'],
+      mobileMoneyProviders: [],
+      bankTransferProvider: 'flutterwave',
+      supportedBanks: true,
+    },
+    GH: {
+      name: 'Ghana',
+      currency: 'GHS',
+      currencySymbol: 'GH₵',
+      kycRequirements: {
+        tier1: ['ghana_card', 'phone'],
+        tier2: ['ghana_card', 'phone', 'source_of_funds', 'next_of_kin'],
+        tier3: ['ghana_card', 'phone', 'source_of_funds', 'next_of_kin', 'proof_of_address'],
+      },
+      tierLimits: {
+        0: { dailySend: 0, maxBalance: 0, label: 'Unverified' },
+        1: { dailySend: 3000, maxBalance: 5000, label: 'Minimum' },
+        2: { dailySend: 15000, maxBalance: 40000, label: 'Medium' },
+        3: { dailySend: 25000, maxBalance: 75000, label: 'Enhanced' },
+      },
+      providers: ['mtn_momo', 'flutterwave'],
+      mobileMoneyProviders: ['mtn', 'vodafone', 'airteltigo'],
+      bankTransferProvider: 'flutterwave',
+      supportedBanks: true,
+    },
+    KE: {
+      name: 'Kenya',
+      currency: 'KES',
+      currencySymbol: 'KSh',
+      kycRequirements: {
+        tier1: ['national_id', 'phone'],
+        tier2: [],
+        tier3: [],
+      },
+      tierLimits: {
+        0: { dailySend: 0, maxBalance: 0, label: 'Unverified' },
+        1: { dailySend: 500000, maxBalance: 500000, label: 'Verified' },
+        2: { dailySend: 500000, maxBalance: 500000, label: 'Verified' },
+        3: { dailySend: 500000, maxBalance: 500000, label: 'Verified' },
+      },
+      providers: ['mpesa'],
+      mobileMoneyProviders: ['mpesa'],
+      bankTransferProvider: null,
+      supportedBanks: false,
+    },
+    UG: {
+      name: 'Uganda',
+      currency: 'UGX',
+      currencySymbol: 'USh',
+      kycRequirements: {
+        tier1: ['national_id', 'phone'],
+        tier2: ['national_id', 'phone', 'selfie'],
+        tier3: ['national_id', 'phone', 'selfie', 'proof_of_address'],
+      },
+      tierLimits: {
+        0: { dailySend: 0, maxBalance: 0, label: 'Unverified' },
+        1: { dailySend: 5000000, maxBalance: 10000000, label: 'Basic' },
+        2: { dailySend: 15000000, maxBalance: 30000000, label: 'Standard' },
+        3: { dailySend: 50000000, maxBalance: 100000000, label: 'Full' },
+      },
+      providers: ['mtn_momo', 'flutterwave'],
+      mobileMoneyProviders: ['mtn', 'airtel'],
+      bankTransferProvider: 'flutterwave',
+      supportedBanks: true,
+    },
+    US: {
+      name: 'United States',
+      currency: 'USD',
+      currencySymbol: '$',
+      kycRequirements: {
+        tier1: ['email', 'phone'],
+        tier2: ['ssn_last4', 'dob', 'address'],
+        tier3: ['ssn', 'photo_id', 'proof_of_address'],
+      },
+      tierLimits: {
+        0: { dailySend: 0, maxBalance: 0, label: 'Unverified' },
+        1: { dailySend: 500, maxBalance: 5000, label: 'Basic' },
+        2: { dailySend: 5000, maxBalance: 25000, label: 'Standard' },
+        3: { dailySend: 50000, maxBalance: 250000, label: 'Full' },
+      },
+      providers: ['stripe'],
+      mobileMoneyProviders: [],
+      bankTransferProvider: 'stripe',
+      supportedBanks: true,
+    },
+  } as Record<string, {
+    name: string;
+    currency: string;
+    currencySymbol: string;
+    kycRequirements: Record<string, string[]>;
+    tierLimits: Record<number, { dailySend: number; maxBalance: number; label: string }>;
+    providers: string[];
+    mobileMoneyProviders: string[];
+    bankTransferProvider: string | null;
+    supportedBanks: boolean;
+  }>,
+
+  // ── Bank Lists by Country ──
+  bankLists: {
+    NG: [
+      { code: '044', name: 'Access Bank' },
+      { code: '023', name: 'Citibank Nigeria' },
+      { code: '063', name: 'Diamond Bank' },
+      { code: '050', name: 'Ecobank Nigeria' },
+      { code: '084', name: 'Enterprise Bank' },
+      { code: '070', name: 'Fidelity Bank' },
+      { code: '011', name: 'First Bank of Nigeria' },
+      { code: '214', name: 'First City Monument Bank' },
+      { code: '058', name: 'Guaranty Trust Bank' },
+      { code: '030', name: 'Heritage Bank' },
+      { code: '301', name: 'Jaiz Bank' },
+      { code: '082', name: 'Keystone Bank' },
+      { code: '526', name: 'Kuda Bank' },
+      { code: '999', name: 'OPay' },
+      { code: '998', name: 'PalmPay' },
+      { code: '076', name: 'Polaris Bank' },
+      { code: '101', name: 'Providus Bank' },
+      { code: '221', name: 'Stanbic IBTC Bank' },
+      { code: '068', name: 'Standard Chartered Bank' },
+      { code: '232', name: 'Sterling Bank' },
+      { code: '100', name: 'Suntrust Bank' },
+      { code: '032', name: 'Union Bank of Nigeria' },
+      { code: '033', name: 'United Bank for Africa' },
+      { code: '215', name: 'Unity Bank' },
+      { code: '035', name: 'Wema Bank' },
+      { code: '057', name: 'Zenith Bank' },
+    ],
+    GH: [
+      { code: 'absa', name: 'Absa Bank Ghana' },
+      { code: 'access', name: 'Access Bank Ghana' },
+      { code: 'cal', name: 'CalBank' },
+      { code: 'ecobank', name: 'Ecobank Ghana' },
+      { code: 'fidelity', name: 'Fidelity Bank Ghana' },
+      { code: 'fnb', name: 'First National Bank Ghana' },
+      { code: 'gcb', name: 'GCB Bank' },
+      { code: 'gtbank', name: 'GTBank Ghana' },
+      { code: 'republic', name: 'Republic Bank Ghana' },
+      { code: 'sbg', name: 'Stanbic Bank Ghana' },
+      { code: 'scb', name: 'Standard Chartered Ghana' },
+      { code: 'uba', name: 'UBA Ghana' },
+      { code: 'zenith', name: 'Zenith Bank Ghana' },
+    ],
+    KE: [
+      { code: 'kcb', name: 'KCB Bank' },
+      { code: 'equity', name: 'Equity Bank' },
+      { code: 'coop', name: 'Co-operative Bank' },
+      { code: 'ncba', name: 'NCBA Bank' },
+      { code: 'absa', name: 'Absa Bank Kenya' },
+      { code: 'stanbic', name: 'Stanbic Bank Kenya' },
+      { code: 'scb', name: 'Standard Chartered Kenya' },
+      { code: 'dtb', name: 'Diamond Trust Bank' },
+      { code: 'im', name: 'I&M Bank' },
+      { code: 'family', name: 'Family Bank' },
+    ],
+    UG: [
+      { code: 'stanbic', name: 'Stanbic Bank Uganda' },
+      { code: 'centenary', name: 'Centenary Bank' },
+      { code: 'dfcu', name: 'dfcu Bank' },
+      { code: 'equity', name: 'Equity Bank Uganda' },
+      { code: 'absa', name: 'Absa Bank Uganda' },
+      { code: 'boa', name: 'Bank of Africa Uganda' },
+      { code: 'cairo', name: 'Cairo International Bank' },
+      { code: 'housing', name: 'Housing Finance Bank' },
+    ],
+  } as Record<string, Array<{ code: string; name: string }>>,
+
   // ── Auth ──
   auth: {
     jwtSecret: env('AUTH_SECRET', env('GATEWAY_SECRET', 'promptpay-local')),

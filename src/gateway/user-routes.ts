@@ -509,5 +509,506 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
     }
   });
 
+  // ══════════════════════════════════════════════════════════
+  // KYC VERIFICATION
+  // ══════════════════════════════════════════════════════════
+
+  // Get KYC status for current user
+  router.get('/api/kyc/status', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const user = db.prepare('SELECT country, kyc_tier, kyc_status FROM users WHERE id = ?').get(userId) as Record<string, unknown> | undefined;
+      const kyc = db.prepare('SELECT * FROM kyc_verifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 1').get(userId) as Record<string, unknown> | undefined;
+
+      const country = (user?.country || '') as string;
+      const countryConf = (CONFIG as Record<string, unknown>).countryConfig as Record<string, Record<string, unknown>> | undefined;
+      const cc = countryConf?.[country];
+
+      res.json({
+        country,
+        tier: user?.kyc_tier || 0,
+        status: user?.kyc_status || 'none',
+        verification: kyc || null,
+        requirements: cc?.kycRequirements || null,
+        limits: cc?.tierLimits || null,
+        currency: cc?.currency || 'USD',
+        currencySymbol: cc?.currencySymbol || '$',
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`KYC status error: ${msg}`);
+      res.status(500).json({ error: 'Failed to get KYC status' });
+    }
+  });
+
+  // Submit KYC verification
+  router.post('/api/kyc/submit', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const { country, bvn, nin, ghana_card_number, national_id, phone_number, full_name, date_of_birth } = req.body;
+
+      if (!country) {
+        res.status(400).json({ error: 'Country is required' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const id = uuid();
+
+      // Determine tier based on what's submitted
+      let tier = 1;
+      const countryConf = (CONFIG as Record<string, unknown>).countryConfig as Record<string, Record<string, unknown>> | undefined;
+      const cc = countryConf?.[country];
+
+      if (cc) {
+        const reqs = cc.kycRequirements as Record<string, string[]>;
+        // Check Tier 2 requirements
+        if (country === 'NG' && bvn && nin) tier = 2;
+        else if (country === 'GH' && ghana_card_number && phone_number) tier = 2;
+        else if ((country === 'KE' || country === 'UG') && national_id && phone_number) tier = 2;
+      }
+
+      // Upsert KYC record
+      const existing = db.prepare('SELECT id FROM kyc_verifications WHERE user_id = ?').get(userId) as Record<string, unknown> | undefined;
+
+      if (existing) {
+        db.prepare(`
+          UPDATE kyc_verifications SET country = ?, tier = ?, status = 'verified',
+            bvn = ?, nin = ?, ghana_card_number = ?, national_id = ?,
+            phone_number = ?, full_name = ?, date_of_birth = ?,
+            verified_at = ?, updated_at = ?
+          WHERE user_id = ?
+        `).run(country, tier, bvn || null, nin || null, ghana_card_number || null, national_id || null,
+          phone_number || null, full_name || null, date_of_birth || null, now, now, userId);
+      } else {
+        db.prepare(`
+          INSERT INTO kyc_verifications (id, user_id, country, tier, status, bvn, nin, ghana_card_number, national_id, phone_number, full_name, date_of_birth, verified_at, created_at, updated_at)
+          VALUES (?, ?, ?, ?, 'verified', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, userId, country, tier, bvn || null, nin || null, ghana_card_number || null, national_id || null,
+          phone_number || null, full_name || null, date_of_birth || null, now, now, now);
+      }
+
+      // Update user record
+      db.prepare('UPDATE users SET kyc_tier = ?, kyc_status = ?, country = ?, phone_number = ? WHERE id = ?')
+        .run(tier, 'verified', country, phone_number || null, userId);
+
+      deps.logger.info(`KYC submitted: user=${userId} country=${country} tier=${tier}`);
+
+      res.json({
+        success: true,
+        tier,
+        status: 'verified',
+        limits: (cc?.tierLimits as Record<number, unknown>)?.[tier] || null,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`KYC submit error: ${msg}`);
+      res.status(500).json({ error: 'Failed to submit KYC' });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // BANK ACCOUNTS & MOBILE WALLETS
+  // ══════════════════════════════════════════════════════════
+
+  // Get bank list for a country
+  router.get('/api/banks/:country', (req: Request, res: Response) => {
+    const country = (req.params.country as string).toUpperCase();
+    const bankLists = (CONFIG as Record<string, unknown>).bankLists as Record<string, Array<{ code: string; name: string }>> | undefined;
+    const banks = bankLists?.[country] || [];
+    res.json({ banks });
+  });
+
+  // Add linked bank account
+  router.post('/api/bank-accounts', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const { country, bank_code, bank_name, account_number, account_name, currency } = req.body;
+
+      if (!country || !bank_code || !bank_name || !account_number || !currency) {
+        res.status(400).json({ error: 'country, bank_code, bank_name, account_number, and currency are required' });
+        return;
+      }
+
+      const id = uuid();
+      const now = new Date().toISOString();
+
+      // Check if this account already exists
+      const existing = db.prepare(
+        'SELECT id FROM user_bank_accounts WHERE user_id = ? AND bank_code = ? AND account_number = ?'
+      ).get(userId, bank_code, account_number);
+
+      if (existing) {
+        res.status(409).json({ error: 'This bank account is already linked' });
+        return;
+      }
+
+      // Count existing accounts to set default
+      const count = db.prepare('SELECT COUNT(*) as c FROM user_bank_accounts WHERE user_id = ?').get(userId) as { c: number };
+      const isDefault = count.c === 0 ? 1 : 0;
+
+      db.prepare(`
+        INSERT INTO user_bank_accounts (id, user_id, country, bank_code, bank_name, account_number, account_name, currency, is_default, verified, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+      `).run(id, userId, country, bank_code, bank_name, account_number, account_name || null, currency, isDefault, now);
+
+      res.json({ success: true, id, is_default: isDefault === 1 });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Add bank account error: ${msg}`);
+      res.status(500).json({ error: 'Failed to add bank account' });
+    }
+  });
+
+  // List linked bank accounts
+  router.get('/api/bank-accounts', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const accounts = db.prepare('SELECT * FROM user_bank_accounts WHERE user_id = ? ORDER BY is_default DESC, created_at DESC').all(userId);
+      res.json({ accounts });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`List bank accounts error: ${msg}`);
+      res.status(500).json({ error: 'Failed to list bank accounts' });
+    }
+  });
+
+  // Remove linked bank account
+  router.delete('/api/bank-accounts/:id', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      db.prepare('DELETE FROM user_bank_accounts WHERE id = ? AND user_id = ?').run(req.params.id, userId);
+      res.json({ success: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Remove bank account error: ${msg}`);
+      res.status(500).json({ error: 'Failed to remove bank account' });
+    }
+  });
+
+  // Add linked mobile wallet
+  router.post('/api/mobile-wallets', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const { country, provider, phone_number, account_name, currency } = req.body;
+
+      if (!country || !provider || !phone_number || !currency) {
+        res.status(400).json({ error: 'country, provider, phone_number, and currency are required' });
+        return;
+      }
+
+      const id = uuid();
+      const now = new Date().toISOString();
+
+      const existing = db.prepare(
+        'SELECT id FROM user_mobile_wallets WHERE user_id = ? AND provider = ? AND phone_number = ?'
+      ).get(userId, provider, phone_number);
+
+      if (existing) {
+        res.status(409).json({ error: 'This mobile wallet is already linked' });
+        return;
+      }
+
+      const count = db.prepare('SELECT COUNT(*) as c FROM user_mobile_wallets WHERE user_id = ?').get(userId) as { c: number };
+      const isDefault = count.c === 0 ? 1 : 0;
+
+      db.prepare(`
+        INSERT INTO user_mobile_wallets (id, user_id, country, provider, phone_number, account_name, currency, is_default, verified, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+      `).run(id, userId, country, provider, phone_number, account_name || null, currency, isDefault, now);
+
+      res.json({ success: true, id, is_default: isDefault === 1 });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Add mobile wallet error: ${msg}`);
+      res.status(500).json({ error: 'Failed to add mobile wallet' });
+    }
+  });
+
+  // List linked mobile wallets
+  router.get('/api/mobile-wallets', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const wallets = db.prepare('SELECT * FROM user_mobile_wallets WHERE user_id = ? ORDER BY is_default DESC, created_at DESC').all(userId);
+      res.json({ wallets });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`List mobile wallets error: ${msg}`);
+      res.status(500).json({ error: 'Failed to list mobile wallets' });
+    }
+  });
+
+  // Remove linked mobile wallet
+  router.delete('/api/mobile-wallets/:id', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      db.prepare('DELETE FROM user_mobile_wallets WHERE id = ? AND user_id = ?').run(req.params.id, userId);
+      res.json({ success: true });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Remove mobile wallet error: ${msg}`);
+      res.status(500).json({ error: 'Failed to remove mobile wallet' });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // DOMESTIC TRANSFERS
+  // ══════════════════════════════════════════════════════════
+
+  // Initiate bank transfer (via Flutterwave)
+  router.post('/api/transfers/bank', authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const { bank_code, account_number, account_name, amount, currency, narration, country } = req.body;
+
+      if (!bank_code || !account_number || !amount || !currency) {
+        res.status(400).json({ error: 'bank_code, account_number, amount, and currency are required' });
+        return;
+      }
+
+      // Check KYC tier
+      const user = db.prepare('SELECT kyc_tier, kyc_status, country FROM users WHERE id = ?').get(userId) as Record<string, unknown> | undefined;
+      if (!user || (user.kyc_tier as number) < 1) {
+        res.status(403).json({ error: 'KYC verification required before making transfers', requiresKyc: true });
+        return;
+      }
+
+      // Check daily limit
+      const userCountry = (country || user.country || '') as string;
+      const countryConf = (CONFIG as Record<string, unknown>).countryConfig as Record<string, Record<string, unknown>> | undefined;
+      const cc = countryConf?.[userCountry];
+      if (cc) {
+        const limits = (cc.tierLimits as Record<number, { dailySend: number }>)?.[user.kyc_tier as number];
+        if (limits && amount > limits.dailySend) {
+          res.status(403).json({ error: `Amount exceeds your Tier ${user.kyc_tier} daily limit of ${cc.currencySymbol}${limits.dailySend.toLocaleString()}. Upgrade KYC to increase.` });
+          return;
+        }
+      }
+
+      // Attempt Flutterwave transfer
+      if (!CONFIG.flutterwave.secretKey) {
+        // Simulate for development
+        const transferId = uuid();
+        const now = new Date().toISOString();
+        db.prepare(`
+          INSERT INTO domestic_transfers (id, user_id, country, type, provider, provider_ref, recipient_account, recipient_name, amount, currency, fee, status, narration, created_at)
+          VALUES (?, ?, ?, 'bank', 'simulated', ?, ?, ?, ?, ?, ?, 'completed', ?, ?)
+        `).run(transferId, userId, userCountry, 'SIM-' + transferId.slice(0, 8), account_number, account_name || null,
+          amount, currency, amount * 0.01, narration || null, now);
+
+        res.json({
+          success: true,
+          transfer: { id: transferId, status: 'completed', provider: 'simulated', amount, currency, fee: amount * 0.01 },
+        });
+        return;
+      }
+
+      // Real Flutterwave transfer
+      const flwRes = await fetch('https://api.flutterwave.com/v3/transfers', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${CONFIG.flutterwave.secretKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account_bank: bank_code,
+          account_number,
+          amount,
+          currency,
+          narration: narration || `PromptPay transfer`,
+          reference: `PP-${uuid().slice(0, 12)}`,
+          debit_currency: currency,
+        }),
+      });
+
+      const flwData = await flwRes.json() as Record<string, unknown>;
+
+      const transferId = uuid();
+      const now = new Date().toISOString();
+      const fee = amount * (CONFIG.fees.p2pPercent / 100);
+
+      db.prepare(`
+        INSERT INTO domestic_transfers (id, user_id, country, type, provider, provider_ref, recipient_account, recipient_name, amount, currency, fee, status, narration, created_at)
+        VALUES (?, ?, ?, 'bank', 'flutterwave', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(transferId, userId, userCountry,
+        (flwData.data as Record<string, unknown>)?.id?.toString() || null,
+        account_number, account_name || null,
+        amount, currency, fee,
+        flwData.status === 'success' ? 'pending' : 'failed',
+        narration || null, now);
+
+      if (flwData.status !== 'success') {
+        res.status(400).json({ error: (flwData.message as string) || 'Transfer failed', details: flwData });
+        return;
+      }
+
+      deps.logger.info(`Bank transfer initiated: ${transferId} ${currency} ${amount} to ${account_number}`);
+      res.json({
+        success: true,
+        transfer: {
+          id: transferId,
+          status: 'pending',
+          provider: 'flutterwave',
+          provider_ref: (flwData.data as Record<string, unknown>)?.id,
+          amount,
+          currency,
+          fee,
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Bank transfer error: ${msg}`);
+      res.status(500).json({ error: 'Failed to initiate transfer' });
+    }
+  });
+
+  // Initiate mobile money transfer
+  router.post('/api/transfers/mobile-money', authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const { provider, phone_number, amount, currency, narration, country } = req.body;
+
+      if (!provider || !phone_number || !amount || !currency) {
+        res.status(400).json({ error: 'provider, phone_number, amount, and currency are required' });
+        return;
+      }
+
+      // Check KYC
+      const user = db.prepare('SELECT kyc_tier, kyc_status, country FROM users WHERE id = ?').get(userId) as Record<string, unknown> | undefined;
+      if (!user || (user.kyc_tier as number) < 1) {
+        res.status(403).json({ error: 'KYC verification required before making transfers', requiresKyc: true });
+        return;
+      }
+
+      const userCountry = (country || user.country || '') as string;
+      const transferId = uuid();
+      const now = new Date().toISOString();
+      const fee = amount * (CONFIG.fees.p2pPercent / 100);
+
+      // Route to appropriate provider
+      let providerRef = '';
+      let status = 'pending';
+
+      if (provider === 'mpesa' && CONFIG.mpesa.consumerKey) {
+        // M-Pesa STK Push
+        const tokenRes = await fetch(
+          `https://${CONFIG.mpesa.environment === 'production' ? 'api' : 'sandbox'}.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials`,
+          { headers: { 'Authorization': 'Basic ' + Buffer.from(`${CONFIG.mpesa.consumerKey}:${CONFIG.mpesa.consumerSecret}`).toString('base64') } }
+        );
+        const tokenData = await tokenRes.json() as Record<string, string>;
+        const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0, 14);
+        const password = Buffer.from(`${CONFIG.mpesa.shortcode}${CONFIG.mpesa.passkey}${timestamp}`).toString('base64');
+
+        const stkRes = await fetch(
+          `https://${CONFIG.mpesa.environment === 'production' ? 'api' : 'sandbox'}.safaricom.co.ke/mpesa/stkpush/v1/processrequest`,
+          {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              BusinessShortCode: CONFIG.mpesa.shortcode,
+              Password: password,
+              Timestamp: timestamp,
+              TransactionType: 'CustomerPayBillOnline',
+              Amount: Math.ceil(amount),
+              PartyA: phone_number.replace('+', ''),
+              PartyB: CONFIG.mpesa.shortcode,
+              PhoneNumber: phone_number.replace('+', ''),
+              CallBackURL: `${CONFIG.platform.domainUrl}/webhooks/mpesa`,
+              AccountReference: `PP${transferId.slice(0, 8)}`,
+              TransactionDesc: narration || 'PromptPay Transfer',
+            }),
+          }
+        );
+        const stkData = await stkRes.json() as Record<string, string>;
+        providerRef = stkData.CheckoutRequestID || '';
+        status = stkData.ResponseCode === '0' ? 'pending' : 'failed';
+
+      } else if ((provider === 'mtn' || provider === 'mtn_momo') && CONFIG.mtnMomo.subscriptionKey) {
+        // MTN MoMo Request to Pay
+        const tokenRes = await fetch('https://momodeveloper.mtn.com/collection/token/', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${CONFIG.mtnMomo.apiUser}:${CONFIG.mtnMomo.apiKey}`).toString('base64'),
+            'Ocp-Apim-Subscription-Key': CONFIG.mtnMomo.subscriptionKey,
+          },
+        });
+        const tokenData = await tokenRes.json() as Record<string, string>;
+        const refId = uuid();
+
+        const momoRes = await fetch('https://momodeveloper.mtn.com/collection/v1_0/requesttopay', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${tokenData.access_token}`,
+            'X-Reference-Id': refId,
+            'X-Target-Environment': CONFIG.mtnMomo.environment,
+            'Ocp-Apim-Subscription-Key': CONFIG.mtnMomo.subscriptionKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: amount.toString(),
+            currency,
+            externalId: transferId,
+            payer: { partyIdType: 'MSISDN', partyId: phone_number.replace('+', '') },
+            payerMessage: narration || 'PromptPay Transfer',
+            payeeNote: 'PromptPay',
+          }),
+        });
+
+        providerRef = refId;
+        status = momoRes.ok ? 'pending' : 'failed';
+
+      } else {
+        // Simulated
+        providerRef = 'SIM-' + transferId.slice(0, 8);
+        status = 'completed';
+      }
+
+      db.prepare(`
+        INSERT INTO domestic_transfers (id, user_id, country, type, provider, provider_ref, recipient_account, recipient_name, amount, currency, fee, status, narration, created_at)
+        VALUES (?, ?, ?, 'mobile_money', ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)
+      `).run(transferId, userId, userCountry, provider, providerRef, phone_number,
+        amount, currency, fee, status, narration || null, now);
+
+      deps.logger.info(`Mobile money transfer: ${transferId} ${provider} ${currency} ${amount} to ${phone_number} status=${status}`);
+      res.json({
+        success: true,
+        transfer: { id: transferId, status, provider, provider_ref: providerRef, amount, currency, fee },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Mobile money transfer error: ${msg}`);
+      res.status(500).json({ error: 'Failed to initiate transfer' });
+    }
+  });
+
+  // Get transfer history
+  router.get('/api/transfers', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const transfers = db.prepare(
+        'SELECT * FROM domestic_transfers WHERE user_id = ? ORDER BY created_at DESC LIMIT ?'
+      ).all(userId, limit);
+      res.json({ transfers });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Transfer history error: ${msg}`);
+      res.status(500).json({ error: 'Failed to get transfer history' });
+    }
+  });
+
+  // Get country config for frontend
+  router.get('/api/config/country/:code', (req: Request, res: Response) => {
+    const code = (req.params.code as string).toUpperCase();
+    const countryConf = (CONFIG as Record<string, unknown>).countryConfig as Record<string, unknown> | undefined;
+    const cc = countryConf?.[code];
+    if (!cc) {
+      res.status(404).json({ error: 'Country not supported' });
+      return;
+    }
+    const bankLists = (CONFIG as Record<string, unknown>).bankLists as Record<string, unknown[]> | undefined;
+    res.json({ config: cc, banks: bankLists?.[code] || [] });
+  });
+
   return router;
 }
