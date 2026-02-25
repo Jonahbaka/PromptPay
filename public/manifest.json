@@ -1,7 +1,7 @@
 {
   "name": "PromptPay",
   "short_name": "PromptPay",
-  "description": "AI-Powered Mobile Payments — Pay by Phone",
+  "description": "AI-Powered Payments Platform — Send money, pay bills, and manage finances using natural language commands.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

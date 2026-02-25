@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /cpanel-*
+Disallow: /webhooks/
+
+Sitemap: https://www.upromptpay.com/sitemap.xml

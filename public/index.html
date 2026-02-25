@@ -2,19 +2,68 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#06060a">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1117">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PromptPay">
+
+  <!-- SEO -->
+  <title>PromptPay — AI-Powered Payments | Send Money by Prompt</title>
+  <meta name="description" content="PromptPay is the developer-first financial platform. Send money, pay bills, and manage finances using simple natural language commands. AI-powered, instant, secure.">
+  <meta name="keywords" content="PromptPay, AI payments, send money, mobile payments, fintech, digital wallet, pay by prompt, natural language payments, P2P payments, bill pay">
+  <meta name="author" content="PromptPay Inc.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.upromptpay.com/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.upromptpay.com/">
+  <meta property="og:title" content="PromptPay — AI-Powered Payments">
+  <meta property="og:description" content="Send money, pay bills, and manage finances using simple natural language commands. The developer-first financial platform.">
+  <meta property="og:image" content="https://www.upromptpay.com/icons/icon-512.png">
+  <meta property="og:site_name" content="PromptPay">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PromptPay — AI-Powered Payments">
+  <meta name="twitter:description" content="Send money, pay bills, and manage finances using simple natural language commands.">
+  <meta name="twitter:image" content="https://www.upromptpay.com/icons/icon-512.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "PromptPay",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "description": "AI-powered digital payments platform. Send money, pay bills, and manage finances using natural language commands.",
+    "url": "https://www.upromptpay.com",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <script src="https://js.stripe.com/v3/"></script>
-  <title>PromptPay</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #06060a;
@@ -47,11 +96,13 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
-      height: 100%; overflow: hidden;
+      height: 100%;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
       background: var(--bg); color: var(--text);
       -webkit-font-smoothing: antialiased;
     }
+    body.app-mode { overflow: hidden; }
+    body.landing-mode { overflow-x: hidden; overflow-y: auto; }
 
     /* ── App Shell ── */
     .app {
@@ -759,15 +810,390 @@
       .app { border-left: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.04); }
     }
     @media (min-width: 768px) {
-      body { display: flex; align-items: center; justify-content: center; }
+      body.app-mode { display: flex; align-items: center; justify-content: center; }
       .app { height: 100vh; max-height: 900px; border-radius: 32px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
     }
+
+    /* ═══ Landing Page ═══ */
+    .landing { display: none; min-height: 100vh; background: #0d1117; color: #c9d1d9; }
+    .landing.active { display: block; }
+    .lp-border { border: 1px solid #30363d; }
+    .lp-card { background-color: #161b22; }
+    .lp-muted { color: #8b949e; }
+    .lp-accent { color: #58a6ff; }
+
+    .lp-grid-bg {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(#30363d 1px, transparent 1px), linear-gradient(90deg, #30363d 1px, transparent 1px);
+      background-size: 40px 40px; opacity: 0.07;
+    }
+
+    @keyframes lpBlink { 50% { opacity: 0; } }
+    .lp-cursor { animation: lpBlink 1s step-end infinite; }
+
+    .lp-nav {
+      position: fixed; top: 0; width: 100%; z-index: 50;
+      transition: all 0.3s ease;
+      padding: 20px 0;
+    }
+    .lp-nav.scrolled {
+      background: rgba(13,17,23,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid #30363d; padding: 12px 0;
+    }
+    .lp-nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .lp-logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .lp-logo-icon {
+      width: 32px; height: 32px; background: #f0f6fc; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lp-logo-text { font-size: 18px; font-weight: 600; color: #f0f6fc; letter-spacing: -0.3px; }
+    .lp-nav-links { display: none; gap: 24px; font-size: 14px; font-weight: 500; }
+    .lp-nav-links a { color: #c9d1d9; text-decoration: none; transition: color 0.2s; }
+    .lp-nav-links a:hover { color: #58a6ff; }
+    @media (min-width: 768px) { .lp-nav-links { display: flex; } }
+    .lp-nav-actions { display: flex; align-items: center; gap: 12px; }
+    .lp-btn-primary {
+      background: #238636; color: white; font-size: 14px; font-weight: 600;
+      padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(240,246,252,0.1);
+      cursor: pointer; transition: background 0.2s;
+    }
+    .lp-btn-primary:hover { background: #2ea043; }
+    .lp-btn-secondary {
+      background: #21262d; color: #c9d1d9; font-size: 14px; font-weight: 600;
+      padding: 8px 16px; border-radius: 6px; border: 1px solid #30363d;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .lp-btn-secondary:hover { background: #30363d; }
+    .lp-btn-signin {
+      background: none; color: #c9d1d9; font-size: 14px; font-weight: 500;
+      padding: 8px 12px; border: none; cursor: pointer; transition: color 0.2s;
+    }
+    .lp-btn-signin:hover { color: #58a6ff; }
+
+    .lp-hero {
+      position: relative; padding: 140px 24px 80px; max-width: 1200px; margin: 0 auto;
+    }
+    .lp-hero-grid { display: grid; gap: 48px; align-items: center; }
+    @media (min-width: 1024px) { .lp-hero-grid { grid-template-columns: 1fr 1fr; } }
+    .lp-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      color: #58a6ff; background: #161b22; border: 1px solid #30363d;
+    }
+    .lp-hero h1 {
+      font-size: clamp(36px, 6vw, 72px); font-weight: 700; color: #f0f6fc;
+      line-height: 1.1; letter-spacing: -1.5px; margin: 20px 0;
+    }
+    .lp-hero h1 span { color: #58a6ff; }
+    .lp-hero-desc { font-size: 18px; color: #8b949e; max-width: 520px; line-height: 1.6; margin-bottom: 28px; }
+    .lp-hero-btns { display: flex; flex-wrap: wrap; gap: 12px; }
+    .lp-hero-btns .lp-btn-primary { padding: 12px 24px; font-size: 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; }
+    .lp-hero-btns .lp-btn-secondary { padding: 12px 24px; font-size: 16px; border-radius: 8px; }
+
+    .lp-terminal {
+      position: relative;
+    }
+    .lp-terminal-glow {
+      position: absolute; inset: -2px;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff); border-radius: 14px;
+      opacity: 0.08; filter: blur(1px); transition: opacity 0.3s;
+    }
+    .lp-terminal:hover .lp-terminal-glow { opacity: 0.18; }
+    .lp-terminal-inner {
+      position: relative; background: #161b22; border: 1px solid #30363d;
+      border-radius: 12px; overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    }
+    .lp-terminal-header {
+      background: #161b22; border-bottom: 1px solid #30363d;
+      padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .lp-terminal-header-left { display: flex; align-items: center; gap: 10px; }
+    .lp-terminal-title { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #8b949e; }
+    .lp-terminal-dots { display: flex; gap: 6px; }
+    .lp-terminal-dots span { width: 12px; height: 12px; border-radius: 50%; background: #30363d; }
+    .lp-terminal-body {
+      padding: 24px; font-family: 'JetBrains Mono', monospace;
+    }
+    @media (min-width: 768px) { .lp-terminal-body { padding: 40px; } }
+    .lp-terminal-cmd { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
+    .lp-terminal-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 2px; font-family: 'Inter', sans-serif; margin-bottom: 4px; }
+    .lp-terminal-text { font-size: clamp(16px, 2.5vw, 24px); color: #f0f6fc; }
+    .lp-terminal-dollar { color: #58a6ff; opacity: 0.5; }
+    .lp-terminal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; border-top: 1px solid #30363d; padding-top: 24px; }
+    .lp-stat-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 2px; font-family: 'Inter', sans-serif; margin-bottom: 4px; }
+    .lp-stat-value { font-size: 14px; display: flex; align-items: center; gap: 6px; }
+    .lp-stat-green { color: #3fb950; }
+
+    .lp-features {
+      padding: 80px 24px; border-top: 1px solid #30363d; background: #0d1117;
+    }
+    .lp-features-inner { max-width: 1200px; margin: 0 auto; }
+    .lp-features-header { display: flex; align-items: center; gap: 8px; margin-bottom: 40px; }
+    .lp-features-title { font-size: 18px; font-weight: 600; color: #f0f6fc; }
+    .lp-features-grid { display: grid; gap: 24px; }
+    @media (min-width: 768px) { .lp-features-grid { grid-template-columns: repeat(3, 1fr); } }
+    .lp-feature-card {
+      background: #161b22; border: 1px solid #30363d; padding: 24px; border-radius: 8px;
+      transition: border-color 0.2s;
+    }
+    .lp-feature-card:hover { border-color: #8b949e; }
+    .lp-feature-icon {
+      width: 40px; height: 40px; border-radius: 6px; background: #0d1117;
+      border: 1px solid #30363d; display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px; transition: transform 0.2s;
+    }
+    .lp-feature-card:hover .lp-feature-icon { transform: scale(1.1); }
+    .lp-feature-title { font-size: 16px; font-weight: 600; color: #f0f6fc; margin-bottom: 8px; }
+    .lp-feature-desc { font-size: 14px; color: #8b949e; line-height: 1.6; }
+
+    .lp-showcase {
+      padding: 80px 24px; position: relative; overflow: hidden;
+    }
+    .lp-showcase-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 64px; align-items: center;
+    }
+    @media (min-width: 1024px) { .lp-showcase-inner { flex-direction: row; } }
+    .lp-showcase-left { flex: 1; }
+    .lp-showcase-left h2 { font-size: 36px; font-weight: 700; color: #f0f6fc; margin-bottom: 16px; }
+    .lp-showcase-left p { font-size: 18px; color: #8b949e; line-height: 1.6; margin-bottom: 24px; }
+    .lp-showcase-items { display: flex; flex-direction: column; gap: 12px; }
+    .lp-showcase-item {
+      display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 8px;
+      background: #161b22; border: 1px solid #30363d;
+    }
+    .lp-showcase-item-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .lp-showcase-right { flex: 1; }
+    .lp-qr-card {
+      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+      padding: 32px; text-align: center; position: relative; overflow: hidden;
+    }
+    @media (min-width: 768px) { .lp-qr-card { padding: 48px; } }
+    .lp-qr-glow {
+      position: absolute; top: 0; right: 0; width: 128px; height: 128px;
+      background: rgba(88,166,255,0.05); filter: blur(60px); border-radius: 50%;
+    }
+    .lp-qr-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 3px; font-family: 'JetBrains Mono', monospace; margin-bottom: 24px; }
+    .lp-qr-box {
+      display: inline-block; padding: 24px; background: white; border-radius: 8px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.3); margin-bottom: 24px;
+    }
+    .lp-qr-amount { font-size: 32px; font-weight: 700; color: #f0f6fc; margin-bottom: 8px; }
+    .lp-qr-ref { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #8b949e; }
+
+    .lp-footer {
+      padding: 64px 24px; border-top: 1px solid #30363d; background: #161b22;
+    }
+    .lp-footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; align-items: center; gap: 32px;
+    }
+    @media (min-width: 768px) { .lp-footer-inner { flex-direction: row; justify-content: space-between; } }
+    .lp-footer-brand { display: flex; align-items: center; gap: 12px; }
+    .lp-footer-links { display: flex; gap: 32px; }
+    .lp-footer-links a {
+      font-size: 12px; font-weight: 600; color: #8b949e; text-decoration: none;
+      text-transform: uppercase; letter-spacing: 2px; transition: color 0.2s;
+    }
+    .lp-footer-links a:hover { color: #58a6ff; }
+    .lp-footer-copy {
+      max-width: 1200px; margin: 32px auto 0; padding-top: 32px;
+      border-top: 1px solid #30363d; text-align: center;
+    }
+    .lp-footer-copy p { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 4px; }
   </style>
 </head>
-<body>
+<body class="landing-mode">
+
+<!-- ═══ Landing Page ═══ -->
+<div class="landing active" id="landing-page">
+
+  <div class="lp-grid-bg"></div>
+
+  <!-- Nav -->
+  <nav class="lp-nav" id="lp-nav">
+    <div class="lp-nav-inner">
+      <div class="lp-logo">
+        <div class="lp-logo-icon">
+          <svg width="20" height="20" viewBox="0 0 60 60" fill="none"><path d="M 16 12 L 16 48" stroke="#0d1117" stroke-width="7" stroke-linecap="round"/><path d="M 16 16 L 36 26.5 Q 42 30 36 33.5 L 16 44" stroke="#0d1117" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </div>
+        <span class="lp-logo-text">PromptPay</span>
+      </div>
+      <div class="lp-nav-links">
+        <a href="#features">Product</a>
+        <a href="#how-it-works">Solutions</a>
+        <a href="#features">Pricing</a>
+      </div>
+      <div class="lp-nav-actions">
+        <button class="lp-btn-signin" onclick="showAuthGate('login')">Sign in</button>
+        <button class="lp-btn-primary" onclick="showAuthGate('register')">Sign up</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="lp-hero">
+    <div class="lp-hero-grid">
+      <div>
+        <div class="lp-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Now live — AI-powered payments
+        </div>
+        <h1>Where code meets <br><span>capital.</span></h1>
+        <p class="lp-hero-desc">PromptPay is the developer-first financial platform. Build world-class payment experiences using the simple beauty of natural language commands.</p>
+        <div class="lp-hero-btns">
+          <button class="lp-btn-primary" onclick="showAuthGate('register')">
+            Get Started
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <button class="lp-btn-secondary" onclick="showAuthGate('login')">Sign in</button>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="lp-terminal">
+        <div class="lp-terminal-glow"></div>
+        <div class="lp-terminal-inner">
+          <div class="lp-terminal-header">
+            <div class="lp-terminal-header-left">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+              <span class="lp-terminal-title">promptpay --live-console</span>
+            </div>
+            <div class="lp-terminal-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="lp-terminal-body">
+            <div class="lp-terminal-cmd">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2" style="flex-shrink:0;margin-top:4px"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
+              <div>
+                <div class="lp-terminal-label">Input Command</div>
+                <div class="lp-terminal-text">
+                  <span class="lp-terminal-dollar">$</span> <span id="lp-typing-text"></span><span class="lp-cursor" style="display:inline-block;width:8px;height:24px;background:#58a6ff;margin-left:4px;vertical-align:text-bottom"></span>
+                </div>
+              </div>
+            </div>
+            <div class="lp-terminal-stats">
+              <div>
+                <div class="lp-stat-label">Status</div>
+                <div class="lp-stat-value lp-stat-green">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  Processing intent...
+                </div>
+              </div>
+              <div>
+                <div class="lp-stat-label">Protocol</div>
+                <div class="lp-stat-value" style="color:#f0f6fc">v4.0-stable</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="lp-features" id="features">
+    <div class="lp-features-inner">
+      <div class="lp-features-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span class="lp-features-title">Powerful foundations</span>
+      </div>
+      <div class="lp-features-grid">
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bc8cff" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="lp-feature-title">Intent Verification</div>
+          <div class="lp-feature-desc">Every prompt is analyzed and validated using our proprietary neural engine before execution.</div>
+        </div>
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+          </div>
+          <div class="lp-feature-title">Distributed Settlement</div>
+          <div class="lp-feature-desc">High-concurrency payment engine built for sub-second global settlement via PromptPay rails.</div>
+        </div>
+        <div class="lp-feature-card">
+          <div class="lp-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div class="lp-feature-title">Unified Identity</div>
+          <div class="lp-feature-desc">Advanced biometric and cryptographic key management. Your identity is your authority.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Showcase -->
+  <section class="lp-showcase" id="how-it-works">
+    <div class="lp-showcase-inner">
+      <div class="lp-showcase-left">
+        <h2>Effortless by design.</h2>
+        <p>We've abstracted the complexity of traditional banking. No more archaic forms — just simple, secure commands that understand exactly what you need.</p>
+        <div class="lp-showcase-items">
+          <div class="lp-showcase-item">
+            <div class="lp-showcase-item-icon" style="background:rgba(35,134,54,0.1)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div>
+              <div style="font-size:14px;font-weight:600;color:#f0f6fc">Transaction Cleared</div>
+              <div style="font-size:12px;color:#8b949e;font-family:'JetBrains Mono',monospace">ID: 4d2e-9f12-00ac</div>
+            </div>
+          </div>
+          <div class="lp-showcase-item" style="opacity:0.5">
+            <div class="lp-showcase-item-icon" style="background:rgba(88,166,255,0.1)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <div style="font-size:14px;color:#f0f6fc">Listening for intent...</div>
+          </div>
+        </div>
+      </div>
+      <div class="lp-showcase-right">
+        <div class="lp-qr-card">
+          <div class="lp-qr-glow"></div>
+          <div class="lp-qr-label">Payload Generation</div>
+          <div class="lp-qr-box">
+            <svg width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="0.8"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="2" height="2" rx="0.5"/><rect x="13" y="2" width="2" height="2" rx="0.5"/><rect x="9" y="6" width="2" height="2" rx="0.5"/><rect x="13" y="6" width="2" height="2" rx="0.5"/><rect x="2" y="9" width="2" height="2" rx="0.5"/><rect x="6" y="9" width="2" height="2" rx="0.5"/><rect x="9" y="9" width="6" height="6" rx="1"/><rect x="16" y="9" width="2" height="2" rx="0.5"/><rect x="20" y="9" width="2" height="2" rx="0.5"/><rect x="2" y="13" width="2" height="2" rx="0.5"/><rect x="6" y="13" width="2" height="2" rx="0.5"/><rect x="16" y="13" width="2" height="2" rx="0.5"/><rect x="20" y="13" width="2" height="2" rx="0.5"/><rect x="9" y="16" width="2" height="2" rx="0.5"/><rect x="13" y="16" width="2" height="2" rx="0.5"/><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="9" y="20" width="2" height="2" rx="0.5"/><rect x="13" y="20" width="2" height="2" rx="0.5"/></svg>
+          </div>
+          <div class="lp-qr-amount">$1,250.00</div>
+          <div class="lp-qr-ref">promptpay://pay?amount=1250&ref=brunch</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="lp-footer">
+    <div class="lp-footer-inner">
+      <div class="lp-footer-brand">
+        <div class="lp-logo-icon">
+          <svg width="20" height="20" viewBox="0 0 60 60" fill="none"><path d="M 16 12 L 16 48" stroke="#0d1117" stroke-width="7" stroke-linecap="round"/><path d="M 16 16 L 36 26.5 Q 42 30 36 33.5 L 16 44" stroke="#0d1117" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </div>
+        <div>
+          <span style="font-size:16px;font-weight:700;color:#f0f6fc">PromptPay</span>
+          <p style="font-size:10px;color:#8b949e;text-transform:uppercase;font-family:'JetBrains Mono',monospace;letter-spacing:3px">Built with precision</p>
+        </div>
+      </div>
+      <div class="lp-footer-links">
+        <a href="#">Privacy</a>
+        <a href="#">Security</a>
+        <a href="#">API</a>
+        <a href="#">Status</a>
+      </div>
+    </div>
+    <div class="lp-footer-copy">
+      <p>&copy; 2025 PromptPay Inc. // All systems nominal</p>
+    </div>
+  </footer>
+</div>
 
 <!-- Auth Gate -->
-<div class="auth-gate" id="auth-gate">
+<div class="auth-gate hidden" id="auth-gate">
   <div class="auth-card">
     <div class="auth-brand">
       <div class="auth-brand-icon" style="background:none;width:48px;height:48px"><svg width="48" height="48" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lStem" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#a5b4fc"/></linearGradient><linearGradient id="lArrow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs><path d="M 16 12 L 16 48" stroke="url(#lStem)" stroke-width="7" stroke-linecap="round"/><path d="M 16 16 L 36 26.5 Q 42 30 36 33.5 L 16 44" stroke="url(#lArrow)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
@@ -846,6 +1272,12 @@
       <button type="submit" class="auth-submit" id="register-submit">Create Account</button>
       <div class="auth-error" id="register-error"></div>
     </form>
+    <div style="text-align:center;margin-top:20px">
+      <button onclick="showLanding();startLandingTyping()" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:4px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Back to home
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1627,7 +2059,7 @@ async function authFetch(url, options = {}) {
     localStorage.removeItem('promptpay_token');
     authToken = null;
     currentUser = null;
-    document.getElementById('auth-gate').classList.remove('hidden');
+    showAuthGate('login');
     document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
     return new Response(JSON.stringify({ error: 'Token expired' }), { status: 401 });
   }
@@ -1637,7 +2069,7 @@ async function authFetch(url, options = {}) {
     localStorage.removeItem('promptpay_token');
     authToken = null;
     currentUser = null;
-    document.getElementById('auth-gate').classList.remove('hidden');
+    showAuthGate('login');
     document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
   }
   return res;
@@ -1732,7 +2164,6 @@ function handleLogout() {
   authToken = null;
   currentUser = null;
   localStorage.removeItem('promptpay_token');
-  document.getElementById('auth-gate').classList.remove('hidden');
   document.getElementById('login-email').value = '';
   document.getElementById('login-password').value = '';
   document.getElementById('register-name').value = '';
@@ -1740,12 +2171,13 @@ function handleLogout() {
   document.getElementById('register-password').value = '';
   document.getElementById('login-error').textContent = '';
   document.getElementById('register-error').textContent = '';
-  switchAuthTab('login');
   navigateTo('home');
+  showLanding();
+  startLandingTyping();
 }
 
 function showApp() {
-  document.getElementById('auth-gate').classList.add('hidden');
+  enterAppMode();
   if (currentUser) {
     const name = currentUser.displayName || currentUser.email || 'User';
     document.querySelector('.header-name').textContent = name;
@@ -2474,26 +2906,83 @@ function populateActivity() {
   `;
 }
 
+// ── Landing Page Logic ──
+const LP_PROMPTS = [
+  "Send $50 to Sarah for dinner...",
+  "Pay my electricity bill this month...",
+  "Split the brunch tab with friends...",
+  "Top up airtime for +234 803 123..."
+];
+let lpPromptIdx = 0;
+
+function startLandingTyping() {
+  const el = document.getElementById('lp-typing-text');
+  if (!el) return;
+  let txt = LP_PROMPTS[lpPromptIdx];
+  let i = 0;
+  const interval = setInterval(() => {
+    el.textContent = txt.slice(0, i);
+    i++;
+    if (i > txt.length) {
+      clearInterval(interval);
+      setTimeout(() => {
+        lpPromptIdx = (lpPromptIdx + 1) % LP_PROMPTS.length;
+        startLandingTyping();
+      }, 3000);
+    }
+  }, 50);
+}
+
+// Landing nav scroll effect
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('lp-nav');
+  if (nav) {
+    if (window.scrollY > 50) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  }
+});
+
+function showLanding() {
+  document.getElementById('landing-page').classList.add('active');
+  document.getElementById('auth-gate').classList.add('hidden');
+  document.body.className = 'landing-mode';
+}
+
+function showAuthGate(tab) {
+  document.getElementById('landing-page').classList.remove('active');
+  document.getElementById('auth-gate').classList.remove('hidden');
+  document.body.className = 'landing-mode';
+  if (tab) switchAuthTab(tab);
+}
+
+function enterAppMode() {
+  document.getElementById('landing-page').classList.remove('active');
+  document.getElementById('auth-gate').classList.add('hidden');
+  document.body.className = 'app-mode';
+}
+
 // ── Init ──
 (async function initApp() {
-  // Check if we had a token that was auto-cleared as expired
   const hadToken = !!localStorage.getItem('promptpay_had_session');
   if (authToken) {
     localStorage.setItem('promptpay_had_session', '1');
     const valid = await validateToken();
     if (valid) {
+      enterAppMode();
       showApp();
     } else {
-      // Token invalid, show login with message
-      document.getElementById('auth-gate').classList.remove('hidden');
+      showAuthGate('login');
       document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
     }
   } else {
-    document.getElementById('auth-gate').classList.remove('hidden');
-    // Show expired message only if user had a previous session
+    // No token — show landing page for new visitors, auth gate for returning users
     if (hadToken) {
       localStorage.removeItem('promptpay_had_session');
+      showAuthGate('login');
       document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
+    } else {
+      showLanding();
+      startLandingTyping();
     }
   }
 })();
