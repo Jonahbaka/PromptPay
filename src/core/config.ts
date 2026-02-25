@@ -449,6 +449,18 @@ export const CONFIG = {
       { code: 'cairo', name: 'Cairo International Bank' },
       { code: 'housing', name: 'Housing Finance Bank' },
     ],
+    US: [
+      { code: 'chase', name: 'Chase' },
+      { code: 'bofa', name: 'Bank of America' },
+      { code: 'wells', name: 'Wells Fargo' },
+      { code: 'citi', name: 'Citi' },
+      { code: 'usbank', name: 'US Bank' },
+      { code: 'capitalone', name: 'Capital One' },
+      { code: 'pnc', name: 'PNC Bank' },
+      { code: 'td', name: 'TD Bank' },
+      { code: 'truist', name: 'Truist' },
+      { code: 'ally', name: 'Ally Bank' },
+    ],
   } as Record<string, Array<{ code: string; name: string }>>,
 
   // ══════════════════════════════════════════════════════════

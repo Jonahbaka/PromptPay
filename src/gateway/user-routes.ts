@@ -594,6 +594,40 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
 
       deps.logger.info(`KYC submitted: user=${userId} country=${country} tier=${tier}`);
 
+      // Send confirmation email (fire-and-forget)
+      if (deps.emailChannel?.isActive()) {
+        const userRow = db.prepare('SELECT email, display_name FROM users WHERE id = ?')
+          .get(userId) as { email: string; display_name: string } | undefined;
+        if (userRow?.email) {
+          import('../channels/email.js').then(({ EmailTemplates: _ET }) => {
+            const tierLabel = (cc?.tierLimits as Record<number, { label?: string }>)?.[tier]?.label || `Tier ${tier}`;
+            deps.emailChannel!.sendEmail(userRow.email,
+              'Identity Verified — PromptPay',
+              `<h2 style="color:#1a1a2e;margin:0 0 16px">Verification Complete</h2>
+               <p style="color:#444;line-height:1.6;margin:0 0 16px">
+                 Hi ${userRow.display_name || 'there'}, your identity has been verified successfully.
+                 You are now at <strong>${tierLabel}</strong> level.
+               </p>
+               <div style="text-align:center;margin:24px 0">
+                 <a href="${CONFIG.platform.domainUrl}"
+                    style="display:inline-block;padding:12px 32px;background:#7c3aed;color:#fff;
+                           text-decoration:none;border-radius:8px;font-weight:600">
+                   Open PromptPay
+                 </a>
+               </div>`
+            ).catch(() => {});
+          }).catch(() => {});
+        }
+      }
+
+      // Send push notification (fire-and-forget)
+      if (deps.pushChannel) {
+        deps.pushChannel.sendMessage(userId, JSON.stringify({
+          title: 'Identity Verified',
+          body: `You're verified! Your account is now Tier ${tier}.`,
+        })).catch(() => {});
+      }
+
       res.json({
         success: true,
         tier,

@@ -541,6 +541,38 @@
       border-radius: 2px; margin: 0 auto 16px;
     }
 
+    /* ── Premium Popup ── */
+    .premium-popup-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      z-index: 200; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .premium-popup-overlay.active { opacity: 1; pointer-events: auto; }
+    .premium-popup {
+      background: linear-gradient(145deg, rgba(15,15,25,0.98), rgba(12,12,20,0.95));
+      border: 1px solid rgba(124,58,237,0.25); border-radius: 24px;
+      padding: 32px 28px; width: 90%; max-width: 360px; text-align: center;
+      transform: scale(0.9); transition: transform 0.3s ease;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(124,58,237,0.1);
+    }
+    .premium-popup-overlay.active .premium-popup { transform: scale(1); }
+    .premium-popup-icon { font-size: 40px; margin-bottom: 12px; }
+    .premium-popup h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .premium-popup p { font-size: 14px; color: var(--text2); line-height: 1.5; margin-bottom: 20px; }
+    .premium-popup .price { font-size: 28px; font-weight: 800; margin-bottom: 24px;
+      background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .premium-popup .btn-subscribe {
+      width: 100%; padding: 16px; background: var(--gradient2); border: none;
+      border-radius: 14px; color: white; font-size: 16px; font-weight: 600;
+      cursor: pointer; font-family: inherit; margin-bottom: 10px;
+      box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+    }
+    .premium-popup .btn-later {
+      width: 100%; padding: 14px; background: none; border: none;
+      color: var(--text2); font-size: 14px; cursor: pointer; font-family: inherit;
+    }
+
     /* ── Token Matrix Display ── */
     .token-matrix {
       background: var(--surface); border: 1px solid var(--glass-border);
@@ -2353,6 +2385,18 @@
   </div>
 </div>
 
+<!-- Premium Feature Popup -->
+<div class="premium-popup-overlay" id="premium-popup" onclick="if(event.target===this)closePremiumPopup()">
+  <div class="premium-popup">
+    <div class="premium-popup-icon" id="premium-popup-icon"></div>
+    <h3 id="premium-popup-title">Unlock Premium</h3>
+    <p>Unlock AI Shopping, Trading, Budgets & more with PromptPay Premium.</p>
+    <div class="price">$19.99/month</div>
+    <button class="btn-subscribe" onclick="subscribePremium()">Subscribe Now</button>
+    <button class="btn-later" onclick="closePremiumPopup()">Maybe Later</button>
+  </div>
+</div>
+
 <script>
 // ═══ PromptPay Frontend Engine ═══
 const API_BASE = '';
@@ -3009,7 +3053,7 @@ async function submitKyc() {
 
     // Show success toast
     const toast = document.getElementById('settings-toast');
-    toast.textContent = `Verified! Tier ${data.tier} \u2022 ${data.limits?.label || 'Active'}`;
+    toast.textContent = `Verified! Tier ${data.tier} \u2022 ${data.limits?.label || 'Active'} — Check your phone/email for confirmation`;
     toast.classList.add('active');
     setTimeout(() => toast.classList.remove('active'), 3000);
   } catch (e) {
@@ -3398,8 +3442,40 @@ async function sendMessage() {
   updateTokenMatrix();
 }
 
+const PREMIUM_FEATURES = {
+  'Create a shopping list': { icon: '\ud83d\uded2', name: 'AI Shopping (Aria)' },
+  'Show my portfolio': { icon: '\ud83d\udcc8', name: 'AI Trading (Quant)' },
+  'Give me financial advice': { icon: '\ud83e\udde0', name: 'AI Advisor (Sage)' },
+  'Show my subscriptions': { icon: '\ud83e\udd16', name: 'AI Assistant (Otto)' },
+};
+
+function showPremiumPopup(featureName) {
+  const info = PREMIUM_FEATURES[featureName] || { icon: '\u2b50', name: 'Premium Feature' };
+  document.getElementById('premium-popup-icon').textContent = info.icon;
+  document.getElementById('premium-popup-title').textContent = `Unlock ${info.name}`;
+  document.getElementById('premium-popup').classList.add('active');
+}
+
+function closePremiumPopup() {
+  document.getElementById('premium-popup').classList.remove('active');
+}
+
+function subscribePremium() {
+  closePremiumPopup();
+  const toast = document.getElementById('settings-toast');
+  toast.textContent = 'Premium subscriptions coming soon!';
+  toast.classList.add('active');
+  setTimeout(() => toast.classList.remove('active'), 3000);
+}
+
 function sendSuggestion(el) {
-  document.getElementById('chat-input').value = el.textContent;
+  const text = el.dataset?.text || el.textContent;
+  // Gate premium features for free-tier users
+  if (PREMIUM_FEATURES[text] && (!currentUser || !currentUser.subscriptionTier || currentUser.subscriptionTier === 'free')) {
+    showPremiumPopup(text);
+    return;
+  }
+  document.getElementById('chat-input').value = text;
   sendMessage();
 }
 
