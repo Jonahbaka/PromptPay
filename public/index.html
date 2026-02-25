@@ -965,6 +965,95 @@
       0% { transform: scale(0.95); opacity: 1; }
       100% { transform: scale(1.2); opacity: 0; }
     }
+
+    /* Phone Mockup */
+    .phone-mockup {
+      position: relative; width: 280px; margin: 0 auto;
+    }
+    @media (min-width: 768px) { .phone-mockup { width: 320px; } }
+    .phone-frame {
+      position: relative; border-radius: 36px; overflow: hidden;
+      border: 3px solid #30363d; background: #06060a;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05), inset 0 0 40px rgba(0,0,0,0.3);
+    }
+    .phone-notch {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 24px; background: #0d1117;
+      border-radius: 0 0 16px 16px; z-index: 10;
+    }
+    .phone-notch::after {
+      content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+      width: 40px; height: 4px; background: #21262d; border-radius: 4px;
+    }
+    .phone-screen {
+      padding: 36px 16px 16px; min-height: 520px;
+      background: linear-gradient(180deg, #06060a 0%, #0c0c14 100%);
+    }
+    .phone-glow {
+      position: absolute; top: -20%; left: -20%; width: 140%; height: 60%;
+      background: radial-gradient(ellipse, rgba(124,58,237,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .ps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .ps-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #1e1b4b, #0c0a1a);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: #a5b4fc;
+    }
+    .ps-greeting { font-size: 11px; color: #8b949e; }
+    .ps-name { font-size: 14px; font-weight: 600; color: #f0f6fc; }
+    .ps-icons { display: flex; gap: 8px; }
+    .ps-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; }
+
+    .ps-balance-card {
+      background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.08));
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+      padding: 20px; margin-bottom: 16px; text-align: center;
+    }
+    .ps-balance-label { font-size: 11px; color: #8b949e; margin-bottom: 4px; }
+    .ps-balance-amount { font-size: 28px; font-weight: 700; color: #f0f6fc; }
+    .ps-balance-change { font-size: 11px; color: #3fb950; margin-top: 4px; }
+    .ps-balance-btns { display: flex; gap: 8px; margin-top: 12px; }
+    .ps-btn-send {
+      flex: 1; padding: 8px; border-radius: 10px; border: none; font-size: 12px; font-weight: 600;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6); color: white; cursor: default;
+    }
+    .ps-btn-request {
+      flex: 1; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04); color: #c9d1d9; font-size: 12px; font-weight: 600; cursor: default;
+    }
+
+    .ps-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 16px; }
+    .ps-grid-item { text-align: center; }
+    .ps-grid-icon {
+      width: 36px; height: 36px; border-radius: 12px; margin: 0 auto 4px;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .ps-grid-label { font-size: 9px; color: #8b949e; }
+
+    .ps-ai-card {
+      background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.15);
+      border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;
+    }
+    .ps-ai-avatar { font-size: 20px; }
+    .ps-ai-text { font-size: 11px; color: #c9d1d9; }
+    .ps-ai-label { font-size: 9px; color: #a78bfa; font-weight: 600; margin-bottom: 2px; }
+
+    .ps-nav {
+      display: flex; justify-content: space-around; padding: 10px 0 4px;
+      border-top: 1px solid rgba(255,255,255,0.04); margin-top: 12px;
+    }
+    .ps-nav-item { text-align: center; }
+    .ps-nav-icon { font-size: 16px; margin-bottom: 2px; }
+    .ps-nav-label { font-size: 8px; color: #8b949e; }
+    .ps-nav-item.active .ps-nav-label { color: #7c3aed; }
+
+    @keyframes phoneFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .phone-mockup { animation: phoneFloat 4s ease-in-out infinite; }
     .lp-terminal-cmd { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
     .lp-terminal-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 2px; font-family: 'Inter', sans-serif; margin-bottom: 4px; }
     .lp-terminal-text { font-size: clamp(16px, 2.5vw, 24px); color: #f0f6fc; }
@@ -1091,8 +1180,8 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           Now live — AI-powered payments
         </div>
-        <h1>Where code meets <br><span>capital.</span></h1>
-        <p class="lp-hero-desc">PromptPay is the developer-first financial platform. Build world-class payment experiences using the simple beauty of natural language commands.</p>
+        <h1>Just say it. <br><span>We'll handle it.</span></h1>
+        <p class="lp-hero-desc">Pay bills, send money, build shopping lists, and manage your finances — all through simple prompts. Your AI-powered financial assistant that actually gets things done.</p>
         <div class="lp-hero-btns">
           <button class="lp-btn-primary" onclick="showAuthGate('register')">
             Get Started
@@ -1102,79 +1191,85 @@
         </div>
       </div>
 
-      <!-- Terminal -->
-      <div class="lp-terminal">
-        <div class="lp-terminal-glow"></div>
-        <div class="lp-terminal-inner">
-          <div class="lp-terminal-header">
-            <div class="lp-terminal-header-left">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-              <span class="lp-terminal-title">promptpay --ai-assistant</span>
-            </div>
-            <div class="lp-terminal-dots"><span></span><span></span><span></span></div>
-          </div>
-          <div class="lp-terminal-body">
-            <div class="lp-terminal-cmd">
-              <!-- Holographic AI Avatar -->
-              <div class="holo-avatar">
-                <div class="holo-pulse"></div>
-                <div class="holo-pulse-2"></div>
-                <div class="holo-avatar-ring"></div>
-                <div class="holo-avatar-inner">
-                  <div class="holo-avatar-face">
-                    <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
-                      <!-- Head outline -->
-                      <ellipse cx="24" cy="20" rx="12" ry="14" stroke="url(#holoGrad)" stroke-width="1.5" fill="none" opacity="0.7"/>
-                      <!-- Eyes -->
-                      <circle cx="19" cy="18" r="2" fill="#58a6ff" opacity="0.9">
-                        <animate attributeName="opacity" values="0.9;0.4;0.9" dur="3s" repeatCount="indefinite"/>
-                      </circle>
-                      <circle cx="29" cy="18" r="2" fill="#58a6ff" opacity="0.9">
-                        <animate attributeName="opacity" values="0.9;0.4;0.9" dur="3s" repeatCount="indefinite"/>
-                      </circle>
-                      <!-- Neural paths -->
-                      <path d="M16 28 Q24 36 32 28" stroke="#bc8cff" stroke-width="1" fill="none" opacity="0.4"/>
-                      <line x1="24" y1="6" x2="24" y2="2" stroke="#58a6ff" stroke-width="1" opacity="0.3"/>
-                      <line x1="18" y1="8" x2="15" y2="4" stroke="#bc8cff" stroke-width="0.8" opacity="0.2"/>
-                      <line x1="30" y1="8" x2="33" y2="4" stroke="#bc8cff" stroke-width="0.8" opacity="0.2"/>
-                      <!-- Circuit nodes -->
-                      <circle cx="24" cy="38" r="1.5" fill="#58a6ff" opacity="0.5">
-                        <animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite"/>
-                      </circle>
-                      <line x1="24" y1="34" x2="24" y2="36" stroke="#58a6ff" stroke-width="0.8" opacity="0.3"/>
-                      <line x1="18" y1="36" x2="22" y2="38" stroke="#bc8cff" stroke-width="0.6" opacity="0.2"/>
-                      <line x1="30" y1="36" x2="26" y2="38" stroke="#bc8cff" stroke-width="0.6" opacity="0.2"/>
-                      <defs>
-                        <linearGradient id="holoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stop-color="#58a6ff"/>
-                          <stop offset="50%" stop-color="#bc8cff"/>
-                          <stop offset="100%" stop-color="#58a6ff"/>
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div class="holo-scanline"></div>
-                  </div>
+      <!-- Phone Mockup -->
+      <div class="phone-mockup">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-glow"></div>
+            <!-- Header -->
+            <div class="ps-header">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="ps-avatar">JB</div>
+                <div>
+                  <div class="ps-greeting">Good evening</div>
+                  <div class="ps-name">Jonah</div>
                 </div>
               </div>
-              <div>
-                <div class="lp-terminal-label">Input Command</div>
-                <div class="lp-terminal-text">
-                  <span class="lp-terminal-dollar">$</span> <span id="lp-typing-text"></span><span class="lp-cursor" style="display:inline-block;width:8px;height:24px;background:#58a6ff;margin-left:4px;vertical-align:text-bottom"></span>
-                </div>
+              <div class="ps-icons">
+                <div class="ps-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+                <div class="ps-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09"/></svg></div>
               </div>
             </div>
-            <div class="lp-terminal-stats">
-              <div>
-                <div class="lp-stat-label">Status</div>
-                <div class="lp-stat-value lp-stat-green">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                  Processing intent...
-                </div>
+            <!-- Balance Card -->
+            <div class="ps-balance-card">
+              <div class="ps-balance-label">Total Balance</div>
+              <div class="ps-balance-amount">$2,450.80</div>
+              <div class="ps-balance-change">+$125.00 today</div>
+              <div class="ps-balance-btns">
+                <div class="ps-btn-send">Send</div>
+                <div class="ps-btn-request">Request</div>
               </div>
-              <div>
-                <div class="lp-stat-label">Protocol</div>
-                <div class="lp-stat-value" style="color:#f0f6fc">v4.0-stable</div>
+            </div>
+            <!-- Quick Actions Grid -->
+            <div class="ps-grid">
+              <div class="ps-grid-item">
+                <div class="ps-grid-icon" style="background:rgba(124,58,237,0.15)">&#129302;</div>
+                <div class="ps-grid-label">AI Agent</div>
               </div>
+              <div class="ps-grid-item">
+                <div class="ps-grid-icon" style="background:rgba(59,130,246,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                <div class="ps-grid-label">Pay Bill</div>
+              </div>
+              <div class="ps-grid-item">
+                <div class="ps-grid-icon" style="background:rgba(6,182,212,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+                <div class="ps-grid-label">QR Code</div>
+              </div>
+              <div class="ps-grid-item">
+                <div class="ps-grid-icon" style="background:rgba(16,185,129,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+                <div class="ps-grid-label">Tap to Pay</div>
+              </div>
+              <div class="ps-grid-item">
+                <div class="ps-grid-icon" style="background:rgba(16,185,129,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/></svg></div>
+                <div class="ps-grid-label">Wallet</div>
+              </div>
+              <div class="ps-grid-item">
+                <div class="ps-grid-icon" style="background:rgba(249,115,22,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+                <div class="ps-grid-label">Top Up</div>
+              </div>
+              <div class="ps-grid-item">
+                <div class="ps-grid-icon" style="background:rgba(59,130,246,0.15)">&#128184;</div>
+                <div class="ps-grid-label">Request</div>
+              </div>
+              <div class="ps-grid-item">
+                <div class="ps-grid-icon" style="background:rgba(239,68,68,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+                <div class="ps-grid-label">Insights</div>
+              </div>
+            </div>
+            <!-- AI Card -->
+            <div class="ps-ai-card">
+              <div class="ps-ai-avatar">&#9889;</div>
+              <div>
+                <div class="ps-ai-label">AI ASSISTANT</div>
+                <div class="ps-ai-text">What can I help you with?</div>
+              </div>
+            </div>
+            <!-- Bottom Nav -->
+            <div class="ps-nav">
+              <div class="ps-nav-item active"><div class="ps-nav-icon">&#127968;</div><div class="ps-nav-label">Home</div></div>
+              <div class="ps-nav-item"><div class="ps-nav-icon">&#128179;</div><div class="ps-nav-label">Wallet</div></div>
+              <div class="ps-nav-item"><div class="ps-nav-icon">&#129302;</div><div class="ps-nav-label">AI</div></div>
+              <div class="ps-nav-item"><div class="ps-nav-icon">&#128338;</div><div class="ps-nav-label">History</div></div>
             </div>
           </div>
         </div>
@@ -1220,22 +1315,64 @@
     <div class="lp-showcase-inner">
       <div class="lp-showcase-left">
         <h2>Effortless by design.</h2>
-        <p>We've abstracted the complexity of traditional banking. No more archaic forms — just simple, secure commands that understand exactly what you need.</p>
-        <div class="lp-showcase-items">
-          <div class="lp-showcase-item">
-            <div class="lp-showcase-item-icon" style="background:rgba(35,134,54,0.1)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <p>No more archaic forms — just simple, secure commands that understand exactly what you need.</p>
+        <!-- Terminal with Holographic Avatar -->
+        <div class="lp-terminal" style="margin-top:24px">
+          <div class="lp-terminal-glow"></div>
+          <div class="lp-terminal-inner">
+            <div class="lp-terminal-header">
+              <div class="lp-terminal-header-left">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span class="lp-terminal-title">promptpay --ai-assistant</span>
+              </div>
+              <div class="lp-terminal-dots"><span></span><span></span><span></span></div>
             </div>
-            <div>
-              <div style="font-size:14px;font-weight:600;color:#f0f6fc">Transaction Cleared</div>
-              <div style="font-size:12px;color:#8b949e;font-family:'JetBrains Mono',monospace">ID: 4d2e-9f12-00ac</div>
+            <div class="lp-terminal-body" style="padding:20px">
+              <div class="lp-terminal-cmd">
+                <!-- Holographic AI Avatar -->
+                <div class="holo-avatar">
+                  <div class="holo-pulse"></div>
+                  <div class="holo-pulse-2"></div>
+                  <div class="holo-avatar-ring"></div>
+                  <div class="holo-avatar-inner">
+                    <div class="holo-avatar-face">
+                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+                        <ellipse cx="24" cy="20" rx="12" ry="14" stroke="url(#holoGrad2)" stroke-width="1.5" fill="none" opacity="0.7"/>
+                        <circle cx="19" cy="18" r="2" fill="#58a6ff" opacity="0.9"><animate attributeName="opacity" values="0.9;0.4;0.9" dur="3s" repeatCount="indefinite"/></circle>
+                        <circle cx="29" cy="18" r="2" fill="#58a6ff" opacity="0.9"><animate attributeName="opacity" values="0.9;0.4;0.9" dur="3s" repeatCount="indefinite"/></circle>
+                        <path d="M16 28 Q24 36 32 28" stroke="#bc8cff" stroke-width="1" fill="none" opacity="0.4"/>
+                        <line x1="24" y1="6" x2="24" y2="2" stroke="#58a6ff" stroke-width="1" opacity="0.3"/>
+                        <line x1="18" y1="8" x2="15" y2="4" stroke="#bc8cff" stroke-width="0.8" opacity="0.2"/>
+                        <line x1="30" y1="8" x2="33" y2="4" stroke="#bc8cff" stroke-width="0.8" opacity="0.2"/>
+                        <circle cx="24" cy="38" r="1.5" fill="#58a6ff" opacity="0.5"><animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite"/></circle>
+                        <line x1="24" y1="34" x2="24" y2="36" stroke="#58a6ff" stroke-width="0.8" opacity="0.3"/>
+                        <defs><linearGradient id="holoGrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#58a6ff"/><stop offset="50%" stop-color="#bc8cff"/><stop offset="100%" stop-color="#58a6ff"/></linearGradient></defs>
+                      </svg>
+                      <div class="holo-scanline"></div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="lp-terminal-label">Input Command</div>
+                  <div class="lp-terminal-text" style="font-size:16px">
+                    <span class="lp-terminal-dollar">$</span> <span id="lp-typing-text"></span><span class="lp-cursor" style="display:inline-block;width:8px;height:20px;background:#58a6ff;margin-left:4px;vertical-align:text-bottom"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="lp-terminal-stats" style="padding-top:16px">
+                <div>
+                  <div class="lp-stat-label">Status</div>
+                  <div class="lp-stat-value lp-stat-green" style="font-size:12px">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Processing...
+                  </div>
+                </div>
+                <div>
+                  <div class="lp-stat-label">Protocol</div>
+                  <div class="lp-stat-value" style="color:#f0f6fc;font-size:12px">v4.0-stable</div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="lp-showcase-item" style="opacity:0.5">
-            <div class="lp-showcase-item-icon" style="background:rgba(88,166,255,0.1)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            </div>
-            <div style="font-size:14px;color:#f0f6fc">Listening for intent...</div>
           </div>
         </div>
       </div>
