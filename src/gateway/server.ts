@@ -60,9 +60,10 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     res.sendFile(path.join(publicDir, 'sw.js'));
   });
 
-  // Manifest
+  // Manifest — must be application/manifest+json for PWA installability
   app.get('/manifest.json', (_req: Request, res: Response) => {
     res.set('Cache-Control', 'no-cache');
+    res.set('Content-Type', 'application/manifest+json');
     res.sendFile(path.join(publicDir, 'manifest.json'));
   });
 

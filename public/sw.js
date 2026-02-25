@@ -2,15 +2,16 @@
 // PromptPay Service Worker — PWA + Offline Support
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'promptpay-v1.4';
+const CACHE_NAME = 'promptpay-v1.5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
 ];
 
-// Install — cache shell
+// Install — cache shell (external fonts cached lazily via fetch handler)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -75,8 +76,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'PromptPay', {
       body: data.body || 'You have a new notification',
-      icon: '/icons/icon-192.svg',
-      badge: '/icons/icon-192.svg',
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
       data: data.url ? { url: data.url } : undefined,
     })
   );
