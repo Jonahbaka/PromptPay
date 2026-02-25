@@ -586,11 +586,22 @@
       text-align: center; margin-bottom: 32px;
     }
     .auth-brand-icon {
-      width: 64px; height: 64px; border-radius: 20px;
-      background: var(--gradient2); margin: 0 auto 16px;
+      width: 72px; height: 72px; border-radius: 20px;
+      background: linear-gradient(135deg, rgba(88,166,255,0.15), rgba(188,140,255,0.15));
+      border: 1px solid rgba(88,166,255,0.2);
+      margin: 0 auto 16px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 28px; font-weight: 800; color: white;
-      box-shadow: 0 8px 32px rgba(124,58,237,0.3);
+      box-shadow: 0 8px 32px rgba(88,166,255,0.2), 0 0 60px rgba(188,140,255,0.1);
+      position: relative;
+    }
+    .auth-brand-icon::after {
+      content: ''; position: absolute; inset: -2px; border-radius: 22px;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff, #58a6ff);
+      background-size: 200% 200%;
+      animation: holoShift 4s ease infinite;
+      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      opacity: 0.6;
     }
     .auth-brand-name {
       font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
@@ -846,8 +857,16 @@
     }
     .lp-logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .lp-logo-icon {
-      width: 32px; height: 32px; background: #f0f6fc; border-radius: 6px;
+      width: 36px; height: 36px; border-radius: 10px; position: relative;
+      background: linear-gradient(135deg, #58a6ff, #bc8cff, #58a6ff);
+      background-size: 200% 200%;
+      animation: holoShift 4s ease infinite;
       display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 16px rgba(88,166,255,0.3), 0 0 4px rgba(188,140,255,0.2);
+    }
+    @keyframes holoShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
     .lp-logo-text { font-size: 18px; font-weight: 600; color: #f0f6fc; letter-spacing: -0.3px; }
     .lp-nav-links { display: none; gap: 24px; font-size: 14px; font-weight: 500; }
@@ -1157,7 +1176,11 @@
     <div class="lp-nav-inner">
       <div class="lp-logo">
         <div class="lp-logo-icon">
-          <svg width="20" height="20" viewBox="0 0 60 60" fill="none"><path d="M 16 12 L 16 48" stroke="#0d1117" stroke-width="7" stroke-linecap="round"/><path d="M 16 16 L 36 26.5 Q 42 30 36 33.5 L 16 44" stroke="#0d1117" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          <svg width="22" height="22" viewBox="0 0 60 60" fill="none">
+            <circle cx="30" cy="30" r="24" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" fill="none"/>
+            <path d="M20 18 L36 30 L20 42" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="44" cy="14" r="4" fill="white" opacity="0.9"/>
+          </svg>
         </div>
         <span class="lp-logo-text">PromptPay</span>
       </div>
@@ -1200,7 +1223,7 @@
             <!-- Header -->
             <div class="ps-header">
               <div style="display:flex;align-items:center;gap:8px">
-                <div class="ps-avatar">JB</div>
+                <div class="ps-avatar" style="background:linear-gradient(135deg,rgba(88,166,255,0.2),rgba(188,140,255,0.2));border:1px solid rgba(88,166,255,0.3)"><svg width="16" height="16" viewBox="0 0 60 60" fill="none"><circle cx="30" cy="30" r="22" stroke="#58a6ff" stroke-width="2" fill="none" opacity="0.6"/><path d="M21 19 L35 30 L21 41" stroke="#c4b5fd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
                 <div>
                   <div class="ps-greeting">Good evening</div>
                   <div class="ps-name">Jonah</div>
@@ -1395,7 +1418,11 @@
     <div class="lp-footer-inner">
       <div class="lp-footer-brand">
         <div class="lp-logo-icon">
-          <svg width="20" height="20" viewBox="0 0 60 60" fill="none"><path d="M 16 12 L 16 48" stroke="#0d1117" stroke-width="7" stroke-linecap="round"/><path d="M 16 16 L 36 26.5 Q 42 30 36 33.5 L 16 44" stroke="#0d1117" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          <svg width="22" height="22" viewBox="0 0 60 60" fill="none">
+            <circle cx="30" cy="30" r="24" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" fill="none"/>
+            <path d="M20 18 L36 30 L20 42" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="44" cy="14" r="4" fill="white" opacity="0.9"/>
+          </svg>
         </div>
         <div>
           <span style="font-size:16px;font-weight:700;color:#f0f6fc">PromptPay</span>
@@ -1419,7 +1446,17 @@
 <div class="auth-gate hidden" id="auth-gate">
   <div class="auth-card">
     <div class="auth-brand">
-      <div class="auth-brand-icon" style="background:none;width:48px;height:48px"><svg width="48" height="48" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lStem" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#a5b4fc"/></linearGradient><linearGradient id="lArrow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs><path d="M 16 12 L 16 48" stroke="url(#lStem)" stroke-width="7" stroke-linecap="round"/><path d="M 16 16 L 36 26.5 Q 42 30 36 33.5 L 16 44" stroke="url(#lArrow)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="auth-brand-icon"><svg width="36" height="36" viewBox="0 0 60 60" fill="none">
+            <defs>
+              <linearGradient id="authRing" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#bc8cff"/></linearGradient>
+              <linearGradient id="authArrow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#c4b5fd"/></linearGradient>
+            </defs>
+            <circle cx="30" cy="30" r="24" stroke="url(#authRing)" stroke-width="2" fill="none" opacity="0.7"/>
+            <path d="M20 18 L36 30 L20 42" stroke="url(#authArrow)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="44" cy="14" r="3.5" fill="#58a6ff" opacity="0.8">
+              <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
+            </circle>
+          </svg></div>
       <div class="auth-brand-name">PromptPay</div>
       <div class="auth-brand-tagline">AI-Powered Financial Assistant</div>
     </div>
@@ -1509,7 +1546,12 @@
   <!-- Header -->
   <div class="header">
     <div class="header-left">
-      <div class="header-avatar" style="background:linear-gradient(135deg,#1e1b4b,#0c0a1a);display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 60 60" fill="none"><defs><linearGradient id="hStem" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#a5b4fc"/></linearGradient><linearGradient id="hArrow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs><path d="M 16 12 L 16 48" stroke="url(#hStem)" stroke-width="7" stroke-linecap="round"/><path d="M 16 16 L 36 26.5 Q 42 30 36 33.5 L 16 44" stroke="url(#hArrow)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
+      <div class="header-avatar" style="background:linear-gradient(135deg,rgba(88,166,255,0.12),rgba(188,140,255,0.12));border:1px solid rgba(88,166,255,0.2);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 60 60" fill="none">
+            <defs><linearGradient id="hRing" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#bc8cff"/></linearGradient><linearGradient id="hArr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#c4b5fd"/></linearGradient></defs>
+            <circle cx="30" cy="30" r="24" stroke="url(#hRing)" stroke-width="2" fill="none" opacity="0.6"/>
+            <path d="M20 18 L36 30 L20 42" stroke="url(#hArr)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="44" cy="14" r="3" fill="#58a6ff" opacity="0.7"/>
+          </svg></div>
       <div>
         <div class="header-greeting">Good <span id="time-greeting">evening</span></div>
         <div class="header-name">PromptPay</div>
