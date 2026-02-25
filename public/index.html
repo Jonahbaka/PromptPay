@@ -63,7 +63,7 @@
   <script src="https://js.stripe.com/v3/"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #06060a;
@@ -587,21 +587,11 @@
     }
     .auth-brand-icon {
       width: 72px; height: 72px; border-radius: 20px;
-      background: linear-gradient(135deg, rgba(88,166,255,0.15), rgba(188,140,255,0.15));
-      border: 1px solid rgba(88,166,255,0.2);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
       margin: 0 auto 16px;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 8px 32px rgba(88,166,255,0.2), 0 0 60px rgba(188,140,255,0.1);
-      position: relative;
-    }
-    .auth-brand-icon::after {
-      content: ''; position: absolute; inset: -2px; border-radius: 22px;
-      background: linear-gradient(135deg, #58a6ff, #bc8cff, #58a6ff);
-      background-size: 200% 200%;
-      animation: holoShift 4s ease infinite;
-      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor; mask-composite: exclude;
-      opacity: 0.6;
+      box-shadow: 0 8px 32px rgba(79,172,254,0.12), 0 0 60px rgba(240,147,251,0.06);
     }
     .auth-brand-name {
       font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
@@ -826,342 +816,332 @@
     }
 
     /* ═══ Landing Page ═══ */
-    .landing { display: none; min-height: 100vh; background: #0d1117; color: #c9d1d9; }
+    .landing { display: none; min-height: 100vh; background: #030308; color: #e0e0e8; }
     .landing.active { display: block; }
-    .lp-border { border: 1px solid #30363d; }
-    .lp-card { background-color: #161b22; }
-    .lp-muted { color: #8b949e; }
-    .lp-accent { color: #58a6ff; }
 
-    .lp-grid-bg {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: linear-gradient(#30363d 1px, transparent 1px), linear-gradient(90deg, #30363d 1px, transparent 1px);
-      background-size: 40px 40px; opacity: 0.07;
-    }
-
+    @keyframes holoSweep { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+    @keyframes cardGlint { 0% { transform: translateX(-100%) rotate(25deg); } 100% { transform: translateX(200%) rotate(25deg); } }
+    @keyframes lpFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
     @keyframes lpBlink { 50% { opacity: 0; } }
     .lp-cursor { animation: lpBlink 1s step-end infinite; }
+    .lp-holo-text {
+      background: linear-gradient(135deg, #00f2fe, #4facfe, #f093fb, #736efe, #00f2fe);
+      background-size: 200% auto; animation: holoSweep 4s linear infinite;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .lp-logo-mark {
+      width: 42px; height: 42px; border-radius: 14px; position: relative;
+      background: linear-gradient(135deg, #00f2fe, #4facfe, #f093fb, #736efe, #00f2fe);
+      background-size: 200% auto; animation: holoSweep 4s linear infinite;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 20px rgba(79,172,254,0.2), 0 0 40px rgba(240,147,251,0.1);
+    }
+    .lp-logo-mark::after {
+      content: 'P'; font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 24px; color: white; text-shadow: 0 0 8px rgba(255,255,255,0.4);
+    }
 
     .lp-nav {
       position: fixed; top: 0; width: 100%; z-index: 50;
-      transition: all 0.3s ease;
-      padding: 20px 0;
+      transition: all 0.3s ease; padding: 20px 0;
     }
     .lp-nav.scrolled {
-      background: rgba(13,17,23,0.95); backdrop-filter: blur(12px);
-      border-bottom: 1px solid #30363d; padding: 12px 0;
+      background: rgba(3,3,8,0.92); backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 0;
     }
     .lp-nav-inner {
       max-width: 1200px; margin: 0 auto; padding: 0 24px;
       display: flex; justify-content: space-between; align-items: center;
     }
     .lp-logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-    .lp-logo-icon {
-      width: 36px; height: 36px; border-radius: 10px; position: relative;
-      background: linear-gradient(135deg, #58a6ff, #bc8cff, #58a6ff);
-      background-size: 200% 200%;
-      animation: holoShift 4s ease infinite;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 16px rgba(88,166,255,0.3), 0 0 4px rgba(188,140,255,0.2);
-    }
-    @keyframes holoShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-    .lp-logo-text { font-size: 18px; font-weight: 600; color: #f0f6fc; letter-spacing: -0.3px; }
-    .lp-nav-links { display: none; gap: 24px; font-size: 14px; font-weight: 500; }
-    .lp-nav-links a { color: #c9d1d9; text-decoration: none; transition: color 0.2s; }
-    .lp-nav-links a:hover { color: #58a6ff; }
+    .lp-logo-text { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+    .lp-nav-links { display: none; gap: 28px; font-size: 14px; font-weight: 500; }
+    .lp-nav-links a { color: rgba(255,255,255,0.6); text-decoration: none; transition: color 0.2s; }
+    .lp-nav-links a:hover { color: #fff; }
     @media (min-width: 768px) { .lp-nav-links { display: flex; } }
     .lp-nav-actions { display: flex; align-items: center; gap: 12px; }
     .lp-btn-primary {
-      background: #238636; color: white; font-size: 14px; font-weight: 600;
-      padding: 8px 16px; border-radius: 6px; border: 1px solid rgba(240,246,252,0.1);
-      cursor: pointer; transition: background 0.2s;
+      background: linear-gradient(135deg, #4facfe, #736efe); color: white; font-size: 14px; font-weight: 600;
+      padding: 10px 20px; border-radius: 12px; border: none;
+      cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 16px rgba(79,172,254,0.25);
     }
-    .lp-btn-primary:hover { background: #2ea043; }
+    .lp-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(79,172,254,0.35); }
     .lp-btn-secondary {
-      background: #21262d; color: #c9d1d9; font-size: 14px; font-weight: 600;
-      padding: 8px 16px; border-radius: 6px; border: 1px solid #30363d;
-      cursor: pointer; transition: background 0.2s;
+      background: rgba(255,255,255,0.06); color: #fff; font-size: 14px; font-weight: 600;
+      padding: 10px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer; transition: all 0.3s;
     }
-    .lp-btn-secondary:hover { background: #30363d; }
+    .lp-btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
     .lp-btn-signin {
-      background: none; color: #c9d1d9; font-size: 14px; font-weight: 500;
-      padding: 8px 12px; border: none; cursor: pointer; transition: color 0.2s;
+      background: none; color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500;
+      padding: 8px 16px; border: none; cursor: pointer; transition: color 0.2s;
     }
-    .lp-btn-signin:hover { color: #58a6ff; }
+    .lp-btn-signin:hover { color: #fff; }
 
     .lp-hero {
-      position: relative; padding: 140px 24px 80px; max-width: 1200px; margin: 0 auto;
+      position: relative; padding: 140px 24px 80px; max-width: 1200px; margin: 0 auto; overflow: hidden;
+    }
+    .lp-hero-glow {
+      position: absolute; top: -200px; right: -100px; width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(79,172,254,0.08) 0%, rgba(240,147,251,0.04) 40%, transparent 70%);
+      pointer-events: none;
     }
     .lp-hero-grid { display: grid; gap: 48px; align-items: center; }
     @media (min-width: 1024px) { .lp-hero-grid { grid-template-columns: 1fr 1fr; } }
-    .lp-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600;
-      color: #58a6ff; background: #161b22; border: 1px solid #30363d;
-    }
     .lp-hero h1 {
-      font-size: clamp(36px, 6vw, 72px); font-weight: 700; color: #f0f6fc;
-      line-height: 1.1; letter-spacing: -1.5px; margin: 20px 0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(40px, 6vw, 68px); font-weight: 700; color: #fff;
+      line-height: 1.08; letter-spacing: -2px; margin: 20px 0;
     }
-    .lp-hero h1 span { color: #58a6ff; }
-    .lp-hero-desc { font-size: 18px; color: #8b949e; max-width: 520px; line-height: 1.6; margin-bottom: 28px; }
+    .lp-hero-desc { font-size: 18px; color: rgba(255,255,255,0.5); max-width: 480px; line-height: 1.7; margin-bottom: 32px; }
     .lp-hero-btns { display: flex; flex-wrap: wrap; gap: 12px; }
-    .lp-hero-btns .lp-btn-primary { padding: 12px 24px; font-size: 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; }
-    .lp-hero-btns .lp-btn-secondary { padding: 12px 24px; font-size: 16px; border-radius: 8px; }
+    .lp-hero-btns .lp-btn-primary { padding: 14px 28px; font-size: 16px; border-radius: 14px; display: flex; align-items: center; gap: 8px; }
+    .lp-hero-btns .lp-btn-secondary { padding: 14px 28px; font-size: 16px; border-radius: 14px; }
 
-    .lp-terminal {
-      position: relative;
-    }
-    .lp-terminal-glow {
-      position: absolute; inset: -2px;
-      background: linear-gradient(135deg, #58a6ff, #bc8cff); border-radius: 14px;
-      opacity: 0.08; filter: blur(1px); transition: opacity 0.3s;
-    }
-    .lp-terminal:hover .lp-terminal-glow { opacity: 0.18; }
+    .lp-terminal { position: relative; }
     .lp-terminal-inner {
-      position: relative; background: #161b22; border: 1px solid #30363d;
-      border-radius: 12px; overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px; overflow: hidden;
     }
     .lp-terminal-header {
-      background: #161b22; border-bottom: 1px solid #30363d;
+      background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06);
       padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
     }
     .lp-terminal-header-left { display: flex; align-items: center; gap: 10px; }
-    .lp-terminal-title { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #8b949e; }
+    .lp-terminal-title { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.35); }
     .lp-terminal-dots { display: flex; gap: 6px; }
-    .lp-terminal-dots span { width: 12px; height: 12px; border-radius: 50%; background: #30363d; }
-    .lp-terminal-body {
-      padding: 24px; font-family: 'JetBrains Mono', monospace;
-    }
-    @media (min-width: 768px) { .lp-terminal-body { padding: 40px; } }
+    .lp-terminal-dots span { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.08); }
+    .lp-terminal-body { padding: 24px; font-family: 'JetBrains Mono', monospace; }
 
-    /* Holographic AI Avatar */
-    .holo-avatar {
-      position: relative; width: 72px; height: 72px; flex-shrink: 0;
+    /* ═══ Friendly AI Agent ═══ */
+    @keyframes agentFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+    @keyframes agentShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+    .agent-section { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .agent-wrapper {
+      position: relative; width: 220px; height: 280px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-    .holo-avatar-ring {
-      position: absolute; inset: 0; border-radius: 50%;
-      border: 2px solid transparent;
-      background: linear-gradient(135deg, #58a6ff, #bc8cff, #58a6ff) border-box;
-      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor; mask-composite: exclude;
-      animation: holoSpin 4s linear infinite;
+    .agent-shadow {
+      position: absolute; bottom: 12px; width: 100px; height: 10px;
+      background: rgba(79,172,254,0.12); filter: blur(14px); border-radius: 50%;
     }
-    .holo-avatar-inner {
-      position: absolute; inset: 3px; border-radius: 50%;
-      background: radial-gradient(ellipse at 30% 30%, rgba(88,166,255,0.15), rgba(188,140,255,0.08), #161b22 70%);
+    .agent-body { position: relative; animation: agentFloat 5s ease-in-out infinite; }
+    .agent-capsule {
+      position: relative; width: 140px; height: 180px;
+      background: rgba(255,255,255,0.93); border-radius: 70px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.35), 0 0 60px rgba(79,172,254,0.08);
+      border: 1px solid rgba(255,255,255,0.4);
+      overflow: hidden; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .agent-glow {
+      position: absolute; inset: 0; opacity: 0.15; border-radius: 70px;
+      background: #22d3ee; transition: background 0.8s;
+    }
+    .agent-glow.thinking { background: #fbbf24; }
+    .agent-glow.success { background: #34d399; }
+    .agent-face {
+      position: relative; z-index: 2; display: flex; flex-direction: column;
+      align-items: center; gap: 22px;
+    }
+    .agent-eyes { display: flex; gap: 26px; transition: transform 0.15s ease-out; }
+    .agent-eye {
+      width: 11px; height: 11px; background: #1e293b; border-radius: 50%;
+      position: relative; transition: transform 0.15s;
+    }
+    .agent-eye.blink { transform: scaleY(0.1); }
+    .agent-eye-sparkle {
+      position: absolute; top: 1px; right: 1px; width: 3px; height: 3px;
+      background: white; border-radius: 50%; opacity: 0.7;
+    }
+    .agent-mouth {
+      width: 38px; height: 5px; background: #e2e8f0; border-radius: 3px; overflow: hidden;
+    }
+    .agent-mouth-fill {
+      height: 100%; width: 33%; background: #22d3ee; border-radius: 3px;
+      transition: all 0.5s;
+    }
+    .agent-mouth-fill.thinking { width: 100%; background: #fbbf24; animation: pulse 1.5s ease infinite; }
+    .agent-mouth-fill.success { width: 100%; background: #34d399; }
+    .agent-reflection {
+      position: absolute; inset: 0; border-radius: 70px;
+      background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0.08) 80%);
+      pointer-events: none; z-index: 3;
+    }
+    .agent-icons {
+      position: absolute; right: -36px; top: 28%; display: flex;
+      flex-direction: column; gap: 12px;
+    }
+    .agent-icon-bubble {
+      width: 34px; height: 34px; background: rgba(255,255,255,0.92);
+      border-radius: 11px; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.4);
+      transition: all 0.5s; font-size: 15px;
+    }
+    .agent-icon-bubble.hide { transform: translateX(16px); opacity: 0; }
+
+    /* Agent Chat Panel */
+    .agent-chat {
+      width: 100%; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 24px;
+      padding: 20px; overflow: hidden;
+    }
+    .agent-chat-header {
+      display: flex; align-items: center; gap: 12px;
+      padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .agent-chat-status-icon {
+      width: 38px; height: 38px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
+      transition: background 0.4s;
     }
-    .holo-avatar-face {
-      position: relative; width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
+    .agent-chat-status-icon.greeting { background: rgba(34,211,238,0.1); }
+    .agent-chat-status-icon.thinking { background: rgba(251,191,36,0.1); }
+    .agent-chat-status-icon.success { background: rgba(52,211,153,0.1); }
+    .agent-chat-title { font-size: 14px; font-weight: 700; color: #fff; }
+    .agent-chat-subtitle { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+    .agent-chat-progress {
+      height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px;
+      overflow: hidden; margin-top: 14px;
     }
-    .holo-scanline {
-      position: absolute; inset: 0; border-radius: 50%;
-      background: repeating-linear-gradient(
-        0deg, transparent, transparent 3px, rgba(88,166,255,0.03) 3px, rgba(88,166,255,0.03) 4px
-      );
-      animation: holoScan 3s linear infinite;
-      pointer-events: none;
+    .agent-chat-progress-fill {
+      height: 100%; width: 0; background: linear-gradient(90deg, #22d3ee, #4facfe);
+      border-radius: 2px; transition: width 2s ease;
     }
-    .holo-pulse {
-      position: absolute; inset: -6px; border-radius: 50%;
-      border: 1px solid rgba(88,166,255,0.2);
-      animation: holoPulse 2.5s ease-out infinite;
+    .agent-chat-progress-fill.active { width: 100%; }
+    .agent-messages {
+      display: flex; flex-direction: column; gap: 8px; margin-top: 14px;
+      max-height: 200px; overflow-y: auto; scrollbar-width: none;
     }
-    .holo-pulse-2 {
-      position: absolute; inset: -12px; border-radius: 50%;
-      border: 1px solid rgba(188,140,255,0.1);
-      animation: holoPulse 2.5s ease-out infinite 0.8s;
+    .agent-messages::-webkit-scrollbar { display: none; }
+    .agent-msg {
+      padding: 10px 14px; border-radius: 14px; font-size: 13px;
+      line-height: 1.5; max-width: 88%; opacity: 0; transform: translateY(8px);
+      animation: agentMsgIn 0.4s ease forwards;
     }
-    @keyframes holoSpin { to { transform: rotate(360deg); } }
-    @keyframes holoScan { to { transform: translateY(4px); } }
-    @keyframes holoPulse {
-      0% { transform: scale(0.95); opacity: 1; }
-      100% { transform: scale(1.2); opacity: 0; }
+    @keyframes agentMsgIn { to { opacity: 1; transform: translateY(0); } }
+    .agent-msg.user {
+      background: linear-gradient(135deg, #4facfe, #736efe); color: white;
+      align-self: flex-end; border-bottom-right-radius: 4px;
     }
+    .agent-msg.ai {
+      background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8);
+      align-self: flex-start; border-bottom-left-radius: 4px;
+    }
+    .agent-msg.typing-msg {
+      background: rgba(255,255,255,0.06); align-self: flex-start;
+      border-bottom-left-radius: 4px; display: flex; gap: 5px; padding: 14px 18px;
+    }
+    .agent-typing-dot {
+      width: 6px; height: 6px; background: rgba(255,255,255,0.3);
+      border-radius: 50%; animation: typingBounce 1.4s ease-in-out infinite;
+    }
+    .agent-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .agent-typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-    /* Phone Mockup */
-    .phone-mockup {
-      position: relative; width: 280px; margin: 0 auto;
-    }
-    @media (min-width: 768px) { .phone-mockup { width: 320px; } }
-    .phone-frame {
-      position: relative; border-radius: 36px; overflow: hidden;
-      border: 3px solid #30363d; background: #06060a;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05), inset 0 0 40px rgba(0,0,0,0.3);
-    }
-    .phone-notch {
-      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 120px; height: 24px; background: #0d1117;
-      border-radius: 0 0 16px 16px; z-index: 10;
-    }
-    .phone-notch::after {
-      content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-      width: 40px; height: 4px; background: #21262d; border-radius: 4px;
-    }
-    .phone-screen {
-      padding: 36px 16px 16px; min-height: 520px;
-      background: linear-gradient(180deg, #06060a 0%, #0c0c14 100%);
-    }
-    .phone-glow {
-      position: absolute; top: -20%; left: -20%; width: 140%; height: 60%;
-      background: radial-gradient(ellipse, rgba(124,58,237,0.08) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .ps-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .ps-avatar {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: linear-gradient(135deg, #1e1b4b, #0c0a1a);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; font-weight: 700; color: #a5b4fc;
-    }
-    .ps-greeting { font-size: 11px; color: #8b949e; }
-    .ps-name { font-size: 14px; font-weight: 600; color: #f0f6fc; }
-    .ps-icons { display: flex; gap: 8px; }
-    .ps-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.04); display: flex; align-items: center; justify-content: center; }
-
-    .ps-balance-card {
-      background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.08));
-      border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
-      padding: 20px; margin-bottom: 16px; text-align: center;
-    }
-    .ps-balance-label { font-size: 11px; color: #8b949e; margin-bottom: 4px; }
-    .ps-balance-amount { font-size: 28px; font-weight: 700; color: #f0f6fc; }
-    .ps-balance-change { font-size: 11px; color: #3fb950; margin-top: 4px; }
-    .ps-balance-btns { display: flex; gap: 8px; margin-top: 12px; }
-    .ps-btn-send {
-      flex: 1; padding: 8px; border-radius: 10px; border: none; font-size: 12px; font-weight: 600;
-      background: linear-gradient(135deg, #7c3aed, #3b82f6); color: white; cursor: default;
-    }
-    .ps-btn-request {
-      flex: 1; padding: 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04); color: #c9d1d9; font-size: 12px; font-weight: 600; cursor: default;
-    }
-
-    .ps-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 16px; }
-    .ps-grid-item { text-align: center; }
-    .ps-grid-icon {
-      width: 36px; height: 36px; border-radius: 12px; margin: 0 auto 4px;
-      display: flex; align-items: center; justify-content: center; font-size: 16px;
-    }
-    .ps-grid-label { font-size: 9px; color: #8b949e; }
-
-    .ps-ai-card {
-      background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.15);
-      border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;
-    }
-    .ps-ai-avatar { font-size: 20px; }
-    .ps-ai-text { font-size: 11px; color: #c9d1d9; }
-    .ps-ai-label { font-size: 9px; color: #a78bfa; font-weight: 600; margin-bottom: 2px; }
-
-    .ps-nav {
-      display: flex; justify-content: space-around; padding: 10px 0 4px;
-      border-top: 1px solid rgba(255,255,255,0.04); margin-top: 12px;
-    }
-    .ps-nav-item { text-align: center; }
-    .ps-nav-icon { font-size: 16px; margin-bottom: 2px; }
-    .ps-nav-label { font-size: 8px; color: #8b949e; }
-    .ps-nav-item.active .ps-nav-label { color: #7c3aed; }
-
-    @keyframes phoneFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-    .phone-mockup { animation: phoneFloat 4s ease-in-out infinite; }
-    .lp-terminal-cmd { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
-    .lp-terminal-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 2px; font-family: 'Inter', sans-serif; margin-bottom: 4px; }
-    .lp-terminal-text { font-size: clamp(16px, 2.5vw, 24px); color: #f0f6fc; }
-    .lp-terminal-dollar { color: #58a6ff; opacity: 0.5; }
-    .lp-terminal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; border-top: 1px solid #30363d; padding-top: 24px; }
-    .lp-stat-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 2px; font-family: 'Inter', sans-serif; margin-bottom: 4px; }
-    .lp-stat-value { font-size: 14px; display: flex; align-items: center; gap: 6px; }
-    .lp-stat-green { color: #3fb950; }
-
-    .lp-features {
-      padding: 80px 24px; border-top: 1px solid #30363d; background: #0d1117;
-    }
+    /* ═══ Features ═══ */
+    .lp-features { padding: 80px 24px; }
     .lp-features-inner { max-width: 1200px; margin: 0 auto; }
-    .lp-features-header { display: flex; align-items: center; gap: 8px; margin-bottom: 40px; }
-    .lp-features-title { font-size: 18px; font-weight: 600; color: #f0f6fc; }
-    .lp-features-grid { display: grid; gap: 24px; }
+    .lp-features-header { text-align: center; margin-bottom: 48px; }
+    .lp-features-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 12px;
+    }
+    .lp-features-subtitle { font-size: 16px; color: rgba(255,255,255,0.4); max-width: 500px; margin: 0 auto; }
+    .lp-features-grid { display: grid; gap: 16px; }
     @media (min-width: 768px) { .lp-features-grid { grid-template-columns: repeat(3, 1fr); } }
     .lp-feature-card {
-      background: #161b22; border: 1px solid #30363d; padding: 24px; border-radius: 8px;
-      transition: border-color 0.2s;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+      padding: 28px; border-radius: 20px; transition: all 0.3s;
     }
-    .lp-feature-card:hover { border-color: #8b949e; }
-    .lp-feature-icon {
-      width: 40px; height: 40px; border-radius: 6px; background: #0d1117;
-      border: 1px solid #30363d; display: flex; align-items: center; justify-content: center;
-      margin-bottom: 16px; transition: transform 0.2s;
+    .lp-feature-card:hover {
+      background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.12);
+      transform: translateY(-2px);
     }
-    .lp-feature-card:hover .lp-feature-icon { transform: scale(1.1); }
-    .lp-feature-title { font-size: 16px; font-weight: 600; color: #f0f6fc; margin-bottom: 8px; }
-    .lp-feature-desc { font-size: 14px; color: #8b949e; line-height: 1.6; }
+    .lp-feature-emoji { font-size: 28px; margin-bottom: 16px; display: block; }
+    .lp-feature-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 8px;
+    }
+    .lp-feature-desc { font-size: 14px; color: rgba(255,255,255,0.4); line-height: 1.6; }
 
-    .lp-showcase {
-      padding: 80px 24px; position: relative; overflow: hidden;
-    }
+    /* ═══ Showcase / How it works ═══ */
+    .lp-showcase { padding: 80px 24px; }
     .lp-showcase-inner {
       max-width: 1200px; margin: 0 auto;
-      display: flex; flex-direction: column; gap: 64px; align-items: center;
+      display: grid; gap: 48px; align-items: center;
     }
-    @media (min-width: 1024px) { .lp-showcase-inner { flex-direction: row; } }
-    .lp-showcase-left { flex: 1; }
-    .lp-showcase-left h2 { font-size: 36px; font-weight: 700; color: #f0f6fc; margin-bottom: 16px; }
-    .lp-showcase-left p { font-size: 18px; color: #8b949e; line-height: 1.6; margin-bottom: 24px; }
-    .lp-showcase-items { display: flex; flex-direction: column; gap: 12px; }
-    .lp-showcase-item {
-      display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 8px;
-      background: #161b22; border: 1px solid #30363d;
+    @media (min-width: 1024px) { .lp-showcase-inner { grid-template-columns: 1fr 1fr; } }
+    .lp-showcase-left h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 12px;
     }
-    .lp-showcase-item-icon {
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    .lp-showcase-left p { font-size: 16px; color: rgba(255,255,255,0.4); line-height: 1.7; margin-bottom: 24px; }
+    .lp-showcase-steps { display: flex; flex-direction: column; gap: 16px; }
+    .lp-step {
+      display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px; transition: all 0.3s;
     }
-    .lp-showcase-right { flex: 1; }
-    .lp-qr-card {
-      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
-      padding: 32px; text-align: center; position: relative; overflow: hidden;
+    .lp-step:hover { background: rgba(255,255,255,0.04); }
+    .lp-step-num {
+      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, #4facfe, #736efe);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: white;
     }
-    @media (min-width: 768px) { .lp-qr-card { padding: 48px; } }
-    .lp-qr-glow {
-      position: absolute; top: 0; right: 0; width: 128px; height: 128px;
-      background: rgba(88,166,255,0.05); filter: blur(60px); border-radius: 50%;
-    }
-    .lp-qr-label { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 3px; font-family: 'JetBrains Mono', monospace; margin-bottom: 24px; }
-    .lp-qr-box {
-      display: inline-block; padding: 24px; background: white; border-radius: 8px;
-      box-shadow: 0 16px 48px rgba(0,0,0,0.3); margin-bottom: 24px;
-    }
-    .lp-qr-amount { font-size: 32px; font-weight: 700; color: #f0f6fc; margin-bottom: 8px; }
-    .lp-qr-ref { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #8b949e; }
+    .lp-step-text { font-size: 14px; color: rgba(255,255,255,0.7); }
+    .lp-step-text strong { color: #fff; }
 
-    .lp-footer {
-      padding: 64px 24px; border-top: 1px solid #30363d; background: #161b22;
+    /* Holographic Card */
+    .lp-holo-card {
+      width: 100%; max-width: 380px; aspect-ratio: 1.586; border-radius: 20px;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1040 50%, #0a0a1a 100%);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 28px; position: relative; overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      animation: lpFloat 5s ease-in-out infinite; margin: 0 auto;
     }
+    .lp-holo-card-glint {
+      position: absolute; top: 0; left: -50%; width: 50%; height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+      animation: cardGlint 4s ease-in-out infinite; pointer-events: none;
+    }
+    .lp-holo-card-chip {
+      width: 36px; height: 28px; border-radius: 6px;
+      background: linear-gradient(135deg, #d4a853, #f0d78c, #d4a853);
+      position: absolute; top: 28px; right: 28px;
+    }
+    .lp-holo-card-logo {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; margin-bottom: 32px;
+    }
+    .lp-holo-card-number {
+      font-family: 'JetBrains Mono', monospace; font-size: 18px;
+      letter-spacing: 3px; color: rgba(255,255,255,0.7); margin-bottom: 20px;
+    }
+    .lp-holo-card-footer { display: flex; justify-content: space-between; align-items: flex-end; }
+    .lp-holo-card-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+      color: rgba(255,255,255,0.3); margin-bottom: 4px;
+    }
+    .lp-holo-card-value { font-size: 14px; color: rgba(255,255,255,0.8); }
+
+    /* ═══ Footer ═══ */
+    .lp-footer { padding: 48px 24px; border-top: 1px solid rgba(255,255,255,0.04); }
     .lp-footer-inner {
       max-width: 1200px; margin: 0 auto;
-      display: flex; flex-direction: column; align-items: center; gap: 32px;
+      display: flex; flex-direction: column; align-items: center; gap: 24px;
     }
     @media (min-width: 768px) { .lp-footer-inner { flex-direction: row; justify-content: space-between; } }
     .lp-footer-brand { display: flex; align-items: center; gap: 12px; }
-    .lp-footer-links { display: flex; gap: 32px; }
-    .lp-footer-links a {
-      font-size: 12px; font-weight: 600; color: #8b949e; text-decoration: none;
-      text-transform: uppercase; letter-spacing: 2px; transition: color 0.2s;
-    }
-    .lp-footer-links a:hover { color: #58a6ff; }
+    .lp-footer-links { display: flex; gap: 28px; }
+    .lp-footer-links a { font-size: 13px; color: rgba(255,255,255,0.3); text-decoration: none; transition: color 0.2s; }
+    .lp-footer-links a:hover { color: rgba(255,255,255,0.7); }
     .lp-footer-copy {
-      max-width: 1200px; margin: 32px auto 0; padding-top: 32px;
-      border-top: 1px solid #30363d; text-align: center;
+      max-width: 1200px; margin: 24px auto 0; padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.04); text-align: center;
     }
-    .lp-footer-copy p { font-size: 10px; color: #8b949e; text-transform: uppercase; letter-spacing: 4px; }
+    .lp-footer-copy p { font-size: 13px; color: rgba(255,255,255,0.2); }
   </style>
 </head>
 <body class="landing-mode">
@@ -1169,131 +1149,77 @@
 <!-- ═══ Landing Page ═══ -->
 <div class="landing active" id="landing-page">
 
-  <div class="lp-grid-bg"></div>
-
   <!-- Nav -->
   <nav class="lp-nav" id="lp-nav">
     <div class="lp-nav-inner">
       <div class="lp-logo">
-        <div class="lp-logo-icon">
-          <svg width="22" height="22" viewBox="0 0 60 60" fill="none">
-            <circle cx="30" cy="30" r="24" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" fill="none"/>
-            <path d="M20 18 L36 30 L20 42" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="44" cy="14" r="4" fill="white" opacity="0.9"/>
-          </svg>
-        </div>
+        <div class="lp-logo-mark"></div>
         <span class="lp-logo-text">PromptPay</span>
       </div>
       <div class="lp-nav-links">
-        <a href="#features">Product</a>
-        <a href="#how-it-works">Solutions</a>
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it works</a>
       </div>
       <div class="lp-nav-actions">
         <button class="lp-btn-signin" onclick="showAuthGate('login')">Sign in</button>
-        <button class="lp-btn-primary" onclick="showAuthGate('register')">Sign up</button>
+        <button class="lp-btn-primary" onclick="showAuthGate('register')">Get Started</button>
       </div>
     </div>
   </nav>
 
   <!-- Hero -->
   <section class="lp-hero">
+    <div class="lp-hero-glow"></div>
     <div class="lp-hero-grid">
       <div>
-        <div class="lp-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          Now live — AI-powered payments
-        </div>
-        <h1>Just say it. <br><span>We'll handle it.</span></h1>
-        <p class="lp-hero-desc">Pay bills, send money, build shopping lists, and manage your finances — all through simple prompts. Your AI-powered financial assistant that actually gets things done.</p>
+        <h1>Just say it.<br><span class="lp-holo-text">We'll handle it.</span></h1>
+        <p class="lp-hero-desc">Pay bills, send money, and manage your finances — all through simple prompts. Your AI-powered financial assistant that actually gets things done.</p>
         <div class="lp-hero-btns">
           <button class="lp-btn-primary" onclick="showAuthGate('register')">
-            Get Started
+            Start for free
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </button>
           <button class="lp-btn-secondary" onclick="showAuthGate('login')">Sign in</button>
         </div>
       </div>
 
-      <!-- Phone Mockup -->
-      <div class="phone-mockup">
-        <div class="phone-frame">
-          <div class="phone-notch"></div>
-          <div class="phone-screen">
-            <div class="phone-glow"></div>
-            <!-- Header -->
-            <div class="ps-header">
-              <div style="display:flex;align-items:center;gap:8px">
-                <div class="ps-avatar" style="background:linear-gradient(135deg,rgba(88,166,255,0.2),rgba(188,140,255,0.2));border:1px solid rgba(88,166,255,0.3)"><svg width="16" height="16" viewBox="0 0 60 60" fill="none"><circle cx="30" cy="30" r="22" stroke="#58a6ff" stroke-width="2" fill="none" opacity="0.6"/><path d="M21 19 L35 30 L21 41" stroke="#c4b5fd" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></div>
-                <div>
-                  <div class="ps-greeting">Good evening</div>
-                  <div class="ps-name">Jonah</div>
+      <!-- AI Agent + Live Chat -->
+      <div class="agent-section">
+        <div class="agent-wrapper" id="agent-wrapper">
+          <div class="agent-shadow"></div>
+          <div class="agent-body">
+            <div class="agent-capsule">
+              <div class="agent-glow" id="agent-glow"></div>
+              <div class="agent-face">
+                <div class="agent-eyes" id="agent-eyes">
+                  <div class="agent-eye"><div class="agent-eye-sparkle"></div></div>
+                  <div class="agent-eye"><div class="agent-eye-sparkle"></div></div>
                 </div>
+                <div class="agent-mouth"><div class="agent-mouth-fill" id="agent-mouth-fill"></div></div>
               </div>
-              <div class="ps-icons">
-                <div class="ps-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
-                <div class="ps-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09"/></svg></div>
-              </div>
+              <div class="agent-reflection"></div>
             </div>
-            <!-- Balance Card -->
-            <div class="ps-balance-card">
-              <div class="ps-balance-label">Total Balance</div>
-              <div class="ps-balance-amount">$2,450.80</div>
-              <div class="ps-balance-change">+$125.00 today</div>
-              <div class="ps-balance-btns">
-                <div class="ps-btn-send">Send</div>
-                <div class="ps-btn-request">Request</div>
-              </div>
+            <div class="agent-icons">
+              <div class="agent-icon-bubble">&#128176;</div>
+              <div class="agent-icon-bubble">&#128179;</div>
             </div>
-            <!-- Quick Actions Grid -->
-            <div class="ps-grid">
-              <div class="ps-grid-item">
-                <div class="ps-grid-icon" style="background:rgba(124,58,237,0.15)">&#129302;</div>
-                <div class="ps-grid-label">AI Agent</div>
-              </div>
-              <div class="ps-grid-item">
-                <div class="ps-grid-icon" style="background:rgba(59,130,246,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-                <div class="ps-grid-label">Pay Bill</div>
-              </div>
-              <div class="ps-grid-item">
-                <div class="ps-grid-icon" style="background:rgba(6,182,212,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
-                <div class="ps-grid-label">QR Code</div>
-              </div>
-              <div class="ps-grid-item">
-                <div class="ps-grid-icon" style="background:rgba(16,185,129,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
-                <div class="ps-grid-label">Tap to Pay</div>
-              </div>
-              <div class="ps-grid-item">
-                <div class="ps-grid-icon" style="background:rgba(16,185,129,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/></svg></div>
-                <div class="ps-grid-label">Wallet</div>
-              </div>
-              <div class="ps-grid-item">
-                <div class="ps-grid-icon" style="background:rgba(249,115,22,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
-                <div class="ps-grid-label">Top Up</div>
-              </div>
-              <div class="ps-grid-item">
-                <div class="ps-grid-icon" style="background:rgba(59,130,246,0.15)">&#128184;</div>
-                <div class="ps-grid-label">Request</div>
-              </div>
-              <div class="ps-grid-item">
-                <div class="ps-grid-icon" style="background:rgba(239,68,68,0.15)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-                <div class="ps-grid-label">Insights</div>
-              </div>
+          </div>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="agent-chat">
+          <div class="agent-chat-header">
+            <div class="agent-chat-status-icon greeting" id="agent-status-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             </div>
-            <!-- AI Card -->
-            <div class="ps-ai-card">
-              <div class="ps-ai-avatar">&#9889;</div>
-              <div>
-                <div class="ps-ai-label">AI ASSISTANT</div>
-                <div class="ps-ai-text">What can I help you with?</div>
-              </div>
+            <div>
+              <div class="agent-chat-title" id="agent-chat-title">Welcome to PromptPay!</div>
+              <div class="agent-chat-subtitle" id="agent-chat-subtitle">Your AI financial assistant</div>
             </div>
-            <!-- Bottom Nav -->
-            <div class="ps-nav">
-              <div class="ps-nav-item active"><div class="ps-nav-icon">&#127968;</div><div class="ps-nav-label">Home</div></div>
-              <div class="ps-nav-item"><div class="ps-nav-icon">&#128179;</div><div class="ps-nav-label">Wallet</div></div>
-              <div class="ps-nav-item"><div class="ps-nav-icon">&#129302;</div><div class="ps-nav-label">AI</div></div>
-              <div class="ps-nav-item"><div class="ps-nav-icon">&#128338;</div><div class="ps-nav-label">History</div></div>
-            </div>
+          </div>
+          <div class="agent-messages" id="agent-messages"></div>
+          <div class="agent-chat-progress">
+            <div class="agent-chat-progress-fill" id="agent-progress-fill"></div>
           </div>
         </div>
       </div>
@@ -1304,110 +1230,83 @@
   <section class="lp-features" id="features">
     <div class="lp-features-inner">
       <div class="lp-features-header">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        <span class="lp-features-title">Powerful foundations</span>
+        <div class="lp-features-title">Everything you need</div>
+        <div class="lp-features-subtitle">Powerful features wrapped in simplicity</div>
       </div>
       <div class="lp-features-grid">
         <div class="lp-feature-card">
-          <div class="lp-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#bc8cff" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-          </div>
-          <div class="lp-feature-title">Intent Verification</div>
-          <div class="lp-feature-desc">Every prompt is analyzed and validated using our proprietary neural engine before execution.</div>
+          <span class="lp-feature-emoji">&#128172;</span>
+          <div class="lp-feature-title">Natural Language</div>
+          <div class="lp-feature-desc">Just type what you want. Our AI understands context, amounts, and recipients instantly.</div>
         </div>
         <div class="lp-feature-card">
-          <div class="lp-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3fb950" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-          </div>
-          <div class="lp-feature-title">Distributed Settlement</div>
-          <div class="lp-feature-desc">High-concurrency payment engine built for sub-second global settlement via PromptPay rails.</div>
+          <span class="lp-feature-emoji">&#9889;</span>
+          <div class="lp-feature-title">Instant Transfers</div>
+          <div class="lp-feature-desc">Send money to anyone in seconds. No routing numbers, no forms, no friction.</div>
         </div>
         <div class="lp-feature-card">
-          <div class="lp-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#58a6ff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-          </div>
-          <div class="lp-feature-title">Unified Identity</div>
-          <div class="lp-feature-desc">Advanced biometric and cryptographic key management. Your identity is your authority.</div>
+          <span class="lp-feature-emoji">&#128179;</span>
+          <div class="lp-feature-title">Smart Wallet</div>
+          <div class="lp-feature-desc">Link cards, track spending, and manage multiple currencies in one place.</div>
+        </div>
+        <div class="lp-feature-card">
+          <span class="lp-feature-emoji">&#128274;</span>
+          <div class="lp-feature-title">Bank-Grade Security</div>
+          <div class="lp-feature-desc">256-bit encryption, biometric auth, and real-time fraud detection keep you safe.</div>
+        </div>
+        <div class="lp-feature-card">
+          <span class="lp-feature-emoji">&#128241;</span>
+          <div class="lp-feature-title">Pay Bills Easily</div>
+          <div class="lp-feature-desc">Utilities, airtime, subscriptions — pay any bill with a simple prompt.</div>
+        </div>
+        <div class="lp-feature-card">
+          <span class="lp-feature-emoji">&#127760;</span>
+          <div class="lp-feature-title">Global Coverage</div>
+          <div class="lp-feature-desc">Send money across borders. Support for 50+ countries and growing.</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Showcase -->
+  <!-- How it works -->
   <section class="lp-showcase" id="how-it-works">
     <div class="lp-showcase-inner">
       <div class="lp-showcase-left">
-        <h2>Effortless by design.</h2>
-        <p>No more archaic forms — just simple, secure commands that understand exactly what you need.</p>
-        <!-- Terminal with Holographic Avatar -->
-        <div class="lp-terminal" style="margin-top:24px">
-          <div class="lp-terminal-glow"></div>
-          <div class="lp-terminal-inner">
-            <div class="lp-terminal-header">
-              <div class="lp-terminal-header-left">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b949e" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                <span class="lp-terminal-title">promptpay --ai-assistant</span>
-              </div>
-              <div class="lp-terminal-dots"><span></span><span></span><span></span></div>
-            </div>
-            <div class="lp-terminal-body" style="padding:20px">
-              <div class="lp-terminal-cmd">
-                <!-- Holographic AI Avatar -->
-                <div class="holo-avatar">
-                  <div class="holo-pulse"></div>
-                  <div class="holo-pulse-2"></div>
-                  <div class="holo-avatar-ring"></div>
-                  <div class="holo-avatar-inner">
-                    <div class="holo-avatar-face">
-                      <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
-                        <ellipse cx="24" cy="20" rx="12" ry="14" stroke="url(#holoGrad2)" stroke-width="1.5" fill="none" opacity="0.7"/>
-                        <circle cx="19" cy="18" r="2" fill="#58a6ff" opacity="0.9"><animate attributeName="opacity" values="0.9;0.4;0.9" dur="3s" repeatCount="indefinite"/></circle>
-                        <circle cx="29" cy="18" r="2" fill="#58a6ff" opacity="0.9"><animate attributeName="opacity" values="0.9;0.4;0.9" dur="3s" repeatCount="indefinite"/></circle>
-                        <path d="M16 28 Q24 36 32 28" stroke="#bc8cff" stroke-width="1" fill="none" opacity="0.4"/>
-                        <line x1="24" y1="6" x2="24" y2="2" stroke="#58a6ff" stroke-width="1" opacity="0.3"/>
-                        <line x1="18" y1="8" x2="15" y2="4" stroke="#bc8cff" stroke-width="0.8" opacity="0.2"/>
-                        <line x1="30" y1="8" x2="33" y2="4" stroke="#bc8cff" stroke-width="0.8" opacity="0.2"/>
-                        <circle cx="24" cy="38" r="1.5" fill="#58a6ff" opacity="0.5"><animate attributeName="r" values="1.5;2.5;1.5" dur="2s" repeatCount="indefinite"/></circle>
-                        <line x1="24" y1="34" x2="24" y2="36" stroke="#58a6ff" stroke-width="0.8" opacity="0.3"/>
-                        <defs><linearGradient id="holoGrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#58a6ff"/><stop offset="50%" stop-color="#bc8cff"/><stop offset="100%" stop-color="#58a6ff"/></linearGradient></defs>
-                      </svg>
-                      <div class="holo-scanline"></div>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div class="lp-terminal-label">Input Command</div>
-                  <div class="lp-terminal-text" style="font-size:16px">
-                    <span class="lp-terminal-dollar">$</span> <span id="lp-typing-text"></span><span class="lp-cursor" style="display:inline-block;width:8px;height:20px;background:#58a6ff;margin-left:4px;vertical-align:text-bottom"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="lp-terminal-stats" style="padding-top:16px">
-                <div>
-                  <div class="lp-stat-label">Status</div>
-                  <div class="lp-stat-value lp-stat-green" style="font-size:12px">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    Processing...
-                  </div>
-                </div>
-                <div>
-                  <div class="lp-stat-label">Protocol</div>
-                  <div class="lp-stat-value" style="color:#f0f6fc;font-size:12px">v4.0-stable</div>
-                </div>
-              </div>
-            </div>
+        <h2>Three steps. That's it.</h2>
+        <p>No apps to download, no forms to fill. Just tell our AI what you need.</p>
+        <div class="lp-showcase-steps">
+          <div class="lp-step">
+            <div class="lp-step-num">1</div>
+            <div class="lp-step-text"><strong>Type your request</strong> — "Send $50 to Sarah" or "Pay my electric bill"</div>
+          </div>
+          <div class="lp-step">
+            <div class="lp-step-num">2</div>
+            <div class="lp-step-text"><strong>AI verifies intent</strong> — confirms amount, recipient, and method</div>
+          </div>
+          <div class="lp-step">
+            <div class="lp-step-num">3</div>
+            <div class="lp-step-text"><strong>Done</strong> — funds sent instantly with real-time confirmation</div>
           </div>
         </div>
       </div>
-      <div class="lp-showcase-right">
-        <div class="lp-qr-card">
-          <div class="lp-qr-glow"></div>
-          <div class="lp-qr-label">Payload Generation</div>
-          <div class="lp-qr-box">
-            <svg width="160" height="160" viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="0.8"><rect x="2" y="2" width="6" height="6" rx="1"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="2" height="2" rx="0.5"/><rect x="13" y="2" width="2" height="2" rx="0.5"/><rect x="9" y="6" width="2" height="2" rx="0.5"/><rect x="13" y="6" width="2" height="2" rx="0.5"/><rect x="2" y="9" width="2" height="2" rx="0.5"/><rect x="6" y="9" width="2" height="2" rx="0.5"/><rect x="9" y="9" width="6" height="6" rx="1"/><rect x="16" y="9" width="2" height="2" rx="0.5"/><rect x="20" y="9" width="2" height="2" rx="0.5"/><rect x="2" y="13" width="2" height="2" rx="0.5"/><rect x="6" y="13" width="2" height="2" rx="0.5"/><rect x="16" y="13" width="2" height="2" rx="0.5"/><rect x="20" y="13" width="2" height="2" rx="0.5"/><rect x="9" y="16" width="2" height="2" rx="0.5"/><rect x="13" y="16" width="2" height="2" rx="0.5"/><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="9" y="20" width="2" height="2" rx="0.5"/><rect x="13" y="20" width="2" height="2" rx="0.5"/></svg>
+
+      <!-- Holographic Payment Card -->
+      <div style="display:flex;justify-content:center">
+        <div class="lp-holo-card">
+          <div class="lp-holo-card-glint"></div>
+          <div class="lp-holo-card-chip"></div>
+          <div class="lp-holo-card-logo lp-holo-text">PromptPay</div>
+          <div class="lp-holo-card-number">4242 &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 8910</div>
+          <div class="lp-holo-card-footer">
+            <div>
+              <div class="lp-holo-card-label">Card Holder</div>
+              <div class="lp-holo-card-value">JONAH BAKA</div>
+            </div>
+            <div>
+              <div class="lp-holo-card-label">Expires</div>
+              <div class="lp-holo-card-value">12/28</div>
+            </div>
           </div>
-          <div class="lp-qr-amount">$1,250.00</div>
-          <div class="lp-qr-ref">promptpay://pay?amount=1250&ref=brunch</div>
         </div>
       </div>
     </div>
@@ -1417,27 +1316,21 @@
   <footer class="lp-footer">
     <div class="lp-footer-inner">
       <div class="lp-footer-brand">
-        <div class="lp-logo-icon">
-          <svg width="22" height="22" viewBox="0 0 60 60" fill="none">
-            <circle cx="30" cy="30" r="24" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" fill="none"/>
-            <path d="M20 18 L36 30 L20 42" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="44" cy="14" r="4" fill="white" opacity="0.9"/>
-          </svg>
-        </div>
+        <div class="lp-logo-mark" style="width:32px;height:32px;border-radius:10px"></div>
         <div>
-          <span style="font-size:16px;font-weight:700;color:#f0f6fc">PromptPay</span>
-          <p style="font-size:10px;color:#8b949e;text-transform:uppercase;font-family:'JetBrains Mono',monospace;letter-spacing:3px">Built with precision</p>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#fff">PromptPay</span>
+          <p style="font-size:12px;color:rgba(255,255,255,0.25);margin-top:2px">AI-powered payments</p>
         </div>
       </div>
       <div class="lp-footer-links">
         <a href="#">Privacy</a>
         <a href="#">Security</a>
-        <a href="#">API</a>
+        <a href="#">Terms</a>
         <a href="#">Status</a>
       </div>
     </div>
     <div class="lp-footer-copy">
-      <p>&copy; 2025 PromptPay Inc. // All systems nominal</p>
+      <p>&copy; 2025 PromptPay Inc. All rights reserved.</p>
     </div>
   </footer>
 </div>
@@ -1446,17 +1339,7 @@
 <div class="auth-gate hidden" id="auth-gate">
   <div class="auth-card">
     <div class="auth-brand">
-      <div class="auth-brand-icon"><svg width="36" height="36" viewBox="0 0 60 60" fill="none">
-            <defs>
-              <linearGradient id="authRing" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#bc8cff"/></linearGradient>
-              <linearGradient id="authArrow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#c4b5fd"/></linearGradient>
-            </defs>
-            <circle cx="30" cy="30" r="24" stroke="url(#authRing)" stroke-width="2" fill="none" opacity="0.7"/>
-            <path d="M20 18 L36 30 L20 42" stroke="url(#authArrow)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="44" cy="14" r="3.5" fill="#58a6ff" opacity="0.8">
-              <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2s" repeatCount="indefinite"/>
-            </circle>
-          </svg></div>
+      <div class="auth-brand-icon"><div class="lp-logo-mark" style="width:48px;height:48px;border-radius:16px"></div></div>
       <div class="auth-brand-name">PromptPay</div>
       <div class="auth-brand-tagline">AI-Powered Financial Assistant</div>
     </div>
@@ -1546,12 +1429,7 @@
   <!-- Header -->
   <div class="header">
     <div class="header-left">
-      <div class="header-avatar" style="background:linear-gradient(135deg,rgba(88,166,255,0.12),rgba(188,140,255,0.12));border:1px solid rgba(88,166,255,0.2);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 60 60" fill="none">
-            <defs><linearGradient id="hRing" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#58a6ff"/><stop offset="100%" stop-color="#bc8cff"/></linearGradient><linearGradient id="hArr" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#c4b5fd"/></linearGradient></defs>
-            <circle cx="30" cy="30" r="24" stroke="url(#hRing)" stroke-width="2" fill="none" opacity="0.6"/>
-            <path d="M20 18 L36 30 L20 42" stroke="url(#hArr)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <circle cx="44" cy="14" r="3" fill="#58a6ff" opacity="0.7"/>
-          </svg></div>
+      <div class="header-avatar lp-logo-mark" style="width:36px;height:36px;border-radius:50%;font-size:16px"></div>
       <div>
         <div class="header-greeting">Good <span id="time-greeting">evening</span></div>
         <div class="header-name">PromptPay</div>
@@ -3172,30 +3050,122 @@ function populateActivity() {
 }
 
 // ── Landing Page Logic ──
-const LP_PROMPTS = [
-  "Create my shopping list for Thanksgiving...",
-  "Design a grilled chicken recipe for 4...",
-  "Build my todo list from meeting notes...",
-  "Plan a budget-friendly date night..."
+
+// Agent Chat Conversation Sequence
+const AGENT_CHAT_SEQUENCE = [
+  { type: 'user', text: 'Send $50 to Sarah for dinner', delay: 1800 },
+  { type: 'thinking', delay: 1500 },
+  { type: 'ai', text: "Done! $50 sent to Sarah. She'll get it instantly.", delay: 3000 },
+  { type: 'user', text: "What's my balance?", delay: 2000 },
+  { type: 'thinking', delay: 800 },
+  { type: 'ai', text: 'Your balance is $2,450.80 — up $125 today.', delay: 3500 },
+  { type: 'user', text: 'Pay my electric bill', delay: 2000 },
+  { type: 'thinking', delay: 1200 },
+  { type: 'ai', text: 'Electric bill of $87.50 paid to Con Edison. Confirmation sent to your email.', delay: 4000 },
 ];
-let lpPromptIdx = 0;
+
+let agentChatRunning = false;
+
+function updateAgentStatus(status) {
+  const glow = document.getElementById('agent-glow');
+  const mouthFill = document.getElementById('agent-mouth-fill');
+  const statusIcon = document.getElementById('agent-status-icon');
+  const title = document.getElementById('agent-chat-title');
+  const subtitle = document.getElementById('agent-chat-subtitle');
+  const progressFill = document.getElementById('agent-progress-fill');
+
+  if (glow) glow.className = 'agent-glow ' + status;
+  if (mouthFill) mouthFill.className = 'agent-mouth-fill ' + status;
+  if (statusIcon) {
+    statusIcon.className = 'agent-chat-status-icon ' + status;
+    const colors = { greeting: '#22d3ee', thinking: '#fbbf24', success: '#34d399' };
+    statusIcon.innerHTML = status === 'success'
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + colors[status] + '" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + colors[status] + '" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  }
+  if (title) {
+    const titles = { greeting: 'Welcome to PromptPay!', thinking: 'Processing...', success: 'Done!' };
+    title.textContent = titles[status] || titles.greeting;
+  }
+  if (subtitle) {
+    const subs = { greeting: 'Your AI financial assistant', thinking: 'Executing your command...', success: 'Transaction completed' };
+    subtitle.textContent = subs[status] || subs.greeting;
+  }
+  if (progressFill) {
+    progressFill.style.width = status === 'thinking' ? '100%' : '0';
+  }
+  // Toggle floating icons
+  document.querySelectorAll('.agent-icon-bubble').forEach(icon => {
+    if (status === 'success') icon.classList.add('hide');
+    else icon.classList.remove('hide');
+  });
+}
+
+function initAgentChat() {
+  const container = document.getElementById('agent-messages');
+  if (!container || agentChatRunning) return;
+  agentChatRunning = true;
+  let idx = 0;
+
+  function showNext() {
+    if (!document.getElementById('agent-messages')) { agentChatRunning = false; return; }
+    if (idx >= AGENT_CHAT_SEQUENCE.length) {
+      setTimeout(() => {
+        container.innerHTML = '';
+        idx = 0;
+        updateAgentStatus('greeting');
+        showNext();
+      }, 3000);
+      return;
+    }
+    const item = AGENT_CHAT_SEQUENCE[idx];
+    if (item.type === 'thinking') {
+      updateAgentStatus('thinking');
+      const dots = document.createElement('div');
+      dots.className = 'agent-msg typing-msg';
+      dots.innerHTML = '<div class="agent-typing-dot"></div><div class="agent-typing-dot"></div><div class="agent-typing-dot"></div>';
+      container.appendChild(dots);
+      container.scrollTop = container.scrollHeight;
+      setTimeout(() => {
+        if (dots.parentNode) dots.parentNode.removeChild(dots);
+        idx++;
+        showNext();
+      }, item.delay);
+    } else {
+      if (item.type === 'ai') updateAgentStatus('success');
+      if (item.type === 'user') updateAgentStatus('greeting');
+      const msg = document.createElement('div');
+      msg.className = 'agent-msg ' + item.type;
+      msg.textContent = item.text;
+      container.appendChild(msg);
+      container.scrollTop = container.scrollHeight;
+      idx++;
+      setTimeout(showNext, item.delay);
+    }
+  }
+  setTimeout(showNext, 1500);
+}
+
+// Agent Eye Tracking
+document.addEventListener('mousemove', (e) => {
+  const agent = document.getElementById('agent-wrapper');
+  if (!agent) return;
+  const rect = agent.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+  const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+  const eyes = document.getElementById('agent-eyes');
+  if (eyes) eyes.style.transform = 'translate(' + (x * 5) + 'px, ' + (y * 3) + 'px)';
+});
+
+// Agent Blinking
+setInterval(() => {
+  document.querySelectorAll('.agent-eye').forEach(eye => eye.classList.add('blink'));
+  setTimeout(() => document.querySelectorAll('.agent-eye').forEach(eye => eye.classList.remove('blink')), 150);
+}, 4000);
 
 function startLandingTyping() {
-  const el = document.getElementById('lp-typing-text');
-  if (!el) return;
-  let txt = LP_PROMPTS[lpPromptIdx];
-  let i = 0;
-  const interval = setInterval(() => {
-    el.textContent = txt.slice(0, i);
-    i++;
-    if (i > txt.length) {
-      clearInterval(interval);
-      setTimeout(() => {
-        lpPromptIdx = (lpPromptIdx + 1) % LP_PROMPTS.length;
-        startLandingTyping();
-      }, 3000);
-    }
-  }, 50);
+  // Legacy — now handled by initAgentChat
+  initAgentChat();
 }
 
 // Landing nav scroll effect
