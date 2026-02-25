@@ -442,6 +442,16 @@ export class MemoryStore extends EventEmitter {
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
 
+      -- ═══ PUSH SUBSCRIPTIONS ═══
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        user_id TEXT NOT NULL,
+        subscription TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE(user_id, subscription),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_push_sub_user ON push_subscriptions(user_id);
+
       -- ═══ AUTH TOKENS ═══
       CREATE TABLE IF NOT EXISTS auth_tokens (
         id TEXT PRIMARY KEY,

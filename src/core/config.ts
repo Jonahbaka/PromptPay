@@ -116,6 +116,20 @@ export const CONFIG = {
     twilioPhoneNumber: env('TWILIO_PHONE_NUMBER', ''),
   },
 
+  // ── Email (Resend) ──
+  email: {
+    resendApiKey: env('RESEND_API_KEY', ''),
+    fromAddress: env('EMAIL_FROM', 'onboarding@resend.dev'),
+    fromName: env('EMAIL_FROM_NAME', 'PromptPay'),
+  },
+
+  // ── Web Push (VAPID) ──
+  push: {
+    vapidPublicKey: env('VAPID_PUBLIC_KEY', ''),
+    vapidPrivateKey: env('VAPID_PRIVATE_KEY', ''),
+    vapidSubject: env('VAPID_SUBJECT', 'mailto:info@upromptpay.com'),
+  },
+
   // ══════════════════════════════════════════════════════════
   // PAYMENT PROVIDERS
   // ══════════════════════════════════════════════════════════

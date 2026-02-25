@@ -1893,10 +1893,44 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
   }
 }
 
-// Register service worker
+// Register service worker + push notifications
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(() => {
+  navigator.serviceWorker.register('/sw.js').then(async (registration) => {
     console.log('Service worker registered');
+
+    // Subscribe to push notifications if logged in
+    const token = localStorage.getItem('promptpay_token') || localStorage.getItem('token');
+    if (token && 'PushManager' in window) {
+      try {
+        const vapidRes = await fetch('/api/push/vapid-key');
+        if (!vapidRes.ok) return;
+        const { publicKey } = await vapidRes.json();
+        if (!publicKey) return;
+
+        let subscription = await registration.pushManager.getSubscription();
+        if (!subscription) {
+          const urlBase64ToUint8Array = (base64String) => {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64);
+            return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+          };
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          });
+        }
+
+        await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ subscription }),
+        });
+        console.log('Push subscription registered');
+      } catch (err) {
+        console.log('Push subscription skipped:', err.message || err);
+      }
+    }
   }).catch((err) => {
     console.log('SW registration failed:', err);
   });

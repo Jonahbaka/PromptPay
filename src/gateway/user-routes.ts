@@ -10,10 +10,14 @@ import { authenticate } from '../auth/middleware.js';
 import { CONFIG } from '../core/config.js';
 import type { MemoryStore } from '../memory/store.js';
 import type { LoggerHandle, CommunicationChannel } from '../core/types.js';
+import type { EmailChannel } from '../channels/email.js';
+import type { PushChannel } from '../channels/push.js';
 
 export interface UserRouteDependencies {
   memory: MemoryStore;
   logger: LoggerHandle;
+  emailChannel?: EmailChannel;
+  pushChannel?: PushChannel;
 }
 
 const ALL_CHANNELS: CommunicationChannel[] = [
@@ -59,6 +63,16 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       const token = createToken(id, null, 'user', CONFIG.auth.jwtSecret, CONFIG.auth.tokenExpiryMs);
 
       deps.logger.info(`User registered: ${email}`, { userId: id });
+
+      // Send welcome email (fire-and-forget)
+      if (deps.emailChannel?.isActive()) {
+        import('../channels/email.js').then(({ EmailTemplates }) => {
+          const { subject, html } = EmailTemplates.welcome(displayName);
+          deps.emailChannel!.sendEmail(email, subject, html).catch(err => {
+            deps.logger.error(`Welcome email failed: ${err}`);
+          });
+        }).catch(() => {});
+      }
 
       res.status(201).json({
         user: { id, email, displayName, role: 'user', country: country || '' },
@@ -288,7 +302,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
 
   // ── List Available Channels ──
   router.get('/api/user/channels', authenticate, (_req: Request, res: Response) => {
-    const active = ['telegram', 'whatsapp', 'sms', 'email'];
+    const active = ['telegram', 'whatsapp', 'sms', 'email', 'push'];
     res.json({
       channels: ALL_CHANNELS.map(ch => ({
         id: ch,
@@ -297,6 +311,46 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
         comingSoon: !active.includes(ch),
       })),
     });
+  });
+
+  // ── Push Subscription: Save ──
+  router.post('/api/push/subscribe', authenticate, (req: Request, res: Response) => {
+    if (!deps.pushChannel) {
+      res.status(503).json({ error: 'Push notifications not available' });
+      return;
+    }
+    const { subscription } = req.body;
+    if (!subscription || !subscription.endpoint) {
+      res.status(400).json({ error: 'subscription with endpoint is required' });
+      return;
+    }
+    deps.pushChannel.saveSubscription(req.auth!.userId, subscription);
+    res.json({ success: true });
+  });
+
+  // ── Push Subscription: Unsubscribe ──
+  router.post('/api/push/unsubscribe', authenticate, (req: Request, res: Response) => {
+    if (!deps.pushChannel) {
+      res.status(503).json({ error: 'Push notifications not available' });
+      return;
+    }
+    const { endpoint } = req.body;
+    if (!endpoint) {
+      res.status(400).json({ error: 'endpoint is required' });
+      return;
+    }
+    deps.pushChannel.removeSubscription(req.auth!.userId, endpoint);
+    res.json({ success: true });
+  });
+
+  // ── VAPID Public Key ──
+  router.get('/api/push/vapid-key', (_req: Request, res: Response) => {
+    const key = CONFIG.push.vapidPublicKey;
+    if (!key) {
+      res.status(503).json({ error: 'Push not configured' });
+      return;
+    }
+    res.json({ publicKey: key });
   });
 
   return router;
