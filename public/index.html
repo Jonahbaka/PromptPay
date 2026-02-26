@@ -866,6 +866,85 @@
     .settings-dropdown-item.danger { color: var(--red); }
     .settings-dropdown-item.danger svg { color: var(--red); }
 
+    /* ── Hamburger Button ── */
+    .hamburger-btn {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--glass-border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; color: var(--text2);
+      padding: 0; flex-shrink: 0;
+    }
+    .hamburger-btn:active { transform: scale(0.92); background: var(--surface-hover); }
+
+    /* ── Navigation Drawer ── */
+    .nav-drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      z-index: 200; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .nav-drawer-overlay.open { opacity: 1; pointer-events: auto; }
+    .nav-drawer {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 280px;
+      background: var(--bg2); z-index: 201;
+      transform: translateX(-100%); transition: transform 0.3s ease;
+      display: flex; flex-direction: column;
+      padding-top: max(20px, env(safe-area-inset-top));
+      box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+    }
+    .nav-drawer-overlay.open .nav-drawer { transform: translateX(0); }
+    .nav-drawer-header {
+      padding: 20px 20px 16px; display: flex; align-items: center; gap: 14px;
+      border-bottom: 1px solid var(--glass-border); margin-bottom: 8px;
+    }
+    .nav-drawer-header .drawer-logo {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: var(--gradient); display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 12px rgba(124,58,237,0.3);
+    }
+    .nav-drawer-header .drawer-info { flex: 1; min-width: 0; }
+    .nav-drawer-header .drawer-name {
+      font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .nav-drawer-header .drawer-email {
+      font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .nav-drawer-section {
+      padding: 4px 12px;
+    }
+    .nav-drawer-section-label {
+      padding: 12px 12px 6px; font-size: 10px; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--text3); font-weight: 600;
+    }
+    .nav-drawer-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 14px; border-radius: 12px; cursor: pointer;
+      font-size: 14px; color: var(--text); font-weight: 500;
+      transition: background 0.15s; border: none; background: none;
+      width: 100%; font-family: inherit; text-align: left;
+    }
+    .nav-drawer-item:hover { background: var(--surface-hover); }
+    .nav-drawer-item.active { background: rgba(124,58,237,0.12); color: var(--accent); }
+    .nav-drawer-item.active svg { color: var(--accent); }
+    .nav-drawer-item svg { flex-shrink: 0; color: var(--text2); }
+    .nav-drawer-item.danger { color: var(--red); }
+    .nav-drawer-item.danger svg { color: var(--red); }
+    .nav-drawer-divider { height: 1px; background: var(--glass-border); margin: 8px 20px; }
+    .nav-drawer-footer {
+      margin-top: auto; padding: 16px 20px;
+      border-top: 1px solid var(--glass-border);
+      font-size: 11px; color: var(--text3); text-align: center;
+    }
+
+    /* ── Back Button (sub-pages) ── */
+    .page-back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: none; border: none; color: var(--text2);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      padding: 4px 0; font-family: inherit; transition: color 0.2s;
+    }
+    .page-back-btn:hover { color: var(--text); }
+
     /* ── Settings Page ── */
     .settings-section {
       background: var(--surface); border: 1px solid var(--glass-border);
@@ -1608,6 +1687,9 @@
   <!-- Header -->
   <div class="header">
     <div class="header-left">
+      <button class="hamburger-btn" onclick="openNavDrawer()" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <div class="header-avatar lp-logo-mark" style="width:36px;height:36px;border-radius:10px;font-size:16px"><svg width="22" height="22" viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="6" y="6" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="7.5" width="3" height="3" fill="#0a0a14"/><rect x="26" y="4" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="28" y="6" width="6" height="6" rx="1" fill="white"/><rect x="29.5" y="7.5" width="3" height="3" fill="#0a0a14"/><rect x="4" y="26" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="6" y="28" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="29.5" width="3" height="3" fill="#0a0a14"/><path d="M2 20 L10 20 L13 12 L17 28 L21 16 L24 24 L27 20 L38 20" stroke="#0a0a14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="20" r="2.5" fill="#0a0a14"/></svg></div>
       <div>
         <div class="header-greeting">Good <span id="time-greeting">evening</span></div>
@@ -1619,25 +1701,71 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         <div class="dot"></div>
       </div>
-      <div class="settings-dropdown-wrap" id="settings-dropdown-wrap">
-        <div class="header-btn" onclick="toggleSettingsDropdown(event)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </div>
-        <div class="settings-dropdown" id="settings-dropdown">
-          <button class="settings-dropdown-item" onclick="navigateTo('settings'); closeSettingsDropdown();">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Settings
-          </button>
-          <button class="settings-dropdown-item" onclick="navigateTo('profile'); closeSettingsDropdown();">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Profile
-          </button>
-          <button class="settings-dropdown-item danger" onclick="handleLogout(); closeSettingsDropdown();">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Logout
-          </button>
+    </div>
+  </div>
+
+  <!-- Navigation Drawer -->
+  <div class="nav-drawer-overlay" id="nav-drawer-overlay" onclick="closeNavDrawer()">
+    <div class="nav-drawer" onclick="event.stopPropagation()">
+      <div class="nav-drawer-header">
+        <div class="drawer-logo lp-logo-mark"><svg width="22" height="22" viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="6" y="6" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="7.5" width="3" height="3" fill="#0a0a14"/><rect x="26" y="4" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="28" y="6" width="6" height="6" rx="1" fill="white"/><rect x="29.5" y="7.5" width="3" height="3" fill="#0a0a14"/><rect x="4" y="26" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="6" y="28" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="29.5" width="3" height="3" fill="#0a0a14"/><path d="M2 20 L10 20 L13 12 L17 28 L21 16 L24 24 L27 20 L38 20" stroke="#0a0a14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="20" r="2.5" fill="#0a0a14"/></svg></div>
+        <div class="drawer-info">
+          <div class="drawer-name" id="drawer-user-name">PromptPay</div>
+          <div class="drawer-email" id="drawer-user-email"></div>
         </div>
       </div>
+      <div class="nav-drawer-section">
+        <div class="nav-drawer-section-label">Main</div>
+        <button class="nav-drawer-item active" data-drawer="home" onclick="drawerNav('home')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Home
+        </button>
+        <button class="nav-drawer-item" data-drawer="activity" onclick="drawerNav('activity')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Activity
+        </button>
+        <button class="nav-drawer-item" data-drawer="ai" onclick="drawerNav('ai')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          AI Assistant
+        </button>
+        <button class="nav-drawer-item" data-drawer="wallet" onclick="drawerNav('wallet')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><circle cx="18" cy="16" r="1"/></svg>
+          Wallet
+        </button>
+      </div>
+      <div class="nav-drawer-divider"></div>
+      <div class="nav-drawer-section">
+        <div class="nav-drawer-section-label">Money</div>
+        <button class="nav-drawer-item" onclick="closeNavDrawer(); openSendModal();">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send Money
+        </button>
+        <button class="nav-drawer-item" onclick="closeNavDrawer(); openRequestModal();">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          Request Money
+        </button>
+        <button class="nav-drawer-item" onclick="closeNavDrawer(); showQrModal();">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="21" x2="21" y2="21"/></svg>
+          QR Code
+        </button>
+      </div>
+      <div class="nav-drawer-divider"></div>
+      <div class="nav-drawer-section">
+        <div class="nav-drawer-section-label">Account</div>
+        <button class="nav-drawer-item" data-drawer="profile" onclick="drawerNav('profile')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </button>
+        <button class="nav-drawer-item" data-drawer="settings" onclick="drawerNav('settings')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </button>
+        <button class="nav-drawer-item danger" onclick="closeNavDrawer(); handleLogout();">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+      <div class="nav-drawer-footer">PromptPay v2.0</div>
     </div>
   </div>
 
@@ -1786,6 +1914,12 @@
 
     <!-- WALLET -->
     <div class="page" id="page-wallet">
+      <div style="margin-bottom:14px">
+        <button class="page-back-btn" onclick="navigateTo('home')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </button>
+      </div>
       <!-- KYC Status Banner -->
       <div id="kyc-banner" style="padding:12px 16px;border-radius:14px;margin-bottom:16px;display:none;cursor:pointer" onclick="openKycModal()">
         <div style="display:flex;align-items:center;gap:10px">
@@ -1873,6 +2007,12 @@
 
     <!-- ACTIVITY (Payments tab) -->
     <div class="page" id="page-activity">
+      <div style="margin-bottom:14px">
+        <button class="page-back-btn" onclick="navigateTo('home')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </button>
+      </div>
       <div class="section-header" style="margin-bottom:18px">
         <div class="section-title">All Transactions</div>
       </div>
@@ -1890,6 +2030,12 @@
 
     <!-- PROFILE -->
     <div class="page" id="page-profile">
+      <div style="margin-bottom:14px">
+        <button class="page-back-btn" onclick="navigateTo('home')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </button>
+      </div>
       <!-- Streak -->
       <div class="streak-card">
         <div class="streak-fire">&#128293;</div>
@@ -1990,9 +2136,14 @@
 
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
+      <div style="margin-bottom:14px">
+        <button class="page-back-btn" onclick="navigateTo('home')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </button>
+      </div>
       <div class="section-header" style="margin-bottom:18px">
         <div class="section-title">Settings</div>
-        <div class="section-link" onclick="navigateTo('home')">Back</div>
       </div>
 
       <!-- AI — Platform Provided -->
@@ -2213,7 +2364,13 @@
   <div class="modal-sheet" style="max-height:90vh">
     <div class="modal-handle"></div>
     <h3 style="margin-bottom:4px;font-size:20px;font-weight:700">Send Money</h3>
-    <p id="send-currency-label" style="font-size:13px;color:var(--text2);margin-bottom:16px"></p>
+    <p id="send-currency-label" style="font-size:13px;color:var(--text2);margin-bottom:12px"></p>
+
+    <!-- Domestic / International toggle -->
+    <div id="send-scope-tabs" style="display:flex;gap:0;margin-bottom:14px;background:var(--surface);border-radius:12px;padding:3px;border:1px solid var(--glass-border)">
+      <button class="send-scope-tab active" data-scope="domestic" onclick="switchSendScope('domestic')" style="flex:1;padding:10px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--gradient2);color:white;transition:all 0.2s">Domestic</button>
+      <button class="send-scope-tab" data-scope="international" onclick="switchSendScope('international')" style="flex:1;padding:10px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--text2);transition:all 0.2s">International</button>
+    </div>
 
     <!-- Transfer type tabs -->
     <div id="send-type-tabs" style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none">
@@ -2224,15 +2381,44 @@
 
     <!-- Bank Transfer Fields -->
     <div id="send-bank-fields">
+      <!-- Country selector for international -->
+      <div id="send-intl-country-wrap" style="margin-bottom:14px;display:none">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Destination Country</label>
+        <select id="send-intl-country" onchange="updateIntlFields()" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
+          <option value="">Select country</option>
+          <option value="US">United States</option>
+          <option value="GB">United Kingdom</option>
+          <option value="NG">Nigeria</option>
+          <option value="GH">Ghana</option>
+          <option value="KE">Kenya</option>
+          <option value="UG">Uganda</option>
+          <option value="IN">India</option>
+          <option value="AU">Australia</option>
+          <option value="CA">Canada</option>
+          <option value="DE">Germany</option>
+          <option value="FR">France</option>
+        </select>
+      </div>
       <div style="margin-bottom:14px">
         <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Bank</label>
         <select id="send-bank" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
           <option value="">Select bank</option>
         </select>
       </div>
+      <!-- Routing / Sort Code / IFSC / BSB field -->
+      <div id="send-routing-wrap" style="margin-bottom:14px">
+        <label id="send-routing-label" style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Routing Number</label>
+        <input id="send-routing" placeholder="000000000" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="send-routing-hint">9-digit ABA routing number</div>
+      </div>
       <div style="margin-bottom:14px">
         <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Account Number</label>
-        <input id="send-account" placeholder="0000000000" maxlength="10" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        <input id="send-account" placeholder="0000000000" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+      </div>
+      <!-- SWIFT/BIC for international -->
+      <div id="send-swift-wrap" style="margin-bottom:14px;display:none">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">SWIFT / BIC Code</label>
+        <input id="send-swift" placeholder="ABCDUS33XXX" maxlength="11" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;text-transform:uppercase">
       </div>
       <div id="send-recipient-name" style="padding:10px 16px;background:rgba(16,185,129,0.1);border-radius:10px;margin-bottom:14px;font-size:13px;color:var(--emerald);display:none"></div>
     </div>
@@ -2796,6 +2982,31 @@ document.addEventListener('click', function(e) {
     closeSettingsDropdown();
   }
 });
+
+// ── Navigation Drawer ──
+function openNavDrawer() {
+  // Update drawer user info
+  if (currentUser) {
+    const nameEl = document.getElementById('drawer-user-name');
+    const emailEl = document.getElementById('drawer-user-email');
+    if (nameEl) nameEl.textContent = currentUser.displayName || 'PromptPay';
+    if (emailEl) emailEl.textContent = currentUser.email || '';
+  }
+  // Highlight current page
+  document.querySelectorAll('.nav-drawer-item[data-drawer]').forEach(item => {
+    item.classList.toggle('active', item.dataset.drawer === currentPage);
+  });
+  document.getElementById('nav-drawer-overlay').classList.add('open');
+}
+
+function closeNavDrawer() {
+  document.getElementById('nav-drawer-overlay').classList.remove('open');
+}
+
+function drawerNav(page) {
+  closeNavDrawer();
+  navigateTo(page);
+}
 
 // ── Settings Page Logic ──
 function toggleChannel(el) {
@@ -3434,6 +3645,12 @@ function updateSendModal() {
     else switchSendType('wallet');
   }
 
+  // Reset scope to domestic
+  switchSendScope('domestic');
+
+  // Update routing field for user's country
+  updateRoutingField(country);
+
   // Populate bank list in send modal
   loadSendBanks(country);
   loadSendMomoProviders(country);
@@ -3454,6 +3671,70 @@ function loadSendMomoProviders(country) {
   const select = document.getElementById('send-momo-provider');
   const opts = providers[country] || [];
   if (select) select.innerHTML = '<option value="">Select provider</option>' + opts.map(p => `<option value="${p}">${providerNames[p] || p}</option>`).join('');
+}
+
+let currentSendScope = 'domestic';
+
+function switchSendScope(scope) {
+  currentSendScope = scope;
+  // Update scope tab styles
+  document.querySelectorAll('#send-scope-tabs .send-scope-tab').forEach(t => {
+    if (t.dataset.scope === scope) {
+      t.style.background = 'var(--gradient2)';
+      t.style.color = 'white';
+    } else {
+      t.style.background = 'transparent';
+      t.style.color = 'var(--text2)';
+    }
+  });
+
+  const intlCountryWrap = document.getElementById('send-intl-country-wrap');
+  const swiftWrap = document.getElementById('send-swift-wrap');
+  const routingWrap = document.getElementById('send-routing-wrap');
+
+  if (scope === 'international') {
+    if (intlCountryWrap) intlCountryWrap.style.display = '';
+    if (swiftWrap) swiftWrap.style.display = '';
+    updateIntlFields();
+  } else {
+    if (intlCountryWrap) intlCountryWrap.style.display = 'none';
+    if (swiftWrap) swiftWrap.style.display = 'none';
+    // Show routing field based on user's own country
+    updateRoutingField(getUserCountry());
+  }
+}
+
+function updateIntlFields() {
+  const destCountry = document.getElementById('send-intl-country')?.value || '';
+  updateRoutingField(destCountry || getUserCountry());
+}
+
+function updateRoutingField(country) {
+  const label = document.getElementById('send-routing-label');
+  const input = document.getElementById('send-routing');
+  const hint = document.getElementById('send-routing-hint');
+  const wrap = document.getElementById('send-routing-wrap');
+
+  const routingConfig = {
+    US: { label: 'Routing Number', placeholder: '000000000', hint: '9-digit ABA routing number', maxlength: '9' },
+    GB: { label: 'Sort Code', placeholder: '00-00-00', hint: '6-digit sort code', maxlength: '8' },
+    AU: { label: 'BSB Number', placeholder: '000-000', hint: '6-digit BSB number', maxlength: '7' },
+    IN: { label: 'IFSC Code', placeholder: 'SBIN0001234', hint: '11-character IFSC code', maxlength: '11' },
+    CA: { label: 'Transit + Institution', placeholder: '00000-000', hint: '5-digit transit + 3-digit institution', maxlength: '9' },
+    DE: { label: 'BLZ (Bankleitzahl)', placeholder: '00000000', hint: '8-digit bank code', maxlength: '8' },
+    FR: { label: 'Code Banque', placeholder: '00000', hint: '5-digit bank code', maxlength: '5' },
+  };
+
+  const cfg = routingConfig[country];
+  if (cfg && wrap) {
+    wrap.style.display = '';
+    if (label) label.textContent = cfg.label;
+    if (input) { input.placeholder = cfg.placeholder; input.maxLength = parseInt(cfg.maxlength); }
+    if (hint) hint.textContent = cfg.hint;
+  } else if (wrap) {
+    // Countries without routing numbers (NG, GH, KE, UG, etc.)
+    wrap.style.display = 'none';
+  }
 }
 
 function switchSendType(type) {
@@ -3990,12 +4271,19 @@ async function executeSend() {
       const bankCode = bankSelect?.value;
       const bankName = bankSelect?.selectedOptions[0]?.dataset?.name || bankSelect?.selectedOptions[0]?.textContent || '';
       const accountNumber = document.getElementById('send-account')?.value?.trim();
+      const routingNumber = document.getElementById('send-routing')?.value?.trim() || '';
+      const swiftCode = document.getElementById('send-swift')?.value?.trim() || '';
       if (!bankCode || !accountNumber) { if (errEl) errEl.textContent = 'Select bank and enter account number'; return; }
+
+      const transferBody = { bank_code: bankCode, account_number: accountNumber, account_name: bankName, amount, currency, narration: note, country };
+      if (routingNumber) transferBody.routing_number = routingNumber;
+      if (swiftCode) transferBody.swift_code = swiftCode;
+      if (currentSendScope === 'international') transferBody.transfer_scope = 'international';
 
       const res = await authFetch(API_BASE + '/api/transfers/bank', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bank_code: bankCode, account_number: accountNumber, account_name: bankName, amount, currency, narration: note, country }),
+        body: JSON.stringify(transferBody),
       });
       const data = await res.json();
       if (!res.ok) {
