@@ -498,6 +498,9 @@
       animation: pwa-slide-up 0.4s ease-out;
     }
     .pwa-install-banner.show { display: block; }
+    @keyframes pwa-spin {
+      to { transform: rotate(360deg); }
+    }
     @keyframes pwa-slide-up {
       from { transform: translateY(100px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
@@ -4098,22 +4101,24 @@ function applySettings(settings) {
 
 // ── PWA Install ──
 let deferredInstallPrompt = null;
+let userWantsInstall = false;
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-console.log('[PWA] standalone:', isStandalone, 'mobile:', isMobile, 'iOS:', isIOS);
 
-// Capture the native install prompt (Chrome/Edge/Samsung Internet on Android)
+// Capture the native install prompt
 window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('[PWA] beforeinstallprompt fired!');
   e.preventDefault();
   deferredInstallPrompt = e;
-  // Show landing page install button
+  // Show install buttons
   const lpBtn = document.getElementById('lp-install-btn');
   if (lpBtn) lpBtn.style.display = 'flex';
-  // Show settings install button
   const btn = document.getElementById('install-app-btn');
   if (btn) btn.textContent = 'Install PromptPay';
+  // If user already tapped install and is waiting, trigger immediately
+  if (userWantsInstall) {
+    triggerNativeInstall();
+  }
   // Show banner
   showInstallBannerIfAllowed();
 });
@@ -4130,7 +4135,6 @@ function showInstallBannerIfAllowed() {
 
 function showInstallBanner() {
   if (isStandalone) return;
-  console.log('[PWA] Showing install banner');
   const banner = document.getElementById('pwa-install-banner');
   if (banner) banner.classList.add('show');
 }
@@ -4145,27 +4149,78 @@ function dismissInstallBanner(permanent) {
   }
 }
 
+function triggerNativeInstall() {
+  if (!deferredInstallPrompt) return;
+  // Remove waiting overlay if shown
+  const overlay = document.getElementById('pwa-install-waiting');
+  if (overlay) overlay.remove();
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then((result) => {
+    if (result.outcome === 'accepted') {
+      showToast('App installed! Find it on your home screen.');
+      dismissInstallBanner(true);
+      const lpBtn = document.getElementById('lp-install-btn');
+      if (lpBtn) lpBtn.style.display = 'none';
+    }
+    deferredInstallPrompt = null;
+    userWantsInstall = false;
+  });
+}
+
 function installApp() {
-  if (deferredInstallPrompt) {
-    deferredInstallPrompt.prompt();
-    deferredInstallPrompt.userChoice.then((result) => {
-      if (result.outcome === 'accepted') {
-        showToast('App installed! Find it on your home screen.');
-        dismissInstallBanner(true);
-        const lpBtn = document.getElementById('lp-install-btn');
-        if (lpBtn) lpBtn.style.display = 'none';
-      }
-      deferredInstallPrompt = null;
-    });
-  } else if (isStandalone) {
+  if (isStandalone) {
     showToast('App is already installed!');
-  } else {
-    showInstallGuide();
+    return;
   }
+  // If native prompt is ready, trigger it immediately
+  if (deferredInstallPrompt) {
+    triggerNativeInstall();
+    return;
+  }
+  // On iOS, show instructions (no native install API)
+  if (isIOS) {
+    showInstallGuide();
+    return;
+  }
+  // On Android/desktop — show "Preparing..." and wait for beforeinstallprompt
+  userWantsInstall = true;
+  showInstallWaiting();
+}
+
+function showInstallWaiting() {
+  const old = document.getElementById('pwa-install-waiting');
+  if (old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'pwa-install-waiting';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;animation:pwa-slide-up 0.3s ease-out';
+  overlay.innerHTML = `
+    <div style="background:#12121e;border-radius:20px;padding:32px 24px;max-width:340px;width:100%;border:1px solid rgba(255,255,255,0.1);text-align:center">
+      <img src="/icons/icon-192.png" style="width:64px;height:64px;border-radius:16px;margin-bottom:16px" onerror="this.style.display='none'">
+      <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">Installing PromptPay...</div>
+      <div id="pwa-wait-status" style="font-size:14px;color:#8b92a5;margin-bottom:24px">Preparing download, please wait...</div>
+      <div style="width:48px;height:48px;margin:0 auto 24px;border:3px solid rgba(124,58,237,0.2);border-top-color:#7c3aed;border-radius:50%;animation:pwa-spin 0.8s linear infinite"></div>
+      <button onclick="cancelInstallWaiting()" style="padding:12px 24px;border:1px solid rgba(255,255,255,0.2);border-radius:10px;background:transparent;color:#8b92a5;font-size:13px;cursor:pointer">Cancel</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  // After 8 seconds, if prompt still hasn't fired, show the manual guide instead
+  setTimeout(() => {
+    if (userWantsInstall && !deferredInstallPrompt) {
+      overlay.remove();
+      userWantsInstall = false;
+      showInstallGuide();
+    }
+  }, 8000);
+}
+
+function cancelInstallWaiting() {
+  userWantsInstall = false;
+  const overlay = document.getElementById('pwa-install-waiting');
+  if (overlay) overlay.remove();
 }
 
 function showInstallGuide() {
-  // Remove old guide if exists
   const old = document.getElementById('pwa-install-guide');
   if (old) old.remove();
 
@@ -4173,78 +4228,50 @@ function showInstallGuide() {
   const isSamsung = /SamsungBrowser/i.test(navigator.userAgent);
   const isFirefox = /Firefox/i.test(navigator.userAgent);
 
-  let steps = '';
-  if (isIOS) {
-    steps = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">1</div>
-        <div>Tap the <strong>Share</strong> button <span style="font-size:20px">\u2B06</span> at the bottom of Safari</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">2</div>
-        <div>Scroll down and tap <strong>"Add to Home Screen"</strong></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">3</div>
-        <div>Tap <strong>"Add"</strong> to confirm</div>
-      </div>`;
-  } else {
-    steps = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">1</div>
-        <div>Tap the <strong>menu</strong> button <span style="font-size:22px;font-weight:bold">\u22EE</span> in the top-right corner of your browser</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
-        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">2</div>
-        <div>Tap <strong>"${isChrome ? 'Install app' : isSamsung ? 'Add page to' : isFirefox ? 'Install' : 'Add to Home screen'}"</strong></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">3</div>
-        <div>Tap <strong>"Install"</strong> to confirm</div>
-      </div>`;
-  }
+  const menuLabel = isIOS ? 'Share button (box with arrow) at the bottom' :
+    'menu button \u22EE at the top-right';
+  const installLabel = isIOS ? 'Add to Home Screen' :
+    isChrome ? 'Install app' : isSamsung ? 'Add page to > Home screen' :
+    isFirefox ? 'Install' : 'Add to Home screen';
 
   const guide = document.createElement('div');
   guide.id = 'pwa-install-guide';
   guide.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;animation:pwa-slide-up 0.3s ease-out';
   guide.innerHTML = `
-    <div style="background:#12121e;border-radius:20px;padding:28px 24px;max-width:360px;width:100%;border:1px solid rgba(255,255,255,0.1);box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+    <div style="background:#12121e;border-radius:20px;padding:28px 24px;max-width:360px;width:100%;border:1px solid rgba(255,255,255,0.1)">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
         <img src="/icons/icon-192.png" style="width:48px;height:48px;border-radius:12px" onerror="this.style.display='none'">
         <div>
           <div style="font-size:18px;font-weight:700;color:#fff">Install PromptPay</div>
-          <div style="font-size:13px;color:#8b92a5">Add to your home screen</div>
+          <div style="font-size:13px;color:#8b92a5">Almost there! Just 2 quick steps:</div>
         </div>
       </div>
-      ${steps}
-      <button onclick="document.getElementById('pwa-install-guide').remove()" style="width:100%;margin-top:24px;padding:14px;border:none;border-radius:12px;background:#7c3aed;color:#fff;font-size:15px;font-weight:600;cursor:pointer">Got it</button>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0">1</div>
+        <div style="color:#e0e0e8;font-size:14px">Tap the <strong>${menuLabel}</strong></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0">2</div>
+        <div style="color:#e0e0e8;font-size:14px">Tap <strong>"${installLabel}"</strong></div>
+      </div>
+      <button onclick="document.getElementById('pwa-install-guide').remove()" style="width:100%;padding:14px;border:none;border-radius:12px;background:#7c3aed;color:#fff;font-size:15px;font-weight:600;cursor:pointer">Got it</button>
     </div>`;
-  guide.addEventListener('click', (e) => {
-    if (e.target === guide) guide.remove();
-  });
+  guide.addEventListener('click', (e) => { if (e.target === guide) guide.remove(); });
   document.body.appendChild(guide);
 }
 
-// ALWAYS show on mobile after 3 seconds if not already installed and not dismissed
-// This is the fallback for browsers that never fire beforeinstallprompt
+// Show banner + install button on mobile after 3 seconds
 if (!isStandalone && isMobile) {
   setTimeout(() => {
-    console.log('[PWA] Fallback timer fired, banner visible:', document.getElementById('pwa-install-banner')?.classList.contains('show'));
-    // Show landing page install button regardless
     const lpBtn = document.getElementById('lp-install-btn');
     if (lpBtn) lpBtn.style.display = 'flex';
-    // Show banner if not already shown
     if (!document.getElementById('pwa-install-banner')?.classList.contains('show')) {
       showInstallBannerIfAllowed();
     }
   }, 3000);
 }
-// Also show on desktop (for Chrome desktop PWA)
-if (!isStandalone && !isMobile) {
-  window.addEventListener('beforeinstallprompt', () => {}); // already handled above
-}
 
-// Hide install section in settings if already installed as PWA
+// Hide install section in settings if already installed
 if (isStandalone) {
   const section = document.getElementById('install-app-section');
   if (section) {
