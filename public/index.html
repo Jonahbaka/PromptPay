@@ -93,6 +93,9 @@
       --radius-sm: 12px;
       --radius-xs: 8px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
@@ -110,6 +113,8 @@
       position: relative; overflow: hidden;
       display: flex; flex-direction: column;
       background: var(--bg);
+      padding-left: var(--safe-left);
+      padding-right: var(--safe-right);
     }
     @media (min-width: 768px) {
       .app { max-width: 480px; }
@@ -131,7 +136,9 @@
     .header {
       position: relative; z-index: 10;
       padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
-      padding-top: max(12px, env(safe-area-inset-top));
+      padding-top: max(12px, var(--safe-top));
+      padding-left: max(20px, calc(20px + var(--safe-left)));
+      padding-right: max(20px, calc(20px + var(--safe-right)));
     }
     .header-left { display: flex; align-items: center; gap: 12px; }
     .header-avatar {
@@ -161,12 +168,17 @@
     }
     .page {
       position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
-      padding: 0 16px 100px; scrollbar-width: none;
+      padding: 0 max(16px, calc(16px + var(--safe-left))) 100px;
+      padding-right: max(16px, calc(16px + var(--safe-right)));
+      scrollbar-width: none;
       opacity: 0; transform: translateY(12px); pointer-events: none;
       transition: opacity 0.35s ease, transform 0.35s ease;
     }
     @media (min-width: 400px) {
-      .page { padding: 0 20px 100px; }
+      .page {
+        padding-left: max(20px, calc(20px + var(--safe-left)));
+        padding-right: max(20px, calc(20px + var(--safe-right)));
+      }
     }
     .page::-webkit-scrollbar { display: none; }
     .page.active {
@@ -589,6 +601,8 @@
       position: relative; z-index: 20;
       display: flex; justify-content: space-around; align-items: center;
       padding: 8px 12px; padding-bottom: max(8px, var(--safe-bottom));
+      padding-left: max(12px, calc(12px + var(--safe-left)));
+      padding-right: max(12px, calc(12px + var(--safe-right)));
       background: rgba(6,6,10,0.92);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255,255,255,0.05);
@@ -843,10 +857,12 @@
     }
     .auth-card {
       position: relative; z-index: 1;
-      width: 100%; max-width: 400px; margin: 0 20px;
+      width: 100%; max-width: 400px;
+      margin: 0 max(20px, calc(20px + var(--safe-left)));
+      margin-right: max(20px, calc(20px + var(--safe-right)));
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 24px; padding: 40px 32px;
+      border-radius: 24px; padding: 40px 28px;
       backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
@@ -862,21 +878,20 @@
       box-shadow: 0 8px 32px rgba(79,172,254,0.12), 0 0 60px rgba(240,147,251,0.06);
     }
     .auth-brand-name {
-      font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
-      background: linear-gradient(to right, #fff, rgba(255,255,255,0.7));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      font-size: 28px; font-weight: 800; letter-spacing: -0.5px;
+      color: #fff;
     }
     .auth-brand-tagline {
-      font-size: 13px; color: var(--text2); margin-top: 4px;
+      font-size: 13px; color: var(--text2); margin-top: 6px;
     }
     .auth-tabs {
       display: flex; background: rgba(255,255,255,0.04); border-radius: 12px;
       padding: 3px; margin-bottom: 28px;
     }
     .auth-tab {
-      flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600;
+      flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 700;
       border-radius: 10px; cursor: pointer; transition: all 0.2s;
-      color: var(--text2); border: none; background: none; font-family: inherit;
+      color: #fff; border: none; background: none; font-family: inherit;
     }
     .auth-tab.active {
       background: var(--gradient2); color: white;
@@ -888,8 +903,8 @@
       margin-bottom: 16px;
     }
     .auth-field label {
-      display: block; font-size: 12px; color: var(--text2);
-      margin-bottom: 6px; font-weight: 500;
+      display: block; font-size: 13px; color: #fff;
+      margin-bottom: 6px; font-weight: 600;
     }
     .auth-field input {
       width: 100%; padding: 14px 16px;
@@ -1197,13 +1212,16 @@
     .lp-nav {
       position: fixed; top: 0; width: 100%; z-index: 50;
       transition: all 0.3s ease; padding: 20px 0;
+      padding-top: max(20px, var(--safe-top));
     }
     .lp-nav.scrolled {
       background: rgba(3,3,8,0.92); backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 0;
     }
     .lp-nav-inner {
-      max-width: 1200px; margin: 0 auto; padding: 0 24px;
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 max(24px, calc(24px + var(--safe-left)));
+      padding-right: max(24px, calc(24px + var(--safe-right)));
       display: flex; justify-content: space-between; align-items: center;
     }
     .lp-logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
@@ -1226,13 +1244,15 @@
     }
     .lp-btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
     .lp-btn-signin {
-      background: none; color: rgba(255,255,255,0.7); font-size: 14px; font-weight: 500;
+      background: none; color: #fff; font-size: 14px; font-weight: 700;
       padding: 8px 16px; border: none; cursor: pointer; transition: color 0.2s;
     }
     .lp-btn-signin:hover { color: #fff; }
 
     .lp-hero {
       position: relative; padding: 140px 24px 80px; max-width: 1200px; margin: 0 auto; overflow: hidden;
+      padding-left: max(24px, calc(24px + var(--safe-left)));
+      padding-right: max(24px, calc(24px + var(--safe-right)));
     }
     .lp-hero-glow {
       position: absolute; top: -200px; right: -100px; width: 600px; height: 600px;
