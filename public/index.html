@@ -9,9 +9,9 @@
   <meta name="apple-mobile-web-app-title" content="PromptPay">
 
   <!-- SEO -->
-  <title>PromptPay — AI Life Assistant | Shopping, Investing, Budgets & Payments</title>
-  <meta name="description" content="PromptPay is your AI life assistant. Shop autonomously, manage investments, track budgets, negotiate bills, and handle payments — all with natural language commands.">
-  <meta name="keywords" content="PromptPay, AI assistant, AI shopping, AI investing, budget tracker, subscription manager, digital wallet, AI payments, fintech, price comparison, DCA trading, bill negotiation">
+  <title>PromptPay — AI-Powered Payments, Calls & Chat</title>
+  <meta name="description" content="PromptPay is your AI-powered fintech platform. Send money, make international calls, buy virtual numbers, send SMS, shop, and chat — all with AI agents.">
+  <meta name="keywords" content="PromptPay, AI payments, international calling, virtual numbers, SMS, digital wallet, fintech, AI chat, money transfer, airtime, POS agent">
   <meta name="author" content="PromptPay Inc.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.upromptpay.com/">
@@ -20,14 +20,14 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.upromptpay.com/">
   <meta property="og:title" content="PromptPay — AI Life Assistant">
-  <meta property="og:description" content="Your AI assistant for shopping, investing, budgeting, and payments. 9 specialized agents handle your financial life autonomously.">
+  <meta property="og:description" content="AI-powered payments, international calls, virtual numbers, SMS, and money transfers. Your all-in-one fintech platform.">
   <meta property="og:image" content="https://www.upromptpay.com/icons/icon-512.png">
   <meta property="og:site_name" content="PromptPay">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PromptPay — AI Life Assistant">
-  <meta name="twitter:description" content="Your AI assistant for shopping, investing, budgeting, and payments. 9 agents handle your financial life.">
+  <meta name="twitter:description" content="AI-powered payments, international calls, virtual numbers, SMS, and money transfers.">
   <meta name="twitter:image" content="https://www.upromptpay.com/icons/icon-512.png">
 
   <!-- Structured Data -->
@@ -476,6 +476,104 @@
     .ach-icon { font-size: 28px; margin-bottom: 8px; }
     .ach-name { font-size: 11px; font-weight: 600; }
     .ach-pts { font-size: 10px; color: var(--accent2); margin-top: 4px; }
+
+    /* ── PWA Install Banner ── */
+    .pwa-install-banner {
+      display: none;
+      position: fixed;
+      bottom: 80px;
+      left: 12px;
+      right: 12px;
+      z-index: 9999;
+      background: linear-gradient(135deg, #7c3aed 0%, #6c5ce7 50%, #5b4cdb 100%);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(124,58,237,0.4), 0 0 0 1px rgba(255,255,255,0.1);
+      animation: pwa-slide-up 0.4s ease-out;
+    }
+    .pwa-install-banner.show { display: block; }
+    @keyframes pwa-slide-up {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .pwa-banner-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pwa-banner-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .pwa-banner-icon img {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+    }
+    .pwa-banner-text {
+      flex: 1;
+    }
+    .pwa-banner-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .pwa-banner-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.3;
+    }
+    .pwa-banner-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .pwa-banner-install {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #fff;
+      color: #7c3aed;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .pwa-banner-install:active { transform: scale(0.97); }
+    .pwa-banner-dismiss {
+      padding: 10px 16px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      background: transparent;
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .pwa-banner-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     /* ── Bottom Navigation ── */
     .bottom-nav {
@@ -1388,6 +1486,436 @@
       border-top: 1px solid rgba(255,255,255,0.04); text-align: center;
     }
     .lp-footer-copy p { font-size: 13px; color: rgba(255,255,255,0.2); }
+
+    /* ═══════════════════════════════════════ */
+    /* POS MODE                                */
+    /* ═══════════════════════════════════════ */
+    .pos-wallet-strip {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 18px; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(59,130,246,0.12));
+      border: 1px solid rgba(124,58,237,0.2); margin-bottom: 18px;
+    }
+    .pos-wallet-bal { flex: 1; }
+    .pos-wallet-bal .pw-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+    .pos-wallet-bal .pw-amount { font-size: 26px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+    .pos-fund-btn {
+      padding: 10px 18px; border-radius: 12px; border: none;
+      background: var(--gradient2); color: #fff; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.25);
+    }
+    .pos-fund-btn:active { transform: scale(0.96); }
+
+    .pos-sell-card {
+      padding: 20px; border-radius: 18px;
+      background: var(--surface); border: 1px solid var(--glass-border);
+      margin-bottom: 18px;
+    }
+    .pos-sell-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+    .pos-input-group { margin-bottom: 12px; }
+    .pos-input-group label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pos-input {
+      width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.04); color: var(--text); font-size: 16px;
+      font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .pos-input:focus { border-color: var(--accent); }
+    .pos-input::placeholder { color: var(--text3); }
+
+    .pos-carrier-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      background: rgba(16,185,129,0.12); color: var(--emerald); margin-top: 6px;
+    }
+
+    .pos-amount-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;
+    }
+    .pos-quick-amt {
+      padding: 12px 4px; border-radius: 10px; border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.03); color: var(--text); font-size: 14px;
+      font-weight: 600; cursor: pointer; text-align: center; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .pos-quick-amt:active, .pos-quick-amt.active {
+      background: rgba(124,58,237,0.15); border-color: var(--accent); color: var(--accent2);
+    }
+
+    .pos-sell-btn {
+      width: 100%; padding: 16px; border-radius: 14px; border: none;
+      background: linear-gradient(135deg, #10b981, #059669); color: #fff;
+      font-size: 17px; font-weight: 700; cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3); transition: all 0.15s;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    .pos-sell-btn:disabled {
+      opacity: 0.5; cursor: not-allowed; box-shadow: none;
+    }
+    .pos-sell-btn:not(:disabled):active { transform: scale(0.97); }
+
+    .pos-stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px;
+    }
+    .pos-stat-card {
+      padding: 14px 12px; border-radius: 14px; text-align: center;
+      background: var(--surface); border: 1px solid var(--glass-border);
+    }
+    .pos-stat-card .ps-val { font-size: 20px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+    .pos-stat-card .ps-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+    .ps-green { color: var(--emerald); }
+    .ps-accent { color: var(--accent2); }
+
+    .pos-sales-list { margin-top: 4px; }
+    .pos-sale-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .pos-sale-item:last-child { border-bottom: none; }
+    .pos-sale-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+      background: rgba(16,185,129,0.12); flex-shrink: 0;
+    }
+    .pos-sale-icon.failed { background: rgba(239,68,68,0.12); }
+    .pos-sale-info { flex: 1; min-width: 0; }
+    .pos-sale-phone { font-size: 14px; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+    .pos-sale-carrier { font-size: 11px; color: var(--text2); }
+    .pos-sale-right { text-align: right; flex-shrink: 0; }
+    .pos-sale-amount { font-size: 14px; font-weight: 700; }
+    .pos-sale-profit { font-size: 11px; color: var(--emerald); font-weight: 600; }
+    .pos-sale-time { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+    /* Fund Wallet Modal */
+    .fund-modal-amounts {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;
+    }
+    .fund-amt-btn {
+      padding: 14px 8px; border-radius: 12px; border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.03); color: var(--text); font-size: 15px;
+      font-weight: 600; cursor: pointer; text-align: center; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .fund-amt-btn:active, .fund-amt-btn.active {
+      background: rgba(124,58,237,0.15); border-color: var(--accent); color: var(--accent2);
+    }
+
+    /* Receipt modal */
+    .pos-receipt {
+      background: #fff; color: #111; border-radius: 16px; padding: 24px;
+      font-family: 'JetBrains Mono', monospace; max-width: 320px; margin: 0 auto;
+    }
+    .pos-receipt h4 { text-align: center; font-size: 16px; color: #111; margin-bottom: 12px; }
+    .pos-receipt hr { border: none; border-top: 1px dashed #ccc; margin: 12px 0; }
+    .pos-receipt .rcpt-row { display: flex; justify-content: space-between; font-size: 13px; margin: 6px 0; }
+    .pos-receipt .rcpt-label { color: #666; }
+    .pos-receipt .rcpt-val { font-weight: 600; color: #111; }
+    .pos-receipt .rcpt-total { font-size: 22px; text-align: center; font-weight: 800; margin: 12px 0; color: #10b981; }
+    .pos-receipt .rcpt-footer { text-align: center; font-size: 10px; color: #999; margin-top: 12px; }
+
+    /* ═══ Calls / Social Page ═══ */
+    .calls-tabs {
+      display: flex; gap: 4px; background: rgba(255,255,255,0.04);
+      border-radius: 14px; padding: 4px; margin-bottom: 20px;
+    }
+    .calls-tab {
+      flex: 1; padding: 10px 0; text-align: center; border-radius: 11px;
+      font-size: 13px; font-weight: 600; color: var(--text3);
+      cursor: pointer; transition: all 0.2s; border: none; background: none;
+      font-family: inherit;
+    }
+    .calls-tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 12px rgba(124,58,237,0.3); }
+
+    /* Dialpad */
+    .dialpad-display {
+      text-align: center; padding: 24px 0 12px;
+    }
+    .dialpad-number {
+      font-size: 32px; font-weight: 700; color: var(--text);
+      font-family: 'JetBrains Mono', monospace; letter-spacing: 2px;
+      min-height: 44px; word-break: break-all;
+    }
+    .dialpad-rate {
+      font-size: 12px; color: var(--text3); margin-top: 6px;
+    }
+    .dialpad-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      max-width: 280px; margin: 0 auto; padding: 12px 0;
+    }
+    .dial-key {
+      width: 72px; height: 72px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; cursor: pointer;
+      transition: all 0.15s; margin: 0 auto; font-family: inherit;
+      color: var(--text);
+    }
+    .dial-key:active { background: rgba(124,58,237,0.2); transform: scale(0.93); }
+    .dial-key-num { font-size: 26px; font-weight: 600; line-height: 1; }
+    .dial-key-sub { font-size: 9px; color: var(--text3); letter-spacing: 2px; margin-top: 2px; }
+    .dial-actions {
+      display: flex; justify-content: center; gap: 32px; align-items: center;
+      padding: 16px 0;
+    }
+    .dial-call-btn {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.4); transition: all 0.2s;
+    }
+    .dial-call-btn:active { transform: scale(0.92); }
+    .dial-call-btn.hangup { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 20px rgba(239,68,68,0.4); }
+    .dial-backspace {
+      width: 48px; height: 48px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,0.06); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text2); transition: all 0.15s; font-family: inherit;
+    }
+    .dial-backspace:active { background: rgba(255,255,255,0.12); }
+
+    /* Active Call Screen Overlay */
+    .call-screen {
+      position: fixed; inset: 0; z-index: 999;
+      background: linear-gradient(160deg, #0d1117 0%, #1a1035 50%, #0d1117 100%);
+      display: none; flex-direction: column; align-items: center;
+      justify-content: center; padding: 40px 24px;
+    }
+    .call-screen.active { display: flex; }
+    .call-avatar {
+      width: 96px; height: 96px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; font-weight: 700; color: #fff; margin-bottom: 20px;
+      box-shadow: 0 0 40px rgba(124,58,237,0.3);
+    }
+    .call-name { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .call-status { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 40px; }
+    .call-status.connected { color: #10b981; }
+    .call-timer {
+      font-size: 42px; font-weight: 300; color: #fff;
+      font-family: 'JetBrains Mono', monospace; margin-bottom: 48px; letter-spacing: 3px;
+    }
+    .call-controls {
+      display: flex; gap: 24px; align-items: center; margin-bottom: 40px;
+    }
+    .call-ctrl-btn {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(255,255,255,0.1); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; transition: all 0.2s;
+    }
+    .call-ctrl-btn:active { transform: scale(0.9); }
+    .call-ctrl-btn.active { background: rgba(255,255,255,0.25); }
+    .call-ctrl-btn.hangup-btn {
+      width: 68px; height: 68px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 4px 24px rgba(239,68,68,0.4);
+    }
+
+    /* Video Call */
+    .video-call-screen {
+      position: fixed; inset: 0; z-index: 998;
+      background: #000; display: none; flex-direction: column;
+    }
+    .video-call-screen.active { display: flex; }
+    .video-remote {
+      flex: 1; background: #111; display: flex; align-items: center;
+      justify-content: center; position: relative;
+    }
+    .video-remote video { width: 100%; height: 100%; object-fit: cover; }
+    .video-remote .video-placeholder {
+      text-align: center; color: rgba(255,255,255,0.4);
+    }
+    .video-remote .video-placeholder svg { margin-bottom: 12px; }
+    .video-local {
+      position: absolute; top: 52px; right: 16px;
+      width: 120px; height: 160px; border-radius: 16px;
+      overflow: hidden; border: 2px solid rgba(255,255,255,0.2);
+      background: #222; z-index: 2;
+    }
+    .video-local video { width: 100%; height: 100%; object-fit: cover; }
+    .video-controls {
+      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 20px; z-index: 3;
+    }
+
+    /* Chat / Messaging */
+    .chat-list-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .chat-list-item:active { opacity: 0.7; }
+    .chat-list-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(59,130,246,0.3));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; color: var(--accent2); flex-shrink: 0;
+    }
+    .chat-list-body { flex: 1; min-width: 0; }
+    .chat-list-name { font-size: 15px; font-weight: 600; color: var(--text); }
+    .chat-list-preview {
+      font-size: 13px; color: var(--text3); white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
+    }
+    .chat-list-meta { text-align: right; flex-shrink: 0; }
+    .chat-list-time { font-size: 11px; color: var(--text3); }
+    .chat-unread-badge {
+      display: inline-block; min-width: 20px; height: 20px; line-height: 20px;
+      border-radius: 10px; background: var(--accent); color: #fff;
+      font-size: 11px; font-weight: 700; text-align: center; margin-top: 4px;
+      padding: 0 6px;
+    }
+
+    /* Message Thread */
+    .msg-thread-header {
+      display: flex; align-items: center; gap: 12px; padding: 12px 0; margin-bottom: 8px;
+    }
+    .msg-thread-back {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,0.06); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text); transition: all 0.15s; font-family: inherit;
+    }
+    .msg-thread-back:active { background: rgba(255,255,255,0.12); }
+    .msg-thread-name { font-size: 17px; font-weight: 700; flex: 1; }
+    .msg-thread-actions { display: flex; gap: 8px; }
+    .msg-thread-action {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,0.06); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text2); transition: all 0.15s; font-family: inherit;
+    }
+    .msg-thread-action:active { background: rgba(255,255,255,0.12); }
+    .msg-bubbles {
+      flex: 1; overflow-y: auto; padding-bottom: 80px;
+    }
+    .msg-bubble {
+      max-width: 78%; padding: 10px 14px; border-radius: 18px;
+      font-size: 14px; line-height: 1.45; margin-bottom: 4px;
+      word-break: break-word;
+    }
+    .msg-bubble.sent {
+      margin-left: auto; background: var(--accent); color: #fff;
+      border-bottom-right-radius: 6px;
+    }
+    .msg-bubble.received {
+      margin-right: auto; background: rgba(255,255,255,0.08); color: var(--text);
+      border-bottom-left-radius: 6px;
+    }
+    .msg-time {
+      font-size: 10px; color: var(--text3); margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    .msg-time.sent { text-align: right; }
+    .msg-compose {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 12px 16px; padding-bottom: max(12px, var(--safe-bottom));
+      background: linear-gradient(to top, var(--bg) 80%, transparent);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .msg-input {
+      flex: 1; padding: 12px 18px; border-radius: 24px;
+      background: var(--surface); border: 1px solid var(--glass-border);
+      color: var(--text); font-size: 14px; font-family: inherit; outline: none;
+    }
+    .msg-input::placeholder { color: var(--text3); }
+    .msg-send-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--gradient2); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; transition: all 0.2s; flex-shrink: 0;
+    }
+    .msg-send-btn:active { transform: scale(0.9); }
+
+    /* AI Assistant Mini (inside social) */
+    .ai-mini-card {
+      background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.08));
+      border: 1px solid rgba(124,58,237,0.2); border-radius: 16px;
+      padding: 16px; margin-bottom: 16px; cursor: pointer; transition: all 0.2s;
+    }
+    .ai-mini-card:active { transform: scale(0.98); }
+    .ai-mini-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .ai-mini-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--gradient2); display: flex; align-items: center;
+      justify-content: center;
+    }
+    .ai-mini-title { font-size: 14px; font-weight: 700; color: var(--text); }
+    .ai-mini-desc { font-size: 12px; color: var(--text3); line-height: 1.5; }
+
+    /* Call History Item */
+    .call-history-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .call-hist-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: rgba(255,255,255,0.06); display: flex;
+      align-items: center; justify-content: center;
+      color: var(--text2);
+    }
+    .call-hist-info { flex: 1; }
+    .call-hist-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .call-hist-detail { font-size: 12px; color: var(--text3); margin-top: 2px; }
+    .call-hist-detail .outgoing { color: #10b981; }
+    .call-hist-detail .incoming { color: #3b82f6; }
+    .call-hist-detail .missed { color: #ef4444; }
+    .call-hist-time { font-size: 11px; color: var(--text3); }
+
+    /* Contact list */
+    .contact-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .contact-item:active { opacity: 0.7; }
+    .contact-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(59,130,246,0.3));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; color: #10b981;
+    }
+    .contact-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .contact-phone { font-size: 12px; color: var(--text3); margin-top: 1px; }
+    .contact-actions { display: flex; gap: 8px; margin-left: auto; }
+    .contact-action-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.06); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text2); transition: all 0.15s; font-family: inherit;
+    }
+    .contact-action-btn:active { background: rgba(255,255,255,0.12); }
+    .contact-action-btn.call-btn { color: #10b981; }
+    .contact-action-btn.msg-btn { color: #3b82f6; }
+
+    /* Ripple pulse for ringing */
+    @keyframes callPulse {
+      0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      70% { box-shadow: 0 0 0 30px rgba(16,185,129,0); }
+      100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+    }
+    .call-avatar.ringing { animation: callPulse 1.5s ease infinite; }
+
+    /* Search bar */
+    .social-search {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+      border-radius: 14px; padding: 10px 14px; margin-bottom: 16px;
+    }
+    .social-search input {
+      flex: 1; border: none; background: none; color: var(--text);
+      font-size: 14px; font-family: inherit; outline: none;
+    }
+    .social-search input::placeholder { color: var(--text3); }
+
+    /* Free features badge */
+    .free-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 6px;
+      background: rgba(16,185,129,0.15); color: #10b981;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
   </style>
 </head>
 <body class="landing-mode">
@@ -1690,7 +2218,9 @@
       <button class="hamburger-btn" onclick="openNavDrawer()" aria-label="Menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <div class="header-avatar lp-logo-mark" style="width:36px;height:36px;border-radius:10px;font-size:16px"><svg width="22" height="22" viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="6" y="6" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="7.5" width="3" height="3" fill="#0a0a14"/><rect x="26" y="4" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="28" y="6" width="6" height="6" rx="1" fill="white"/><rect x="29.5" y="7.5" width="3" height="3" fill="#0a0a14"/><rect x="4" y="26" width="10" height="10" rx="2" fill="#0a0a14"/><rect x="6" y="28" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="29.5" width="3" height="3" fill="#0a0a14"/><path d="M2 20 L10 20 L13 12 L17 28 L21 16 L24 24 L27 20 L38 20" stroke="#0a0a14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="20" r="2.5" fill="#0a0a14"/></svg></div>
+      <div class="header-avatar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
       <div>
         <div class="header-greeting">Good <span id="time-greeting">evening</span></div>
         <div class="header-name">PromptPay</div>
@@ -1806,17 +2336,17 @@
           </div>
           <div class="quick-label">Shop</div>
         </div>
-        <div class="quick-item" onclick="openMarketsModal()">
+        <div class="quick-item" onclick="navigateTo('wallet')">
           <div class="quick-icon qi-green" style="background:rgba(16,185,129,0.15)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 10H18a2 2 0 0 0 0 4h4"/></svg>
           </div>
-          <div class="quick-label">Markets</div>
+          <div class="quick-label">Wallet</div>
         </div>
-        <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Give me financial advice'}})">
+        <div class="quick-item" onclick="navigateTo('calls')">
           <div class="quick-icon qi-blue" style="background:rgba(59,130,246,0.15)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 6v6l4 2"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           </div>
-          <div class="quick-label">Advisor</div>
+          <div class="quick-label">Calls</div>
         </div>
         <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Show my subscriptions'}})">
           <div class="quick-icon qi-orange" style="background:rgba(249,115,22,0.15)">
@@ -1843,11 +2373,17 @@
           </div>
           <div class="quick-label">QR Code</div>
         </div>
-        <div class="quick-item">
-          <div class="quick-icon qi-red">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <div class="quick-item" onclick="navigateTo('pos')">
+          <div class="quick-icon" style="background:rgba(16,185,129,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           </div>
-          <div class="quick-label">Insights</div>
+          <div class="quick-label">POS</div>
+        </div>
+        <div class="quick-item" onclick="navigateTo('calls')">
+          <div class="quick-icon" style="background:rgba(59,130,246,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>
+          </div>
+          <div class="quick-label">Calls</div>
         </div>
         <!-- Africa-specific quick actions -->
         <div class="quick-item" id="airtime-quick-btn" onclick="openAirtimeModal()" style="display:none">
@@ -1898,21 +2434,21 @@
           <div class="ai-avatar" style="width:36px;height:36px;border-radius:10px;font-size:16px">&#9889;</div>
           <div>
             <div style="font-size:15px;font-weight:600">PromptPay Agent</div>
-            <div class="ai-status" style="font-size:11px">5 agents &middot; 59 tools online</div>
+            <div class="ai-status" style="font-size:11px">7 agents &middot; AI-powered</div>
           </div>
         </div>
 
         <div class="chat-messages" id="chat-messages">
           <div class="msg msg-ai">
-            Hey! I'm your PromptPay AI assistant. I can help you shop, invest, manage budgets, track subscriptions, send money, pay bills, and more. Just tell me what you need.
+            Hey! I'm your PromptPay AI assistant. I can help you send money, make international calls, buy virtual numbers, send SMS, shop, track subscriptions, pay bills, and more. Just tell me what you need.
           </div>
         </div>
 
         <div class="chat-input-area">
           <div class="chat-suggestions" id="chat-suggestions">
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Create a shopping list for groceries">Shopping List</div>
-            <div class="chat-suggestion" onclick="openMarketsModal()">Markets</div>
-            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Create a monthly budget">Budget</div>
+            <div class="chat-suggestion" onclick="navigateTo('calls')">Calls & SMS</div>
+            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Send money to a friend">Send Money</div>
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Show my subscriptions">Subscriptions</div>
           </div>
           <div class="chat-input-wrap">
@@ -2015,6 +2551,293 @@
           <span class="token-label">Est. Cost Savings</span>
           <span class="token-value token-saved" id="tm-cost">$0.000</span>
         </div>
+      </div>
+    </div>
+
+    <!-- POS MODE -->
+    <div class="page" id="page-pos">
+      <div style="margin-bottom:14px">
+        <button class="page-back-btn" onclick="navigateTo('home')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </button>
+      </div>
+
+      <!-- Wallet Balance Strip -->
+      <div class="pos-wallet-strip">
+        <div class="pos-wallet-bal">
+          <div class="pw-label">Wallet Balance</div>
+          <div class="pw-amount" id="pos-balance">&#8358;0.00</div>
+        </div>
+        <button class="pos-fund-btn" onclick="openFundWalletModal()">+ Fund</button>
+      </div>
+
+      <!-- Today's Stats -->
+      <div class="pos-stats-row">
+        <div class="pos-stat-card">
+          <div class="ps-val ps-accent" id="pos-today-sales">0</div>
+          <div class="ps-label">Sales Today</div>
+        </div>
+        <div class="pos-stat-card">
+          <div class="ps-val" id="pos-today-revenue">&#8358;0</div>
+          <div class="ps-label">Revenue</div>
+        </div>
+        <div class="pos-stat-card">
+          <div class="ps-val ps-green" id="pos-today-profit">&#8358;0</div>
+          <div class="ps-label">Profit</div>
+        </div>
+      </div>
+
+      <!-- Product Tabs -->
+      <div style="display:flex;gap:0;margin-bottom:14px;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border)">
+        <button class="pos-product-tab active" id="tab-airtime" onclick="switchPosTab('airtime')" style="flex:1;padding:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(124,58,237,0.15);color:var(--accent2)">Airtime</button>
+        <button class="pos-product-tab" id="tab-data" onclick="switchPosTab('data')" style="flex:1;padding:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--surface);color:var(--text2)">Data</button>
+      </div>
+
+      <!-- Shared Phone + Country -->
+      <div class="pos-sell-card" style="margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0">
+        <div class="pos-input-group">
+          <label>Customer Phone Number</label>
+          <input class="pos-input" id="pos-phone" type="tel" placeholder="e.g. 08012345678" oninput="posPhoneChanged()">
+          <div id="pos-carrier-info"></div>
+        </div>
+        <div class="pos-input-group" style="margin-bottom:0">
+          <label>Country</label>
+          <select class="pos-input" id="pos-country" style="font-family:inherit" onchange="posPhoneChanged()">
+            <option value="NG">Nigeria (+234)</option>
+            <option value="GH">Ghana (+233)</option>
+            <option value="KE">Kenya (+254)</option>
+            <option value="ZA">South Africa (+27)</option>
+            <option value="TZ">Tanzania (+255)</option>
+            <option value="UG">Uganda (+256)</option>
+            <option value="CM">Cameroon (+237)</option>
+            <option value="SN">Senegal (+221)</option>
+            <option value="ET">Ethiopia (+251)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Airtime Tab -->
+      <div class="pos-sell-card" id="pos-airtime-section" style="border-top-left-radius:0;border-top-right-radius:0;border-top:1px solid var(--glass-border)">
+        <h3>Sell Airtime</h3>
+        <div class="pos-input-group">
+          <label>Amount</label>
+          <div class="pos-amount-grid">
+            <button class="pos-quick-amt" onclick="posSetAmount(100)">&#8358;100</button>
+            <button class="pos-quick-amt" onclick="posSetAmount(200)">&#8358;200</button>
+            <button class="pos-quick-amt" onclick="posSetAmount(500)">&#8358;500</button>
+            <button class="pos-quick-amt" onclick="posSetAmount(1000)">&#8358;1K</button>
+          </div>
+          <input class="pos-input" id="pos-amount" type="number" placeholder="Custom amount" oninput="posAmountChanged()">
+          <div id="pos-cost-preview" style="font-size:12px;color:var(--text2);margin-top:6px"></div>
+        </div>
+        <button class="pos-sell-btn" id="pos-sell-btn" onclick="posSellAirtime()" disabled>
+          SELL AIRTIME
+        </button>
+      </div>
+
+      <!-- Data Tab -->
+      <div class="pos-sell-card" id="pos-data-section" style="display:none;border-top-left-radius:0;border-top-right-radius:0;border-top:1px solid var(--glass-border)">
+        <h3>Sell Data Bundle</h3>
+        <div id="pos-data-bundles-list" style="margin-bottom:12px">
+          <div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">Enter a phone number above to see available data plans</div>
+        </div>
+        <button class="pos-sell-btn" id="pos-sell-data-btn" onclick="posSellData()" disabled style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);box-shadow:0 4px 20px rgba(59,130,246,0.3)">
+          SELL DATA
+        </button>
+      </div>
+
+      <!-- Recent Sales -->
+      <div class="section-header">
+        <div class="section-title">Recent Sales</div>
+        <div class="section-link" onclick="posLoadAllSales()">See All</div>
+      </div>
+      <div class="pos-sales-list" id="pos-sales-list">
+        <div style="padding:24px 0;text-align:center;color:var(--text3);font-size:13px">
+          No sales yet. Sell airtime to get started.
+        </div>
+      </div>
+    </div>
+
+    <!-- CALLS / SOCIAL -->
+    <div class="page" id="page-calls">
+      <!-- Tabs: Keypad | Chats | History -->
+      <div class="calls-tabs">
+        <button class="calls-tab active" onclick="switchCallsTab('keypad')">Keypad</button>
+        <button class="calls-tab" onclick="switchCallsTab('chats')">Chats</button>
+        <button class="calls-tab" onclick="switchCallsTab('services')">Services</button>
+        <button class="calls-tab" onclick="switchCallsTab('history')">History</button>
+      </div>
+
+      <!-- AI Features Cards -->
+      <div id="calls-ai-features">
+        <div class="ai-mini-card" onclick="navigateTo('ai');document.getElementById('chat-input').value='Translate this call for me';sendMessage()">
+          <div class="ai-mini-header">
+            <div class="ai-mini-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div>
+              <div class="ai-mini-title">AI Translator <span class="free-badge">Free</span></div>
+              <div class="ai-mini-desc">Real-time language translation during calls</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KEYPAD TAB -->
+      <div id="calls-tab-keypad">
+        <div class="dialpad-display">
+          <div class="dialpad-number" id="dial-number">&nbsp;</div>
+          <div class="dialpad-rate" id="dial-rate"></div>
+        </div>
+        <div class="dialpad-grid">
+          <button class="dial-key" onclick="dialPress('1')"><span class="dial-key-num">1</span><span class="dial-key-sub">&nbsp;</span></button>
+          <button class="dial-key" onclick="dialPress('2')"><span class="dial-key-num">2</span><span class="dial-key-sub">ABC</span></button>
+          <button class="dial-key" onclick="dialPress('3')"><span class="dial-key-num">3</span><span class="dial-key-sub">DEF</span></button>
+          <button class="dial-key" onclick="dialPress('4')"><span class="dial-key-num">4</span><span class="dial-key-sub">GHI</span></button>
+          <button class="dial-key" onclick="dialPress('5')"><span class="dial-key-num">5</span><span class="dial-key-sub">JKL</span></button>
+          <button class="dial-key" onclick="dialPress('6')"><span class="dial-key-num">6</span><span class="dial-key-sub">MNO</span></button>
+          <button class="dial-key" onclick="dialPress('7')"><span class="dial-key-num">7</span><span class="dial-key-sub">PQRS</span></button>
+          <button class="dial-key" onclick="dialPress('8')"><span class="dial-key-num">8</span><span class="dial-key-sub">TUV</span></button>
+          <button class="dial-key" onclick="dialPress('9')"><span class="dial-key-num">9</span><span class="dial-key-sub">WXYZ</span></button>
+          <button class="dial-key" onclick="dialPress('*')"><span class="dial-key-num">*</span><span class="dial-key-sub">&nbsp;</span></button>
+          <button class="dial-key" onclick="dialPress('0')" oncontextmenu="event.preventDefault();dialPress('+')"><span class="dial-key-num">0</span><span class="dial-key-sub">+</span></button>
+          <button class="dial-key" onclick="dialPress('#')"><span class="dial-key-num">#</span><span class="dial-key-sub">&nbsp;</span></button>
+        </div>
+        <div class="dial-actions">
+          <div style="width:48px"></div>
+          <button class="dial-call-btn" id="dial-call-btn" onclick="startCall()">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </button>
+          <button class="dial-backspace" onclick="dialBackspace()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+          </button>
+        </div>
+        <!-- Quick actions under dialpad -->
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:8px 0">
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="startVideoCall()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Video Call <span class="free-badge">Free</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="openSmartDial()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            AI Smart Dial <span class="free-badge">Free</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHATS TAB -->
+      <div id="calls-tab-chats" style="display:none">
+        <!-- Search -->
+        <div class="social-search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search chats or start new..." id="chat-search-input" oninput="searchChats(this.value)">
+        </div>
+
+        <!-- Search Results (hidden by default) -->
+        <div id="chat-search-results" style="display:none"></div>
+
+        <!-- Conversation List -->
+        <div id="chat-conversations-list">
+          <div style="text-align:center;padding:40px 0;color:var(--text3)">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:12px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">No conversations yet</div>
+            <div style="font-size:12px">Search for users to start chatting</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MESSAGE THREAD (overlays chat list) -->
+      <div id="calls-tab-thread" style="display:none;position:relative;height:calc(100vh - 200px)">
+        <div class="msg-thread-header">
+          <button class="msg-thread-back" onclick="closeMessageThread()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+          <div class="msg-thread-name" id="thread-name">User</div>
+          <div class="msg-thread-actions">
+            <button class="msg-thread-action" onclick="callThreadUser()" title="Call">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.83.3 1.65.52 2.44a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.79.22 1.61.39 2.44.52A2 2 0 0 1 22 16.92z"/></svg>
+            </button>
+            <button class="msg-thread-action" onclick="videoCallThreadUser()" title="Video Call">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="msg-bubbles" id="msg-bubbles"></div>
+        <div class="msg-compose">
+          <input class="msg-input" id="msg-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMessage()">
+          <button class="msg-send-btn" onclick="sendChatMessage()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div id="calls-tab-history" style="display:none">
+        <div id="call-history-list">
+          <div style="text-align:center;padding:40px 0;color:var(--text3)">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:12px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">No call history</div>
+            <div style="font-size:12px">Your calls will appear here</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICES TAB — Virtual Numbers, SIMs, SMS, AI -->
+      <div id="calls-tab-services" style="display:none">
+
+        <!-- Telnyx Account Balance -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);border-radius:14px;margin-bottom:16px">
+          <div>
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">Telnyx Balance</div>
+            <div style="font-size:20px;font-weight:700;color:#10b981" id="telnyx-balance-display">$—</div>
+          </div>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+
+        <!-- Service Cards Grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+
+          <!-- Virtual Numbers Card -->
+          <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.2s" onclick="showServicePanel('numbers')">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3"/></svg>
+            </div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">Virtual Numbers</div>
+            <div style="font-size:11px;color:var(--text3)">Buy global phone numbers</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px" id="my-numbers-count">0 active</div>
+          </div>
+
+          <!-- eSIM Card -->
+          <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.2s" onclick="showServicePanel('sims')">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M8 10h8"/><path d="M8 14h4"/></svg>
+            </div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">eSIM / SIM</div>
+            <div style="font-size:11px;color:var(--text3)">IoT & travel SIMs</div>
+          </div>
+
+          <!-- SMS Card -->
+          <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.2s" onclick="showServicePanel('sms')">
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">SMS / MMS</div>
+            <div style="font-size:11px;color:var(--text3)">Send global texts</div>
+          </div>
+
+          <!-- AI Chat Card -->
+          <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.2s" onclick="showServicePanel('telnyxai')">
+            <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(59,130,246,0.12));display:flex;align-items:center;justify-content:center;margin-bottom:10px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">AI Assistant <span class="free-badge">Free</span></div>
+            <div style="font-size:11px;color:var(--text3)">Llama 3.1 powered</div>
+          </div>
+        </div>
+
+        <!-- Service Panel (dynamic content) -->
+        <div id="service-panel"></div>
       </div>
     </div>
 
@@ -2346,6 +3169,24 @@
 
   </div>
 
+  <!-- PWA Install Banner -->
+  <div class="pwa-install-banner" id="pwa-install-banner">
+    <button class="pwa-banner-close" onclick="dismissInstallBanner(true)">&times;</button>
+    <div class="pwa-banner-content">
+      <div class="pwa-banner-icon">
+        <img src="/icons/icon-192.png" alt="PromptPay" onerror="this.parentElement.innerHTML='&#x1F4B3;'">
+      </div>
+      <div class="pwa-banner-text">
+        <div class="pwa-banner-title">Install PromptPay</div>
+        <div class="pwa-banner-desc">Add to your home screen for the full app experience — fast, offline-ready, no app store.</div>
+      </div>
+    </div>
+    <div class="pwa-banner-actions">
+      <button class="pwa-banner-install" onclick="installApp()">Install App</button>
+      <button class="pwa-banner-dismiss" onclick="dismissInstallBanner(false)">Not Now</button>
+    </div>
+  </div>
+
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <div class="nav-item active" data-page="home">
@@ -2354,11 +3195,11 @@
       </div>
       <div class="nav-label">Home</div>
     </div>
-    <div class="nav-item" data-page="activity">
+    <div class="nav-item" data-page="pos">
       <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
       </div>
-      <div class="nav-label">Activity</div>
+      <div class="nav-label">POS</div>
     </div>
     <div class="nav-item nav-ai" data-page="ai">
       <div class="nav-icon">
@@ -2366,11 +3207,11 @@
       </div>
       <div class="nav-label">AI</div>
     </div>
-    <div class="nav-item" data-page="wallet">
+    <div class="nav-item" data-page="calls">
       <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><circle cx="18" cy="16" r="1"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
       </div>
-      <div class="nav-label">Wallet</div>
+      <div class="nav-label">Calls</div>
     </div>
     <div class="nav-item" data-page="profile">
       <div class="nav-icon">
@@ -2380,6 +3221,58 @@
     </div>
   </div>
 
+</div>
+
+<!-- Active Call Screen Overlay -->
+<div class="call-screen" id="call-screen">
+  <div class="call-avatar" id="call-screen-avatar">?</div>
+  <div class="call-name" id="call-screen-name">Unknown</div>
+  <div class="call-status" id="call-screen-status">Dialing...</div>
+  <div class="call-timer" id="call-screen-timer" style="display:none">00:00</div>
+  <div class="call-controls">
+    <button class="call-ctrl-btn" id="call-mute-btn" onclick="toggleCallMute()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    </button>
+    <button class="call-ctrl-btn" id="call-speaker-btn" onclick="toggleCallSpeaker()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    </button>
+    <button class="call-ctrl-btn hangup-btn" onclick="endCall()">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    </button>
+    <button class="call-ctrl-btn" id="call-keypad-btn" onclick="toggleCallKeypad()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="4" y="2" width="4" height="4" rx="1"/><rect x="10" y="2" width="4" height="4" rx="1"/><rect x="16" y="2" width="4" height="4" rx="1"/><rect x="4" y="8" width="4" height="4" rx="1"/><rect x="10" y="8" width="4" height="4" rx="1"/><rect x="16" y="8" width="4" height="4" rx="1"/><rect x="4" y="14" width="4" height="4" rx="1"/><rect x="10" y="14" width="4" height="4" rx="1"/><rect x="16" y="14" width="4" height="4" rx="1"/></svg>
+    </button>
+  </div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:20px" id="call-cost-display"></div>
+</div>
+
+<!-- Video Call Screen Overlay -->
+<div class="video-call-screen" id="video-call-screen">
+  <div class="video-remote" id="video-remote">
+    <div class="video-placeholder" id="video-remote-placeholder">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+      <div style="font-size:16px;font-weight:600;margin-top:8px" id="video-remote-name">Waiting...</div>
+      <div style="font-size:13px;margin-top:4px" id="video-call-status-text">Connecting video...</div>
+    </div>
+    <video id="remote-video" autoplay playsinline style="display:none"></video>
+  </div>
+  <div class="video-local">
+    <video id="local-video" autoplay playsinline muted></video>
+  </div>
+  <div class="video-controls">
+    <button class="call-ctrl-btn" id="video-mute-btn" onclick="toggleVideoMute()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+    </button>
+    <button class="call-ctrl-btn" id="video-cam-btn" onclick="toggleVideoCamera()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+    </button>
+    <button class="call-ctrl-btn hangup-btn" onclick="endVideoCall()">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>
+    </button>
+    <button class="call-ctrl-btn" id="video-flip-btn" onclick="flipVideoCamera()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </button>
+  </div>
 </div>
 
 <!-- Add Card Modal -->
@@ -2530,62 +3423,6 @@
       <div id="qr-scan-error" style="display:none;padding:12px;background:rgba(239,68,68,0.1);border-radius:12px;margin-bottom:8px;font-size:13px;color:var(--red)"></div>
     </div>
     <button onclick="closeQrModal()" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;color:var(--text);font-size:14px;cursor:pointer;font-family:inherit">Close</button>
-  </div>
-</div>
-
-<!-- Markets Modal -->
-<div class="modal-overlay" id="markets-modal">
-  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto">
-    <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h3 style="font-size:20px;font-weight:700">Market Insights</h3>
-      <button onclick="closeModals()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer">&times;</button>
-    </div>
-    <!-- Period Tabs -->
-    <div style="display:flex;gap:6px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px">
-      <button class="mkt-period-tab active" onclick="loadMarketData('day')" data-period="day" style="padding:8px 16px;border:none;border-radius:20px;background:var(--gradient2);color:white;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">Today</button>
-      <button class="mkt-period-tab" onclick="loadMarketData('week')" data-period="week" style="padding:8px 16px;border:none;border-radius:20px;background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">This Week</button>
-      <button class="mkt-period-tab" onclick="loadMarketData('month')" data-period="month" style="padding:8px 16px;border:none;border-radius:20px;background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">This Month</button>
-      <button class="mkt-period-tab" onclick="loadMarketData('year')" data-period="year" style="padding:8px 16px;border:none;border-radius:20px;background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">This Year</button>
-    </div>
-    <!-- Market Summary -->
-    <div id="mkt-summary" style="display:flex;gap:8px;margin-bottom:20px">
-      <div style="flex:1;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:14px;text-align:center">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">S&P 500</div>
-        <div style="font-size:16px;font-weight:700" id="mkt-sp500">--</div>
-        <div style="font-size:11px" id="mkt-sp500-change">--</div>
-      </div>
-      <div style="flex:1;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:14px;text-align:center">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">NASDAQ</div>
-        <div style="font-size:16px;font-weight:700" id="mkt-nasdaq">--</div>
-        <div style="font-size:11px" id="mkt-nasdaq-change">--</div>
-      </div>
-      <div style="flex:1;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:14px;text-align:center">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">DOW</div>
-        <div style="font-size:16px;font-weight:700" id="mkt-dow">--</div>
-        <div style="font-size:11px" id="mkt-dow-change">--</div>
-      </div>
-    </div>
-    <!-- Top Gainers -->
-    <div style="margin-bottom:20px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--emerald)">Top Gainers</div>
-      <div id="mkt-gainers" style="display:flex;flex-direction:column;gap:8px">
-        <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Loading...</div>
-      </div>
-    </div>
-    <!-- Top Losers -->
-    <div style="margin-bottom:20px">
-      <div style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--red)">Top Losers</div>
-      <div id="mkt-losers" style="display:flex;flex-direction:column;gap:8px">
-        <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Loading...</div>
-      </div>
-    </div>
-    <!-- AI Market Insight -->
-    <div style="background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(59,130,246,0.08));border:1px solid rgba(124,58,237,0.15);border-radius:16px;padding:16px;margin-bottom:16px">
-      <div style="font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:8px">AI Market Insight</div>
-      <div id="mkt-insight" style="font-size:13px;color:var(--text);line-height:1.5">Analyzing market conditions...</div>
-    </div>
-    <p style="font-size:11px;color:var(--text3);text-align:center">Data for informational purposes only. Not investment advice. Full trading features coming soon.</p>
   </div>
 </div>
 
@@ -2825,6 +3662,43 @@
   </div>
 </div>
 
+<!-- Fund Wallet Modal -->
+<div class="modal-overlay" id="fund-wallet-modal" onclick="if(event.target===this)closeFundModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Fund Wallet</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Add funds from your linked card to sell airtime</p>
+    <div class="fund-modal-amounts">
+      <button class="fund-amt-btn" onclick="fundSetAmount(1000)">&#8358;1,000</button>
+      <button class="fund-amt-btn" onclick="fundSetAmount(2000)">&#8358;2,000</button>
+      <button class="fund-amt-btn" onclick="fundSetAmount(5000)">&#8358;5,000</button>
+      <button class="fund-amt-btn" onclick="fundSetAmount(10000)">&#8358;10K</button>
+      <button class="fund-amt-btn" onclick="fundSetAmount(20000)">&#8358;20K</button>
+      <button class="fund-amt-btn" onclick="fundSetAmount(50000)">&#8358;50K</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Custom Amount (NGN)</label>
+      <input id="fund-amount" type="number" placeholder="Enter amount" class="pos-input">
+    </div>
+    <div id="fund-card-select" style="margin-bottom:14px"></div>
+    <button id="fund-submit-btn" onclick="submitFundWallet()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Fund Wallet</button>
+    <button onclick="closeFundModal()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
+    <div id="fund-error" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- POS Receipt Modal -->
+<div class="modal-overlay" id="pos-receipt-modal" onclick="if(event.target===this)closeReceiptModal()">
+  <div class="modal-sheet" style="max-width:380px;margin:0 auto">
+    <div class="modal-handle"></div>
+    <div id="pos-receipt-content"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button onclick="shareReceipt()" style="flex:1;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Share</button>
+      <button onclick="closeReceiptModal()" style="flex:1;padding:14px;background:var(--gradient2);border:none;border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Done</button>
+    </div>
+  </div>
+</div>
+
 <!-- Premium Feature Popup -->
 <div class="premium-popup-overlay" id="premium-popup" onclick="if(event.target===this)closePremiumPopup()">
   <div class="premium-popup">
@@ -2996,6 +3870,7 @@ function handleLogout() {
   authToken = null;
   currentUser = null;
   localStorage.removeItem('promptpay_token');
+  localStorage.removeItem('promptpay_user');
   document.getElementById('login-email').value = '';
   document.getElementById('login-password').value = '';
   document.getElementById('register-name').value = '';
@@ -3067,6 +3942,8 @@ async function handleProfilePicUpload(event) {
       });
       if (res.ok) {
         currentUser.profilePicture = dataUrl;
+        // Persist to localStorage so it survives refresh
+        try { localStorage.setItem('promptpay_user', JSON.stringify(currentUser)); } catch(e) {}
         // Update header
         const headerAvatar = document.querySelector('.header-avatar');
         headerAvatar.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
@@ -3075,7 +3952,7 @@ async function handleProfilePicUpload(event) {
         const initials = document.getElementById('profile-pic-initials');
         if (img) { img.src = dataUrl; img.style.display = 'block'; }
         if (initials) initials.style.display = 'none';
-        showToast('Profile picture updated!');
+        showToast('Profile picture updated!', 'success');
       } else {
         showToast('Failed to upload picture');
       }
@@ -3108,20 +3985,28 @@ async function validateToken() {
     authToken = null;
     return false;
   }
+  // Load cached user immediately (profile pic, name, etc.)
+  try {
+    const cached = localStorage.getItem('promptpay_user');
+    if (cached) currentUser = JSON.parse(cached);
+  } catch(e) {}
   try {
     const res = await authFetch(API_BASE + '/api/auth/me');
     if (res.ok) {
       const data = await res.json();
       currentUser = data.user || data;
+      // Cache user data in localStorage for instant load next time
+      try { localStorage.setItem('promptpay_user', JSON.stringify(currentUser)); } catch(e) {}
       return true;
     }
     // Token invalid on server
     localStorage.removeItem('promptpay_token');
+    localStorage.removeItem('promptpay_user');
     authToken = null;
     return false;
   } catch (e) {
-    // Server might be down; keep token and let user in
-    return true;
+    // Server might be down; keep token and cached user
+    return !!currentUser;
   }
 }
 
@@ -3221,12 +4106,42 @@ function applySettings(settings) {
 
 // ── PWA Install ──
 let deferredInstallPrompt = null;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
   const btn = document.getElementById('install-app-btn');
   if (btn) btn.textContent = 'Add to Home Screen';
+  // Show the install banner after 3 seconds if not dismissed recently
+  const dismissed = localStorage.getItem('pwa_banner_dismissed');
+  const dismissedAt = dismissed ? parseInt(dismissed) : 0;
+  const hoursSinceDismiss = (Date.now() - dismissedAt) / (1000 * 60 * 60);
+  // Show again if never dismissed, or dismissed more than 24 hours ago
+  if (!dismissed || hoursSinceDismiss > 24) {
+    setTimeout(() => {
+      showInstallBanner();
+    }, 3000);
+  }
 });
+
+function showInstallBanner() {
+  if (isStandalone) return;
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.classList.add('show');
+}
+
+function dismissInstallBanner(permanent) {
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.classList.remove('show');
+  if (permanent) {
+    // Don't show again for 7 days
+    localStorage.setItem('pwa_banner_dismissed', (Date.now() + 6 * 24 * 60 * 60 * 1000).toString());
+  } else {
+    // "Not Now" — show again after 24 hours
+    localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
+  }
+}
 
 function installApp() {
   if (deferredInstallPrompt) {
@@ -3234,19 +4149,39 @@ function installApp() {
     deferredInstallPrompt.userChoice.then((result) => {
       if (result.outcome === 'accepted') {
         showToast('App installed! Find it on your home screen.');
+        dismissInstallBanner(true);
       }
       deferredInstallPrompt = null;
     });
-  } else if (window.matchMedia('(display-mode: standalone)').matches) {
+  } else if (isStandalone) {
     showToast('App is already installed!');
   } else {
-    // iOS Safari or browser without install prompt
-    showToast('Tap your browser\'s Share button, then "Add to Home Screen"');
+    // iOS Safari — show manual instructions
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      showToast('Tap the Share button (box with arrow), then "Add to Home Screen"');
+    } else {
+      showToast('Open browser menu (\u22EE) and tap "Add to Home Screen" or "Install app"');
+    }
   }
 }
 
-// Hide install section if already installed as PWA
-if (window.matchMedia('(display-mode: standalone)').matches) {
+// For iOS where beforeinstallprompt doesn't fire, show banner with manual instructions
+if (!isStandalone) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  if (isIOS && isSafari) {
+    const dismissed = localStorage.getItem('pwa_banner_dismissed');
+    const dismissedAt = dismissed ? parseInt(dismissed) : 0;
+    const hoursSinceDismiss = (Date.now() - dismissedAt) / (1000 * 60 * 60);
+    if (!dismissed || hoursSinceDismiss > 24) {
+      setTimeout(() => showInstallBanner(), 3000);
+    }
+  }
+}
+
+// Hide install section in settings if already installed as PWA
+if (isStandalone) {
   const section = document.getElementById('install-app-section');
   if (section) {
     section.querySelector('.settings-section-title').insertAdjacentHTML('afterend',
@@ -3360,11 +4295,12 @@ async function payByPhone(amount, label, merchantId) {
   }
 }
 
-function showToast(message) {
+function showToast(message, type) {
   const toast = document.getElementById('settings-toast');
   toast.textContent = message;
+  toast.style.background = type === 'error' ? 'linear-gradient(135deg,#ef4444,#dc2626)' : type === 'success' ? 'linear-gradient(135deg,#10b981,#059669)' : '';
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
+  setTimeout(() => { toast.classList.remove('show'); toast.style.background = ''; }, 3000);
 }
 
 // ── Time greeting ──
@@ -3394,6 +4330,12 @@ function navigateTo(page) {
   }
   if (page === 'ai') {
     setTimeout(() => document.getElementById('chat-input')?.focus(), 100);
+  }
+  if (page === 'pos') {
+    loadPosData();
+  }
+  if (page === 'calls') {
+    loadCallsPage();
   }
 }
 
@@ -4113,10 +5055,8 @@ function detectTaskType(text) {
   // Agentic agents checked FIRST
   // Shopping (Aria)
   if (t.includes('shop') || t.includes('grocery') || t.includes('shopping list') || t.includes('buy ') || t.includes('order') || t.includes('reorder') || t.includes('price compare')) return 'shopping_list_create';
-  // Trading (Quant)
-  if (t.includes('invest') || t.includes('stock') || t.includes('crypto') || t.includes('portfolio') || t.includes('trade') || t.includes('dca') || t.includes('market')) return 'market_insights';
-  // Advisory (Sage)
-  if (t.includes('budget') || t.includes('spending') || t.includes('debt') || t.includes('savings advice') || t.includes('tax') || t.includes('net worth') || t.includes('financial health') || t.includes('financial advice') || t.includes('goal')) return 'advisor_budget_create';
+  // Calls & SMS
+  if (t.includes('call') || t.includes('dial') || t.includes('phone') || t.includes('sms') || t.includes('text') || t.includes('number') || t.includes('sim')) return 'calls_sms';
   // Assistant (Otto)
   if (t.includes('subscription') || t.includes('negotiate') || t.includes('appointment') || t.includes('document') || t.includes('price alert') || t.includes('return') || t.includes('deal') || t.includes('auto pay')) return 'assistant_subscriptions';
   // Payment infrastructure
@@ -4138,16 +5078,14 @@ function getSmartFallback(text) {
   const responses = {
     // Agentic agents
     shopping_list_create: "I'll help with shopping. Want me to create a list, compare prices, or track an order?",
-    market_insights: "Let me check the markets for you. I'll show today's top performers and market trends. You can also tap the Markets button on your home screen for real-time insights.",
-    advisor_budget_create: "I can help with your finances. Want to create a budget, analyze spending, or plan a goal?",
+    calls_sms: "I can help with calls and messaging! Go to the Calls tab to dial international numbers, buy virtual numbers, send SMS, or chat with AI. What do you need?",
     assistant_subscriptions: "I'll manage that for you. I can list subscriptions, set alerts, or schedule appointments.",
-    // Payment infrastructure
     wallet_transfer: "Got it. Who are you sending to and how much?",
     bill_pay: "I'll handle that bill. What's the bill type and amount?",
     tx_history: `Your balance is ${document.getElementById('balance-display')?.textContent || '$0.00'}. Need transaction details?`,
     payment_initiate: "On it. What would you like to pay for?",
     payment_method_manage: "You can manage your cards in the Wallet tab. Need help with something specific?",
-    custom: "I can help you shop, invest, budget, manage subscriptions, send money, pay bills, and more. What do you need?"
+    custom: "I can help you shop, make calls, send SMS, manage subscriptions, send money, pay bills, and more. What do you need?"
   };
   return responses[type] || responses.custom;
 }
@@ -4340,112 +5278,6 @@ function handleQrResult(data) {
     resultEl.innerHTML = '<b>QR Scanned:</b><br>' + data;
   }
 }
-// ══════════════════════════════════════════════════════════
-// MARKET INSIGHTS
-// ══════════════════════════════════════════════════════════
-
-const MARKET_STOCKS = {
-  day: [
-    { symbol: 'NVDA', name: 'NVIDIA', price: 142.50, change: 5.8 },
-    { symbol: 'AAPL', name: 'Apple', price: 238.20, change: 2.1 },
-    { symbol: 'MSFT', name: 'Microsoft', price: 452.30, change: 1.9 },
-    { symbol: 'TSLA', name: 'Tesla', price: 345.80, change: 4.2 },
-    { symbol: 'AMZN', name: 'Amazon', price: 225.40, change: 1.5 },
-    { symbol: 'META', name: 'Meta', price: 612.90, change: -1.2 },
-    { symbol: 'GOOG', name: 'Alphabet', price: 198.60, change: -0.8 },
-    { symbol: 'JPM', name: 'JPMorgan', price: 252.10, change: -1.5 },
-  ],
-  week: [
-    { symbol: 'NVDA', name: 'NVIDIA', price: 142.50, change: 12.3 },
-    { symbol: 'TSLA', name: 'Tesla', price: 345.80, change: 8.7 },
-    { symbol: 'PLTR', name: 'Palantir', price: 98.40, change: 7.2 },
-    { symbol: 'AMD', name: 'AMD', price: 168.30, change: 6.1 },
-    { symbol: 'COIN', name: 'Coinbase', price: 285.70, change: 5.5 },
-    { symbol: 'INTC', name: 'Intel', price: 24.30, change: -4.8 },
-    { symbol: 'BA', name: 'Boeing', price: 178.50, change: -3.9 },
-    { symbol: 'NKE', name: 'Nike', price: 72.40, change: -3.2 },
-  ],
-  month: [
-    { symbol: 'NVDA', name: 'NVIDIA', price: 142.50, change: 28.5 },
-    { symbol: 'SMCI', name: 'Super Micro', price: 45.80, change: 22.1 },
-    { symbol: 'PLTR', name: 'Palantir', price: 98.40, change: 18.6 },
-    { symbol: 'TSLA', name: 'Tesla', price: 345.80, change: 15.3 },
-    { symbol: 'META', name: 'Meta', price: 612.90, change: 11.2 },
-    { symbol: 'PFE', name: 'Pfizer', price: 26.80, change: -8.5 },
-    { symbol: 'DIS', name: 'Disney', price: 108.30, change: -6.2 },
-    { symbol: 'BABA', name: 'Alibaba', price: 85.60, change: -5.7 },
-  ],
-  year: [
-    { symbol: 'NVDA', name: 'NVIDIA', price: 142.50, change: 185.4 },
-    { symbol: 'PLTR', name: 'Palantir', price: 98.40, change: 340.2 },
-    { symbol: 'META', name: 'Meta', price: 612.90, change: 72.8 },
-    { symbol: 'AMZN', name: 'Amazon', price: 225.40, change: 48.6 },
-    { symbol: 'AAPL', name: 'Apple', price: 238.20, change: 32.5 },
-    { symbol: 'INTC', name: 'Intel', price: 24.30, change: -52.1 },
-    { symbol: 'MRNA', name: 'Moderna', price: 38.50, change: -43.8 },
-    { symbol: 'NKE', name: 'Nike', price: 72.40, change: -28.5 },
-  ]
-};
-
-const MARKET_INDICES = {
-  day: { sp500: '5,998.42', sp500Change: '+0.82%', nasdaq: '19,432.18', nasdaqChange: '+1.12%', dow: '43,215.67', dowChange: '+0.45%' },
-  week: { sp500: '5,998.42', sp500Change: '+2.14%', nasdaq: '19,432.18', nasdaqChange: '+3.28%', dow: '43,215.67', dowChange: '+1.56%' },
-  month: { sp500: '5,998.42', sp500Change: '+4.85%', nasdaq: '19,432.18', nasdaqChange: '+6.72%', dow: '43,215.67', dowChange: '+3.41%' },
-  year: { sp500: '5,998.42', sp500Change: '+24.31%', nasdaq: '19,432.18', nasdaqChange: '+32.85%', dow: '43,215.67', dowChange: '+18.67%' }
-};
-
-const MARKET_INSIGHTS = {
-  day: "Markets are trending higher today led by AI and semiconductor stocks. NVIDIA continues its momentum after reporting strong data center revenue. The Fed minutes released this afternoon showed no immediate rate changes planned, supporting equities.",
-  week: "A strong week for tech as AI spending forecasts were revised upward. Tesla gained on news of FSD expansion to new markets. Intel remains under pressure amid market share losses.",
-  month: "The AI trade continues to dominate with NVIDIA leading the charge. Super Micro Computer surged on data center demand. Defensive sectors underperformed as risk appetite remains strong.",
-  year: "2024-2025 has been the year of AI infrastructure spending. Palantir led with 340% gains driven by government and enterprise AI contracts. NVIDIA's data center dominance propelled a 185% rise. Legacy tech like Intel struggled with -52% as the market shifted."
-};
-
-function openMarketsModal() {
-  document.getElementById('markets-modal').classList.add('active');
-  loadMarketData('day');
-}
-
-function loadMarketData(period) {
-  // Update tab styles
-  document.querySelectorAll('.mkt-period-tab').forEach(t => {
-    if (t.dataset.period === period) { t.style.background = 'var(--gradient2)'; t.style.color = 'white'; }
-    else { t.style.background = 'var(--surface)'; t.style.color = 'var(--text2)'; }
-  });
-
-  const idx = MARKET_INDICES[period];
-  document.getElementById('mkt-sp500').textContent = idx.sp500;
-  document.getElementById('mkt-sp500-change').textContent = idx.sp500Change;
-  document.getElementById('mkt-sp500-change').style.color = idx.sp500Change.startsWith('+') ? 'var(--emerald)' : 'var(--red)';
-  document.getElementById('mkt-nasdaq').textContent = idx.nasdaq;
-  document.getElementById('mkt-nasdaq-change').textContent = idx.nasdaqChange;
-  document.getElementById('mkt-nasdaq-change').style.color = idx.nasdaqChange.startsWith('+') ? 'var(--emerald)' : 'var(--red)';
-  document.getElementById('mkt-dow').textContent = idx.dow;
-  document.getElementById('mkt-dow-change').textContent = idx.dowChange;
-  document.getElementById('mkt-dow-change').style.color = idx.dowChange.startsWith('+') ? 'var(--emerald)' : 'var(--red)';
-
-  const stocks = MARKET_STOCKS[period];
-  const gainers = stocks.filter(s => s.change > 0).sort((a,b) => b.change - a.change);
-  const losers = stocks.filter(s => s.change < 0).sort((a,b) => a.change - b.change);
-
-  const renderStock = (s) => `
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border-radius:12px;border:1px solid var(--glass-border)">
-      <div style="width:40px;height:40px;border-radius:10px;background:${s.change >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${s.change >= 0 ? 'var(--emerald)' : 'var(--red)'}">${s.symbol.slice(0,4)}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:600">${s.symbol}</div>
-        <div style="font-size:11px;color:var(--text3)">${s.name}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:14px;font-weight:600">$${s.price.toFixed(2)}</div>
-        <div style="font-size:12px;font-weight:600;color:${s.change >= 0 ? 'var(--emerald)' : 'var(--red)'}">${s.change > 0 ? '+' : ''}${s.change}%</div>
-      </div>
-    </div>`;
-
-  document.getElementById('mkt-gainers').innerHTML = gainers.length ? gainers.map(renderStock).join('') : '<div style="padding:12px;color:var(--text3);font-size:13px;text-align:center">No gainers in this period</div>';
-  document.getElementById('mkt-losers').innerHTML = losers.length ? losers.map(renderStock).join('') : '<div style="padding:12px;color:var(--text3);font-size:13px;text-align:center">No losers in this period</div>';
-  document.getElementById('mkt-insight').textContent = MARKET_INSIGHTS[period];
-}
-
 function showNotifications() {
   navigateTo('activity');
 }
@@ -4557,11 +5389,11 @@ async function renderRewardCard(container) {
       <div class="reward-type">Referral Rewards</div>
       <div class="reward-title">Reward Card</div>
       <div class="reward-balance-label">Available Balance</div>
-      <div class="reward-balance-value">$${data.balance.toFixed(2)}</div>
+      <div class="reward-balance-value">$${Number(data.balance || 0).toFixed(2)}</div>
       <div class="reward-footer">
         <div>
           <div class="reward-stat-label">Lifetime Earned</div>
-          <div class="reward-stat-value">$${data.lifetimeEarned.toFixed(2)}</div>
+          <div class="reward-stat-value">$${Number(data.lifetimeEarned || 0).toFixed(2)}</div>
         </div>
         <div style="text-align:right">
           <div class="reward-stat-label">Status</div>
@@ -4634,6 +5466,396 @@ async function removePaymentMethod(pmId) {
     else { showToast('Failed to remove card'); }
   } catch (err) { showToast('Failed to remove card'); }
 }
+
+// ══════════════════════════════════════════════════════════
+// POS MODE — Airtime Reseller System
+// ══════════════════════════════════════════════════════════
+
+let posCarrier = null;
+let posDetectTimer = null;
+let lastReceipt = null;
+let posLinkedCards = [];
+
+function formatNaira(n) {
+  return '\u20A6' + Number(n||0).toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+async function loadPosData() {
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/dashboard');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    // Balance
+    document.getElementById('pos-balance').textContent = formatNaira(data.wallet?.balance || 0);
+
+    // Today stats
+    document.getElementById('pos-today-sales').textContent = data.today?.count || 0;
+    document.getElementById('pos-today-revenue').textContent = formatNaira(data.today?.totalSales || 0);
+    document.getElementById('pos-today-profit').textContent = formatNaira(data.today?.totalProfit || 0);
+
+    // Recent sales
+    renderPosSales(data.recentSales || []);
+  } catch (e) { console.error('POS load error:', e); }
+}
+
+function renderPosSales(sales) {
+  const list = document.getElementById('pos-sales-list');
+  if (!sales.length) {
+    list.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--text3);font-size:13px">No sales yet. Sell airtime to get started.</div>';
+    return;
+  }
+  list.innerHTML = sales.map(s => {
+    const isFailed = s.status === 'failed' || s.status === 'refunded';
+    const time = new Date(s.created_at || s.completed_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const date = new Date(s.created_at || s.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `<div class="pos-sale-item">
+      <div class="pos-sale-icon ${isFailed ? 'failed' : ''}">
+        ${isFailed ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>'}
+      </div>
+      <div class="pos-sale-info">
+        <div class="pos-sale-phone">${s.customer_phone}</div>
+        <div class="pos-sale-carrier">${s.carrier || 'Airtime'} &middot; ${s.country || 'NG'}</div>
+      </div>
+      <div class="pos-sale-right">
+        <div class="pos-sale-amount">${formatNaira(s.face_value)}</div>
+        ${!isFailed ? `<div class="pos-sale-profit">+${formatNaira(s.agent_profit)}</div>` : `<div style="font-size:11px;color:var(--red)">${s.status}</div>`}
+        <div class="pos-sale-time">${date} ${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function posPhoneChanged() {
+  const phone = document.getElementById('pos-phone').value.trim();
+  document.getElementById('pos-carrier-info').innerHTML = '';
+  posCarrier = null;
+  updatePosSellBtn();
+
+  clearTimeout(posDetectTimer);
+  if (phone.length >= 7) {
+    posDetectTimer = setTimeout(() => detectPosCarrier(phone), 600);
+  }
+}
+
+async function detectPosCarrier(phone) {
+  try {
+    const country = document.getElementById('pos-country').value;
+    const res = await authFetch(API_BASE + '/api/pos/detect-carrier?phone=' + encodeURIComponent(phone) + '&countryCode=' + country);
+    if (!res.ok) return;
+    const data = await res.json();
+    posCarrier = data;
+    document.getElementById('pos-carrier-info').innerHTML =
+      `<div class="pos-carrier-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> ${data.carrier}</div>`;
+    posAmountChanged();
+    updatePosSellBtn();
+    // Load data bundles if on data tab
+    if (posActiveTab === 'data' && data.operatorId) loadDataBundles(data.operatorId);
+  } catch (e) { /* silent */ }
+}
+
+function posSetAmount(amt) {
+  document.getElementById('pos-amount').value = amt;
+  document.querySelectorAll('.pos-quick-amt').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  posAmountChanged();
+}
+
+function posAmountChanged() {
+  const amt = parseFloat(document.getElementById('pos-amount').value) || 0;
+  const preview = document.getElementById('pos-cost-preview');
+  if (amt > 0) {
+    preview.innerHTML = `Wallet will be debited <span style="font-weight:700">${formatNaira(amt)}</span> &middot; Collect ${formatNaira(amt)}+ cash from customer`;
+  } else {
+    preview.innerHTML = '';
+  }
+  updatePosSellBtn();
+}
+
+function updatePosSellBtn() {
+  const phone = document.getElementById('pos-phone').value.trim();
+  const amount = parseFloat(document.getElementById('pos-amount').value) || 0;
+  document.getElementById('pos-sell-btn').disabled = !(phone.length >= 7 && amount >= 50);
+}
+
+async function posSellAirtime() {
+  const phone = document.getElementById('pos-phone').value.trim();
+  const amount = parseFloat(document.getElementById('pos-amount').value);
+  const country = document.getElementById('pos-country').value;
+  const btn = document.getElementById('pos-sell-btn');
+
+  if (!phone || !amount) return;
+  btn.disabled = true;
+  btn.textContent = 'PROCESSING...';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/sell', {
+      method: 'POST',
+      body: JSON.stringify({ phoneNumber: phone, amount, countryCode: country })
+    });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      showToast('Airtime sent successfully!');
+      lastReceipt = data;
+      showPosReceipt(data);
+      // Reset form
+      document.getElementById('pos-phone').value = '';
+      document.getElementById('pos-amount').value = '';
+      document.getElementById('pos-carrier-info').innerHTML = '';
+      document.getElementById('pos-cost-preview').innerHTML = '';
+      document.querySelectorAll('.pos-quick-amt').forEach(b => b.classList.remove('active'));
+      posCarrier = null;
+      // Reload data
+      loadPosData();
+    } else {
+      showToast(data.error || 'Sale failed');
+    }
+  } catch (e) {
+    showToast('Network error. Try again.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'SELL AIRTIME';
+    updatePosSellBtn();
+  }
+}
+
+function showPosReceipt(data) {
+  const now = new Date();
+  const receiptHtml = `<div class="pos-receipt">
+    <h4>PromptPay POS</h4>
+    <div style="text-align:center;font-size:11px;color:#666;margin-bottom:8px">${now.toLocaleDateString()} ${now.toLocaleTimeString()}</div>
+    <hr>
+    <div class="rcpt-row"><span class="rcpt-label">Phone</span><span class="rcpt-val">${data.phoneNumber || data.customerPhone || ''}</span></div>
+    <div class="rcpt-row"><span class="rcpt-label">Carrier</span><span class="rcpt-val">${data.carrier || 'Auto'}</span></div>
+    <div class="rcpt-row"><span class="rcpt-label">Product</span><span class="rcpt-val">Airtime</span></div>
+    <hr>
+    <div class="rcpt-total">${formatNaira(data.faceValue || data.amount)}</div>
+    <hr>
+    <div class="rcpt-row"><span class="rcpt-label">Tx ID</span><span class="rcpt-val">${(data.transactionId || data.posTransactionId || '').slice(0, 12)}...</span></div>
+    <div class="rcpt-row"><span class="rcpt-label">Status</span><span class="rcpt-val" style="color:#10b981">COMPLETED</span></div>
+    <div class="rcpt-footer">Powered by PromptPay &middot; www.upromptpay.com</div>
+  </div>`;
+  document.getElementById('pos-receipt-content').innerHTML = receiptHtml;
+  document.getElementById('pos-receipt-modal').classList.add('active');
+}
+
+function closeReceiptModal() {
+  document.getElementById('pos-receipt-modal').classList.remove('active');
+}
+
+async function shareReceipt() {
+  if (navigator.share && lastReceipt) {
+    try {
+      await navigator.share({
+        title: 'PromptPay Airtime Receipt',
+        text: `Airtime of ${formatNaira(lastReceipt.faceValue || lastReceipt.amount)} sent to ${lastReceipt.phoneNumber || lastReceipt.customerPhone}. Tx: ${lastReceipt.transactionId || lastReceipt.posTransactionId}. Powered by PromptPay.`
+      });
+    } catch (e) { /* user cancelled */ }
+  } else {
+    showToast('Share not available');
+  }
+}
+
+// ── Fund Wallet ──
+function openFundWalletModal() {
+  document.getElementById('fund-error').textContent = '';
+  document.getElementById('fund-amount').value = '';
+  document.querySelectorAll('.fund-amt-btn').forEach(b => b.classList.remove('active'));
+  loadFundCardOptions();
+  document.getElementById('fund-wallet-modal').classList.add('active');
+}
+
+function closeFundModal() {
+  document.getElementById('fund-wallet-modal').classList.remove('active');
+}
+
+function fundSetAmount(amt) {
+  document.getElementById('fund-amount').value = amt;
+  document.querySelectorAll('.fund-amt-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+async function loadFundCardOptions() {
+  const container = document.getElementById('fund-card-select');
+  try {
+    const res = await authFetch(API_BASE + '/api/user/payment-methods');
+    if (!res.ok) { container.innerHTML = '<div style="color:var(--red);font-size:13px">Add a card in Wallet first</div>'; return; }
+    const { methods } = await res.json();
+    posLinkedCards = methods;
+    if (!methods.length) {
+      container.innerHTML = '<div style="font-size:13px;color:var(--text2)">No cards linked. <span style="color:var(--accent2);cursor:pointer" onclick="closeFundModal();navigateTo(\'wallet\');openAddCardModal()">Add one</span></div>';
+      return;
+    }
+    container.innerHTML = '<label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Pay With</label>' +
+      methods.map((m, i) => `<label style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;border:1px solid var(--glass-border);cursor:pointer;margin-bottom:6px;background:${i === 0 ? 'rgba(124,58,237,0.08)' : 'transparent'}">
+        <input type="radio" name="fund-card" value="${m.id}" ${i === 0 ? 'checked' : ''} style="accent-color:var(--accent)">
+        <span style="font-size:14px">${(m.brand||'Card').toUpperCase()} ····${m.last4}</span>
+      </label>`).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="color:var(--red);font-size:13px">Failed to load cards</div>';
+  }
+}
+
+async function submitFundWallet() {
+  const amount = parseFloat(document.getElementById('fund-amount').value);
+  const errorEl = document.getElementById('fund-error');
+  const btn = document.getElementById('fund-submit-btn');
+  errorEl.textContent = '';
+
+  if (!amount || amount < 100) { errorEl.textContent = 'Minimum amount is \u20A6100'; return; }
+
+  const cardRadio = document.querySelector('input[name="fund-card"]:checked');
+  if (!cardRadio) { errorEl.textContent = 'Select a payment card'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Processing...';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/wallet/fund', {
+      method: 'POST',
+      body: JSON.stringify({ amount, currency: 'NGN', paymentMethodId: cardRadio.value })
+    });
+    const data = await res.json();
+
+    if (data.funded) {
+      showToast('Wallet funded with ' + formatNaira(amount));
+      closeFundModal();
+      loadPosData();
+    } else if (data.clientSecret) {
+      // 3DS required
+      const stripe = Stripe(data.publishableKey || '');
+      const result = await stripe.confirmCardPayment(data.clientSecret);
+      if (result.error) {
+        errorEl.textContent = result.error.message;
+      } else {
+        // Confirm with backend
+        const confirmRes = await authFetch(API_BASE + '/api/wallet/fund/confirm', {
+          method: 'POST',
+          body: JSON.stringify({ paymentIntentId: result.paymentIntent.id, amount, currency: 'NGN' })
+        });
+        const confirmData = await confirmRes.json();
+        if (confirmData.funded) {
+          showToast('Wallet funded with ' + formatNaira(amount));
+          closeFundModal();
+          loadPosData();
+        } else {
+          errorEl.textContent = confirmData.error || 'Funding failed';
+        }
+      }
+    } else {
+      errorEl.textContent = data.error || 'Funding failed';
+    }
+  } catch (e) {
+    errorEl.textContent = 'Network error. Try again.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Fund Wallet';
+  }
+}
+
+// ── POS Tab Switching & Data Bundles ──
+let posActiveTab = 'airtime';
+let posDataBundles = [];
+let posSelectedBundle = null;
+
+function switchPosTab(tab) {
+  posActiveTab = tab;
+  document.getElementById('tab-airtime').style.background = tab === 'airtime' ? 'rgba(124,58,237,0.15)' : 'var(--surface)';
+  document.getElementById('tab-airtime').style.color = tab === 'airtime' ? 'var(--accent2)' : 'var(--text2)';
+  document.getElementById('tab-data').style.background = tab === 'data' ? 'rgba(59,130,246,0.15)' : 'var(--surface)';
+  document.getElementById('tab-data').style.color = tab === 'data' ? '#3b82f6' : 'var(--text2)';
+  document.getElementById('pos-airtime-section').style.display = tab === 'airtime' ? 'block' : 'none';
+  document.getElementById('pos-data-section').style.display = tab === 'data' ? 'block' : 'none';
+  if (tab === 'data' && posCarrier && posCarrier.operatorId) {
+    loadDataBundles(posCarrier.operatorId);
+  }
+}
+
+async function loadDataBundles(operatorId) {
+  const container = document.getElementById('pos-data-bundles-list');
+  container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">Loading data plans...</div>';
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/data-bundles?operatorId=' + operatorId);
+    if (!res.ok) { container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--red);font-size:13px">Failed to load plans</div>'; return; }
+    const data = await res.json();
+    posDataBundles = data.bundles || [];
+    if (!posDataBundles.length) {
+      container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">No data plans available for this carrier</div>';
+      return;
+    }
+    container.innerHTML = posDataBundles.map((b, i) =>
+      `<label style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;border:1px solid var(--glass-border);cursor:pointer;margin-bottom:6px;background:transparent;transition:all 0.15s" onclick="selectDataBundle(${i},this)">
+        <input type="radio" name="pos-data-bundle" value="${i}" style="accent-color:#3b82f6">
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:600">${b.name}</div>
+          <div style="font-size:11px;color:var(--text2)">${b.validity ? b.validity + ' ' + (b.validityUnit || 'days') : ''}</div>
+        </div>
+        <div style="font-size:15px;font-weight:700;color:#3b82f6">${formatNaira(b.price)}</div>
+      </label>`
+    ).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--red);font-size:13px">Error loading plans</div>';
+  }
+}
+
+function selectDataBundle(idx, el) {
+  posSelectedBundle = posDataBundles[idx];
+  document.querySelectorAll('#pos-data-bundles-list label').forEach(l => l.style.background = 'transparent');
+  el.style.background = 'rgba(59,130,246,0.08)';
+  document.getElementById('pos-sell-data-btn').disabled = !(posSelectedBundle && document.getElementById('pos-phone').value.trim().length >= 7);
+}
+
+async function posSellData() {
+  if (!posSelectedBundle || !posCarrier) return;
+  const phone = document.getElementById('pos-phone').value.trim();
+  const country = document.getElementById('pos-country').value;
+  const btn = document.getElementById('pos-sell-data-btn');
+
+  btn.disabled = true;
+  btn.textContent = 'PROCESSING...';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/sell-data', {
+      method: 'POST',
+      body: JSON.stringify({
+        phoneNumber: phone,
+        amount: posSelectedBundle.price,
+        countryCode: country,
+        operatorId: posCarrier.operatorId,
+        dataBundleId: posSelectedBundle.id,
+        bundleName: posSelectedBundle.name,
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Data bundle sent!');
+      lastReceipt = { ...data, productType: 'Data', bundleName: posSelectedBundle.name };
+      showPosReceipt({ ...data, productType: 'Data' });
+      posSelectedBundle = null;
+      document.querySelectorAll('#pos-data-bundles-list input[type=radio]').forEach(r => r.checked = false);
+      loadPosData();
+    } else {
+      showToast(data.error || 'Sale failed');
+    }
+  } catch (e) {
+    showToast('Network error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'SELL DATA';
+  }
+}
+
+async function posLoadAllSales() {
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/sales');
+    if (!res.ok) return;
+    const data = await res.json();
+    renderPosSales(data.sales || []);
+  } catch (e) { showToast('Failed to load sales'); }
+}
+
+// ══════════════════════════════════════════════════════════
 
 async function executePayByPhone() {
   const amount = parseFloat(document.getElementById('pay-amount').value);
@@ -5327,6 +6549,947 @@ document.addEventListener('DOMContentLoaded', function() {
   updateCarriers();
   autoDetectCountry();
 });
+
+// ══════════════════════════════════════════════════════════════
+// CALLS / SOCIAL — International Calling, Chat, Video, AI
+// ══════════════════════════════════════════════════════════════
+
+let dialNumber = '';
+let activeCallId = null;
+let callStartTime = null;
+let callTimerInterval = null;
+let callMuted = false;
+let callSpeaker = false;
+let currentThreadUserId = null;
+let currentThreadUserName = '';
+let chatPollInterval = null;
+let videoStream = null;
+let videoPeerConnection = null;
+let facingMode = 'user';
+
+// ── Tab Switching ──
+function switchCallsTab(tab) {
+  document.querySelectorAll('.calls-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.calls-tab[onclick*="${tab}"]`)?.classList.add('active');
+  ['keypad','chats','history','thread','services'].forEach(t => {
+    const el = document.getElementById('calls-tab-' + t);
+    if (el) el.style.display = 'none';
+  });
+  const target = document.getElementById('calls-tab-' + tab);
+  if (target) target.style.display = '';
+  // Show AI features only on keypad
+  const aiFeatures = document.getElementById('calls-ai-features');
+  if (aiFeatures) aiFeatures.style.display = tab === 'keypad' ? '' : 'none';
+
+  if (tab === 'chats') loadConversations();
+  if (tab === 'history') loadCallHistory();
+  if (tab === 'services') loadServicesData();
+}
+
+// ── Load page data ──
+function loadCallsPage() {
+  loadConversations();
+  loadServicesData();
+}
+
+// ── Dialpad ──
+function dialPress(digit) {
+  if (dialNumber.length >= 20) return;
+  dialNumber += digit;
+  document.getElementById('dial-number').textContent = formatPhoneDisplay(dialNumber);
+  // Auto-lookup rate when number looks international
+  if (dialNumber.startsWith('+') && dialNumber.length >= 5) {
+    lookupRate(dialNumber);
+  }
+}
+
+function dialBackspace() {
+  dialNumber = dialNumber.slice(0, -1);
+  document.getElementById('dial-number').textContent = dialNumber ? formatPhoneDisplay(dialNumber) : '\u00A0';
+  if (!dialNumber) document.getElementById('dial-rate').textContent = '';
+}
+
+function formatPhoneDisplay(num) {
+  if (!num) return '\u00A0';
+  // Format nicely: +234 801 234 5678
+  if (num.startsWith('+') && num.length > 4) {
+    const cc = getCountryCodeLen(num);
+    const rest = num.slice(cc);
+    return num.slice(0, cc) + ' ' + rest.replace(/(.{3})/g, '$1 ').trim();
+  }
+  return num;
+}
+
+function getCountryCodeLen(num) {
+  // Simple country code length detection
+  if (num.startsWith('+1')) return 2;
+  if (num.startsWith('+44') || num.startsWith('+91') || num.startsWith('+27')) return 3;
+  if (num.startsWith('+234') || num.startsWith('+233') || num.startsWith('+254') || num.startsWith('+255') || num.startsWith('+256')) return 4;
+  return 4; // default
+}
+
+let rateTimeout = null;
+async function lookupRate(number) {
+  clearTimeout(rateTimeout);
+  rateTimeout = setTimeout(async () => {
+    try {
+      const res = await authFetch(API_BASE + '/api/calls/rate?destination=' + encodeURIComponent(number));
+      if (res.ok) {
+        const data = await res.json();
+        const costPerMin = parseFloat(data.rate || '0');
+        const markup = 1.5; // 50% markup for retail
+        const retailRate = (costPerMin * markup).toFixed(2);
+        document.getElementById('dial-rate').innerHTML =
+          `<span style="color:var(--accent2)">$${retailRate}/min</span> · ${data.country || 'International'}`;
+      }
+    } catch (e) {}
+  }, 500);
+}
+
+// ── Start/End Call ──
+async function startCall() {
+  if (!dialNumber || dialNumber.length < 4) {
+    showToast('Enter a phone number');
+    return;
+  }
+  // Ensure it's E.164
+  let number = dialNumber;
+  if (!number.startsWith('+')) {
+    number = '+' + number;
+  }
+
+  showCallScreen(number, 'Dialing...');
+
+  try {
+    const res = await authFetch(API_BASE + '/api/calls/dial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ destination: number })
+    });
+    const data = await res.json();
+    if (data.callControlId) {
+      activeCallId = data.callControlId;
+      updateCallStatus('Ringing...');
+      // Simulate connection after 3s (in real Telnyx, webhooks handle this)
+      setTimeout(() => {
+        if (activeCallId) {
+          updateCallStatus('Connected', true);
+          startCallTimer();
+        }
+      }, 3000);
+    } else {
+      updateCallStatus('Failed: ' + (data.error || 'Could not connect'));
+      setTimeout(hideCallScreen, 3000);
+    }
+  } catch (e) {
+    updateCallStatus('Network error');
+    setTimeout(hideCallScreen, 2000);
+  }
+}
+
+async function endCall() {
+  if (activeCallId) {
+    try {
+      await authFetch(API_BASE + '/api/calls/hangup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callControlId: activeCallId })
+      });
+    } catch (e) {}
+  }
+  stopCallTimer();
+  activeCallId = null;
+  hideCallScreen();
+  showToast('Call ended');
+  // Refresh history
+  if (currentPage === 'calls') loadCallHistory();
+}
+
+function showCallScreen(number, status) {
+  const screen = document.getElementById('call-screen');
+  const initial = number.replace(/[^A-Za-z]/g, '')[0] || number[1] || '?';
+  document.getElementById('call-screen-avatar').textContent = initial.toUpperCase();
+  document.getElementById('call-screen-avatar').classList.add('ringing');
+  document.getElementById('call-screen-name').textContent = number;
+  document.getElementById('call-screen-status').textContent = status;
+  document.getElementById('call-screen-status').className = 'call-status';
+  document.getElementById('call-screen-timer').style.display = 'none';
+  document.getElementById('call-cost-display').textContent = '';
+  screen.classList.add('active');
+}
+
+function hideCallScreen() {
+  document.getElementById('call-screen').classList.remove('active');
+  document.getElementById('call-screen-avatar').classList.remove('ringing');
+}
+
+function updateCallStatus(text, connected) {
+  const el = document.getElementById('call-screen-status');
+  el.textContent = text;
+  if (connected) {
+    el.className = 'call-status connected';
+    document.getElementById('call-screen-avatar').classList.remove('ringing');
+  }
+}
+
+function startCallTimer() {
+  callStartTime = Date.now();
+  document.getElementById('call-screen-timer').style.display = '';
+  callTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+    const min = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const sec = String(elapsed % 60).padStart(2, '0');
+    document.getElementById('call-screen-timer').textContent = `${min}:${sec}`;
+    // Show estimated cost
+    const costPerMin = 0.15; // rough estimate
+    const cost = ((elapsed / 60) * costPerMin).toFixed(2);
+    document.getElementById('call-cost-display').textContent = `Est. cost: $${cost}`;
+  }, 1000);
+}
+
+function stopCallTimer() {
+  if (callTimerInterval) {
+    clearInterval(callTimerInterval);
+    callTimerInterval = null;
+  }
+  callStartTime = null;
+}
+
+function toggleCallMute() {
+  callMuted = !callMuted;
+  document.getElementById('call-mute-btn').classList.toggle('active', callMuted);
+  showToast(callMuted ? 'Muted' : 'Unmuted');
+}
+
+function toggleCallSpeaker() {
+  callSpeaker = !callSpeaker;
+  document.getElementById('call-speaker-btn').classList.toggle('active', callSpeaker);
+  showToast(callSpeaker ? 'Speaker on' : 'Speaker off');
+}
+
+function toggleCallKeypad() {
+  // Could show in-call DTMF keypad — for now just toggle
+  document.getElementById('call-keypad-btn').classList.toggle('active');
+}
+
+// ── Call History ──
+async function loadCallHistory() {
+  const container = document.getElementById('call-history-list');
+  try {
+    const res = await authFetch(API_BASE + '/api/calls/history');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const calls = data.calls || [];
+    if (calls.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px 0;color:var(--text3)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:12px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">No call history</div>
+          <div style="font-size:12px">Make your first international call!</div>
+        </div>`;
+      return;
+    }
+    container.innerHTML = calls.map(c => {
+      const initial = (c.destination || '?')[1] || '?';
+      const dirClass = c.direction === 'outbound' ? 'outgoing' : (c.status === 'missed' ? 'missed' : 'incoming');
+      const dirLabel = c.direction === 'outbound' ? 'Outgoing' : (c.status === 'missed' ? 'Missed' : 'Incoming');
+      const duration = c.duration_seconds ? `${Math.floor(c.duration_seconds / 60)}:${String(c.duration_seconds % 60).padStart(2,'0')}` : '';
+      const cost = c.charge_amount ? `$${parseFloat(c.charge_amount).toFixed(2)}` : '';
+      const time = new Date(c.created_at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+      return `
+        <div class="call-history-item" onclick="dialNumber='${c.destination}';document.getElementById('dial-number').textContent='${c.destination}';switchCallsTab('keypad')">
+          <div class="call-hist-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3"/></svg>
+          </div>
+          <div class="call-hist-info">
+            <div class="call-hist-name">${c.destination || 'Unknown'}</div>
+            <div class="call-hist-detail">
+              <span class="${dirClass}">${dirLabel}</span>
+              ${duration ? ' · ' + duration : ''} ${cost ? ' · ' + cost : ''}
+            </div>
+          </div>
+          <div class="call-hist-time">${time}</div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Could not load call history</div>';
+  }
+}
+
+// ── Chat / Messaging ──
+async function loadConversations() {
+  const container = document.getElementById('chat-conversations-list');
+  if (!container) return;
+  try {
+    const res = await authFetch(API_BASE + '/api/chat/conversations');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const convos = data.conversations || [];
+    if (convos.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px 0;color:var(--text3)">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:12px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">No conversations yet</div>
+          <div style="font-size:12px">Search for users to start chatting <span class="free-badge">Free</span></div>
+        </div>`;
+      return;
+    }
+    container.innerHTML = convos.map(c => {
+      const initial = (c.display_name || c.user_id || '?')[0].toUpperCase();
+      const name = c.display_name || c.email || 'User';
+      const preview = c.last_message || 'Tap to chat';
+      const time = c.last_message_at ? timeAgo(new Date(c.last_message_at)) : '';
+      const unread = c.unread_count || 0;
+      return `
+        <div class="chat-list-item" onclick="openMessageThread('${c.user_id}','${name.replace(/'/g,"\\'")}')">
+          <div class="chat-list-avatar">${initial}</div>
+          <div class="chat-list-body">
+            <div class="chat-list-name">${name}</div>
+            <div class="chat-list-preview">${preview}</div>
+          </div>
+          <div class="chat-list-meta">
+            <div class="chat-list-time">${time}</div>
+            ${unread > 0 ? `<div class="chat-unread-badge">${unread}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    // silent fail
+  }
+}
+
+function timeAgo(date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'now';
+  if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+  if (seconds < 86400) return Math.floor(seconds / 3600) + 'h';
+  if (seconds < 604800) return Math.floor(seconds / 86400) + 'd';
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+async function searchChats(query) {
+  const container = document.getElementById('chat-search-results');
+  const listContainer = document.getElementById('chat-conversations-list');
+  if (!query || query.length < 2) {
+    container.style.display = 'none';
+    listContainer.style.display = '';
+    return;
+  }
+  container.style.display = '';
+  listContainer.style.display = 'none';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/users/search?q=' + encodeURIComponent(query));
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const users = data.users || [];
+    if (users.length === 0) {
+      container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">No users found</div>';
+      return;
+    }
+    container.innerHTML = users.map(u => {
+      const initial = (u.display_name || u.email || '?')[0].toUpperCase();
+      const name = u.display_name || u.email || 'User';
+      return `
+        <div class="contact-item" onclick="openMessageThread('${u.id}','${name.replace(/'/g,"\\'")}')">
+          <div class="contact-avatar">${initial}</div>
+          <div>
+            <div class="contact-name">${name}</div>
+            <div class="contact-phone">${u.email || ''}</div>
+          </div>
+          <div class="contact-actions">
+            <button class="contact-action-btn msg-btn" title="Message">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Search failed</div>';
+  }
+}
+
+async function openMessageThread(userId, userName) {
+  currentThreadUserId = userId;
+  currentThreadUserName = userName || 'User';
+  // Hide search results, show thread
+  document.getElementById('chat-search-results').style.display = 'none';
+  document.getElementById('chat-conversations-list').style.display = 'none';
+  document.getElementById('calls-tab-chats').style.display = 'none';
+  document.getElementById('calls-tab-thread').style.display = '';
+  document.getElementById('thread-name').textContent = currentThreadUserName;
+  document.getElementById('chat-search-input').value = '';
+
+  await loadMessages(userId);
+  // Poll for new messages
+  if (chatPollInterval) clearInterval(chatPollInterval);
+  chatPollInterval = setInterval(() => loadMessages(userId), 5000);
+  // Focus input
+  setTimeout(() => document.getElementById('msg-input')?.focus(), 100);
+}
+
+function closeMessageThread() {
+  if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
+  currentThreadUserId = null;
+  document.getElementById('calls-tab-thread').style.display = 'none';
+  document.getElementById('calls-tab-chats').style.display = '';
+  document.getElementById('chat-conversations-list').style.display = '';
+  loadConversations();
+}
+
+async function loadMessages(userId) {
+  const container = document.getElementById('msg-bubbles');
+  try {
+    const res = await authFetch(API_BASE + '/api/chat/conversation/' + userId);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const messages = data.messages || [];
+    const myId = currentUser?.id;
+    if (messages.length === 0) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:60px 20px;color:var(--text3)">
+          <div style="font-size:32px;margin-bottom:12px">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:4px">Start a conversation</div>
+          <div style="font-size:12px">Say hello! Messaging is <span class="free-badge">Free</span></div>
+        </div>`;
+      return;
+    }
+    let html = '';
+    let lastDate = '';
+    messages.forEach(m => {
+      const msgDate = new Date(m.created_at).toLocaleDateString();
+      if (msgDate !== lastDate) {
+        html += `<div style="text-align:center;padding:12px 0 8px;font-size:11px;color:var(--text3)">${msgDate}</div>`;
+        lastDate = msgDate;
+      }
+      const isMine = m.sender_id === myId;
+      const time = new Date(m.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      html += `<div class="msg-bubble ${isMine ? 'sent' : 'received'}">${escapeHtml(m.message)}</div>`;
+      html += `<div class="msg-time ${isMine ? 'sent' : ''}">${time}</div>`;
+    });
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+  } catch (e) {}
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('msg-input');
+  const message = input.value.trim();
+  if (!message || !currentThreadUserId) return;
+  input.value = '';
+
+  // Optimistic append
+  const bubbles = document.getElementById('msg-bubbles');
+  const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  bubbles.innerHTML += `<div class="msg-bubble sent">${escapeHtml(message)}</div><div class="msg-time sent">${time}</div>`;
+  bubbles.scrollTop = bubbles.scrollHeight;
+
+  try {
+    await authFetch(API_BASE + '/api/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipientId: currentThreadUserId, message })
+    });
+  } catch (e) {
+    showToast('Failed to send');
+  }
+}
+
+function callThreadUser() {
+  // Placeholder — would need the user's phone number
+  showToast('Voice calling requires a phone number');
+}
+
+function videoCallThreadUser() {
+  startVideoCall();
+}
+
+// ── Video Calling (WebRTC P2P — Free) ──
+async function startVideoCall() {
+  const screen = document.getElementById('video-call-screen');
+  screen.classList.add('active');
+
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: facingMode },
+      audio: true
+    });
+    const localVideo = document.getElementById('local-video');
+    localVideo.srcObject = videoStream;
+    document.getElementById('video-call-status-text').textContent = 'Camera ready. Share link to connect.';
+    showToast('Video call ready — share your link to connect');
+  } catch (e) {
+    document.getElementById('video-call-status-text').textContent = 'Camera access denied';
+    showToast('Camera access required for video calls');
+  }
+}
+
+function endVideoCall() {
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    videoStream = null;
+  }
+  if (videoPeerConnection) {
+    videoPeerConnection.close();
+    videoPeerConnection = null;
+  }
+  document.getElementById('video-call-screen').classList.remove('active');
+  document.getElementById('local-video').srcObject = null;
+  document.getElementById('remote-video').srcObject = null;
+  showToast('Video call ended');
+}
+
+function toggleVideoMute() {
+  if (videoStream) {
+    const audioTrack = videoStream.getAudioTracks()[0];
+    if (audioTrack) {
+      audioTrack.enabled = !audioTrack.enabled;
+      document.getElementById('video-mute-btn').classList.toggle('active', !audioTrack.enabled);
+    }
+  }
+}
+
+function toggleVideoCamera() {
+  if (videoStream) {
+    const videoTrack = videoStream.getVideoTracks()[0];
+    if (videoTrack) {
+      videoTrack.enabled = !videoTrack.enabled;
+      document.getElementById('video-cam-btn').classList.toggle('active', !videoTrack.enabled);
+    }
+  }
+}
+
+async function flipVideoCamera() {
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facingMode },
+        audio: true
+      });
+      document.getElementById('local-video').srcObject = videoStream;
+    } catch (e) {
+      showToast('Could not switch camera');
+    }
+  }
+}
+
+// ── AI Smart Dial (Free AI Feature) ──
+function openSmartDial() {
+  navigateTo('ai');
+  setTimeout(() => {
+    const input = document.getElementById('chat-input');
+    if (input) {
+      input.value = 'Help me make an international call to ';
+      input.focus();
+    }
+  }, 200);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TELNYX SERVICES — Virtual Numbers, SIMs, SMS, AI
+// ══════════════════════════════════════════════════════════════
+
+let currentServicePanel = '';
+let telnyxAiSessionId = null;
+
+// ── Load services data ──
+async function loadServicesData() {
+  // Balance
+  try {
+    const res = await authFetch(API_BASE + '/api/telnyx/balance');
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('telnyx-balance-display').textContent = '$' + parseFloat(data.balance || '0').toFixed(2);
+    }
+  } catch (e) {}
+
+  // Numbers count
+  try {
+    const res = await authFetch(API_BASE + '/api/numbers/mine');
+    if (res.ok) {
+      const data = await res.json();
+      const count = (data.numbers || []).length;
+      document.getElementById('my-numbers-count').textContent = count + ' active';
+    }
+  } catch (e) {}
+}
+
+// ── Show a service sub-panel ──
+function showServicePanel(panel) {
+  currentServicePanel = panel;
+  const container = document.getElementById('service-panel');
+
+  if (panel === 'numbers') {
+    container.innerHTML = `
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:700;color:var(--text)">Virtual Numbers</div>
+          <button onclick="showServicePanel('')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;font-family:inherit">&times;</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Buy a phone number in any country for calling, SMS, and verification.</div>
+
+        <!-- My Numbers -->
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">My Numbers</div>
+        <div id="my-numbers-list" style="margin-bottom:16px">
+          <div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Loading...</div>
+        </div>
+
+        <!-- Search Numbers -->
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">Search Available Numbers</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <select id="number-search-country" style="flex:1;padding:10px;border-radius:10px;background:var(--surface);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px">
+            <option value="US">United States (+1)</option>
+            <option value="GB">United Kingdom (+44)</option>
+            <option value="CA">Canada (+1)</option>
+            <option value="NG">Nigeria (+234)</option>
+            <option value="GH">Ghana (+233)</option>
+            <option value="KE">Kenya (+254)</option>
+            <option value="ZA">South Africa (+27)</option>
+            <option value="DE">Germany (+49)</option>
+            <option value="FR">France (+33)</option>
+            <option value="AU">Australia (+61)</option>
+          </select>
+          <button onclick="searchAvailableNumbers()" style="padding:10px 20px;border-radius:10px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-weight:600;font-family:inherit;font-size:13px">Search</button>
+        </div>
+        <div id="number-search-results"></div>
+      </div>`;
+    loadMyNumbers();
+
+  } else if (panel === 'sims') {
+    container.innerHTML = `
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:700;color:var(--text)">eSIM / SIM Cards</div>
+          <button onclick="showServicePanel('')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;font-family:inherit">&times;</button>
+        </div>
+
+        <!-- Coming Soon Banner -->
+        <div style="text-align:center;padding:40px 20px;background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(217,119,6,0.04));border:1px dashed rgba(245,158,11,0.3);border-radius:16px;margin-bottom:16px">
+          <div style="font-size:48px;margin-bottom:12px">&#128225;</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Coming Soon</div>
+          <div style="font-size:13px;color:var(--text3);max-width:280px;margin:0 auto;line-height:1.6">eSIM and physical SIM card ordering is being activated. You'll be able to order instant eSIMs for IoT, travel, and secondary lines.</div>
+          <div style="margin-top:16px;padding:8px 16px;display:inline-block;border-radius:20px;background:rgba(245,158,11,0.1);color:#f59e0b;font-size:12px;font-weight:600">We'll notify you when it's ready</div>
+        </div>
+
+        <!-- My Orders (if any from before) -->
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">My Orders</div>
+        <div id="sim-orders-list">
+          <div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Loading...</div>
+        </div>
+      </div>`;
+    loadSimOrders();
+
+  } else if (panel === 'sms') {
+    container.innerHTML = `
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:700;color:var(--text)">SMS / MMS</div>
+          <button onclick="showServicePanel('')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;font-family:inherit">&times;</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Send SMS/MMS globally using your virtual numbers. $0.05 per message.</div>
+
+        <!-- Compose SMS -->
+        <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:16px;margin-bottom:16px">
+          <input type="text" id="sms-to" placeholder="To: +1234567890 (E.164)" style="width:100%;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px;margin-bottom:8px;box-sizing:border-box">
+          <textarea id="sms-body" placeholder="Type your message..." rows="3" style="width:100%;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px;resize:none;margin-bottom:8px;box-sizing:border-box"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:11px;color:var(--text3)" id="sms-char-count">0/160</div>
+            <button onclick="sendSmsMessage()" style="padding:10px 24px;border-radius:10px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit">Send SMS</button>
+          </div>
+        </div>
+
+        <!-- SMS History -->
+        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">Recent Messages</div>
+        <div id="sms-history-list">
+          <div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Loading...</div>
+        </div>
+      </div>`;
+    loadSmsHistory();
+    // Character counter
+    document.getElementById('sms-body')?.addEventListener('input', function() {
+      document.getElementById('sms-char-count').textContent = this.value.length + '/160';
+    });
+
+  } else if (panel === 'telnyxai') {
+    container.innerHTML = `
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:700;color:var(--text)">AI Assistant <span class="free-badge">Free</span></div>
+          <button onclick="showServicePanel('')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;font-family:inherit">&times;</button>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Powered by Llama 3.1 70B via Telnyx. Ask anything!</div>
+
+        <!-- Quick Actions -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+          <button onclick="aiQuickAction('Translate this to French: Hello, how are you?')" style="padding:6px 12px;border-radius:20px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);color:var(--accent2);font-size:11px;cursor:pointer;font-family:inherit">Translate</button>
+          <button onclick="aiQuickAction('Summarize: international calling rates in Africa')" style="padding:6px 12px;border-radius:20px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);color:#3b82f6;font-size:11px;cursor:pointer;font-family:inherit">Summarize</button>
+          <button onclick="aiQuickAction('What is the cheapest way to call Nigeria from the US?')" style="padding:6px 12px;border-radius:20px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);color:#10b981;font-size:11px;cursor:pointer;font-family:inherit">Call Advice</button>
+          <button onclick="aiQuickAction('Write a business SMS template for airtime POS agents')" style="padding:6px 12px;border-radius:20px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);color:#f59e0b;font-size:11px;cursor:pointer;font-family:inherit">SMS Template</button>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="telnyx-ai-messages" style="max-height:300px;overflow-y:auto;margin-bottom:12px;padding:4px 0"></div>
+
+        <!-- Input -->
+        <div style="display:flex;gap:8px">
+          <input type="text" id="telnyx-ai-input" placeholder="Ask the AI anything..." onkeydown="if(event.key==='Enter')sendTelnyxAi()" style="flex:1;padding:12px 16px;border-radius:24px;background:var(--surface);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px;outline:none">
+          <button onclick="sendTelnyxAi()" style="width:44px;height:44px;border-radius:50%;background:var(--gradient2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>`;
+
+  } else {
+    container.innerHTML = '';
+  }
+}
+
+// ── Virtual Numbers ──
+async function loadMyNumbers() {
+  const container = document.getElementById('my-numbers-list');
+  if (!container) return;
+  try {
+    const res = await authFetch(API_BASE + '/api/numbers/mine');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const numbers = data.numbers || [];
+    if (numbers.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No numbers yet. Search and buy below.</div>';
+      return;
+    }
+    container.innerHTML = numbers.map(n => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;margin-bottom:6px">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);font-family:'JetBrains Mono',monospace">${n.phone_number}</div>
+          <div style="font-size:11px;color:var(--text3)">${n.country_code} · ${n.number_type} · ${n.status}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button onclick="dialNumber='${n.phone_number}';switchCallsTab('keypad')" style="padding:6px 10px;border-radius:8px;background:rgba(16,185,129,0.1);border:none;color:#10b981;font-size:11px;cursor:pointer;font-family:inherit">Use</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Failed to load</div>';
+  }
+}
+
+async function searchAvailableNumbers() {
+  const country = document.getElementById('number-search-country').value;
+  const container = document.getElementById('number-search-results');
+  container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Searching...</div>';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/numbers/search?country=' + country);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const numbers = data.numbers || [];
+    if (numbers.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No numbers available for this country</div>';
+      return;
+    }
+    container.innerHTML = numbers.map(n => {
+      const phone = n.phone_number || n.phoneNumber || '';
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;margin-bottom:6px">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--text);font-family:'JetBrains Mono',monospace">${phone}</div>
+            <div style="font-size:11px;color:var(--text3)">${n.region || country} · <span style="color:#10b981;font-weight:600">$2.00</span> from wallet</div>
+          </div>
+          <button onclick="buyNumber('${phone}','${country}')" style="padding:6px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit">Buy $2</button>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Search failed. Check Telnyx balance.</div>';
+  }
+}
+
+async function buyNumber(phoneNumber, countryCode) {
+  if (!confirm('Buy ' + phoneNumber + ' for $2.00?\nThis will be charged from your PromptPay wallet balance.')) return;
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = 'Buying...'; }
+  try {
+    const res = await authFetch(API_BASE + '/api/numbers/buy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phoneNumber, countryCode })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Number purchased: ' + phoneNumber, 'success');
+      loadMyNumbers();
+      loadServicesData();
+    } else {
+      showToast(data.error || 'Purchase failed', 'error');
+    }
+  } catch (e) {
+    showToast('Network error — please try again', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Buy'; }
+  }
+}
+
+// ── SIM Cards ──
+async function loadSimOrders() {
+  const container = document.getElementById('sim-orders-list');
+  if (!container) return;
+  try {
+    const res = await authFetch(API_BASE + '/api/sims/orders');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const orders = data.orders || [];
+    if (orders.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No orders yet</div>';
+      return;
+    }
+    container.innerHTML = orders.map(o => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;margin-bottom:6px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">${o.sim_type === 'esim' ? 'eSIM' : 'Physical SIM'} x${o.quantity}</div>
+          <div style="font-size:11px;color:var(--text3)">${o.status} · ${new Date(o.created_at).toLocaleDateString()}</div>
+        </div>
+        <div style="padding:4px 10px;border-radius:8px;background:${o.status === 'pending' ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)'};color:${o.status === 'pending' ? '#f59e0b' : '#10b981'};font-size:11px;font-weight:600">${o.status}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Failed to load</div>';
+  }
+}
+
+async function orderSim() {
+  const simType = document.getElementById('sim-order-type').value;
+  const quantity = document.getElementById('sim-order-qty').value;
+  if (!confirm('Order ' + quantity + ' ' + (simType === 'esim' ? 'eSIM(s)' : 'physical SIM(s)') + '?')) return;
+
+  try {
+    const res = await authFetch(API_BASE + '/api/sims/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ simType, quantity })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('SIM order placed!');
+      loadSimOrders();
+    } else {
+      showToast(data.error || 'Order failed');
+    }
+  } catch (e) {
+    showToast('Network error');
+  }
+}
+
+// ── SMS ──
+async function loadSmsHistory() {
+  const container = document.getElementById('sms-history-list');
+  if (!container) return;
+  try {
+    const res = await authFetch(API_BASE + '/api/sms/history');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const messages = data.messages || [];
+    if (messages.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No messages yet. Send your first SMS above.</div>';
+      return;
+    }
+    container.innerHTML = messages.map(m => `
+      <div style="padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <div style="font-size:12px;font-weight:600;color:var(--text)">${m.direction === 'outbound' ? 'To: ' + m.to_number : 'From: ' + m.from_number}</div>
+          <div style="font-size:10px;color:var(--text3)">${new Date(m.created_at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>
+        </div>
+        <div style="font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.body)}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Failed to load</div>';
+  }
+}
+
+async function sendSmsMessage() {
+  const to = document.getElementById('sms-to').value.trim();
+  const text = document.getElementById('sms-body').value.trim();
+  if (!to || !text) { showToast('Enter recipient and message', 'error'); return; }
+  if (!to.startsWith('+')) { showToast('Number must start with + (E.164 format, e.g. +1234567890)', 'error'); return; }
+  if (!confirm('Send SMS to ' + to + '?\nCost: $0.05 from your wallet balance.')) return;
+
+  const sendBtn = event?.target;
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Sending...'; }
+  try {
+    const res = await authFetch(API_BASE + '/api/sms/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, text })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('SMS sent to ' + to, 'success');
+      document.getElementById('sms-to').value = '';
+      document.getElementById('sms-body').value = '';
+      document.getElementById('sms-char-count').textContent = '0/160';
+      loadSmsHistory();
+    } else {
+      showToast(data.error || 'Send failed', 'error');
+    }
+  } catch (e) {
+    showToast('Network error — please try again', 'error');
+  } finally {
+    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Send SMS'; }
+  }
+}
+
+// ── Telnyx AI Chat ──
+function aiQuickAction(prompt) {
+  const input = document.getElementById('telnyx-ai-input');
+  if (input) { input.value = prompt; sendTelnyxAi(); }
+}
+
+async function sendTelnyxAi() {
+  const input = document.getElementById('telnyx-ai-input');
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = '';
+
+  const container = document.getElementById('telnyx-ai-messages');
+  // User bubble
+  container.innerHTML += `<div style="margin-left:auto;max-width:80%;padding:10px 14px;border-radius:18px 18px 4px 18px;background:var(--accent);color:#fff;font-size:13px;margin-bottom:8px;word-break:break-word">${escapeHtml(message)}</div>`;
+  // Thinking indicator
+  container.innerHTML += `<div id="ai-thinking" style="max-width:80%;padding:10px 14px;border-radius:18px 18px 18px 4px;background:rgba(255,255,255,0.08);color:var(--text3);font-size:13px;margin-bottom:8px">Thinking...</div>`;
+  container.scrollTop = container.scrollHeight;
+
+  try {
+    const res = await authFetch(API_BASE + '/api/telnyx-ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, sessionId: telnyxAiSessionId })
+    });
+    const data = await res.json();
+    // Remove thinking indicator
+    const thinking = document.getElementById('ai-thinking');
+    if (thinking) thinking.remove();
+
+    if (data.reply) {
+      telnyxAiSessionId = data.sessionId;
+      container.innerHTML += `<div style="max-width:80%;padding:10px 14px;border-radius:18px 18px 18px 4px;background:rgba(255,255,255,0.08);color:var(--text);font-size:13px;margin-bottom:8px;line-height:1.5;word-break:break-word">${escapeHtml(data.reply)}</div>`;
+    } else {
+      container.innerHTML += `<div style="max-width:80%;padding:10px 14px;border-radius:18px;background:rgba(239,68,68,0.1);color:#ef4444;font-size:12px;margin-bottom:8px">${data.error || 'AI error'}</div>`;
+    }
+    container.scrollTop = container.scrollHeight;
+  } catch (e) {
+    const thinking = document.getElementById('ai-thinking');
+    if (thinking) thinking.remove();
+    container.innerHTML += `<div style="padding:10px;color:#ef4444;font-size:12px">Network error</div>`;
+  }
+}
 </script>
 
 </body>
