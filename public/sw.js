@@ -2,7 +2,7 @@
 // PromptPay Service Worker — PWA + Offline Support
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'promptpay-v2.0';
+const CACHE_NAME = 'promptpay-v3.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

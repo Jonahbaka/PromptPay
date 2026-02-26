@@ -3169,24 +3169,6 @@
 
   </div>
 
-  <!-- PWA Install Banner -->
-  <div class="pwa-install-banner" id="pwa-install-banner">
-    <button class="pwa-banner-close" onclick="dismissInstallBanner(true)">&times;</button>
-    <div class="pwa-banner-content">
-      <div class="pwa-banner-icon">
-        <img src="/icons/icon-192.png" alt="PromptPay" onerror="this.parentElement.innerHTML='&#x1F4B3;'">
-      </div>
-      <div class="pwa-banner-text">
-        <div class="pwa-banner-title">Install PromptPay</div>
-        <div class="pwa-banner-desc">Add to your home screen for the full app experience — fast, offline-ready, no app store.</div>
-      </div>
-    </div>
-    <div class="pwa-banner-actions">
-      <button class="pwa-banner-install" onclick="installApp()">Install App</button>
-      <button class="pwa-banner-dismiss" onclick="dismissInstallBanner(false)">Not Now</button>
-    </div>
-  </div>
-
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <div class="nav-item active" data-page="home">
@@ -4166,17 +4148,20 @@ function installApp() {
   }
 }
 
-// For iOS where beforeinstallprompt doesn't fire, show banner with manual instructions
+// Fallback: show banner on ALL mobile browsers if beforeinstallprompt hasn't fired
+// This covers iOS Safari, Firefox, Samsung Internet, Opera, etc.
 if (!isStandalone) {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  if (isIOS && isSafari) {
-    const dismissed = localStorage.getItem('pwa_banner_dismissed');
-    const dismissedAt = dismissed ? parseInt(dismissed) : 0;
-    const hoursSinceDismiss = (Date.now() - dismissedAt) / (1000 * 60 * 60);
-    if (!dismissed || hoursSinceDismiss > 24) {
-      setTimeout(() => showInstallBanner(), 3000);
-    }
+  const dismissed = localStorage.getItem('pwa_banner_dismissed');
+  const dismissedAt = dismissed ? parseInt(dismissed) : 0;
+  const hoursSinceDismiss = (Date.now() - dismissedAt) / (1000 * 60 * 60);
+  const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobile && (!dismissed || hoursSinceDismiss > 24)) {
+    // Wait 5 seconds — if beforeinstallprompt already showed it, this is a no-op
+    setTimeout(() => {
+      if (!document.getElementById('pwa-install-banner')?.classList.contains('show')) {
+        showInstallBanner();
+      }
+    }, 5000);
   }
 }
 
@@ -7491,6 +7476,24 @@ async function sendTelnyxAi() {
   }
 }
 </script>
+
+<!-- PWA Install Banner (body-level so it shows on landing AND app) -->
+<div class="pwa-install-banner" id="pwa-install-banner">
+  <button class="pwa-banner-close" onclick="dismissInstallBanner(true)">&times;</button>
+  <div class="pwa-banner-content">
+    <div class="pwa-banner-icon">
+      <img src="/icons/icon-192.png" alt="PromptPay" onerror="this.parentElement.innerHTML='&#x1F4B3;'">
+    </div>
+    <div class="pwa-banner-text">
+      <div class="pwa-banner-title">Install PromptPay</div>
+      <div class="pwa-banner-desc">Add to your home screen for the full app experience — fast, offline-ready, no app store.</div>
+    </div>
+  </div>
+  <div class="pwa-banner-actions">
+    <button class="pwa-banner-install" onclick="installApp()">Install App</button>
+    <button class="pwa-banner-dismiss" onclick="dismissInstallBanner(false)">Not Now</button>
+  </div>
+</div>
 
 </body>
 </html>
