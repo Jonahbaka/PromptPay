@@ -5840,7 +5840,9 @@ async function submitFundWallet() {
     } else if (data.clientSecret) {
       // 3DS required
       const stripe = Stripe(stripePublishableKey || '');
-      const result = await stripe.confirmCardPayment(data.clientSecret);
+      const result = await stripe.confirmCardPayment(data.clientSecret, {
+        return_url: window.location.origin + '/?wallet_funded=true'
+      });
       if (result.error) {
         errorEl.textContent = result.error.message;
       } else {

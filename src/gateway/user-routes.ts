@@ -1247,6 +1247,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       if (paymentMethodId) {
         piBody.set('payment_method', paymentMethodId);
         piBody.set('confirm', 'true');
+        piBody.set('return_url', `${CONFIG.platform.domainUrl || 'https://www.upromptpay.com'}/?wallet_funded=true`);
       } else {
         piBody.set('automatic_payment_methods[enabled]', 'true');
         piBody.set('automatic_payment_methods[allow_redirects]', 'never');
