@@ -1849,6 +1849,19 @@
           </div>
           <div class="quick-label">Insights</div>
         </div>
+        <!-- Africa-specific quick actions -->
+        <div class="quick-item" id="airtime-quick-btn" onclick="openAirtimeModal()" style="display:none">
+          <div class="quick-icon" style="background:rgba(251,191,36,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+          </div>
+          <div class="quick-label">Airtime</div>
+        </div>
+        <div class="quick-item" id="bills-quick-btn" onclick="sendSuggestion({dataset:{text:'Pay my bills'}})" style="display:none">
+          <div class="quick-icon" style="background:rgba(168,85,247,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <div class="quick-label">Pay Bills</div>
+        </div>
       </div>
 
       <!-- AI Agent Preview -->
@@ -2114,6 +2127,9 @@
             <option value="UG">Uganda</option>
             <option value="ZA">South Africa</option>
             <option value="TZ">Tanzania</option>
+            <option value="CM">Cameroon</option>
+            <option value="SN">Senegal</option>
+            <option value="ET">Ethiopia</option>
           </optgroup>
           <optgroup label="Americas">
             <option value="US">United States</option>
@@ -2244,6 +2260,10 @@
               <option value="KE">Kenya</option>
               <option value="UG">Uganda</option>
               <option value="ZA">South Africa</option>
+              <option value="TZ">Tanzania</option>
+              <option value="CM">Cameroon</option>
+              <option value="SN">Senegal</option>
+              <option value="ET">Ethiopia</option>
             </optgroup>
             <optgroup label="Americas">
               <option value="US">United States</option>
@@ -2550,6 +2570,11 @@
       <option value="GH">Ghana (+233)</option>
       <option value="UG">Uganda (+256)</option>
       <option value="KE">Kenya (+254)</option>
+      <option value="ZA">South Africa (+27)</option>
+      <option value="TZ">Tanzania (+255)</option>
+      <option value="CM">Cameroon (+237)</option>
+      <option value="SN">Senegal (+221)</option>
+      <option value="ET">Ethiopia (+251)</option>
     </select>
 
     <!-- Carrier -->
@@ -2656,6 +2681,22 @@
         <div style="margin-bottom:14px">
           <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Date of Birth</label>
           <input id="kyc-dob" type="date" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        </div>
+      </div>
+
+      <!-- South Africa -->
+      <div id="kyc-za" class="kyc-country-form" style="display:none">
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">SA ID Number</label>
+          <input id="kyc-sa-id" placeholder="13-digit SA ID number" maxlength="13" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
+        </div>
+      </div>
+
+      <!-- Generic Africa (TZ, CM, SN, ET) -->
+      <div id="kyc-generic-africa" class="kyc-country-form" style="display:none">
+        <div style="margin-bottom:14px">
+          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">National ID Number</label>
+          <input id="kyc-national-id-generic" placeholder="Your national ID number" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
         </div>
       </div>
 
@@ -2930,12 +2971,13 @@ function showApp() {
 function applyAirtimeGeoGate() {
   const country = getUserCountry();
   const airtimeBtn = document.getElementById('airtime-quick-btn');
+  const billsBtn = document.getElementById('bills-quick-btn');
+  const isAfrican = ['NG','GH','KE','UG','ZA','TZ','CM','SN','ET'].includes(country);
   if (airtimeBtn) {
-    if (NON_AIRTIME_COUNTRIES.includes(country)) {
-      airtimeBtn.style.display = 'none';
-    } else {
-      airtimeBtn.style.display = '';
-    }
+    airtimeBtn.style.display = (isAfrican && !NON_AIRTIME_COUNTRIES.includes(country)) ? '' : 'none';
+  }
+  if (billsBtn) {
+    billsBtn.style.display = isAfrican ? '' : 'none';
   }
 }
 
@@ -3353,9 +3395,11 @@ function openKycModal() {
   else if (country === 'GH') document.getElementById('kyc-gh').style.display = 'block';
   else if (country === 'KE' || country === 'UG') document.getElementById('kyc-ke-ug').style.display = 'block';
   else if (country === 'US') document.getElementById('kyc-us').style.display = 'block';
+  else if (country === 'ZA') { const el = document.getElementById('kyc-za'); if (el) el.style.display = 'block'; else document.getElementById('kyc-generic-africa')?.style.display !== undefined && (document.getElementById('kyc-generic-africa').style.display = 'block'); }
+  else if (['TZ','CM','SN','ET'].includes(country)) { const el = document.getElementById('kyc-generic-africa'); if (el) el.style.display = 'block'; }
 
   // Set phone placeholder based on country
-  const phonePh = { NG: '+234...', GH: '+233...', KE: '+254...', UG: '+256...', US: '+1...' };
+  const phonePh = { NG: '+234...', GH: '+233...', KE: '+254...', UG: '+256...', US: '+1...', ZA: '+27...', TZ: '+255...', CM: '+237...', SN: '+221...', ET: '+251...' };
   const phoneEl = document.getElementById('kyc-phone');
   if (phoneEl) phoneEl.placeholder = phonePh[country] || '+...';
 
@@ -3547,7 +3591,7 @@ function renderMobileWallets() {
   const section = document.getElementById('momo-section');
   if (!list) return;
   const country = getUserCountry();
-  const momoCountries = ['GH', 'UG', 'KE', 'TZ', 'CM'];
+  const momoCountries = ['GH', 'UG', 'KE', 'TZ', 'CM', 'SN', 'ET'];
   if (!momoCountries.includes(country)) { if (section) section.style.display = 'none'; return; }
   if (section) section.style.display = 'block';
 
@@ -3555,7 +3599,7 @@ function renderMobileWallets() {
     list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">No mobile wallets linked</div>';
     return;
   }
-  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money' };
+  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money', orange: 'Orange Money', wave: 'Wave', telebirr: 'Telebirr', vodacom: 'Vodacom M-Pesa', tigo: 'Tigo Pesa' };
   list.innerHTML = userMobileWallets.map(w => `
     <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:14px;margin-bottom:8px">
       <div style="width:40px;height:40px;border-radius:10px;background:rgba(251,191,36,0.12);display:flex;align-items:center;justify-content:center;font-size:18px">\ud83d\udcf1</div>
@@ -3570,12 +3614,12 @@ function renderMobileWallets() {
 
 function openMomoModal() {
   const country = getUserCountry();
-  const providers = { GH: ['mtn','vodafone','airteltigo'], UG: ['mtn','airtel'], KE: ['mpesa'], TZ: ['mpesa','vodacom'] };
-  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money', vodacom: 'Vodacom M-Pesa' };
+  const providers = { GH: ['mtn','vodafone','airteltigo'], UG: ['mtn','airtel'], KE: ['mpesa'], TZ: ['mpesa','vodacom','tigo','airtel'], CM: ['mtn','orange'], SN: ['orange','wave'], ET: ['telebirr'] };
+  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money', vodacom: 'Vodacom M-Pesa', orange: 'Orange Money', wave: 'Wave', telebirr: 'Telebirr', tigo: 'Tigo Pesa' };
   const select = document.getElementById('momo-provider');
   const opts = providers[country] || [];
   select.innerHTML = '<option value="">Select provider</option>' + opts.map(p => `<option value="${p}">${providerNames[p] || p}</option>`).join('');
-  const phonePh = { GH: '+233...', UG: '+256...', KE: '+254...' };
+  const phonePh = { GH: '+233...', UG: '+256...', KE: '+254...', TZ: '+255...', CM: '+237...', SN: '+221...', ET: '+251...' };
   document.getElementById('momo-phone').placeholder = phonePh[country] || '+...';
   document.getElementById('momo-modal').classList.add('active');
 }
@@ -3589,7 +3633,7 @@ async function submitMobileWallet() {
   if (!provider) { errEl.textContent = 'Select a provider'; return; }
   if (!phone || phone.length < 8) { errEl.textContent = 'Enter a valid phone number'; return; }
 
-  const currencies = { GH: 'GHS', UG: 'UGX', KE: 'KES', TZ: 'TZS' };
+  const currencies = { GH: 'GHS', UG: 'UGX', KE: 'KES', TZ: 'TZS', CM: 'XAF', SN: 'XOF', ET: 'ETB', ZA: 'ZAR' };
   try {
     const res = await authFetch(API_BASE + '/api/mobile-wallets', {
       method: 'POST',
@@ -3622,9 +3666,9 @@ async function removeMobileWallet(id) {
 
 function updateSendModal() {
   const country = getUserCountry();
-  const momoCountries = ['GH', 'UG', 'KE', 'TZ'];
-  const bankCountries = ['NG', 'GH', 'UG', 'US'];
-  const syms = { NG: '\u20a6', GH: 'GH\u20b5', KE: 'KSh', UG: 'USh', US: '$' };
+  const momoCountries = ['GH', 'UG', 'KE', 'TZ', 'CM', 'SN', 'ET'];
+  const bankCountries = ['NG', 'GH', 'UG', 'US', 'ZA', 'TZ', 'CM', 'SN', 'ET'];
+  const syms = { NG: '\u20a6', GH: 'GH\u20b5', KE: 'KSh', UG: 'USh', US: '$', ZA: 'R', TZ: 'TSh', CM: 'FCFA', SN: 'CFA', ET: 'Br' };
   const sym = countryConfig?.currencySymbol || syms[country] || '$';
 
   // Update currency label
@@ -4621,6 +4665,51 @@ const CARRIER_DATA = {
       { id: 'airtel_ke', name: 'Airtel Kenya', prefixes: ['073','078','010'] },
       { id: 'telkom_ke', name: 'Telkom Kenya', prefixes: ['077'] },
     ]
+  },
+  ZA: {
+    dialCode: '+27', currency: 'ZAR', name: 'South Africa',
+    presets: [5, 10, 29, 49, 99, 199],
+    carriers: [
+      { id: 'vodacom_za', name: 'Vodacom', prefixes: ['060','061','062','063','064','065','066','071','072','073','082','084'] },
+      { id: 'mtn_za', name: 'MTN South Africa', prefixes: ['060','061','062','063','064','065','066','071','073','078','083'] },
+      { id: 'cellc_za', name: 'Cell C', prefixes: ['074','084'] },
+      { id: 'telkom_za', name: 'Telkom Mobile', prefixes: ['081'] },
+    ]
+  },
+  TZ: {
+    dialCode: '+255', currency: 'TZS', name: 'Tanzania',
+    presets: [500, 1000, 2000, 5000, 10000, 20000],
+    carriers: [
+      { id: 'vodacom_tz', name: 'Vodacom Tanzania', prefixes: ['074','075','076'] },
+      { id: 'airtel_tz', name: 'Airtel Tanzania', prefixes: ['068','069','078'] },
+      { id: 'tigo_tz', name: 'Tigo Tanzania', prefixes: ['065','067','071'] },
+      { id: 'halotel_tz', name: 'Halotel', prefixes: ['062'] },
+    ]
+  },
+  CM: {
+    dialCode: '+237', currency: 'XAF', name: 'Cameroon',
+    presets: [100, 200, 500, 1000, 2000, 5000],
+    carriers: [
+      { id: 'mtn_cm', name: 'MTN Cameroon', prefixes: ['67','650','651','652','653','654'] },
+      { id: 'orange_cm', name: 'Orange Cameroon', prefixes: ['69','655','656','657','658','659'] },
+    ]
+  },
+  SN: {
+    dialCode: '+221', currency: 'XOF', name: 'Senegal',
+    presets: [200, 500, 1000, 2000, 5000, 10000],
+    carriers: [
+      { id: 'orange_sn', name: 'Orange Sénégal', prefixes: ['77','78'] },
+      { id: 'free_sn', name: 'Free Sénégal', prefixes: ['76'] },
+      { id: 'expresso_sn', name: 'Expresso', prefixes: ['70'] },
+    ]
+  },
+  ET: {
+    dialCode: '+251', currency: 'ETB', name: 'Ethiopia',
+    presets: [5, 10, 25, 50, 100, 200],
+    carriers: [
+      { id: 'ethio_et', name: 'Ethio Telecom', prefixes: ['091','092','093','094','095','096','097'] },
+      { id: 'safaricom_et', name: 'Safaricom Ethiopia', prefixes: ['090'] },
+    ]
   }
 };
 
@@ -4678,6 +4767,22 @@ function getUserCountry() {
   // Check user profile first, then localStorage
   if (currentUser && currentUser.country) return currentUser.country;
   return localStorage.getItem('promptpay_country') || '';
+}
+
+// Auto-detect country via IP on first visit (non-blocking)
+async function autoDetectCountry() {
+  if (localStorage.getItem('promptpay_country')) return; // already set
+  try {
+    const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
+    const data = await res.json();
+    const supported = ['NG','GH','KE','UG','ZA','TZ','CM','SN','ET','US','CA','GB','DE','FR','IN','AU'];
+    if (data.country_code && supported.includes(data.country_code)) {
+      localStorage.setItem('promptpay_country', data.country_code);
+      // Pre-fill registration country
+      const regCountry = document.getElementById('register-country');
+      if (regCountry) regCountry.value = data.country_code;
+    }
+  } catch (e) { /* silent fail — user will pick manually */ }
 }
 
 function updateCarriers() {
@@ -4854,6 +4959,7 @@ loadSettings = async function() {
 // Initialize airtime carrier on first load
 document.addEventListener('DOMContentLoaded', function() {
   updateCarriers();
+  autoDetectCountry();
 });
 </script>
 

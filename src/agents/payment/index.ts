@@ -148,7 +148,7 @@ const providerStatusSchema = z.object({
 const airtimeTopupSchema = z.object({
   phoneNumber: z.string().min(10).describe('Phone number with country code (e.g., 2347012345678 for Nigeria)'),
   amount: z.number().positive().describe('Amount in local currency (NGN, GHS, UGX, KES)'),
-  countryCode: z.enum(['NG', 'GH', 'UG', 'KE']).describe('ISO country code'),
+  countryCode: z.enum(['NG', 'GH', 'UG', 'KE', 'ZA', 'TZ', 'CM', 'SN', 'ET']).describe('ISO country code'),
   operatorId: z.number().optional().describe('Reloadly operator ID (auto-detected if omitted)'),
   carrierName: z.string().optional().describe('Carrier name (e.g., MTN Nigeria, Safaricom) for display purposes'),
   recipientType: z.enum(['self', 'other']).optional().default('self').describe('Whether buying for self or someone else'),
@@ -157,7 +157,7 @@ const airtimeTopupSchema = z.object({
 const dataBundleSchema = z.object({
   phoneNumber: z.string().min(10).describe('Phone number with country code'),
   amount: z.number().positive().describe('Amount in local currency for data bundle'),
-  countryCode: z.enum(['NG', 'GH', 'UG', 'KE']),
+  countryCode: z.enum(['NG', 'GH', 'UG', 'KE', 'ZA', 'TZ', 'CM', 'SN', 'ET']),
   operatorId: z.number().optional(),
   carrierName: z.string().optional().describe('Carrier name for display purposes'),
   recipientType: z.enum(['self', 'other']).optional().default('self'),
