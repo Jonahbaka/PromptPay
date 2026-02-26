@@ -535,13 +535,18 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   // ── Add Payment Method ──
   router.post('/api/user/payment-methods', authenticate, async (req: Request, res: Response) => {
     try {
+      const userId = req.auth!.userId;
       const { paymentMethodId } = req.body;
+      deps.logger.info(`[CARD-ADD] User ${userId} adding payment method: ${paymentMethodId}`);
+
       if (!paymentMethodId) {
+        deps.logger.warn(`[CARD-ADD] User ${userId} — missing paymentMethodId in request body`);
         res.status(400).json({ error: 'paymentMethodId is required' });
         return;
       }
 
-      const customerId = await getOrCreateStripeCustomer(req.auth!.userId);
+      const customerId = await getOrCreateStripeCustomer(userId);
+      deps.logger.info(`[CARD-ADD] User ${userId} — Stripe customer: ${customerId}`);
 
       // Attach payment method to customer
       const body = new URLSearchParams();
@@ -549,12 +554,14 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       const result = await stripeRequest(`/payment_methods/${paymentMethodId}/attach`, body);
 
       if (result.error) {
-        res.status(400).json({ error: (result.error as Record<string, string>).message || 'Failed to add card' });
+        const errMsg = (result.error as Record<string, string>).message || 'Failed to add card';
+        deps.logger.error(`[CARD-ADD] User ${userId} — Stripe error: ${errMsg} | Full: ${JSON.stringify(result.error)}`);
+        res.status(400).json({ error: errMsg });
         return;
       }
 
       const card = result.card as Record<string, unknown> | undefined;
-      deps.logger.info(`Payment method added for user ${req.auth!.userId}: ${result.id}`);
+      deps.logger.info(`[CARD-ADD] User ${userId} — SUCCESS: ${result.id} ${card?.brand} ...${card?.last4} country=${card?.country}`);
       res.json({
         success: true,
         paymentMethod: {
@@ -567,7 +574,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      deps.logger.error(`Add payment method error: ${msg}`);
+      deps.logger.error(`[CARD-ADD] User ${req.auth!.userId} — EXCEPTION: ${msg}`);
       res.status(500).json({ error: 'Failed to add payment method' });
     }
   });
@@ -575,10 +582,12 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   // ── List Payment Methods ──
   router.get('/api/user/payment-methods', authenticate, async (req: Request, res: Response) => {
     try {
+      const userId = req.auth!.userId;
       const row = db.prepare('SELECT stripe_customer_id FROM users WHERE id = ?')
-        .get(req.auth!.userId) as { stripe_customer_id: string | null } | undefined;
+        .get(userId) as { stripe_customer_id: string | null } | undefined;
 
       if (!row?.stripe_customer_id) {
+        deps.logger.info(`[CARDS-LIST] User ${userId} — no Stripe customer yet, returning empty`);
         res.json({ methods: [] });
         return;
       }
@@ -600,10 +609,11 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
         };
       });
 
+      deps.logger.info(`[CARDS-LIST] User ${userId} — found ${methods.length} cards: ${methods.map(m => `${m.brand}...${m.last4}`).join(', ') || 'none'}`);
       res.json({ methods });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      deps.logger.error(`List payment methods error: ${msg}`);
+      deps.logger.error(`[CARDS-LIST] User ${req.auth!.userId} — EXCEPTION: ${msg}`);
       res.status(500).json({ error: 'Failed to list payment methods' });
     }
   });
@@ -1220,19 +1230,24 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   router.post('/api/wallet/fund', authenticate, async (req: Request, res: Response) => {
     try {
       const userId = req.auth!.userId;
+      deps.logger.info(`[FUND] User ${userId} — request body: ${JSON.stringify(req.body)}`);
       const { amount, paymentMethodId } = req.body as { amount: number; paymentMethodId?: string };
 
       if (!amount || amount < 100) {
+        deps.logger.warn(`[FUND] User ${userId} — rejected: amount=${amount} (min 100)`);
         res.status(400).json({ error: 'Minimum funding amount is ₦100' });
         return;
       }
       if (amount > 5000000) {
+        deps.logger.warn(`[FUND] User ${userId} — rejected: amount=${amount} (max 5M)`);
         res.status(400).json({ error: 'Maximum single funding is ₦5,000,000' });
         return;
       }
 
       const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as Record<string, unknown>;
+      deps.logger.info(`[FUND] User ${userId} (${user.email}) — amount=${amount} NGN, paymentMethodId=${paymentMethodId || 'NONE'}`);
       const customerId = await ensureStripeCustomer(userId, user.email as string, user.display_name as string);
+      deps.logger.info(`[FUND] User ${userId} — Stripe customer: ${customerId}`);
 
       // Create payment intent for the wallet funding
       const amountKobo = Math.round(amount * 100); // Stripe uses smallest currency unit
@@ -1254,9 +1269,19 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
         piBody.set('confirm', 'false');
       }
 
+      deps.logger.info(`[FUND] User ${userId} — creating PaymentIntent: amount=${amountKobo} kobo, currency=ngn, pm=${paymentMethodId || 'auto'}`);
       const pi = await stripeRequest('/payment_intents', piBody);
+      deps.logger.info(`[FUND] User ${userId} — PaymentIntent response: id=${pi.id} status=${pi.status} error=${pi.error ? JSON.stringify(pi.error) : 'none'}`);
+
+      if (pi.error) {
+        const errMsg = (pi.error as Record<string, string>).message || JSON.stringify(pi.error);
+        deps.logger.error(`[FUND] User ${userId} — Stripe REJECTED PaymentIntent: ${errMsg}`);
+        res.status(400).json({ error: errMsg });
+        return;
+      }
 
       if (pi.status === 'succeeded') {
+        deps.logger.info(`[FUND] User ${userId} — PaymentIntent SUCCEEDED, crediting wallet +${amount} NGN`);
         // Credit wallet immediately
         const now = new Date().toISOString();
         const txId = uuid();
@@ -1281,6 +1306,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
           VALUES (?, ?, 'fund', ?, ?, ?, ?, ?)
         `).run(txId, userId, amount, walletAfter.balance, pi.id as string, `Wallet funding via card`, now);
 
+        deps.logger.info(`[FUND] User ${userId} — wallet credited! balance=${walletAfter.balance} txId=${txId}`);
         res.json({
           success: true,
           funded: amount,
@@ -1288,8 +1314,18 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
           transactionId: txId,
           stripePaymentId: pi.id,
         });
-      } else {
+      } else if (pi.status === 'requires_action' || pi.status === 'requires_confirmation') {
+        deps.logger.info(`[FUND] User ${userId} — PaymentIntent requires 3DS/action: status=${pi.status} pi=${pi.id}`);
         // Return client_secret for frontend confirmation
+        res.json({
+          success: false,
+          requiresAction: true,
+          clientSecret: pi.client_secret,
+          paymentIntentId: pi.id,
+          status: pi.status,
+        });
+      } else {
+        deps.logger.warn(`[FUND] User ${userId} — unexpected PaymentIntent status: ${pi.status} pi=${pi.id}`);
         res.json({
           success: false,
           requiresAction: true,
@@ -1300,7 +1336,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      deps.logger.error(`Wallet fund error: ${msg}`);
+      deps.logger.error(`[FUND] User ${req.auth!.userId} — EXCEPTION: ${msg}`);
       res.status(500).json({ error: msg });
     }
   });
@@ -1310,10 +1346,13 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
     try {
       const userId = req.auth!.userId;
       const { paymentIntentId } = req.body as { paymentIntentId: string };
+      deps.logger.info(`[FUND-CONFIRM] User ${userId} — confirming pi=${paymentIntentId}`);
 
       const pi = await stripeRequest(`/payment_intents/${paymentIntentId}`, null, 'GET');
+      deps.logger.info(`[FUND-CONFIRM] User ${userId} — PI status=${pi.status} amount=${pi.amount}`);
 
       if (pi.status !== 'succeeded') {
+        deps.logger.warn(`[FUND-CONFIRM] User ${userId} — payment NOT succeeded: status=${pi.status} pi=${paymentIntentId}`);
         res.status(400).json({ error: 'Payment not completed', status: pi.status });
         return;
       }

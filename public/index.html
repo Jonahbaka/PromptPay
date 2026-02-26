@@ -5466,27 +5466,39 @@ function openAddCardModal() {
 async function submitCardForm() {
   if (!stripeInstance || !cardElement) { showToast('Card form not ready. Please try again.'); return; }
   const btn = document.getElementById('add-card-submit');
+  const errDiv = document.getElementById('card-errors');
   btn.disabled = true; btn.textContent = 'Adding...';
+  console.log('[CARD-ADD] Starting card submission...');
   try {
     const { paymentMethod, error } = await stripeInstance.createPaymentMethod({ type: 'card', card: cardElement });
     if (error) {
-      document.getElementById('card-errors').textContent = error.message;
-      document.getElementById('card-errors').style.display = 'block';
+      console.error('[CARD-ADD] Stripe createPaymentMethod error:', error.message);
+      errDiv.textContent = error.message;
+      errDiv.style.display = 'block';
       btn.disabled = false; btn.textContent = 'Add Card';
       return;
     }
+    console.log('[CARD-ADD] PaymentMethod created:', paymentMethod.id);
     const res = await authFetch(API_BASE + '/api/user/payment-methods', {
       method: 'POST', body: JSON.stringify({ paymentMethodId: paymentMethod.id }),
     });
+    console.log('[CARD-ADD] Server response status:', res.status);
     if (res.ok) {
       const data = await res.json();
+      console.log('[CARD-ADD] SUCCESS:', data.paymentMethod.brand, '...', data.paymentMethod.last4);
       showToast(`${data.paymentMethod.brand} ...${data.paymentMethod.last4} added!`);
       closeModals(); cardElement.clear(); loadPaymentMethods();
     } else {
       const errData = await res.json();
-      showToast(errData.error || 'Failed to add card');
+      console.error('[CARD-ADD] Server error:', errData);
+      errDiv.textContent = errData.error || 'Failed to add card';
+      errDiv.style.display = 'block';
     }
-  } catch (err) { showToast('Failed to add card'); }
+  } catch (err) {
+    console.error('[CARD-ADD] Exception:', err);
+    errDiv.textContent = 'Failed to add card: ' + (err.message || 'Unknown error');
+    errDiv.style.display = 'block';
+  }
   btn.disabled = false; btn.textContent = 'Add Card';
 }
 
@@ -5825,13 +5837,16 @@ async function submitFundWallet() {
 
   btn.disabled = true;
   btn.textContent = 'Processing...';
+  console.log('[FUND] Starting fund:', { amount, paymentMethodId: cardRadio.value });
 
   try {
     const res = await authFetch(API_BASE + '/api/wallet/fund', {
       method: 'POST',
       body: JSON.stringify({ amount, currency: 'NGN', paymentMethodId: cardRadio.value })
     });
+    console.log('[FUND] Response status:', res.status);
     const data = await res.json();
+    console.log('[FUND] Response data:', JSON.stringify(data));
 
     if (data.funded) {
       showToast('Wallet funded with ' + formatNaira(amount));
@@ -5839,10 +5854,12 @@ async function submitFundWallet() {
       loadPosData();
     } else if (data.clientSecret) {
       // 3DS required
+      console.log('[FUND] 3DS required, confirming card payment...');
       const stripe = Stripe(stripePublishableKey || '');
       const result = await stripe.confirmCardPayment(data.clientSecret, {
         return_url: window.location.origin + '/?wallet_funded=true'
       });
+      console.log('[FUND] 3DS result:', result.error ? result.error.message : 'success');
       if (result.error) {
         errorEl.textContent = result.error.message;
       } else {
@@ -5851,19 +5868,22 @@ async function submitFundWallet() {
           body: JSON.stringify({ paymentIntentId: result.paymentIntent.id, amount, currency: 'NGN' })
         });
         const confirmData = await confirmRes.json();
-        if (confirmData.funded) {
+        console.log('[FUND] Confirm data:', JSON.stringify(confirmData));
+        if (confirmData.funded || confirmData.success) {
           showToast('Wallet funded with ' + formatNaira(amount));
           closeFundModal();
           loadPosData();
         } else {
-          errorEl.textContent = confirmData.error || 'Funding failed';
+          errorEl.textContent = confirmData.error || 'Funding failed after 3DS verification';
         }
       }
     } else {
-      errorEl.textContent = data.error || 'Funding failed';
+      errorEl.textContent = data.error || 'Funding failed. Please try again.';
+      console.error('[FUND] Funding failed:', data);
     }
   } catch (e) {
-    errorEl.textContent = 'Network error. Try again.';
+    console.error('[FUND] Exception:', e);
+    errorEl.textContent = 'Network error: ' + (e.message || 'Try again.');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Fund Wallet';
