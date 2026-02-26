@@ -53,22 +53,6 @@ const SUB_AGENT_CONFIGS: Record<string, SubAgentConfig> = {
     tools: ['create_shopping_list', 'add_to_list', 'find_best_price', 'place_order', 'track_order', 'reorder_items', 'compare_prices', 'smart_recommendations'],
     temperature: 0.3,
   },
-  advisor_ops: {
-    role: 'advisor_ops',
-    name: 'Sage',
-    description: 'Financial advisor — budgets, spending analysis, debt strategy, savings advice, tax tips, net worth, health score, goal planning',
-    capabilities: ['budgeting', 'spending_analysis', 'debt_strategy', 'savings_advice', 'tax_tips', 'net_worth', 'health_scoring', 'goal_planning'],
-    tools: ['create_budget', 'analyze_spending', 'debt_strategy', 'savings_advice', 'tax_tips', 'net_worth_snapshot', 'financial_health_score', 'goal_planning'],
-    temperature: 0.3,
-  },
-  trading_ops: {
-    role: 'trading_ops',
-    name: 'Quant',
-    description: 'Trading agent — stock/crypto trades, portfolio management, DCA automation, market signals, risk assessment, paper trading',
-    capabilities: ['market_data', 'trading', 'portfolio_management', 'dca_automation', 'risk_assessment', 'market_signals', 'paper_trading'],
-    tools: ['market_lookup', 'place_trade', 'portfolio_overview', 'set_dca_schedule', 'risk_assessment', 'market_signals', 'paper_trade', 'trading_history', 'set_stop_loss', 'rebalance_portfolio'],
-    temperature: 0.2,
-  },
   assistant_ops: {
     role: 'assistant_ops',
     name: 'Otto',
@@ -252,27 +236,6 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
       shopping_order_place: 'shopping_ops',
       shopping_order_track: 'shopping_ops',
       shopping_reorder: 'shopping_ops',
-      // Advisory (Sage)
-      advisor_budget_create: 'advisor_ops',
-      advisor_spending_analysis: 'advisor_ops',
-      advisor_debt_strategy: 'advisor_ops',
-      advisor_savings_advice: 'advisor_ops',
-      advisor_tax_tips: 'advisor_ops',
-      advisor_net_worth: 'advisor_ops',
-      advisor_health_score: 'advisor_ops',
-      advisor_goal_planning: 'advisor_ops',
-      advisor_general: 'advisor_ops',
-      // Trading (Quant)
-      trading_market_lookup: 'trading_ops',
-      trading_place_trade: 'trading_ops',
-      trading_portfolio: 'trading_ops',
-      trading_dca_schedule: 'trading_ops',
-      trading_risk_assessment: 'trading_ops',
-      trading_market_signals: 'trading_ops',
-      trading_paper_trade: 'trading_ops',
-      trading_history: 'trading_ops',
-      trading_stop_loss: 'trading_ops',
-      trading_rebalance: 'trading_ops',
       // Assistant (Otto)
       assistant_subscriptions: 'assistant_ops',
       assistant_negotiate_bill: 'assistant_ops',
@@ -392,8 +355,6 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
   private isAgentEnabled(role: AgentRole): boolean {
     switch (role) {
       case 'shopping_ops': return CONFIG.shopping.enabled;
-      case 'trading_ops': return CONFIG.trading.enabled;
-      case 'advisor_ops': return CONFIG.advisor.enabled;
       case 'assistant_ops': return CONFIG.assistant.enabled;
       default: return true; // payment infrastructure agents are always enabled
     }

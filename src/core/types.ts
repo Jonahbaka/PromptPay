@@ -11,8 +11,6 @@ export type AgentRole =
   | 'orchestrator'
   // Agentic agents (primary)
   | 'shopping_ops'
-  | 'advisor_ops'
-  | 'trading_ops'
   | 'assistant_ops'
   // Payment infrastructure agents
   | 'wallet_ops'
@@ -61,27 +59,6 @@ export type TaskType =
   | 'shopping_order_place'
   | 'shopping_order_track'
   | 'shopping_reorder'
-  // Advisory (Sage)
-  | 'advisor_budget_create'
-  | 'advisor_spending_analysis'
-  | 'advisor_debt_strategy'
-  | 'advisor_savings_advice'
-  | 'advisor_tax_tips'
-  | 'advisor_net_worth'
-  | 'advisor_health_score'
-  | 'advisor_goal_planning'
-  | 'advisor_general'
-  // Trading (Quant)
-  | 'trading_market_lookup'
-  | 'trading_place_trade'
-  | 'trading_portfolio'
-  | 'trading_dca_schedule'
-  | 'trading_risk_assessment'
-  | 'trading_market_signals'
-  | 'trading_paper_trade'
-  | 'trading_history'
-  | 'trading_stop_loss'
-  | 'trading_rebalance'
   // Assistant (Otto)
   | 'assistant_subscriptions'
   | 'assistant_negotiate_bill'
@@ -825,14 +802,6 @@ export const TaskSchema = z.object({
     // Shopping (Aria)
     'shopping_list_create', 'shopping_list_manage', 'shopping_price_compare',
     'shopping_order_place', 'shopping_order_track', 'shopping_reorder',
-    // Advisory (Sage)
-    'advisor_budget_create', 'advisor_spending_analysis', 'advisor_debt_strategy',
-    'advisor_savings_advice', 'advisor_tax_tips', 'advisor_net_worth',
-    'advisor_health_score', 'advisor_goal_planning', 'advisor_general',
-    // Trading (Quant)
-    'trading_market_lookup', 'trading_place_trade', 'trading_portfolio',
-    'trading_dca_schedule', 'trading_risk_assessment', 'trading_market_signals',
-    'trading_paper_trade', 'trading_history', 'trading_stop_loss', 'trading_rebalance',
     // Assistant (Otto)
     'assistant_subscriptions', 'assistant_negotiate_bill', 'assistant_appointment',
     'assistant_document', 'assistant_price_alert', 'assistant_process_return',

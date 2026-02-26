@@ -112,39 +112,6 @@ export class DaemonLoop {
 
     // ── Agentic Agent Jobs ──
 
-    // DCA execution (every hour): execute due DCA schedules
-    this.addJob('dca_execution', 'DCA Schedule Execution', 3600000, async () => {
-      const now = new Date().toISOString();
-      const due = this.deps.db.prepare(
-        "SELECT * FROM trading_dca_schedules WHERE status = 'active' AND next_execution <= ?"
-      ).all(now) as Array<Record<string, unknown>>;
-
-      for (const schedule of due) {
-        const nextExec = new Date(Date.now() + (schedule.frequency_hours as number) * 3600000).toISOString();
-        const nowTs = new Date().toISOString();
-        const orderId = uuid();
-
-        // Create a trading order for this DCA execution
-        this.deps.db.prepare(`
-          INSERT INTO trading_orders (id, portfolio_id, symbol, side, order_type, quantity, price, status, paper_trade, filled_at, created_at)
-          VALUES (?, ?, ?, 'buy', 'market', ?, NULL, 'filled', 1, ?, ?)
-        `).run(orderId, schedule.portfolio_id, schedule.symbol, schedule.amount_usd, nowTs, nowTs);
-
-        // Update the DCA schedule counters and next execution time
-        this.deps.db.prepare(`
-          UPDATE trading_dca_schedules
-          SET executions_count = executions_count + 1,
-              total_invested = total_invested + ?,
-              next_execution = ?
-          WHERE id = ?
-        `).run(schedule.amount_usd, nextExec, schedule.id);
-        this.deps.logger.info(`[Daemon] DCA executed: ${schedule.symbol} $${schedule.amount_usd} (order ${orderId})`);
-      }
-      if (due.length > 0) {
-        this.deps.auditTrail.record('daemon', 'dca_execution', 'quant', { executed: due.length });
-      }
-    });
-
     // Price alerts (every hour): check and trigger price alerts
     this.addJob('price_alerts', 'Price Alert Check', 3600000, async () => {
       const active = this.deps.db.prepare(

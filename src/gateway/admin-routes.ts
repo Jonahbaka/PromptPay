@@ -643,6 +643,196 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
     }
   });
 
-  deps.logger.info('Admin portal: 26 routes registered');
+  // ═══════════════════════════════════════════════════════
+  // 27. GET /admin/pos/revenue — POS Revenue Dashboard
+  // ═══════════════════════════════════════════════════════
+  router.get('/admin/pos/revenue', authenticate, requireRole('owner'), (_req: Request, res: Response) => {
+    const db = deps.memory.getDb();
+    const today = new Date().toISOString().slice(0, 10);
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+
+    // Total wallet fundings (= money that entered your Stripe account)
+    const totalFunded = db.prepare(
+      "SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM wallet_transactions WHERE type = 'fund'"
+    ).get() as { total: number; count: number };
+
+    // Total Reloadly spend (= money you paid to Reloadly)
+    const totalReloadlySpend = db.prepare(
+      "SELECT COALESCE(SUM(cost_price), 0) as total FROM pos_transactions WHERE status = 'completed'"
+    ).get() as { total: number };
+
+    // Platform fees collected
+    const totalPlatformFees = db.prepare(
+      "SELECT COALESCE(SUM(platform_fee), 0) as total FROM pos_transactions WHERE status = 'completed'"
+    ).get() as { total: number };
+
+    // Agent profits paid out (from your margin)
+    const totalAgentProfits = db.prepare(
+      "SELECT COALESCE(SUM(agent_profit), 0) as total FROM pos_transactions WHERE status = 'completed'"
+    ).get() as { total: number };
+
+    // Gross profit = fundings - reloadly spend (what stays in your Stripe)
+    const grossProfit = totalFunded.total - totalReloadlySpend.total;
+
+    // Today's breakdown
+    const todayStats = db.prepare(`
+      SELECT COUNT(*) as txCount,
+        COALESCE(SUM(face_value), 0) as volume,
+        COALESCE(SUM(platform_fee), 0) as fees,
+        COALESCE(SUM(cost_price), 0) as reloadlySpend,
+        COALESCE(SUM(agent_profit), 0) as agentProfits
+      FROM pos_transactions WHERE status = 'completed' AND created_at >= ?
+    `).get(today) as { txCount: number; volume: number; fees: number; reloadlySpend: number; agentProfits: number };
+
+    const todayFundings = db.prepare(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM wallet_transactions WHERE type = 'fund' AND created_at >= ?"
+    ).get(today) as { total: number };
+
+    // Weekly breakdown
+    const weekStats = db.prepare(`
+      SELECT COUNT(*) as txCount,
+        COALESCE(SUM(face_value), 0) as volume,
+        COALESCE(SUM(platform_fee), 0) as fees,
+        COALESCE(SUM(cost_price), 0) as reloadlySpend
+      FROM pos_transactions WHERE status = 'completed' AND created_at >= ?
+    `).get(weekAgo) as { txCount: number; volume: number; fees: number; reloadlySpend: number };
+
+    const weekFundings = db.prepare(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM wallet_transactions WHERE type = 'fund' AND created_at >= ?"
+    ).get(weekAgo) as { total: number };
+
+    // Monthly breakdown
+    const monthStats = db.prepare(`
+      SELECT COUNT(*) as txCount,
+        COALESCE(SUM(face_value), 0) as volume,
+        COALESCE(SUM(platform_fee), 0) as fees,
+        COALESCE(SUM(cost_price), 0) as reloadlySpend
+      FROM pos_transactions WHERE status = 'completed' AND created_at >= ?
+    `).get(monthAgo) as { txCount: number; volume: number; fees: number; reloadlySpend: number };
+
+    const monthFundings = db.prepare(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM wallet_transactions WHERE type = 'fund' AND created_at >= ?"
+    ).get(monthAgo) as { total: number };
+
+    // Active agents (users with wallets who have made sales)
+    const activeAgents = db.prepare(
+      "SELECT COUNT(DISTINCT agent_user_id) as count FROM pos_transactions WHERE status = 'completed'"
+    ).get() as { count: number };
+
+    const totalAgents = db.prepare(
+      "SELECT COUNT(*) as count FROM user_wallets"
+    ).get() as { count: number };
+
+    // Top agents
+    const topAgents = db.prepare(`
+      SELECT p.agent_user_id, u.display_name, u.email,
+        COUNT(*) as sales,
+        SUM(p.face_value) as volume,
+        SUM(p.platform_fee) as feesGenerated,
+        SUM(p.agent_profit) as agentEarned
+      FROM pos_transactions p
+      JOIN users u ON u.id = p.agent_user_id
+      WHERE p.status = 'completed'
+      GROUP BY p.agent_user_id
+      ORDER BY volume DESC LIMIT 10
+    `).all() as Array<Record<string, unknown>>;
+
+    // Current platform fee setting
+    const feeSetting = db.prepare("SELECT value FROM platform_settings WHERE key = 'pos_platform_fee_pct'").get() as { value: string } | undefined;
+
+    // Failed transactions
+    const failedCount = db.prepare(
+      "SELECT COUNT(*) as count FROM pos_transactions WHERE status = 'failed'"
+    ).get() as { count: number };
+
+    res.json({
+      allTime: {
+        walletFundings: totalFunded.total,
+        fundingCount: totalFunded.count,
+        reloadlySpend: totalReloadlySpend.total,
+        platformFees: totalPlatformFees.total,
+        agentProfits: totalAgentProfits.total,
+        grossProfit,
+        netRevenue: totalPlatformFees.total, // platform fee is your guaranteed cut
+      },
+      today: {
+        fundings: todayFundings.total,
+        transactions: todayStats.txCount,
+        volume: todayStats.volume,
+        platformFees: todayStats.fees,
+        reloadlySpend: todayStats.reloadlySpend,
+        profit: todayFundings.total - todayStats.reloadlySpend,
+      },
+      week: {
+        fundings: weekFundings.total,
+        transactions: weekStats.txCount,
+        volume: weekStats.volume,
+        platformFees: weekStats.fees,
+        profit: weekFundings.total - weekStats.reloadlySpend,
+      },
+      month: {
+        fundings: monthFundings.total,
+        transactions: monthStats.txCount,
+        volume: monthStats.volume,
+        platformFees: monthStats.fees,
+        profit: monthFundings.total - monthStats.reloadlySpend,
+      },
+      agents: {
+        total: totalAgents.count,
+        active: activeAgents.count,
+        top: topAgents,
+      },
+      failedTransactions: failedCount.count,
+      currentPlatformFeePct: parseFloat(feeSetting?.value || '1'),
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // 28. GET /admin/pos/settings — Get POS platform settings
+  // ═══════════════════════════════════════════════════════
+  router.get('/admin/pos/settings', authenticate, requireRole('owner'), (_req: Request, res: Response) => {
+    const db = deps.memory.getDb();
+    const settings = db.prepare("SELECT * FROM platform_settings").all() as Array<{ key: string; value: string; updated_by: string | null; updated_at: string }>;
+    const obj: Record<string, { value: string; updatedBy: string | null; updatedAt: string }> = {};
+    for (const s of settings) {
+      obj[s.key] = { value: s.value, updatedBy: s.updated_by, updatedAt: s.updated_at };
+    }
+    res.json({ settings: obj });
+  });
+
+  // ═══════════════════════════════════════════════════════
+  // 29. POST /admin/pos/settings — Update POS platform settings
+  // ═══════════════════════════════════════════════════════
+  router.post('/admin/pos/settings', authenticate, requireRole('owner'), (req: Request, res: Response) => {
+    const db = deps.memory.getDb();
+    const { platformFeePct } = req.body as { platformFeePct?: number };
+
+    if (platformFeePct !== undefined) {
+      if (typeof platformFeePct !== 'number' || platformFeePct < 0 || platformFeePct > 25) {
+        res.status(400).json({ error: 'Platform fee must be between 0% and 25%' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      db.prepare(`
+        INSERT INTO platform_settings (key, value, updated_by, updated_at)
+        VALUES ('pos_platform_fee_pct', ?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at
+      `).run(String(platformFeePct), req.auth!.userId, now);
+
+      deps.auditTrail.record('admin', 'settings_update', req.auth!.userId, {
+        setting: 'pos_platform_fee_pct',
+        oldValue: undefined,
+        newValue: platformFeePct,
+      });
+
+      deps.logger.info(`[Admin] Platform fee updated to ${platformFeePct}% by ${req.auth!.userId}`);
+    }
+
+    res.json({ success: true, platformFeePct: platformFeePct ?? null });
+  });
+
+  deps.logger.info('Admin portal: 29 routes registered');
   return router;
 }

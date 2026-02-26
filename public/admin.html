@@ -260,6 +260,13 @@
     }
     /* ── Nav item hidden by role ── */
     .nav-item.role-hidden { display: none; }
+    /* ── POS Period Buttons ── */
+    .pos-period-btn {
+      padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text2); font-size: 13px;
+      font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s;
+    }
+    .pos-period-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -338,6 +345,9 @@
   <div class="nav-section">Revenue</div>
   <div class="nav-item" data-page="revenue">
     <span class="nav-icon">&#128176;</span> Revenue
+  </div>
+  <div class="nav-item" data-page="pos-revenue">
+    <span class="nav-icon">&#128722;</span> POS Revenue
   </div>
   <div class="nav-section">Network</div>
   <div class="nav-item" data-page="agents-network">
@@ -673,6 +683,88 @@
       <summary style="cursor:pointer;color:var(--accent2);font-size:13px;font-weight:600">View live platform data the AI sees</summary>
       <pre id="exec-context" style="margin-top:8px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-size:11px;color:var(--text2);overflow-x:auto;max-height:400px;overflow-y:auto">Loading...</pre>
     </details>
+  </div>
+
+  <!-- ── POS REVENUE ── -->
+  <div class="page" id="page-pos-revenue" style="display:none;">
+    <div class="header"><h2>POS Revenue Dashboard</h2></div>
+    <p style="opacity: 0.6; margin-bottom: 20px;">Your money: Stripe wallet fundings in, Reloadly spend out. The difference is profit.</p>
+
+    <!-- Platform Fee Control -->
+    <div class="card" style="margin-bottom: 20px; border: 1px solid rgba(124,58,237,0.3);">
+      <div class="card-header"><span class="card-title">Platform Fee Control</span><span class="card-icon">&#9881;</span></div>
+      <div style="display:flex; align-items:center; gap:12px; margin-top:12px;">
+        <input type="number" id="pos-fee-input" min="0" max="25" step="0.5" style="width:80px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:16px;font-weight:600;text-align:center">
+        <span style="color:var(--text2)">% per transaction</span>
+        <button onclick="savePlatformFee()" style="padding:10px 20px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-weight:600;cursor:pointer;font-size:13px">Save</button>
+        <span id="pos-fee-status" style="font-size:12px;color:var(--success)"></span>
+      </div>
+    </div>
+
+    <!-- All-Time Summary -->
+    <div class="grid grid-4" id="pos-revenue-alltime">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Wallet Fundings</span><span class="card-icon">&#128179;</span></div>
+        <div class="stat" id="pos-r-fundings">&#8358;0</div>
+        <div class="stat-sub" id="pos-r-funding-count">0 deposits</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Reloadly Spend</span><span class="card-icon">&#128225;</span></div>
+        <div class="stat" id="pos-r-reloadly" style="color:var(--warning)">&#8358;0</div>
+        <div class="stat-sub">What you paid to Reloadly</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Gross Profit</span><span class="card-icon">&#128176;</span></div>
+        <div class="stat" id="pos-r-gross" style="color:var(--success)">&#8358;0</div>
+        <div class="stat-sub">Fundings minus Reloadly spend</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Platform Fees</span><span class="card-icon">&#127919;</span></div>
+        <div class="stat" id="pos-r-fees" style="color:var(--accent2)">&#8358;0</div>
+        <div class="stat-sub">Your guaranteed cut</div>
+      </div>
+    </div>
+
+    <!-- Period Tabs -->
+    <div style="display:flex;gap:8px;margin:20px 0 14px">
+      <button class="pos-period-btn active" onclick="showPosPeriod('today',this)">Today</button>
+      <button class="pos-period-btn" onclick="showPosPeriod('week',this)">This Week</button>
+      <button class="pos-period-btn" onclick="showPosPeriod('month',this)">This Month</button>
+    </div>
+    <div class="grid grid-4" id="pos-period-stats">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Fundings</span></div>
+        <div class="stat" id="pos-p-fundings">&#8358;0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Transactions</span></div>
+        <div class="stat" id="pos-p-txns">0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Volume</span></div>
+        <div class="stat" id="pos-p-volume">&#8358;0</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Profit</span></div>
+        <div class="stat" id="pos-p-profit" style="color:var(--success)">&#8358;0</div>
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div class="card" style="margin-top:20px">
+      <div class="card-header"><span class="card-title">Top Agents</span><span id="pos-agent-count" style="font-size:12px;color:var(--text2)"></span></div>
+      <table style="width:100%;margin-top:12px;border-collapse:collapse" id="pos-top-agents">
+        <thead>
+          <tr style="text-align:left;font-size:12px;color:var(--text2);border-bottom:1px solid var(--border)">
+            <th style="padding:8px">Agent</th>
+            <th style="padding:8px">Sales</th>
+            <th style="padding:8px">Volume</th>
+            <th style="padding:8px">Fees Generated</th>
+          </tr>
+        </thead>
+        <tbody id="pos-agents-tbody"></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- ── CROSS-BORDER ── -->
@@ -1459,6 +1551,81 @@ async function loadExecutive() {
 }
 
 // ── Page router ──
+// ── POS Revenue ──
+let posRevenueData = null;
+
+function fmtNaira(n) {
+  return '\u20A6' + Number(n || 0).toLocaleString('en-NG', { maximumFractionDigits: 0 });
+}
+
+async function loadPosRevenue() {
+  const data = await api('/admin/pos/revenue');
+  if (!data) return;
+  posRevenueData = data;
+
+  // Platform fee input
+  document.getElementById('pos-fee-input').value = data.currentPlatformFeePct ?? 1;
+
+  // All-time stats
+  document.getElementById('pos-r-fundings').textContent = fmtNaira(data.allTime.walletFundings);
+  document.getElementById('pos-r-funding-count').textContent = fmt(data.allTime.fundingCount) + ' deposits';
+  document.getElementById('pos-r-reloadly').textContent = fmtNaira(data.allTime.reloadlySpend);
+  document.getElementById('pos-r-gross').textContent = fmtNaira(data.allTime.grossProfit);
+  document.getElementById('pos-r-fees').textContent = fmtNaira(data.allTime.platformFees);
+
+  // Default period: today
+  showPosPeriod('today', document.querySelector('.pos-period-btn.active'));
+
+  // Agents
+  document.getElementById('pos-agent-count').textContent = `${data.agents.active} active / ${data.agents.total} total`;
+  const tbody = document.getElementById('pos-agents-tbody');
+  if (data.agents.top && data.agents.top.length > 0) {
+    tbody.innerHTML = data.agents.top.map(a =>
+      `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:10px 8px"><strong>${a.display_name || a.email || a.agent_user_id}</strong></td>
+        <td style="padding:10px 8px">${fmt(a.sales)}</td>
+        <td style="padding:10px 8px">${fmtNaira(a.volume)}</td>
+        <td style="padding:10px 8px;color:var(--success)">${fmtNaira(a.feesGenerated)}</td>
+      </tr>`
+    ).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--text2)">No agent sales yet</td></tr>';
+  }
+}
+
+function showPosPeriod(period, btn) {
+  if (!posRevenueData) return;
+  document.querySelectorAll('.pos-period-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const d = posRevenueData[period] || {};
+  document.getElementById('pos-p-fundings').textContent = fmtNaira(d.fundings);
+  document.getElementById('pos-p-txns').textContent = fmt(d.transactions || 0);
+  document.getElementById('pos-p-volume').textContent = fmtNaira(d.volume);
+  document.getElementById('pos-p-profit').textContent = fmtNaira(d.profit);
+}
+
+async function savePlatformFee() {
+  const val = parseFloat(document.getElementById('pos-fee-input').value);
+  if (isNaN(val) || val < 0 || val > 25) {
+    document.getElementById('pos-fee-status').textContent = 'Must be 0-25%';
+    document.getElementById('pos-fee-status').style.color = 'var(--danger)';
+    return;
+  }
+  const data = await api('/admin/pos/settings', {
+    method: 'POST',
+    body: JSON.stringify({ platformFeePct: val }),
+  });
+  if (data && data.success) {
+    document.getElementById('pos-fee-status').textContent = 'Saved!';
+    document.getElementById('pos-fee-status').style.color = 'var(--success)';
+    setTimeout(() => { document.getElementById('pos-fee-status').textContent = ''; }, 3000);
+  } else {
+    document.getElementById('pos-fee-status').textContent = 'Error saving';
+    document.getElementById('pos-fee-status').style.color = 'var(--danger)';
+  }
+}
+
 function loadPage(page) {
   const loaders = {
     dashboard: loadDashboard, agents: loadAgents, tasks: loadTasks,
@@ -1467,7 +1634,7 @@ function loadPage(page) {
     partners: loadPartners, revenue: () => loadRevenue('today'),
     providers: loadProviders, audit: loadAudit, health: loadHealth,
     'agents-network': loadAgentNetwork, 'cross-border': loadCrossBorder,
-    executive: loadExecutive,
+    'pos-revenue': loadPosRevenue, executive: loadExecutive,
   };
   if (loaders[page]) loaders[page]();
 }

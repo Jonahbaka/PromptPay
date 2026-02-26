@@ -243,6 +243,60 @@ export const CONFIG = {
     environment: env('CIRCLE_ENV', 'sandbox') as 'sandbox' | 'production',
   },
 
+  // ── pawaPay (Cross-Border — Mobile Money to Africa) ──
+  pawapay: {
+    apiToken: env('PAWAPAY_API_TOKEN', ''),
+    environment: env('PAWAPAY_ENV', 'sandbox') as 'sandbox' | 'production',
+    get baseUrl(): string {
+      return this.environment === 'production'
+        ? 'https://api.pawapay.io'
+        : 'https://api.sandbox.pawapay.io';
+    },
+    webhookIps: ['18.192.208.15', '18.195.113.136', '3.72.212.107', '54.73.125.42', '54.155.38.214', '54.73.130.113'],
+  },
+
+  // ── Fincra (Cross-Border — Bank Transfers to Africa) ──
+  fincra: {
+    secretKey: env('FINCRA_SECRET_KEY', ''),
+    publicKey: env('FINCRA_PUBLIC_KEY', ''),
+    businessId: env('FINCRA_BUSINESS_ID', ''),
+    webhookSecret: env('FINCRA_WEBHOOK_SECRET', ''),
+    environment: env('FINCRA_ENV', 'sandbox') as 'sandbox' | 'production',
+    get baseUrl(): string {
+      return this.environment === 'production'
+        ? 'https://api.fincra.com'
+        : 'https://sandboxapi.fincra.com';
+    },
+  },
+
+  // ── Korapay (Cross-Border — Nigeria + Pan-African Payouts) ──
+  korapay: {
+    secretKey: env('KORAPAY_SECRET_KEY', ''),
+    publicKey: env('KORAPAY_PUBLIC_KEY', ''),
+    environment: env('KORAPAY_ENV', 'sandbox') as 'sandbox' | 'production',
+    get baseUrl(): string {
+      return this.environment === 'production'
+        ? 'https://api.korapay.com'
+        : 'https://api.korapay.com';
+    },
+  },
+
+  // ── Telnyx (International Calling) ──
+  telnyx: {
+    apiKey: env('TELNYX_API_KEY', ''),
+    apiSecret: env('TELNYX_API_SECRET', ''),
+    sipConnectionId: env('TELNYX_SIP_CONNECTION_ID', ''),
+    callerIdNumber: env('TELNYX_CALLER_ID', ''),
+    get baseUrl(): string { return 'https://api.telnyx.com/v2'; },
+  },
+
+  // ── Termii (Virtual Numbers + SMS) ──
+  termii: {
+    apiKey: env('TERMII_API_KEY', ''),
+    senderId: env('TERMII_SENDER_ID', 'PromptPay'),
+    get baseUrl(): string { return 'https://api.ng.termii.com/api'; },
+  },
+
   // ── Agent Network (Nexus — Africa Cash-In/Cash-Out) ──
   agentNetwork: {
     enabled: env('AGENT_NETWORK_ENABLED', 'true') === 'true',
@@ -624,27 +678,6 @@ export const CONFIG = {
     maxBudgetUsd: parseFloat(env('SHOPPING_MAX_BUDGET_USD', '10000')),
     priceComparisonProvider: env('SHOPPING_PRICE_PROVIDER', 'internal'),
     priceComparisonApiKey: env('SHOPPING_PRICE_API_KEY', ''),
-  },
-
-  // ── Trading (Quant) ──
-  trading: {
-    enabled: env('TRADING_ENABLED', 'true') === 'true',
-    provider: env('TRADING_PROVIDER', 'paper_only') as 'alpaca' | 'paper_only',
-    alpacaApiKey: env('ALPACA_API_KEY', ''),
-    alpacaSecretKey: env('ALPACA_SECRET_KEY', ''),
-    alpacaBaseUrl: env('ALPACA_BASE_URL', 'https://paper-api.alpaca.markets'),
-    cryptoProvider: env('CRYPTO_PROVIDER', 'none'),
-    cryptoApiKey: env('CRYPTO_API_KEY', ''),
-    maxTradeUsd: parseFloat(env('TRADING_MAX_TRADE_USD', '10000')),
-    paperTradingDefault: env('TRADING_PAPER_DEFAULT', 'true') === 'true',
-    dcaMinIntervalHours: parseInt(env('TRADING_DCA_MIN_INTERVAL_HOURS', '24')),
-  },
-
-  // ── Financial Advisor (Sage) ──
-  advisor: {
-    enabled: env('ADVISOR_ENABLED', 'true') === 'true',
-    budgetAlertThresholdPercent: parseInt(env('ADVISOR_BUDGET_ALERT_THRESHOLD', '80')),
-    insightFrequency: env('ADVISOR_INSIGHT_FREQUENCY', 'weekly') as 'daily' | 'weekly' | 'monthly',
   },
 
   // ── Life Assistant (Otto) ──

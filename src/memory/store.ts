@@ -852,6 +852,177 @@ export class MemoryStore extends EventEmitter {
       );
     `);
 
+    // ── POS Agent / Wallet System ──
+    this.db.exec(`
+      -- ═══ USER WALLETS (Fundable Balance) ═══
+      CREATE TABLE IF NOT EXISTS user_wallets (
+        user_id TEXT PRIMARY KEY,
+        balance REAL DEFAULT 0,
+        currency TEXT DEFAULT 'NGN',
+        total_funded REAL DEFAULT 0,
+        total_spent REAL DEFAULT 0,
+        total_earned REAL DEFAULT 0,
+        is_agent INTEGER DEFAULT 0,
+        agent_tier TEXT DEFAULT 'starter' CHECK(agent_tier IN ('starter', 'bronze', 'silver', 'gold', 'platinum')),
+        agent_location TEXT,
+        agent_verified INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      -- ═══ WALLET TRANSACTIONS ═══
+      CREATE TABLE IF NOT EXISTS wallet_transactions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('fund', 'debit', 'commission', 'refund', 'bonus', 'withdrawal')),
+        amount REAL NOT NULL,
+        balance_after REAL NOT NULL,
+        reference TEXT,
+        description TEXT,
+        metadata TEXT DEFAULT '{}',
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_wallet_tx_user ON wallet_transactions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_wallet_tx_created ON wallet_transactions(created_at);
+
+      -- ═══ POS TRANSACTIONS (Airtime/Data Resale) ═══
+      CREATE TABLE IF NOT EXISTS pos_transactions (
+        id TEXT PRIMARY KEY,
+        agent_user_id TEXT NOT NULL,
+        customer_phone TEXT NOT NULL,
+        carrier TEXT,
+        product_type TEXT NOT NULL CHECK(product_type IN ('airtime', 'data')),
+        face_value REAL NOT NULL,
+        cost_price REAL NOT NULL,
+        agent_profit REAL NOT NULL,
+        platform_fee REAL DEFAULT 0,
+        currency TEXT DEFAULT 'NGN',
+        country TEXT DEFAULT 'NG',
+        reloadly_tx_id TEXT,
+        reloadly_operator_id INTEGER,
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'completed', 'failed', 'refunded')),
+        error_message TEXT,
+        created_at TEXT NOT NULL,
+        completed_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_pos_agent ON pos_transactions(agent_user_id);
+      CREATE INDEX IF NOT EXISTS idx_pos_created ON pos_transactions(created_at);
+      CREATE INDEX IF NOT EXISTS idx_pos_status ON pos_transactions(status);
+
+      -- ═══ PLATFORM SETTINGS (Admin-configurable) ═══
+      CREATE TABLE IF NOT EXISTS platform_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_by TEXT,
+        updated_at TEXT NOT NULL
+      );
+
+      -- Default platform fee: 1%
+      INSERT OR IGNORE INTO platform_settings (key, value, updated_at) VALUES ('pos_platform_fee_pct', '1', datetime('now'));
+
+      -- ═══ CALL LOG (International Calling) ═══
+      CREATE TABLE IF NOT EXISTS call_log (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        direction TEXT NOT NULL CHECK(direction IN ('outbound', 'inbound')),
+        destination TEXT NOT NULL,
+        destination_country TEXT,
+        duration_seconds INTEGER DEFAULT 0,
+        cost_usd REAL DEFAULT 0,
+        charge_amount REAL DEFAULT 0,
+        charge_currency TEXT DEFAULT 'NGN',
+        status TEXT DEFAULT 'initiated' CHECK(status IN ('initiated', 'ringing', 'answered', 'completed', 'failed', 'busy', 'no_answer')),
+        telnyx_call_id TEXT,
+        created_at TEXT NOT NULL,
+        ended_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_call_user ON call_log(user_id);
+
+      -- ═══ IN-APP MESSAGES (Free Chat) ═══
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        sender_id TEXT NOT NULL,
+        recipient_id TEXT NOT NULL,
+        message TEXT NOT NULL,
+        message_type TEXT DEFAULT 'text' CHECK(message_type IN ('text', 'image', 'voice', 'video_call', 'file')),
+        read_at TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_chat_sender ON chat_messages(sender_id);
+      CREATE INDEX IF NOT EXISTS idx_chat_recipient ON chat_messages(recipient_id);
+
+      -- ═══ USER CONTACTS ═══
+      CREATE TABLE IF NOT EXISTS user_contacts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        contact_user_id TEXT,
+        name TEXT NOT NULL,
+        phone TEXT,
+        is_app_user INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_contacts_user ON user_contacts(user_id);
+
+      -- ═══ VIRTUAL NUMBERS (Telnyx) ═══
+      CREATE TABLE IF NOT EXISTS virtual_numbers (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        phone_number TEXT NOT NULL,
+        telnyx_number_id TEXT,
+        telnyx_order_id TEXT,
+        country_code TEXT NOT NULL,
+        number_type TEXT DEFAULT 'local',
+        status TEXT DEFAULT 'active',
+        monthly_cost_usd REAL DEFAULT 1.00,
+        capabilities TEXT DEFAULT '[]',
+        purchased_at TEXT NOT NULL,
+        expires_at TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_vnumbers_user ON virtual_numbers(user_id);
+
+      -- ═══ SIM CARD ORDERS (Telnyx) ═══
+      CREATE TABLE IF NOT EXISTS sim_card_orders (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        telnyx_order_id TEXT,
+        sim_type TEXT DEFAULT 'esim',
+        quantity INTEGER DEFAULT 1,
+        status TEXT DEFAULT 'pending',
+        total_cost_usd REAL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        fulfilled_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_sim_orders_user ON sim_card_orders(user_id);
+
+      -- ═══ SMS / MMS MESSAGES (Telnyx) ═══
+      CREATE TABLE IF NOT EXISTS sms_messages (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        telnyx_message_id TEXT,
+        direction TEXT DEFAULT 'outbound',
+        from_number TEXT NOT NULL,
+        to_number TEXT NOT NULL,
+        body TEXT NOT NULL,
+        media_urls TEXT,
+        status TEXT DEFAULT 'sent',
+        cost_usd REAL DEFAULT 0,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_sms_user ON sms_messages(user_id);
+
+      -- ═══ AI CHAT SESSIONS (Telnyx AI) ═══
+      CREATE TABLE IF NOT EXISTS ai_chat_sessions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT DEFAULT 'New Chat',
+        messages TEXT DEFAULT '[]',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_ai_sessions_user ON ai_chat_sessions(user_id);
+    `);
+
     // ── Safe migrations for existing databases ──
     try {
       this.db.exec(`ALTER TABLE users ADD COLUMN country TEXT DEFAULT ''`);
