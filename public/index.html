@@ -61,6 +61,7 @@
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <script src="https://js.stripe.com/v3/"></script>
+  <script src="https://js.paystack.co/v2/inline.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -2514,15 +2515,16 @@
         </div>
       </div>
 
-      <!-- Cards Section -->
+      <!-- Cards & Payment Section -->
       <div class="section-header" style="margin-bottom:18px">
-        <div class="section-title">Cards</div>
-        <div class="section-link" onclick="openAddCardModal()">+ Add</div>
+        <div class="section-title">Payment Methods</div>
+        <div class="section-link" onclick="openFundWalletModal()">+ Fund</div>
       </div>
       <div class="card-carousel" id="payment-cards">
-        <div style="min-width:280px;padding:30px 24px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3)" onclick="openAddCardModal()">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span style="font-size:13px">Add Card</span>
+        <div style="min-width:280px;padding:30px 24px;border-radius:20px;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(59,130,246,0.06));border:1px dashed rgba(124,58,237,0.25);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--accent2)" onclick="openFundWalletModal()">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span style="font-size:14px;font-weight:600">Fund Wallet</span>
+          <span style="font-size:11px;color:var(--text2)">Card &bull; Bank Transfer &bull; USSD</span>
         </div>
       </div>
 
@@ -3290,15 +3292,18 @@
   </div>
 </div>
 
-<!-- Add Card Modal -->
+<!-- Add Card Modal (redirects to Fund Wallet via Paystack) -->
 <div class="modal-overlay" id="add-card-modal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Add Payment Method</h3>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Securely add a debit or credit card</p>
-    <div id="stripe-card-element" style="padding:16px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;margin-bottom:16px;min-height:44px"></div>
-    <div id="card-errors" style="color:var(--red);font-size:13px;margin-bottom:16px;display:none"></div>
-    <button id="add-card-submit" onclick="submitCardForm()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Add Card</button>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Fund your wallet securely with your card, bank transfer, or USSD</p>
+    <div style="padding:20px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.15);border-radius:16px;margin-bottom:16px;text-align:center">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="1.5" style="margin-bottom:8px"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <p style="font-size:14px;color:var(--text);margin-bottom:4px;font-weight:600">No card storage needed</p>
+      <p style="font-size:12px;color:var(--text2)">Pay securely each time via Paystack. Supports Visa, Mastercard, Verve, bank transfer & USSD.</p>
+    </div>
+    <button onclick="closeModals();openFundWalletModal()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Fund Wallet Now</button>
     <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
   </div>
 </div>
@@ -3682,21 +3687,24 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Fund Wallet</h3>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Add funds from your linked card to sell airtime</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Add funds via card, bank transfer, or USSD</p>
     <div class="fund-modal-amounts">
+      <button class="fund-amt-btn" onclick="fundSetAmount(500)">&#8358;500</button>
       <button class="fund-amt-btn" onclick="fundSetAmount(1000)">&#8358;1,000</button>
       <button class="fund-amt-btn" onclick="fundSetAmount(2000)">&#8358;2,000</button>
       <button class="fund-amt-btn" onclick="fundSetAmount(5000)">&#8358;5,000</button>
       <button class="fund-amt-btn" onclick="fundSetAmount(10000)">&#8358;10K</button>
-      <button class="fund-amt-btn" onclick="fundSetAmount(20000)">&#8358;20K</button>
       <button class="fund-amt-btn" onclick="fundSetAmount(50000)">&#8358;50K</button>
     </div>
     <div style="margin-bottom:14px">
       <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Custom Amount (NGN)</label>
-      <input id="fund-amount" type="number" placeholder="Enter amount" class="pos-input">
+      <input id="fund-amount" type="number" placeholder="Enter amount (min &#8358;100)" class="pos-input">
     </div>
-    <div id="fund-card-select" style="margin-bottom:14px"></div>
-    <button id="fund-submit-btn" onclick="submitFundWallet()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Fund Wallet</button>
+    <div id="fund-method-info" style="padding:12px 16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:12px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span style="font-size:12px;color:var(--text2)">Secured by Paystack. Supports Visa, Mastercard, Verve, bank transfer & USSD.</span>
+    </div>
+    <button id="fund-submit-btn" onclick="submitFundWallet()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(124,58,237,0.3)">Pay & Fund Wallet</button>
     <button onclick="closeFundModal()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
     <div id="fund-error" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center"></div>
   </div>
@@ -3937,6 +3945,7 @@ function showApp() {
   updateTokenMatrix();
   loadSettings();
   loadPaymentMethods();
+  initPaystack(); // Pre-load Paystack key for funding
 }
 
 async function handleProfilePicUpload(event) {
@@ -5410,82 +5419,83 @@ function openPayByPhone() {
 }
 
 // ══════════════════════════════════════════════════════════
-// STRIPE ELEMENTS (Card Linking)
+// PAYSTACK PAYMENT INTEGRATION
 // ══════════════════════════════════════════════════════════
 
-let stripeInstance = null;
-let cardElement = null;
-let stripePublishableKey = null;
+let paystackPublicKey = null;
 
-async function initStripeElements() {
-  if (stripeInstance) return;
+async function initPaystack() {
+  if (paystackPublicKey) return paystackPublicKey;
   try {
-    const res = await authFetch(API_BASE + '/api/config/stripe-key');
-    if (!res.ok) return;
-    const { publishableKey } = await res.json();
-    if (!publishableKey) return;
-    stripePublishableKey = publishableKey;
-    stripeInstance = Stripe(publishableKey);
-    const elements = stripeInstance.elements({
-      appearance: {
-        theme: 'night',
-        variables: {
-          colorPrimary: '#7c3aed',
-          colorBackground: '#0c0c14',
-          colorText: '#f0f2f5',
-          colorTextSecondary: '#8b92a5',
-          borderRadius: '12px',
-          fontFamily: 'Inter, sans-serif',
-        },
-      },
-    });
-    cardElement = elements.create('card', {
-      style: { base: { fontSize: '16px', color: '#f0f2f5', '::placeholder': { color: '#4a5068' } } },
-    });
+    const res = await authFetch(API_BASE + '/api/config/paystack-key');
+    if (!res.ok) return null;
+    const { publicKey } = await res.json();
+    paystackPublicKey = publicKey;
+    return publicKey;
   } catch (err) {
-    console.error('Stripe init failed:', err);
+    console.error('Paystack init failed:', err);
+    return null;
   }
 }
 
 function openAddCardModal() {
   document.getElementById('add-card-modal').classList.add('active');
-  initStripeElements().then(() => {
-    if (cardElement) {
-      cardElement.mount('#stripe-card-element');
-      cardElement.on('change', (event) => {
-        const errDiv = document.getElementById('card-errors');
-        if (event.error) { errDiv.textContent = event.error.message; errDiv.style.display = 'block'; }
-        else { errDiv.style.display = 'none'; }
-      });
-    }
-  });
 }
 
-async function submitCardForm() {
-  if (!stripeInstance || !cardElement) { showToast('Card form not ready'); return; }
-  const btn = document.getElementById('add-card-submit');
-  btn.disabled = true; btn.textContent = 'Adding...';
+function launchPaystackPayment(amount, onSuccess) {
+  if (!paystackPublicKey) {
+    showToast('Payment system loading, please try again');
+    initPaystack();
+    return;
+  }
+  if (!currentUser || !currentUser.email) {
+    showToast('Please log in to continue');
+    return;
+  }
+
+  const reference = 'PP_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+  const handler = PaystackPop.setup({
+    key: paystackPublicKey,
+    email: currentUser.email,
+    amount: Math.round(amount * 100), // Paystack expects kobo
+    currency: 'NGN',
+    ref: reference,
+    metadata: {
+      custom_fields: [
+        { display_name: 'User', variable_name: 'user', value: currentUser.displayName || currentUser.email },
+        { display_name: 'Purpose', variable_name: 'purpose', value: 'Wallet Funding' }
+      ]
+    },
+    onClose: function() {
+      showToast('Payment cancelled');
+    },
+    callback: function(response) {
+      // Payment successful — verify on backend and credit wallet
+      verifyPaystackPayment(response.reference, amount, onSuccess);
+    }
+  });
+
+  handler.openIframe();
+}
+
+async function verifyPaystackPayment(reference, amount, onSuccess) {
   try {
-    const { paymentMethod, error } = await stripeInstance.createPaymentMethod({ type: 'card', card: cardElement });
-    if (error) {
-      document.getElementById('card-errors').textContent = error.message;
-      document.getElementById('card-errors').style.display = 'block';
-      btn.disabled = false; btn.textContent = 'Add Card';
-      return;
-    }
-    const res = await authFetch(API_BASE + '/api/user/payment-methods', {
-      method: 'POST', body: JSON.stringify({ paymentMethodId: paymentMethod.id }),
+    showToast('Verifying payment...');
+    const res = await authFetch(API_BASE + '/api/wallet/fund-paystack', {
+      method: 'POST',
+      body: JSON.stringify({ reference, amount }),
     });
-    if (res.ok) {
-      const data = await res.json();
-      showToast(`${data.paymentMethod.brand} ...${data.paymentMethod.last4} added!`);
-      closeModals(); cardElement.clear(); loadPaymentMethods();
+    const data = await res.json();
+    if (data.success) {
+      showToast('Wallet funded with ' + formatNaira(data.funded));
+      if (onSuccess) onSuccess(data);
     } else {
-      const errData = await res.json();
-      showToast(errData.error || 'Failed to add card');
+      showToast(data.error || 'Verification failed');
     }
-  } catch (err) { showToast('Failed to add card'); }
-  btn.disabled = false; btn.textContent = 'Add Card';
+  } catch (err) {
+    showToast('Verification failed. Contact support with ref: ' + reference);
+  }
 }
 
 async function renderRewardCard(container) {
@@ -5525,49 +5535,51 @@ async function loadPaymentMethods() {
     // Reward card always first
     await renderRewardCard(container);
 
-    // Fetch Stripe payment methods
-    const res = await authFetch(API_BASE + '/api/user/payment-methods');
-    if (!res.ok) return;
-    const { methods } = await res.json();
+    // Try to fetch Stripe payment methods (if Stripe is configured)
+    try {
+      const res = await authFetch(API_BASE + '/api/user/payment-methods');
+      if (res.ok) {
+        const { methods } = await res.json();
+        const brandClassMap = { visa: 'brand-visa', mastercard: 'brand-mastercard', amex: 'brand-amex', discover: 'brand-discover' };
+        const holderName = (currentUser && currentUser.displayName) ? currentUser.displayName.toUpperCase() : 'CARD HOLDER';
 
-    const brandClassMap = { visa: 'brand-visa', mastercard: 'brand-mastercard', amex: 'brand-amex', discover: 'brand-discover' };
-    const holderName = (currentUser && currentUser.displayName) ? currentUser.displayName.toUpperCase() : 'CARD HOLDER';
+        methods.forEach(pm => {
+          const brandClass = brandClassMap[pm.brand] || 'brand-default';
+          const brandLabel = (pm.brand || 'card').toUpperCase();
+          const card = document.createElement('div');
+          card.className = 'wallet-holo-card ' + brandClass;
+          card.innerHTML = `
+            <div class="holo-glint"></div>
+            <div class="holo-chip"></div>
+            <div class="holo-brand">${brandLabel}</div>
+            <button class="holo-remove" onclick="removePaymentMethod('${pm.id}')" title="Remove">&#10005;</button>
+            <div class="holo-number">&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; ${pm.last4}</div>
+            <div class="holo-footer">
+              <div>
+                <div class="holo-label">Card Holder</div>
+                <div class="holo-value">${holderName}</div>
+              </div>
+              <div style="text-align:center">
+                <div class="holo-label">Expires</div>
+                <div class="holo-value">${String(pm.expMonth).padStart(2,'0')}/${String(pm.expYear).slice(-2)}</div>
+              </div>
+              <div style="text-align:right">
+                <div class="holo-branding">PromptPay</div>
+              </div>
+            </div>`;
+          container.appendChild(card);
+        });
+      }
+    } catch (e) { /* Stripe not configured — skip */ }
 
-    methods.forEach(pm => {
-      const brandClass = brandClassMap[pm.brand] || 'brand-default';
-      const brandLabel = (pm.brand || 'card').toUpperCase();
-      const card = document.createElement('div');
-      card.className = 'wallet-holo-card ' + brandClass;
-      card.innerHTML = `
-        <div class="holo-glint"></div>
-        <div class="holo-chip"></div>
-        <div class="holo-brand">${brandLabel}</div>
-        <button class="holo-remove" onclick="removePaymentMethod('${pm.id}')" title="Remove">&#10005;</button>
-        <div class="holo-number">&#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; &#8226;&#8226;&#8226;&#8226; ${pm.last4}</div>
-        <div class="holo-footer">
-          <div>
-            <div class="holo-label">Card Holder</div>
-            <div class="holo-value">${holderName}</div>
-          </div>
-          <div style="text-align:center">
-            <div class="holo-label">Expires</div>
-            <div class="holo-value">${String(pm.expMonth).padStart(2,'0')}/${String(pm.expYear).slice(-2)}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="holo-branding">PromptPay</div>
-          </div>
-        </div>`;
-      container.appendChild(card);
-    });
-
-    // Add Payment Method button
-    const addBtn = document.createElement('div');
-    addBtn.style.cssText = 'min-width:300px;aspect-ratio:1.586;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3);flex-shrink:0;transition:border-color 0.2s;';
-    addBtn.onmouseenter = function() { this.style.borderColor = 'rgba(124,58,237,0.3)'; };
-    addBtn.onmouseleave = function() { this.style.borderColor = 'rgba(255,255,255,0.1)'; };
-    addBtn.onclick = openAddCardModal;
-    addBtn.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span style="font-size:13px">Add Payment Method</span>';
-    container.appendChild(addBtn);
+    // Fund Wallet card (always show — works with Paystack)
+    const fundBtn = document.createElement('div');
+    fundBtn.style.cssText = 'min-width:300px;aspect-ratio:1.586;border-radius:20px;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(59,130,246,0.06));border:1px dashed rgba(124,58,237,0.25);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;cursor:pointer;color:var(--accent2);flex-shrink:0;transition:all 0.2s;';
+    fundBtn.onmouseenter = function() { this.style.borderColor = 'rgba(124,58,237,0.5)'; this.style.background = 'linear-gradient(135deg,rgba(124,58,237,0.12),rgba(59,130,246,0.1))'; };
+    fundBtn.onmouseleave = function() { this.style.borderColor = 'rgba(124,58,237,0.25)'; this.style.background = 'linear-gradient(135deg,rgba(124,58,237,0.08),rgba(59,130,246,0.06))'; };
+    fundBtn.onclick = openFundWalletModal;
+    fundBtn.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span style="font-size:14px;font-weight:600">Fund Wallet</span><span style="font-size:11px;color:var(--text2)">Card &bull; Bank Transfer &bull; USSD</span>';
+    container.appendChild(fundBtn);
   } catch (err) { console.error('Failed to load payment methods:', err); }
 }
 
@@ -5770,13 +5782,14 @@ async function shareReceipt() {
   }
 }
 
-// ── Fund Wallet ──
+// ── Fund Wallet (Paystack) ──
 function openFundWalletModal() {
   document.getElementById('fund-error').textContent = '';
   document.getElementById('fund-amount').value = '';
   document.querySelectorAll('.fund-amt-btn').forEach(b => b.classList.remove('active'));
-  loadFundCardOptions();
   document.getElementById('fund-wallet-modal').classList.add('active');
+  // Pre-load Paystack key
+  initPaystack();
 }
 
 function closeFundModal() {
@@ -5789,27 +5802,6 @@ function fundSetAmount(amt) {
   event.target.classList.add('active');
 }
 
-async function loadFundCardOptions() {
-  const container = document.getElementById('fund-card-select');
-  try {
-    const res = await authFetch(API_BASE + '/api/user/payment-methods');
-    if (!res.ok) { container.innerHTML = '<div style="color:var(--red);font-size:13px">Add a card in Wallet first</div>'; return; }
-    const { methods } = await res.json();
-    posLinkedCards = methods;
-    if (!methods.length) {
-      container.innerHTML = '<div style="font-size:13px;color:var(--text2)">No cards linked. <span style="color:var(--accent2);cursor:pointer" onclick="closeFundModal();navigateTo(\'wallet\');openAddCardModal()">Add one</span></div>';
-      return;
-    }
-    container.innerHTML = '<label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Pay With</label>' +
-      methods.map((m, i) => `<label style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;border:1px solid var(--glass-border);cursor:pointer;margin-bottom:6px;background:${i === 0 ? 'rgba(124,58,237,0.08)' : 'transparent'}">
-        <input type="radio" name="fund-card" value="${m.id}" ${i === 0 ? 'checked' : ''} style="accent-color:var(--accent)">
-        <span style="font-size:14px">${(m.brand||'Card').toUpperCase()} ····${m.last4}</span>
-      </label>`).join('');
-  } catch (e) {
-    container.innerHTML = '<div style="color:var(--red);font-size:13px">Failed to load cards</div>';
-  }
-}
-
 async function submitFundWallet() {
   const amount = parseFloat(document.getElementById('fund-amount').value);
   const errorEl = document.getElementById('fund-error');
@@ -5817,53 +5809,31 @@ async function submitFundWallet() {
   errorEl.textContent = '';
 
   if (!amount || amount < 100) { errorEl.textContent = 'Minimum amount is \u20A6100'; return; }
+  if (amount > 5000000) { errorEl.textContent = 'Maximum is \u20A65,000,000'; return; }
 
-  const cardRadio = document.querySelector('input[name="fund-card"]:checked');
-  if (!cardRadio) { errorEl.textContent = 'Select a payment card'; return; }
+  // Ensure Paystack key is loaded
+  const key = await initPaystack();
+  if (!key) {
+    errorEl.textContent = 'Payment system unavailable. Please try again later.';
+    return;
+  }
 
   btn.disabled = true;
-  btn.textContent = 'Processing...';
+  btn.textContent = 'Opening payment...';
 
   try {
-    const res = await authFetch(API_BASE + '/api/wallet/fund', {
-      method: 'POST',
-      body: JSON.stringify({ amount, currency: 'NGN', paymentMethodId: cardRadio.value })
-    });
-    const data = await res.json();
-
-    if (data.funded) {
-      showToast('Wallet funded with ' + formatNaira(amount));
+    launchPaystackPayment(amount, (data) => {
       closeFundModal();
       loadPosData();
-    } else if (data.clientSecret) {
-      // 3DS required
-      const stripe = Stripe(data.publishableKey || '');
-      const result = await stripe.confirmCardPayment(data.clientSecret);
-      if (result.error) {
-        errorEl.textContent = result.error.message;
-      } else {
-        // Confirm with backend
-        const confirmRes = await authFetch(API_BASE + '/api/wallet/fund/confirm', {
-          method: 'POST',
-          body: JSON.stringify({ paymentIntentId: result.paymentIntent.id, amount, currency: 'NGN' })
-        });
-        const confirmData = await confirmRes.json();
-        if (confirmData.funded) {
-          showToast('Wallet funded with ' + formatNaira(amount));
-          closeFundModal();
-          loadPosData();
-        } else {
-          errorEl.textContent = confirmData.error || 'Funding failed';
-        }
-      }
-    } else {
-      errorEl.textContent = data.error || 'Funding failed';
-    }
+      // Refresh wallet balance everywhere
+      if (typeof loadWalletBalance === 'function') loadWalletBalance();
+      if (typeof loadPaymentMethods === 'function') loadPaymentMethods();
+    });
   } catch (e) {
-    errorEl.textContent = 'Network error. Try again.';
+    errorEl.textContent = 'Failed to open payment. Try again.';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Fund Wallet';
+    btn.textContent = 'Pay & Fund Wallet';
   }
 }
 
