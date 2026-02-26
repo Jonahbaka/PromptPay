@@ -4257,8 +4257,10 @@ if (isStandalone) {
 
 // Register service worker + push notifications
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(async (registration) => {
-    console.log('Service worker registered');
+  navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(async (registration) => {
+    console.log('[PWA] Service worker registered, scope:', registration.scope);
+    registration.update();
+    if (registration.waiting) registration.waiting.postMessage({ type: 'SKIP_WAITING' });
 
     // Subscribe to push notifications if logged in
     const token = localStorage.getItem('promptpay_token') || localStorage.getItem('token');
