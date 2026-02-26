@@ -4159,11 +4159,70 @@ function installApp() {
     });
   } else if (isStandalone) {
     showToast('App is already installed!');
-  } else if (isIOS) {
-    showToast('Tap the Share button (box with arrow), then "Add to Home Screen"');
   } else {
-    showToast('Open browser menu (\u22EE) and tap "Add to Home Screen" or "Install app"');
+    showInstallGuide();
   }
+}
+
+function showInstallGuide() {
+  // Remove old guide if exists
+  const old = document.getElementById('pwa-install-guide');
+  if (old) old.remove();
+
+  const isChrome = /Chrome/i.test(navigator.userAgent) && !/Edge|OPR/i.test(navigator.userAgent);
+  const isSamsung = /SamsungBrowser/i.test(navigator.userAgent);
+  const isFirefox = /Firefox/i.test(navigator.userAgent);
+
+  let steps = '';
+  if (isIOS) {
+    steps = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">1</div>
+        <div>Tap the <strong>Share</strong> button <span style="font-size:20px">\u2B06</span> at the bottom of Safari</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">2</div>
+        <div>Scroll down and tap <strong>"Add to Home Screen"</strong></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">3</div>
+        <div>Tap <strong>"Add"</strong> to confirm</div>
+      </div>`;
+  } else {
+    steps = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">1</div>
+        <div>Tap the <strong>menu</strong> button <span style="font-size:22px;font-weight:bold">\u22EE</span> in the top-right corner of your browser</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">2</div>
+        <div>Tap <strong>"${isChrome ? 'Install app' : isSamsung ? 'Add page to' : isFirefox ? 'Install' : 'Add to Home screen'}"</strong></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(124,58,237,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">3</div>
+        <div>Tap <strong>"Install"</strong> to confirm</div>
+      </div>`;
+  }
+
+  const guide = document.createElement('div');
+  guide.id = 'pwa-install-guide';
+  guide.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;padding:20px;animation:pwa-slide-up 0.3s ease-out';
+  guide.innerHTML = `
+    <div style="background:#12121e;border-radius:20px;padding:28px 24px;max-width:360px;width:100%;border:1px solid rgba(255,255,255,0.1);box-shadow:0 20px 60px rgba(0,0,0,0.5)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <img src="/icons/icon-192.png" style="width:48px;height:48px;border-radius:12px" onerror="this.style.display='none'">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#fff">Install PromptPay</div>
+          <div style="font-size:13px;color:#8b92a5">Add to your home screen</div>
+        </div>
+      </div>
+      ${steps}
+      <button onclick="document.getElementById('pwa-install-guide').remove()" style="width:100%;margin-top:24px;padding:14px;border:none;border-radius:12px;background:#7c3aed;color:#fff;font-size:15px;font-weight:600;cursor:pointer">Got it</button>
+    </div>`;
+  guide.addEventListener('click', (e) => {
+    if (e.target === guide) guide.remove();
+  });
+  document.body.appendChild(guide);
 }
 
 // ALWAYS show on mobile after 3 seconds if not already installed and not dismissed
