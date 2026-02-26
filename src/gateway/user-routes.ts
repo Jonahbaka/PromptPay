@@ -1325,9 +1325,29 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       deps.logger.info(`[FUND] User ${userId} — PaymentIntent response: id=${pi.id} status=${pi.status} error=${pi.error ? JSON.stringify(pi.error) : 'none'}`);
 
       if (pi.error) {
-        const errMsg = (pi.error as Record<string, string>).message || JSON.stringify(pi.error);
-        deps.logger.error(`[FUND] User ${userId} — Stripe REJECTED PaymentIntent: ${errMsg}`);
-        res.status(400).json({ error: errMsg });
+        const stripeErr = pi.error as Record<string, unknown>;
+        const errMsg = (stripeErr.message as string) || JSON.stringify(pi.error);
+        const declineCode = stripeErr.decline_code as string || '';
+        const errCode = stripeErr.code as string || '';
+        deps.logger.error(`[FUND] User ${userId} — Stripe REJECTED PaymentIntent: ${errMsg} code=${errCode} decline=${declineCode}`);
+
+        // Give user-friendly messages for common decline reasons
+        let userMessage = errMsg;
+        if (errCode === 'card_declined') {
+          if (declineCode === 'insufficient_funds') {
+            userMessage = 'Insufficient funds on your card. Please check your balance and try again.';
+          } else if (declineCode === 'try_again_later') {
+            userMessage = 'Your bank temporarily declined the charge. Please wait a few minutes and try again, or contact your bank to enable online payments.';
+          } else {
+            userMessage = 'Your card was declined. This may happen with some Nigerian debit cards for international transactions. Please contact your bank to enable online/international payments, or try a different card.';
+          }
+        } else if (errCode === 'expired_card') {
+          userMessage = 'Your card has expired. Please add a new card.';
+        } else if (errCode === 'incorrect_cvc') {
+          userMessage = 'Card security code (CVC) was incorrect. Please remove this card and add it again.';
+        }
+
+        res.status(400).json({ error: userMessage });
         return;
       }
 
