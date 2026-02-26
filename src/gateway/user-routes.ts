@@ -354,6 +354,29 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   });
 
   // ══════════════════════════════════════════════════════════
+  // REWARD BALANCE
+  // ══════════════════════════════════════════════════════════
+
+  router.get('/api/rewards/balance', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const row = db.prepare(
+        'SELECT balance, lifetime_earned, last_credited_at FROM reward_balances WHERE user_id = ?'
+      ).get(userId) as { balance: number; lifetime_earned: number; last_credited_at: string | null } | undefined;
+
+      res.json({
+        balance: row?.balance ?? 0,
+        lifetimeEarned: row?.lifetime_earned ?? 0,
+        lastCreditedAt: row?.last_credited_at ?? null,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Reward balance error: ${msg}`);
+      res.status(500).json({ error: 'Failed to get reward balance' });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════
   // STRIPE PAYMENT METHODS
   // ══════════════════════════════════════════════════════════
 

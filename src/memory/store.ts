@@ -152,6 +152,26 @@ export class MemoryStore extends EventEmitter {
       );
       CREATE INDEX IF NOT EXISTS idx_referral_referrer ON referral_events(referrer_user_id);
 
+      -- ═══ REWARD BALANCES ═══
+      CREATE TABLE IF NOT EXISTS reward_balances (
+        user_id TEXT PRIMARY KEY,
+        balance REAL DEFAULT 0,
+        lifetime_earned REAL DEFAULT 0,
+        last_credited_at TEXT,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS reward_transactions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('referral_bonus', 'admin_credit', 'redemption', 'adjustment')),
+        reference_id TEXT,
+        description TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_reward_tx_user ON reward_transactions(user_id);
+
       -- ═══ SMART SAVINGS ═══
       CREATE TABLE IF NOT EXISTS savings_goals (
         id TEXT PRIMARY KEY,

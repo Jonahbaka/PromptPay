@@ -594,6 +594,55 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
     }
   });
 
-  deps.logger.info('Admin portal: 25 routes registered');
+  // ═══════════════════════════════════════════════════════
+  // 26. POST /admin/rewards/credit — Credit reward balance (owner-only)
+  // ═══════════════════════════════════════════════════════
+  router.post('/admin/rewards/credit', requireRole('owner'), (req: Request, res: Response) => {
+    try {
+      const { userId, amount, description } = req.body as {
+        userId: string;
+        amount: number;
+        description?: string;
+      };
+
+      if (!userId || !amount || amount <= 0) {
+        res.status(400).json({ error: 'userId and a positive amount are required' });
+        return;
+      }
+
+      // Verify user exists
+      const user = db.prepare('SELECT id, display_name FROM users WHERE id = ?')
+        .get(userId) as { id: string; display_name: string } | undefined;
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      const desc = description || `Admin credit by ${req.auth!.userId}`;
+      deps.hookEngine.referrals.adminCreditReward(userId, amount, desc);
+
+      deps.auditTrail.record('admin', 'reward_credit', userId, {
+        amount,
+        description: desc,
+        creditedBy: req.auth!.userId,
+      });
+
+      deps.logger.info(`[Admin] Credited $${amount} reward to ${user.display_name} (${userId})`);
+
+      res.json({
+        success: true,
+        userId,
+        amount,
+        userName: user.display_name,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Admin reward credit error: ${msg}`);
+      res.status(500).json({ error: 'Failed to credit reward' });
+    }
+  });
+
+  deps.logger.info('Admin portal: 26 routes registered');
   return router;
 }

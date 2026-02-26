@@ -99,16 +99,104 @@ export class ReferralEngine {
     return { success: true, referrerBonus: bonusAmount, newUserBonus: bonusAmount };
   }
 
-  /** Credit pending referral bonuses. */
+  /** Credit pending referral bonuses (delegates to 3-tx validation). */
   creditPending(): number {
-    const pending = this.db.prepare("SELECT id FROM referral_events WHERE status = 'pending'").all() as Array<{ id: string }>;
+    return this.checkAndCreditEligible();
+  }
+
+  /**
+   * For each pending referral_event, verify the referred user completed
+   * 3+ real transactions on 3+ distinct days before crediting the referrer.
+   */
+  private checkAndCreditEligible(): number {
+    const pending = this.db.prepare(
+      "SELECT id, referrer_user_id, referred_user_id, bonus_amount FROM referral_events WHERE status = 'pending'"
+    ).all() as Array<{ id: string; referrer_user_id: string; referred_user_id: string; bonus_amount: number }>;
+
+    let credited = 0;
     const now = new Date().toISOString();
 
-    for (const p of pending) {
-      this.db.prepare("UPDATE referral_events SET status = 'credited', credited_at = ? WHERE id = ?").run(now, p.id);
+    for (const evt of pending) {
+      // Check referred user has 3+ fee_ledger entries with amount > 0 on 3+ distinct days
+      const txCheck = this.db.prepare(`
+        SELECT COUNT(*) as tx_count, COUNT(DISTINCT DATE(created_at)) as distinct_days
+        FROM fee_ledger
+        WHERE user_id = ? AND amount > 0
+      `).get(evt.referred_user_id) as { tx_count: number; distinct_days: number };
+
+      if (txCheck.tx_count >= 3 && txCheck.distinct_days >= 3) {
+        // Eligible — credit the referrer's reward balance
+        this.creditRewardBalance(
+          evt.referrer_user_id,
+          evt.bonus_amount,
+          evt.id,
+          `Referral bonus: referred user completed ${txCheck.tx_count} transactions`
+        );
+        this.db.prepare(
+          "UPDATE referral_events SET status = 'credited', credited_at = ? WHERE id = ?"
+        ).run(now, evt.id);
+        credited++;
+        this.logger.info(`[Referral] Credited $${evt.bonus_amount} to ${evt.referrer_user_id} (event ${evt.id})`);
+      }
+      // Otherwise skip — will be re-checked on next daemon cycle
     }
 
-    return pending.length;
+    return credited;
+  }
+
+  /** Upsert reward balance and record a reward transaction. */
+  private creditRewardBalance(userId: string, amount: number, referenceId: string, description: string): void {
+    const now = new Date().toISOString();
+
+    // Upsert reward_balances
+    this.db.prepare(`
+      INSERT INTO reward_balances (user_id, balance, lifetime_earned, last_credited_at, created_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET
+        balance = balance + ?,
+        lifetime_earned = lifetime_earned + ?,
+        last_credited_at = ?
+    `).run(userId, amount, amount, now, now, amount, amount, now);
+
+    // Record transaction
+    this.db.prepare(`
+      INSERT INTO reward_transactions (id, user_id, amount, type, reference_id, description, created_at)
+      VALUES (?, ?, ?, 'referral_bonus', ?, ?, ?)
+    `).run(uuid(), userId, amount, referenceId, description, now);
+  }
+
+  /** Get a user's current reward balance. */
+  getRewardBalance(userId: string): { balance: number; lifetimeEarned: number; lastCreditedAt: string | null } {
+    const row = this.db.prepare(
+      'SELECT balance, lifetime_earned, last_credited_at FROM reward_balances WHERE user_id = ?'
+    ).get(userId) as { balance: number; lifetime_earned: number; last_credited_at: string | null } | undefined;
+
+    return {
+      balance: row?.balance ?? 0,
+      lifetimeEarned: row?.lifetime_earned ?? 0,
+      lastCreditedAt: row?.last_credited_at ?? null,
+    };
+  }
+
+  /** Admin-only: credit a reward balance with an admin_credit transaction type. */
+  adminCreditReward(userId: string, amount: number, description: string): void {
+    const now = new Date().toISOString();
+
+    this.db.prepare(`
+      INSERT INTO reward_balances (user_id, balance, lifetime_earned, last_credited_at, created_at)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET
+        balance = balance + ?,
+        lifetime_earned = lifetime_earned + ?,
+        last_credited_at = ?
+    `).run(userId, amount, amount, now, now, amount, amount, now);
+
+    this.db.prepare(`
+      INSERT INTO reward_transactions (id, user_id, amount, type, reference_id, description, created_at)
+      VALUES (?, ?, ?, 'admin_credit', NULL, ?, ?)
+    `).run(uuid(), userId, amount, description, now);
+
+    this.logger.info(`[Referral] Admin credited $${amount} reward to ${userId}: ${description}`);
   }
 
   /** Get referral stats */
