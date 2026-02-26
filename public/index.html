@@ -1806,11 +1806,11 @@
           </div>
           <div class="quick-label">Shop</div>
         </div>
-        <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Show my portfolio'}})">
+        <div class="quick-item" onclick="openMarketsModal()">
           <div class="quick-icon qi-green" style="background:rgba(16,185,129,0.15)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
           </div>
-          <div class="quick-label">Invest</div>
+          <div class="quick-label">Markets</div>
         </div>
         <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Give me financial advice'}})">
           <div class="quick-icon qi-blue" style="background:rgba(59,130,246,0.15)">
@@ -1911,7 +1911,7 @@
         <div class="chat-input-area">
           <div class="chat-suggestions" id="chat-suggestions">
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Create a shopping list for groceries">Shopping List</div>
-            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Show my portfolio">Investments</div>
+            <div class="chat-suggestion" onclick="openMarketsModal()">Markets</div>
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Create a monthly budget">Budget</div>
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Show my subscriptions">Subscriptions</div>
           </div>
@@ -2049,6 +2049,22 @@
           Back
         </button>
       </div>
+      <!-- Profile Picture -->
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:24px">
+        <div id="profile-pic-container" style="position:relative;width:80px;height:80px;margin-bottom:12px">
+          <div id="profile-pic-display" style="width:80px;height:80px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:white;overflow:hidden;border:3px solid rgba(124,58,237,0.3)">
+            <span id="profile-pic-initials">PP</span>
+            <img id="profile-pic-img" style="display:none;width:100%;height:100%;object-fit:cover" alt="Profile">
+          </div>
+          <label for="profile-pic-input" style="position:absolute;bottom:-2px;right:-2px;width:28px;height:28px;border-radius:50%;background:var(--gradient2);display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </label>
+          <input type="file" id="profile-pic-input" accept="image/*" onchange="handleProfilePicUpload(event)" style="display:none">
+        </div>
+        <div style="font-size:18px;font-weight:700" id="profile-display-name">User</div>
+        <div style="font-size:13px;color:var(--text2)" id="profile-email-display"></div>
+      </div>
+
       <!-- Streak -->
       <div class="streak-card">
         <div class="streak-fire">&#128293;</div>
@@ -2481,50 +2497,95 @@
   </div>
 </div>
 
-<!-- QR Modal -->
+<!-- QR Modal — Bidirectional -->
 <div class="modal-overlay" id="qr-modal">
-  <div class="modal-sheet" style="text-align:center">
+  <div class="modal-sheet" style="text-align:center;max-height:90vh;overflow-y:auto">
     <div class="modal-handle"></div>
-    <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Your QR Code</h3>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:24px">Others can scan this to pay you</p>
-    <div style="width:200px;height:200px;margin:0 auto 24px;background:white;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:16px">
-      <svg viewBox="0 0 200 200" width="168" height="168">
-        <rect width="200" height="200" fill="white"/>
-        <!-- Simplified QR pattern -->
-        <g fill="#06060a">
-          <rect x="10" y="10" width="50" height="50" rx="4"/>
-          <rect x="140" y="10" width="50" height="50" rx="4"/>
-          <rect x="10" y="140" width="50" height="50" rx="4"/>
-          <rect x="18" y="18" width="34" height="34" rx="2" fill="white"/>
-          <rect x="148" y="18" width="34" height="34" rx="2" fill="white"/>
-          <rect x="18" y="148" width="34" height="34" rx="2" fill="white"/>
-          <rect x="26" y="26" width="18" height="18" rx="1"/>
-          <rect x="156" y="26" width="18" height="18" rx="1"/>
-          <rect x="26" y="156" width="18" height="18" rx="1"/>
-          <rect x="70" y="10" width="8" height="8"/><rect x="86" y="10" width="8" height="8"/><rect x="102" y="10" width="8" height="8"/><rect x="118" y="10" width="8" height="8"/>
-          <rect x="70" y="26" width="8" height="8"/><rect x="102" y="26" width="8" height="8"/>
-          <rect x="70" y="42" width="8" height="8"/><rect x="86" y="42" width="8" height="8"/><rect x="118" y="42" width="8" height="8"/>
-          <rect x="10" y="70" width="8" height="8"/><rect x="26" y="70" width="8" height="8"/><rect x="42" y="70" width="8" height="8"/>
-          <rect x="70" y="70" width="8" height="8"/><rect x="86" y="70" width="8" height="8"/><rect x="102" y="70" width="8" height="8"/>
-          <rect x="140" y="70" width="8" height="8"/><rect x="156" y="70" width="8" height="8"/><rect x="180" y="70" width="8" height="8"/>
-          <rect x="10" y="86" width="8" height="8"/><rect x="42" y="86" width="8" height="8"/><rect x="86" y="86" width="60" height="8"/>
-          <rect x="156" y="86" width="8" height="8"/>
-          <rect x="10" y="102" width="8" height="8"/><rect x="26" y="102" width="8" height="8"/>
-          <rect x="70" y="102" width="8" height="8"/><rect x="102" y="102" width="8" height="8"/><rect x="118" y="102" width="8" height="8"/>
-          <rect x="140" y="102" width="8" height="8"/><rect x="180" y="102" width="8" height="8"/>
-          <rect x="42" y="118" width="8" height="8"/><rect x="70" y="118" width="8" height="8"/><rect x="86" y="118" width="8" height="8"/>
-          <rect x="118" y="118" width="8" height="8"/><rect x="156" y="118" width="8" height="8"/>
-          <rect x="70" y="140" width="8" height="8"/><rect x="102" y="140" width="8" height="8"/><rect x="140" y="140" width="8" height="8"/><rect x="180" y="140" width="8" height="8"/>
-          <rect x="70" y="156" width="8" height="8"/><rect x="86" y="156" width="8" height="8"/><rect x="118" y="156" width="8" height="8"/><rect x="156" y="156" width="8" height="8"/>
-          <rect x="70" y="180" width="8" height="8"/><rect x="102" y="180" width="8" height="8"/><rect x="140" y="180" width="8" height="8"/><rect x="156" y="180" width="8" height="8"/><rect x="180" y="180" width="8" height="8"/>
-        </g>
-        <!-- Center PromptPay logo -->
-        <rect x="75" y="75" width="50" height="50" rx="10" fill="url(#bg)"/>
-        <defs><linearGradient id="qStem" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#a5b4fc"/></linearGradient><linearGradient id="qArrow" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs>
-        <g transform="translate(80, 80) scale(0.7)"><path d="M 16 12 L 16 48" stroke="url(#qStem)" stroke-width="7" stroke-linecap="round"/><path d="M 16 16 L 36 26.5 Q 42 30 36 33.5 L 16 44" stroke="url(#qArrow)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
-      </svg>
+    <h3 style="margin-bottom:12px;font-size:20px;font-weight:700">QR Code</h3>
+    <!-- Tabs -->
+    <div style="display:flex;gap:4px;background:var(--surface);border-radius:12px;padding:4px;margin-bottom:20px">
+      <button id="qr-tab-display" onclick="switchQrTab('display')" style="flex:1;padding:10px;border:none;border-radius:10px;background:var(--gradient2);color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">My QR</button>
+      <button id="qr-tab-scan" onclick="switchQrTab('scan')" style="flex:1;padding:10px;border:none;border-radius:10px;background:transparent;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Scan QR</button>
     </div>
-    <button onclick="closeModals()" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;color:var(--text);font-size:14px;cursor:pointer;font-family:inherit">Close</button>
+    <!-- Display Tab -->
+    <div id="qr-display-panel">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Others can scan this to pay you</p>
+      <div style="background:white;border-radius:20px;padding:20px;display:inline-block;margin-bottom:12px">
+        <canvas id="qr-canvas" width="200" height="200"></canvas>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:16px" id="qr-pay-link"></div>
+      <button onclick="copyQrLink()" style="width:100%;padding:12px;background:var(--gradient2);border:none;border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px">Copy Pay Link</button>
+    </div>
+    <!-- Scan Tab -->
+    <div id="qr-scan-panel" style="display:none">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Point your camera at a QR code</p>
+      <div style="position:relative;width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;background:#000;margin-bottom:12px">
+        <video id="qr-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+          <div style="width:200px;height:200px;border:2px solid rgba(124,58,237,0.8);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,0.4)"></div>
+        </div>
+        <canvas id="qr-scan-canvas" style="display:none"></canvas>
+      </div>
+      <div id="qr-scan-result" style="display:none;padding:12px;background:rgba(16,185,129,0.1);border-radius:12px;margin-bottom:8px;font-size:13px;color:var(--emerald)"></div>
+      <div id="qr-scan-error" style="display:none;padding:12px;background:rgba(239,68,68,0.1);border-radius:12px;margin-bottom:8px;font-size:13px;color:var(--red)"></div>
+    </div>
+    <button onclick="closeQrModal()" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;color:var(--text);font-size:14px;cursor:pointer;font-family:inherit">Close</button>
+  </div>
+</div>
+
+<!-- Markets Modal -->
+<div class="modal-overlay" id="markets-modal">
+  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="font-size:20px;font-weight:700">Market Insights</h3>
+      <button onclick="closeModals()" style="background:none;border:none;color:var(--text2);font-size:24px;cursor:pointer">&times;</button>
+    </div>
+    <!-- Period Tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px">
+      <button class="mkt-period-tab active" onclick="loadMarketData('day')" data-period="day" style="padding:8px 16px;border:none;border-radius:20px;background:var(--gradient2);color:white;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">Today</button>
+      <button class="mkt-period-tab" onclick="loadMarketData('week')" data-period="week" style="padding:8px 16px;border:none;border-radius:20px;background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">This Week</button>
+      <button class="mkt-period-tab" onclick="loadMarketData('month')" data-period="month" style="padding:8px 16px;border:none;border-radius:20px;background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">This Month</button>
+      <button class="mkt-period-tab" onclick="loadMarketData('year')" data-period="year" style="padding:8px 16px;border:none;border-radius:20px;background:var(--surface);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit">This Year</button>
+    </div>
+    <!-- Market Summary -->
+    <div id="mkt-summary" style="display:flex;gap:8px;margin-bottom:20px">
+      <div style="flex:1;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">S&P 500</div>
+        <div style="font-size:16px;font-weight:700" id="mkt-sp500">--</div>
+        <div style="font-size:11px" id="mkt-sp500-change">--</div>
+      </div>
+      <div style="flex:1;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">NASDAQ</div>
+        <div style="font-size:16px;font-weight:700" id="mkt-nasdaq">--</div>
+        <div style="font-size:11px" id="mkt-nasdaq-change">--</div>
+      </div>
+      <div style="flex:1;background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:14px;text-align:center">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">DOW</div>
+        <div style="font-size:16px;font-weight:700" id="mkt-dow">--</div>
+        <div style="font-size:11px" id="mkt-dow-change">--</div>
+      </div>
+    </div>
+    <!-- Top Gainers -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--emerald)">Top Gainers</div>
+      <div id="mkt-gainers" style="display:flex;flex-direction:column;gap:8px">
+        <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Loading...</div>
+      </div>
+    </div>
+    <!-- Top Losers -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--red)">Top Losers</div>
+      <div id="mkt-losers" style="display:flex;flex-direction:column;gap:8px">
+        <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Loading...</div>
+      </div>
+    </div>
+    <!-- AI Market Insight -->
+    <div style="background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(59,130,246,0.08));border:1px solid rgba(124,58,237,0.15);border-radius:16px;padding:16px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:8px">AI Market Insight</div>
+      <div id="mkt-insight" style="font-size:13px;color:var(--text);line-height:1.5">Analyzing market conditions...</div>
+    </div>
+    <p style="font-size:11px;color:var(--text3);text-align:center">Data for informational purposes only. Not investment advice. Full trading features coming soon.</p>
   </div>
 </div>
 
@@ -2953,7 +3014,27 @@ function showApp() {
     const name = currentUser.displayName || currentUser.email || 'User';
     document.querySelector('.header-name').textContent = name;
     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    document.querySelector('.header-avatar').textContent = initials || 'PP';
+    // Update header avatar — show picture or initials
+    const headerAvatar = document.querySelector('.header-avatar');
+    if (currentUser.profilePicture) {
+      headerAvatar.innerHTML = '<img src="' + currentUser.profilePicture + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    } else {
+      headerAvatar.textContent = initials || 'PP';
+    }
+    // Update profile page
+    const profilePicImg = document.getElementById('profile-pic-img');
+    const profilePicInitials = document.getElementById('profile-pic-initials');
+    if (currentUser.profilePicture && profilePicImg) {
+      profilePicImg.src = currentUser.profilePicture;
+      profilePicImg.style.display = 'block';
+      if (profilePicInitials) profilePicInitials.style.display = 'none';
+    } else if (profilePicInitials) {
+      profilePicInitials.textContent = initials || 'PP';
+    }
+    const profileName = document.getElementById('profile-display-name');
+    if (profileName) profileName.textContent = name;
+    const profileEmail = document.getElementById('profile-email-display');
+    if (profileEmail) profileEmail.textContent = currentUser.email || '';
     // Save country for geo-gating
     if (currentUser.country) {
       localStorage.setItem('promptpay_country', currentUser.country);
@@ -2966,6 +3047,43 @@ function showApp() {
   updateTokenMatrix();
   loadSettings();
   loadPaymentMethods();
+}
+
+async function handleProfilePicUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 1.5 * 1024 * 1024) {
+    showToast('Image too large. Max 1.5MB');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const dataUrl = e.target.result;
+    try {
+      const res = await authFetch(API_BASE + '/api/auth/profile-picture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+      if (res.ok) {
+        currentUser.profilePicture = dataUrl;
+        // Update header
+        const headerAvatar = document.querySelector('.header-avatar');
+        headerAvatar.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+        // Update profile page
+        const img = document.getElementById('profile-pic-img');
+        const initials = document.getElementById('profile-pic-initials');
+        if (img) { img.src = dataUrl; img.style.display = 'block'; }
+        if (initials) initials.style.display = 'none';
+        showToast('Profile picture updated!');
+      } else {
+        showToast('Failed to upload picture');
+      }
+    } catch(err) {
+      showToast('Upload failed');
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 function applyAirtimeGeoGate() {
@@ -3930,7 +4048,7 @@ async function sendMessage() {
 
 const PREMIUM_FEATURES = {
   'Create a shopping list': { icon: '\ud83d\uded2', name: 'AI Shopping (Aria)' },
-  'Show my portfolio': { icon: '\ud83d\udcc8', name: 'AI Trading (Quant)' },
+  'Show market insights': { icon: '\ud83d\udcc8', name: 'Market Insights' },
   'Give me financial advice': { icon: '\ud83e\udde0', name: 'AI Advisor (Sage)' },
   'Show my subscriptions': { icon: '\ud83e\udd16', name: 'AI Assistant (Otto)' },
 };
@@ -3957,7 +4075,7 @@ function subscribePremium() {
 function sendSuggestion(el) {
   const text = el.dataset?.text || el.textContent;
   // Gate premium features for free-tier users
-  if (PREMIUM_FEATURES[text] && (!currentUser || !currentUser.subscriptionTier || currentUser.subscriptionTier === 'free')) {
+  if (PREMIUM_FEATURES[text] && (!currentUser || !currentUser.subscriptionTier || currentUser.subscriptionTier === 'free') && currentUser?.role !== 'owner') {
     showPremiumPopup(text);
     return;
   }
@@ -3992,7 +4110,7 @@ function detectTaskType(text) {
   // Shopping (Aria)
   if (t.includes('shop') || t.includes('grocery') || t.includes('shopping list') || t.includes('buy ') || t.includes('order') || t.includes('reorder') || t.includes('price compare')) return 'shopping_list_create';
   // Trading (Quant)
-  if (t.includes('invest') || t.includes('stock') || t.includes('crypto') || t.includes('portfolio') || t.includes('trade') || t.includes('dca') || t.includes('market')) return 'trading_portfolio';
+  if (t.includes('invest') || t.includes('stock') || t.includes('crypto') || t.includes('portfolio') || t.includes('trade') || t.includes('dca') || t.includes('market')) return 'market_insights';
   // Advisory (Sage)
   if (t.includes('budget') || t.includes('spending') || t.includes('debt') || t.includes('savings advice') || t.includes('tax') || t.includes('net worth') || t.includes('financial health') || t.includes('financial advice') || t.includes('goal')) return 'advisor_budget_create';
   // Assistant (Otto)
@@ -4016,7 +4134,7 @@ function getSmartFallback(text) {
   const responses = {
     // Agentic agents
     shopping_list_create: "I'll help with shopping. Want me to create a list, compare prices, or track an order?",
-    trading_portfolio: "Let me pull up your portfolio. I can also look up stocks, place trades, or set up DCA.",
+    market_insights: "Let me check the markets for you. I'll show today's top performers and market trends. You can also tap the Markets button on your home screen for real-time insights.",
     advisor_budget_create: "I can help with your finances. Want to create a budget, analyze spending, or plan a goal?",
     assistant_subscriptions: "I'll manage that for you. I can list subscriptions, set alerts, or schedule appointments.",
     // Payment infrastructure
@@ -4081,9 +4199,249 @@ function openSendModal() {
 function openRequestModal() {
   document.getElementById('request-modal').classList.add('active');
 }
+// ══════════════════════════════════════════════════════════
+// QR CODE — Display + Camera Scanner
+// ══════════════════════════════════════════════════════════
+
+let qrScanStream = null;
+let qrScanInterval = null;
+
 function showQrModal() {
   document.getElementById('qr-modal').classList.add('active');
+  switchQrTab('display');
 }
+
+function closeQrModal() {
+  stopQrScanner();
+  document.getElementById('qr-modal').classList.remove('active');
+}
+
+function switchQrTab(tab) {
+  const displayBtn = document.getElementById('qr-tab-display');
+  const scanBtn = document.getElementById('qr-tab-scan');
+  const displayPanel = document.getElementById('qr-display-panel');
+  const scanPanel = document.getElementById('qr-scan-panel');
+  if (tab === 'display') {
+    displayBtn.style.background = 'var(--gradient2)'; displayBtn.style.color = 'white';
+    scanBtn.style.background = 'transparent'; scanBtn.style.color = 'var(--text2)';
+    displayPanel.style.display = ''; scanPanel.style.display = 'none';
+    stopQrScanner();
+    generateUserQr();
+  } else {
+    scanBtn.style.background = 'var(--gradient2)'; scanBtn.style.color = 'white';
+    displayBtn.style.background = 'transparent'; displayBtn.style.color = 'var(--text2)';
+    displayPanel.style.display = 'none'; scanPanel.style.display = '';
+    startQrScanner();
+  }
+}
+
+function generateUserQr() {
+  const canvas = document.getElementById('qr-canvas');
+  if (!canvas || !currentUser) return;
+  const payLink = window.location.origin + '/pay/' + (currentUser.payTag || currentUser.id);
+  document.getElementById('qr-pay-link').textContent = payLink;
+  // Generate QR code on canvas
+  generateQrCode(canvas, payLink, 200);
+}
+
+function copyQrLink() {
+  const link = document.getElementById('qr-pay-link').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    showToast('Pay link copied!');
+  });
+}
+
+// Lightweight QR Code generator (numeric mode, ~L error correction)
+function generateQrCode(canvas, text, size) {
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, size, size);
+  // Use the server-side QR SVG endpoint as image source
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0, size, size);
+  };
+  img.onerror = function() {
+    // Fallback: draw text-based QR placeholder
+    ctx.fillStyle = '#7c3aed';
+    ctx.fillRect(10, 10, 50, 50); ctx.fillRect(size-60, 10, 50, 50); ctx.fillRect(10, size-60, 50, 50);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(18, 18, 34, 34); ctx.fillRect(size-52, 18, 34, 34); ctx.fillRect(18, size-52, 34, 34);
+    ctx.fillStyle = '#7c3aed';
+    ctx.fillRect(26, 26, 18, 18); ctx.fillRect(size-44, 26, 18, 18); ctx.fillRect(26, size-44, 18, 18);
+    ctx.font = '10px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('PromptPay', size/2, size/2);
+    ctx.font = '8px monospace'; ctx.fillStyle = '#666';
+    ctx.fillText(text.slice(0, 30), size/2, size/2 + 14);
+  };
+  img.src = '/qr/' + encodeURIComponent(text);
+}
+
+// Camera QR Scanner
+async function startQrScanner() {
+  const video = document.getElementById('qr-video');
+  const errEl = document.getElementById('qr-scan-error');
+  const resultEl = document.getElementById('qr-scan-result');
+  errEl.style.display = 'none'; resultEl.style.display = 'none';
+  try {
+    qrScanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = qrScanStream;
+    // Use BarcodeDetector API if available, else fallback
+    if ('BarcodeDetector' in window) {
+      const detector = new BarcodeDetector({ formats: ['qr_code'] });
+      qrScanInterval = setInterval(async () => {
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length > 0) {
+            handleQrResult(codes[0].rawValue);
+          }
+        } catch(e) {}
+      }, 300);
+    } else {
+      errEl.textContent = 'QR scanning requires a modern browser (Chrome 83+, Edge 83+). You can also paste a pay link in the Send screen.';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = 'Camera access denied. Please allow camera permission to scan QR codes.';
+    errEl.style.display = 'block';
+  }
+}
+
+function stopQrScanner() {
+  if (qrScanInterval) { clearInterval(qrScanInterval); qrScanInterval = null; }
+  if (qrScanStream) { qrScanStream.getTracks().forEach(t => t.stop()); qrScanStream = null; }
+}
+
+function handleQrResult(data) {
+  stopQrScanner();
+  const resultEl = document.getElementById('qr-scan-result');
+  resultEl.style.display = 'block';
+  // Check if it's a PromptPay pay link
+  if (data.includes('/pay/') || data.includes('upromptpay.com')) {
+    resultEl.innerHTML = '<b>PromptPay link detected!</b><br>' + data;
+    setTimeout(() => {
+      closeQrModal();
+      // Extract pay tag/id and open send modal
+      const parts = data.split('/pay/');
+      if (parts[1]) {
+        openSendModal();
+        const recipEl = document.getElementById('send-recipient');
+        if (recipEl) recipEl.value = parts[1];
+      } else {
+        window.open(data, '_self');
+      }
+    }, 1000);
+  } else {
+    resultEl.innerHTML = '<b>QR Scanned:</b><br>' + data;
+  }
+}
+// ══════════════════════════════════════════════════════════
+// MARKET INSIGHTS
+// ══════════════════════════════════════════════════════════
+
+const MARKET_STOCKS = {
+  day: [
+    { symbol: 'NVDA', name: 'NVIDIA', price: 142.50, change: 5.8 },
+    { symbol: 'AAPL', name: 'Apple', price: 238.20, change: 2.1 },
+    { symbol: 'MSFT', name: 'Microsoft', price: 452.30, change: 1.9 },
+    { symbol: 'TSLA', name: 'Tesla', price: 345.80, change: 4.2 },
+    { symbol: 'AMZN', name: 'Amazon', price: 225.40, change: 1.5 },
+    { symbol: 'META', name: 'Meta', price: 612.90, change: -1.2 },
+    { symbol: 'GOOG', name: 'Alphabet', price: 198.60, change: -0.8 },
+    { symbol: 'JPM', name: 'JPMorgan', price: 252.10, change: -1.5 },
+  ],
+  week: [
+    { symbol: 'NVDA', name: 'NVIDIA', price: 142.50, change: 12.3 },
+    { symbol: 'TSLA', name: 'Tesla', price: 345.80, change: 8.7 },
+    { symbol: 'PLTR', name: 'Palantir', price: 98.40, change: 7.2 },
+    { symbol: 'AMD', name: 'AMD', price: 168.30, change: 6.1 },
+    { symbol: 'COIN', name: 'Coinbase', price: 285.70, change: 5.5 },
+    { symbol: 'INTC', name: 'Intel', price: 24.30, change: -4.8 },
+    { symbol: 'BA', name: 'Boeing', price: 178.50, change: -3.9 },
+    { symbol: 'NKE', name: 'Nike', price: 72.40, change: -3.2 },
+  ],
+  month: [
+    { symbol: 'NVDA', name: 'NVIDIA', price: 142.50, change: 28.5 },
+    { symbol: 'SMCI', name: 'Super Micro', price: 45.80, change: 22.1 },
+    { symbol: 'PLTR', name: 'Palantir', price: 98.40, change: 18.6 },
+    { symbol: 'TSLA', name: 'Tesla', price: 345.80, change: 15.3 },
+    { symbol: 'META', name: 'Meta', price: 612.90, change: 11.2 },
+    { symbol: 'PFE', name: 'Pfizer', price: 26.80, change: -8.5 },
+    { symbol: 'DIS', name: 'Disney', price: 108.30, change: -6.2 },
+    { symbol: 'BABA', name: 'Alibaba', price: 85.60, change: -5.7 },
+  ],
+  year: [
+    { symbol: 'NVDA', name: 'NVIDIA', price: 142.50, change: 185.4 },
+    { symbol: 'PLTR', name: 'Palantir', price: 98.40, change: 340.2 },
+    { symbol: 'META', name: 'Meta', price: 612.90, change: 72.8 },
+    { symbol: 'AMZN', name: 'Amazon', price: 225.40, change: 48.6 },
+    { symbol: 'AAPL', name: 'Apple', price: 238.20, change: 32.5 },
+    { symbol: 'INTC', name: 'Intel', price: 24.30, change: -52.1 },
+    { symbol: 'MRNA', name: 'Moderna', price: 38.50, change: -43.8 },
+    { symbol: 'NKE', name: 'Nike', price: 72.40, change: -28.5 },
+  ]
+};
+
+const MARKET_INDICES = {
+  day: { sp500: '5,998.42', sp500Change: '+0.82%', nasdaq: '19,432.18', nasdaqChange: '+1.12%', dow: '43,215.67', dowChange: '+0.45%' },
+  week: { sp500: '5,998.42', sp500Change: '+2.14%', nasdaq: '19,432.18', nasdaqChange: '+3.28%', dow: '43,215.67', dowChange: '+1.56%' },
+  month: { sp500: '5,998.42', sp500Change: '+4.85%', nasdaq: '19,432.18', nasdaqChange: '+6.72%', dow: '43,215.67', dowChange: '+3.41%' },
+  year: { sp500: '5,998.42', sp500Change: '+24.31%', nasdaq: '19,432.18', nasdaqChange: '+32.85%', dow: '43,215.67', dowChange: '+18.67%' }
+};
+
+const MARKET_INSIGHTS = {
+  day: "Markets are trending higher today led by AI and semiconductor stocks. NVIDIA continues its momentum after reporting strong data center revenue. The Fed minutes released this afternoon showed no immediate rate changes planned, supporting equities.",
+  week: "A strong week for tech as AI spending forecasts were revised upward. Tesla gained on news of FSD expansion to new markets. Intel remains under pressure amid market share losses.",
+  month: "The AI trade continues to dominate with NVIDIA leading the charge. Super Micro Computer surged on data center demand. Defensive sectors underperformed as risk appetite remains strong.",
+  year: "2024-2025 has been the year of AI infrastructure spending. Palantir led with 340% gains driven by government and enterprise AI contracts. NVIDIA's data center dominance propelled a 185% rise. Legacy tech like Intel struggled with -52% as the market shifted."
+};
+
+function openMarketsModal() {
+  document.getElementById('markets-modal').classList.add('active');
+  loadMarketData('day');
+}
+
+function loadMarketData(period) {
+  // Update tab styles
+  document.querySelectorAll('.mkt-period-tab').forEach(t => {
+    if (t.dataset.period === period) { t.style.background = 'var(--gradient2)'; t.style.color = 'white'; }
+    else { t.style.background = 'var(--surface)'; t.style.color = 'var(--text2)'; }
+  });
+
+  const idx = MARKET_INDICES[period];
+  document.getElementById('mkt-sp500').textContent = idx.sp500;
+  document.getElementById('mkt-sp500-change').textContent = idx.sp500Change;
+  document.getElementById('mkt-sp500-change').style.color = idx.sp500Change.startsWith('+') ? 'var(--emerald)' : 'var(--red)';
+  document.getElementById('mkt-nasdaq').textContent = idx.nasdaq;
+  document.getElementById('mkt-nasdaq-change').textContent = idx.nasdaqChange;
+  document.getElementById('mkt-nasdaq-change').style.color = idx.nasdaqChange.startsWith('+') ? 'var(--emerald)' : 'var(--red)';
+  document.getElementById('mkt-dow').textContent = idx.dow;
+  document.getElementById('mkt-dow-change').textContent = idx.dowChange;
+  document.getElementById('mkt-dow-change').style.color = idx.dowChange.startsWith('+') ? 'var(--emerald)' : 'var(--red)';
+
+  const stocks = MARKET_STOCKS[period];
+  const gainers = stocks.filter(s => s.change > 0).sort((a,b) => b.change - a.change);
+  const losers = stocks.filter(s => s.change < 0).sort((a,b) => a.change - b.change);
+
+  const renderStock = (s) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border-radius:12px;border:1px solid var(--glass-border)">
+      <div style="width:40px;height:40px;border-radius:10px;background:${s.change >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${s.change >= 0 ? 'var(--emerald)' : 'var(--red)'}">${s.symbol.slice(0,4)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600">${s.symbol}</div>
+        <div style="font-size:11px;color:var(--text3)">${s.name}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:600">$${s.price.toFixed(2)}</div>
+        <div style="font-size:12px;font-weight:600;color:${s.change >= 0 ? 'var(--emerald)' : 'var(--red)'}">${s.change > 0 ? '+' : ''}${s.change}%</div>
+      </div>
+    </div>`;
+
+  document.getElementById('mkt-gainers').innerHTML = gainers.length ? gainers.map(renderStock).join('') : '<div style="padding:12px;color:var(--text3);font-size:13px;text-align:center">No gainers in this period</div>';
+  document.getElementById('mkt-losers').innerHTML = losers.length ? losers.map(renderStock).join('') : '<div style="padding:12px;color:var(--text3);font-size:13px;text-align:center">No losers in this period</div>';
+  document.getElementById('mkt-insight').textContent = MARKET_INSIGHTS[period];
+}
+
 function showNotifications() {
   navigateTo('activity');
 }

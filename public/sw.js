@@ -2,7 +2,7 @@
 // PromptPay Service Worker — PWA + Offline Support
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'promptpay-v1.5';
+const CACHE_NAME = 'promptpay-v2.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,7 +11,7 @@ const STATIC_ASSETS = [
   '/icons/icon-512.png',
 ];
 
-// Install — cache shell (external fonts cached lazily via fetch handler)
+// Install — cache shell
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Skip API requests (never cache)
+  // Skip API requests, WebSocket, health checks
   if (request.url.includes('/api/') || request.url.includes('/ws') || request.url.includes('/health')) {
     return;
   }
@@ -48,7 +48,6 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        // Clone and cache successful responses
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
@@ -56,10 +55,8 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // Offline — serve from cache
         return caches.match(request).then((cached) => {
           if (cached) return cached;
-          // For navigation requests, serve the shell
           if (request.mode === 'navigate') {
             return caches.match('/');
           }
@@ -69,16 +66,23 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Push notifications (future)
+// Push notifications
 self.addEventListener('push', (event) => {
   if (!event.data) return;
-  const data = event.data.json();
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: 'PromptPay', body: event.data.text() };
+  }
   event.waitUntil(
     self.registration.showNotification(data.title || 'PromptPay', {
       body: data.body || 'You have a new notification',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      data: data.url ? { url: data.url } : undefined,
+      vibrate: [100, 50, 100],
+      data: data.url ? { url: data.url } : { url: '/' },
+      actions: data.actions || [],
     })
   );
 });
@@ -86,5 +90,15 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url || '/';
-  event.waitUntil(clients.openWindow(url));
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clients) => {
+      // Focus existing window if open
+      for (const client of clients) {
+        if (client.url.includes(self.registration.scope) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });

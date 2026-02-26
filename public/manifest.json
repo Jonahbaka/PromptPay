@@ -2,8 +2,10 @@
   "name": "PromptPay",
   "short_name": "PromptPay",
   "description": "AI-Powered Payments Platform — Send money, pay bills, and manage finances using natural language commands.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
+  "id": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#06060a",
   "theme_color": "#06060a",
@@ -29,6 +31,17 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
   "prefer_related_applications": false,
-  "related_applications": []
+  "related_applications": [],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }

@@ -27,7 +27,7 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   const server = createServer(app);
   const wss = new WebSocketServer({ server, path: '/ws' });
 
-  app.use(express.json({ limit: '10mb' }));
+  app.use(express.json({ limit: '5mb' }));
 
   // ── Serve static frontend ──
   const __dirname = path.dirname(fileURLToPath(import.meta.url));

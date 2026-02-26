@@ -174,7 +174,36 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       status: user.status,
       lastLoginAt: user.last_login_at,
       createdAt: user.created_at,
+      profilePicture: user.profile_picture || null,
     });
+  });
+
+  // ── Profile Picture Upload ──
+  router.post('/api/auth/profile-picture', authenticate, (req: Request, res: Response) => {
+    const { image } = req.body as { image?: string };
+    if (!image || typeof image !== 'string') {
+      res.status(400).json({ error: 'Image data required (base64)' });
+      return;
+    }
+    // Validate it's a data URL (image/png, image/jpeg, image/webp)
+    if (!image.startsWith('data:image/')) {
+      res.status(400).json({ error: 'Invalid image format. Must be data:image/ URL' });
+      return;
+    }
+    // Limit to ~2MB base64
+    if (image.length > 2 * 1024 * 1024) {
+      res.status(400).json({ error: 'Image too large. Max 1.5MB' });
+      return;
+    }
+    db.prepare('UPDATE users SET profile_picture = ?, updated_at = ? WHERE id = ?')
+      .run(image, new Date().toISOString(), req.auth!.userId);
+    res.json({ success: true });
+  });
+
+  router.delete('/api/auth/profile-picture', authenticate, (req: Request, res: Response) => {
+    db.prepare('UPDATE users SET profile_picture = NULL, updated_at = ? WHERE id = ?')
+      .run(new Date().toISOString(), req.auth!.userId);
+    res.json({ success: true });
   });
 
   // ── Get User Settings ──

@@ -872,6 +872,10 @@ export class MemoryStore extends EventEmitter {
     try {
       this.db.exec(`ALTER TABLE users ADD COLUMN phone_number TEXT DEFAULT NULL`);
     } catch { /* column already exists */ }
+
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN profile_picture TEXT DEFAULT NULL`);
+    } catch { /* column already exists */ }
   }
 
   getDb(): Database.Database {
