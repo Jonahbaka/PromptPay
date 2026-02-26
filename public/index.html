@@ -3091,11 +3091,12 @@ function applyAirtimeGeoGate() {
   const airtimeBtn = document.getElementById('airtime-quick-btn');
   const billsBtn = document.getElementById('bills-quick-btn');
   const isAfrican = ['NG','GH','KE','UG','ZA','TZ','CM','SN','ET'].includes(country);
+  const owner = isOwner();
   if (airtimeBtn) {
-    airtimeBtn.style.display = (isAfrican && !NON_AIRTIME_COUNTRIES.includes(country)) ? '' : 'none';
+    airtimeBtn.style.display = (owner || (isAfrican && !NON_AIRTIME_COUNTRIES.includes(country))) ? '' : 'none';
   }
   if (billsBtn) {
-    billsBtn.style.display = isAfrican ? '' : 'none';
+    billsBtn.style.display = (owner || isAfrican) ? '' : 'none';
   }
 }
 
@@ -3710,7 +3711,7 @@ function renderMobileWallets() {
   if (!list) return;
   const country = getUserCountry();
   const momoCountries = ['GH', 'UG', 'KE', 'TZ', 'CM', 'SN', 'ET'];
-  if (!momoCountries.includes(country)) { if (section) section.style.display = 'none'; return; }
+  if (!isOwner() && !momoCountries.includes(country)) { if (section) section.style.display = 'none'; return; }
   if (section) section.style.display = 'block';
 
   if (userMobileWallets.length === 0) {
@@ -3735,7 +3736,9 @@ function openMomoModal() {
   const providers = { GH: ['mtn','vodafone','airteltigo'], UG: ['mtn','airtel'], KE: ['mpesa'], TZ: ['mpesa','vodacom','tigo','airtel'], CM: ['mtn','orange'], SN: ['orange','wave'], ET: ['telebirr'] };
   const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money', vodacom: 'Vodacom M-Pesa', orange: 'Orange Money', wave: 'Wave', telebirr: 'Telebirr', tigo: 'Tigo Pesa' };
   const select = document.getElementById('momo-provider');
-  const opts = providers[country] || [];
+  // Owner sees all providers for testing
+  const allProviders = ['mtn','vodafone','airteltigo','mpesa','airtel','vodacom','orange','wave','telebirr','tigo'];
+  const opts = isOwner() ? allProviders : (providers[country] || []);
   select.innerHTML = '<option value="">Select provider</option>' + opts.map(p => `<option value="${p}">${providerNames[p] || p}</option>`).join('');
   const phonePh = { GH: '+233...', UG: '+256...', KE: '+254...', TZ: '+255...', CM: '+237...', SN: '+221...', ET: '+251...' };
   document.getElementById('momo-phone').placeholder = phonePh[country] || '+...';
@@ -3798,8 +3801,9 @@ function updateSendModal() {
   if (tabs) {
     const bankTab = tabs.querySelector('[data-type="bank"]');
     const momoTab = tabs.querySelector('[data-type="mobile_money"]');
-    if (bankTab) bankTab.style.display = bankCountries.includes(country) ? '' : 'none';
-    if (momoTab) momoTab.style.display = momoCountries.includes(country) ? '' : 'none';
+    const owner = isOwner();
+    if (bankTab) bankTab.style.display = (owner || bankCountries.includes(country)) ? '' : 'none';
+    if (momoTab) momoTab.style.display = (owner || momoCountries.includes(country)) ? '' : 'none';
 
     // Default to best tab for country
     if (country === 'KE') switchSendType('mobile_money');
@@ -5078,9 +5082,9 @@ let airtimeRecipient = 'self'; // 'self' or 'other'
 
 // ── Airtime Modal ──
 function openAirtimeModal() {
-  // Check if user country supports airtime
+  // Check if user country supports airtime (owners bypass)
   const userCountry = getUserCountry();
-  if (NON_AIRTIME_COUNTRIES.includes(userCountry)) {
+  if (!isOwner() && NON_AIRTIME_COUNTRIES.includes(userCountry)) {
     showToast('Airtime top-up is available for Africa only');
     return;
   }
@@ -5125,6 +5129,10 @@ function getUserCountry() {
   // Check user profile first, then localStorage
   if (currentUser && currentUser.country) return currentUser.country;
   return localStorage.getItem('promptpay_country') || '';
+}
+
+function isOwner() {
+  return currentUser && currentUser.role === 'owner';
 }
 
 // Auto-detect country via IP on first visit (non-blocking)
