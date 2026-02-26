@@ -12,7 +12,7 @@ import type { MemoryStore } from '../memory/store.js';
 import type { LoggerHandle, CommunicationChannel } from '../core/types.js';
 import type { EmailChannel } from '../channels/email.js';
 import type { PushChannel } from '../channels/push.js';
-import { ensureStripeCustomer } from '../providers/stripe.js';
+// ensureStripeCustomer moved inline as getOrCreateStripeCustomer to prevent duplicate customer creation
 import { detectOperator, sendTopup, getOperatorById, getDataBundles, sendDataTopup } from '../providers/reloadly.js';
 import {
   initiateCall, getCallRate, searchNumbers, orderNumber, listOwnedNumbers,
@@ -434,16 +434,68 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   }
 
   async function getOrCreateStripeCustomer(userId: string): Promise<string> {
-    const row = db.prepare('SELECT stripe_customer_id, email FROM users WHERE id = ?')
-      .get(userId) as { stripe_customer_id: string | null; email: string } | undefined;
-    if (row?.stripe_customer_id) return row.stripe_customer_id;
+    const row = db.prepare('SELECT stripe_customer_id, email, display_name FROM users WHERE id = ?')
+      .get(userId) as { stripe_customer_id: string | null; email: string; display_name: string | null } | undefined;
 
+    // 1. If we have a stored customer ID, verify it's still valid and has payment methods
+    if (row?.stripe_customer_id) {
+      try {
+        const existing = await stripeRequest(`/customers/${row.stripe_customer_id}`, null, 'GET');
+        if (existing.id && !existing.deleted) {
+          return row.stripe_customer_id;
+        }
+      } catch { /* customer may have been deleted, continue */ }
+    }
+
+    // 2. Search Stripe for any existing customer with this user's email (handles duplicates)
+    if (row?.email) {
+      try {
+        const params = new URLSearchParams();
+        params.set('email', row.email);
+        params.set('limit', '10');
+        const searchResult = await stripeRequest('/customers', params, 'GET');
+        const customers = (searchResult.data || []) as Array<Record<string, unknown>>;
+
+        // Find the customer that actually has payment methods attached
+        let bestCustomer: string | null = null;
+        for (const cust of customers) {
+          if (cust.deleted) continue;
+          const custId = cust.id as string;
+          // Check if this customer has cards
+          const pmParams = new URLSearchParams();
+          pmParams.set('customer', custId);
+          pmParams.set('type', 'card');
+          pmParams.set('limit', '1');
+          const pmResult = await stripeRequest('/payment_methods', pmParams, 'GET');
+          const pmData = (pmResult.data || []) as Array<unknown>;
+          if (pmData.length > 0) {
+            bestCustomer = custId;
+            break;
+          }
+          // If no best yet, use the first non-deleted customer
+          if (!bestCustomer) bestCustomer = custId;
+        }
+
+        if (bestCustomer) {
+          deps.logger.info(`[STRIPE] Found existing customer ${bestCustomer} for user ${userId} (${row.email})`);
+          db.prepare('UPDATE users SET stripe_customer_id = ? WHERE id = ?').run(bestCustomer, userId);
+          return bestCustomer;
+        }
+      } catch (e) {
+        deps.logger.warn(`[STRIPE] Error searching for existing customer: ${e}`);
+      }
+    }
+
+    // 3. Create new customer only if none found
     const body = new URLSearchParams();
-    body.set('metadata[user_id]', userId);
+    body.set('metadata[userId]', userId);
+    body.set('metadata[platform]', 'PromptPay');
     if (row?.email) body.set('email', row.email);
+    if (row?.display_name) body.set('name', row.display_name);
     const customer = await stripeRequest('/customers', body);
     if (!customer.id) throw new Error('Failed to create Stripe customer');
 
+    deps.logger.info(`[STRIPE] Created new customer ${customer.id} for user ${userId}`);
     db.prepare('UPDATE users SET stripe_customer_id = ? WHERE id = ?')
       .run(customer.id as string, userId);
     return customer.id as string;
@@ -1244,9 +1296,8 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
         return;
       }
 
-      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as Record<string, unknown>;
-      deps.logger.info(`[FUND] User ${userId} (${user.email}) — amount=${amount} NGN, paymentMethodId=${paymentMethodId || 'NONE'}`);
-      const customerId = await ensureStripeCustomer(userId, user.email as string, user.display_name as string);
+      deps.logger.info(`[FUND] User ${userId} — amount=${amount} NGN, paymentMethodId=${paymentMethodId || 'NONE'}`);
+      const customerId = await getOrCreateStripeCustomer(userId);
       deps.logger.info(`[FUND] User ${userId} — Stripe customer: ${customerId}`);
 
       // Create payment intent for the wallet funding
