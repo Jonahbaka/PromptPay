@@ -2395,12 +2395,6 @@
           </div>
           <div class="quick-label">Send</div>
         </div>
-        <div class="quick-item" onclick="navigateTo('wallet')">
-          <div class="quick-icon qi-green">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><circle cx="18" cy="16" r="1"/></svg>
-          </div>
-          <div class="quick-label">Wallet</div>
-        </div>
         <div class="quick-item" onclick="showQrModal()">
           <div class="quick-icon qi-cyan">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="21" x2="21" y2="21"/></svg>
@@ -4132,6 +4126,8 @@ const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
+  // Only show install prompts on mobile devices, not desktop
+  if (!isMobile) return;
   // Show install buttons
   const lpBtn = document.getElementById('lp-install-btn');
   if (lpBtn) lpBtn.style.display = 'flex';
@@ -4141,12 +4137,12 @@ window.addEventListener('beforeinstallprompt', (e) => {
   if (userWantsInstall) {
     triggerNativeInstall();
   }
-  // Show banner
+  // Show banner on mobile only
   showInstallBannerIfAllowed();
 });
 
 function showInstallBannerIfAllowed() {
-  if (isStandalone) return;
+  if (isStandalone || !isMobile) return;
   const dismissed = localStorage.getItem('pwa_banner_dismissed');
   const dismissedAt = dismissed ? parseInt(dismissed) : 0;
   const hoursSinceDismiss = (Date.now() - dismissedAt) / (1000 * 60 * 60);
@@ -4156,7 +4152,7 @@ function showInstallBannerIfAllowed() {
 }
 
 function showInstallBanner() {
-  if (isStandalone) return;
+  if (isStandalone || !isMobile) return;
   const banner = document.getElementById('pwa-install-banner');
   if (banner) banner.classList.add('show');
 }
