@@ -106,10 +106,13 @@
 
     /* ── App Shell ── */
     .app {
-      max-width: 480px; margin: 0 auto; height: 100vh; height: 100dvh;
+      width: 100%; margin: 0 auto; height: 100vh; height: 100dvh;
       position: relative; overflow: hidden;
       display: flex; flex-direction: column;
       background: var(--bg);
+    }
+    @media (min-width: 768px) {
+      .app { max-width: 480px; }
     }
     .app::before {
       content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
@@ -158,9 +161,12 @@
     }
     .page {
       position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
-      padding: 0 20px 100px; scrollbar-width: none;
+      padding: 0 16px 100px; scrollbar-width: none;
       opacity: 0; transform: translateY(12px); pointer-events: none;
       transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    @media (min-width: 400px) {
+      .page { padding: 0 20px 100px; }
     }
     .page::-webkit-scrollbar { display: none; }
     .page.active {
@@ -1955,6 +1961,10 @@
           </button>
           <button class="lp-btn-secondary" onclick="showAuthGate('login')">Sign in</button>
         </div>
+        <button id="lp-install-btn" class="lp-btn-secondary" onclick="installApp()" style="display:none;margin-top:12px;width:100%;border:2px solid #7c3aed;background:rgba(124,58,237,0.15);color:#a78bfa;font-weight:600;gap:8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Install App
+        </button>
       </div>
 
       <!-- AI Agent + Live Chat -->
@@ -4089,26 +4099,38 @@ function applySettings(settings) {
 // ── PWA Install ──
 let deferredInstallPrompt = null;
 const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+console.log('[PWA] standalone:', isStandalone, 'mobile:', isMobile, 'iOS:', isIOS);
 
+// Capture the native install prompt (Chrome/Edge/Samsung Internet on Android)
 window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('[PWA] beforeinstallprompt fired!');
   e.preventDefault();
   deferredInstallPrompt = e;
+  // Show landing page install button
+  const lpBtn = document.getElementById('lp-install-btn');
+  if (lpBtn) lpBtn.style.display = 'flex';
+  // Show settings install button
   const btn = document.getElementById('install-app-btn');
-  if (btn) btn.textContent = 'Add to Home Screen';
-  // Show the install banner after 3 seconds if not dismissed recently
+  if (btn) btn.textContent = 'Install PromptPay';
+  // Show banner
+  showInstallBannerIfAllowed();
+});
+
+function showInstallBannerIfAllowed() {
+  if (isStandalone) return;
   const dismissed = localStorage.getItem('pwa_banner_dismissed');
   const dismissedAt = dismissed ? parseInt(dismissed) : 0;
   const hoursSinceDismiss = (Date.now() - dismissedAt) / (1000 * 60 * 60);
-  // Show again if never dismissed, or dismissed more than 24 hours ago
   if (!dismissed || hoursSinceDismiss > 24) {
-    setTimeout(() => {
-      showInstallBanner();
-    }, 3000);
+    showInstallBanner();
   }
-});
+}
 
 function showInstallBanner() {
   if (isStandalone) return;
+  console.log('[PWA] Showing install banner');
   const banner = document.getElementById('pwa-install-banner');
   if (banner) banner.classList.add('show');
 }
@@ -4117,10 +4139,8 @@ function dismissInstallBanner(permanent) {
   const banner = document.getElementById('pwa-install-banner');
   if (banner) banner.classList.remove('show');
   if (permanent) {
-    // Don't show again for 7 days
     localStorage.setItem('pwa_banner_dismissed', (Date.now() + 6 * 24 * 60 * 60 * 1000).toString());
   } else {
-    // "Not Now" — show again after 24 hours
     localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
   }
 }
@@ -4132,37 +4152,37 @@ function installApp() {
       if (result.outcome === 'accepted') {
         showToast('App installed! Find it on your home screen.');
         dismissInstallBanner(true);
+        const lpBtn = document.getElementById('lp-install-btn');
+        if (lpBtn) lpBtn.style.display = 'none';
       }
       deferredInstallPrompt = null;
     });
   } else if (isStandalone) {
     showToast('App is already installed!');
+  } else if (isIOS) {
+    showToast('Tap the Share button (box with arrow), then "Add to Home Screen"');
   } else {
-    // iOS Safari — show manual instructions
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (isIOS) {
-      showToast('Tap the Share button (box with arrow), then "Add to Home Screen"');
-    } else {
-      showToast('Open browser menu (\u22EE) and tap "Add to Home Screen" or "Install app"');
-    }
+    showToast('Open browser menu (\u22EE) and tap "Add to Home Screen" or "Install app"');
   }
 }
 
-// Fallback: show banner on ALL mobile browsers if beforeinstallprompt hasn't fired
-// This covers iOS Safari, Firefox, Samsung Internet, Opera, etc.
-if (!isStandalone) {
-  const dismissed = localStorage.getItem('pwa_banner_dismissed');
-  const dismissedAt = dismissed ? parseInt(dismissed) : 0;
-  const hoursSinceDismiss = (Date.now() - dismissedAt) / (1000 * 60 * 60);
-  const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (isMobile && (!dismissed || hoursSinceDismiss > 24)) {
-    // Wait 5 seconds — if beforeinstallprompt already showed it, this is a no-op
-    setTimeout(() => {
-      if (!document.getElementById('pwa-install-banner')?.classList.contains('show')) {
-        showInstallBanner();
-      }
-    }, 5000);
-  }
+// ALWAYS show on mobile after 3 seconds if not already installed and not dismissed
+// This is the fallback for browsers that never fire beforeinstallprompt
+if (!isStandalone && isMobile) {
+  setTimeout(() => {
+    console.log('[PWA] Fallback timer fired, banner visible:', document.getElementById('pwa-install-banner')?.classList.contains('show'));
+    // Show landing page install button regardless
+    const lpBtn = document.getElementById('lp-install-btn');
+    if (lpBtn) lpBtn.style.display = 'flex';
+    // Show banner if not already shown
+    if (!document.getElementById('pwa-install-banner')?.classList.contains('show')) {
+      showInstallBannerIfAllowed();
+    }
+  }, 3000);
+}
+// Also show on desktop (for Chrome desktop PWA)
+if (!isStandalone && !isMobile) {
+  window.addEventListener('beforeinstallprompt', () => {}); // already handled above
 }
 
 // Hide install section in settings if already installed as PWA
