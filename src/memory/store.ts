@@ -419,7 +419,7 @@ export class MemoryStore extends EventEmitter {
         contact_email TEXT NOT NULL,
         contact_phone TEXT,
         status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'active', 'suspended', 'deactivated')),
-        tier TEXT DEFAULT 'standard' CHECK(tier IN ('standard', 'premium', 'enterprise')),
+        tier TEXT DEFAULT 'standard' CHECK(tier IN ('standard', 'professional', 'enterprise')),
         config TEXT DEFAULT '{}',
         created_at TEXT NOT NULL,
         activated_at TEXT,
@@ -503,6 +503,42 @@ export class MemoryStore extends EventEmitter {
       );
       CREATE INDEX IF NOT EXISTS idx_devkey_hash ON developer_keys(api_key_hash);
       CREATE INDEX IF NOT EXISTS idx_devkey_user ON developer_keys(user_id);
+
+      -- ═══ DEVELOPER API LOGS ═══
+      CREATE TABLE IF NOT EXISTS developer_api_logs (
+        id TEXT PRIMARY KEY,
+        api_key_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        endpoint TEXT NOT NULL,
+        method TEXT NOT NULL,
+        status_code INTEGER NOT NULL,
+        response_time_ms INTEGER DEFAULT 0,
+        ip_address TEXT,
+        user_agent TEXT,
+        request_body TEXT,
+        error_message TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (api_key_id) REFERENCES developer_keys(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_apilog_key ON developer_api_logs(api_key_id);
+      CREATE INDEX IF NOT EXISTS idx_apilog_date ON developer_api_logs(created_at);
+
+      -- ═══ DEVELOPER WEBHOOKS ═══
+      CREATE TABLE IF NOT EXISTS developer_webhooks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        api_key_id TEXT NOT NULL,
+        url TEXT NOT NULL,
+        secret TEXT NOT NULL,
+        events TEXT NOT NULL DEFAULT '[]',
+        status TEXT DEFAULT 'active' CHECK(status IN ('active', 'disabled')),
+        failures INTEGER DEFAULT 0,
+        last_triggered_at TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (api_key_id) REFERENCES developer_keys(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_webhook_key ON developer_webhooks(api_key_id);
 
       -- ═══ USAGE TRACKING ═══
       CREATE TABLE IF NOT EXISTS usage_tracking (

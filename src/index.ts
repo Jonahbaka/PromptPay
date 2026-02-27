@@ -18,6 +18,8 @@ import { createAdminRoutes } from './gateway/admin-routes.js';
 import { createUserRoutes } from './gateway/user-routes.js';
 import { createPartnerRoutes } from './gateway/partner-routes.js';
 import { createDeveloperRoutes } from './gateway/developer-routes.js';
+import { createPosRoutes } from './gateway/pos-routes.js';
+import { createHrRoutes } from './gateway/hr-routes.js';
 import { HookEngine } from './hooks/engine.js';
 import { FeeEngine } from './hooks/fees.js';
 import { DaemonLoop } from './daemon/loop.js';
@@ -163,6 +165,14 @@ async function main(): Promise<void> {
   // Partner routes (bank partnership management)
   const partnerRouter = createPartnerRoutes({ memory, auditTrail, hookEngine, logger });
   app.use(partnerRouter);
+
+  // POS agent routes (PromptPay Points)
+  const posRouter = createPosRoutes({ memory, auditTrail, logger });
+  app.use(posRouter);
+
+  // HR & Hiring routes (careers + admin pipeline)
+  const hrRouter = createHrRoutes({ memory, auditTrail, logger });
+  app.use(hrRouter);
 
   // Admin routes (dashboard, hooks, providers, audit)
   const adminRouter = createAdminRoutes({

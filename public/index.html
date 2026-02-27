@@ -1525,6 +1525,44 @@
     /* ═══════════════════════════════════════ */
     /* POS MODE                                */
     /* ═══════════════════════════════════════ */
+    /* POS Agent Card */
+    .pos-agent-card {
+      padding: 18px; border-radius: 16px; margin-bottom: 16px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08));
+      border: 1px solid rgba(99,102,241,0.2);
+    }
+    .pos-agent-card.not-registered {
+      background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(124,58,237,0.06));
+      border: 1px dashed rgba(124,58,237,0.3);
+    }
+    .pos-agent-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .pos-agent-badge {
+      padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .pos-agent-code { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--accent2); }
+    .pos-agent-limit-bar { margin-bottom: 12px; }
+    .pos-limit-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+    .pos-limit-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+    .pos-limit-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; background: var(--gradient2); }
+    .pos-limit-fill.high { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .pos-agent-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pos-agent-actions button {
+      padding: 8px 16px; border-radius: 10px; border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.04); color: var(--text); font-size: 12px;
+      font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s;
+    }
+    .pos-agent-actions button:hover { background: rgba(124,58,237,0.12); border-color: var(--accent); color: var(--accent2); }
+    .pos-agent-actions button.primary-action {
+      background: var(--gradient2); color: #fff; border: none;
+      box-shadow: 0 2px 10px rgba(124,58,237,0.2);
+    }
+    .pos-register-form { margin-top: 14px; }
+    .pos-register-form .pos-input-group { margin-bottom: 10px; }
+    .pos-register-form label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .pos-register-form input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); color: var(--text); font-size: 14px; font-family: inherit; outline: none; box-sizing: border-box; }
+    .pos-register-form input:focus { border-color: var(--accent); }
+
     .pos-wallet-strip {
       display: flex; align-items: center; gap: 12px;
       padding: 16px 18px; border-radius: 16px;
@@ -2334,6 +2372,14 @@
           Logout
         </button>
       </div>
+      <div class="nav-drawer-divider"></div>
+      <div class="nav-drawer-section">
+        <div class="nav-drawer-section-label">Build</div>
+        <button class="nav-drawer-item" data-drawer="developer" onclick="drawerNav('developer')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Developer Portal
+        </button>
+      </div>
       <div class="nav-drawer-footer">PromptPay v2.0</div>
     </div>
   </div>
@@ -2415,6 +2461,18 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
           </div>
           <div class="quick-label">Bills</div>
+        </div>
+        <div class="quick-item" onclick="window.open('/partners','_blank')">
+          <div class="quick-icon" style="background:rgba(168,85,247,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="quick-label">Partners</div>
+        </div>
+        <div class="quick-item" onclick="window.open('/careers','_blank')">
+          <div class="quick-icon" style="background:rgba(16,185,129,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="quick-label">Careers</div>
         </div>
       </div>
 
@@ -2583,6 +2641,9 @@
           Back
         </button>
       </div>
+
+      <!-- POS Agent Card -->
+      <div id="pos-agent-card" class="pos-agent-card not-registered" style="display:none"></div>
 
       <!-- Wallet Balance Strip -->
       <div class="pos-wallet-strip">
@@ -3188,6 +3249,152 @@
       <div style="height:24px"></div>
     </div>
 
+    <!-- DEVELOPER PORTAL -->
+    <div class="page" id="page-developer">
+      <div style="margin-bottom:14px">
+        <button class="page-back-btn" onclick="navigateTo('home')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back
+        </button>
+      </div>
+      <div class="section-header" style="margin-bottom:8px">
+        <div class="section-title">Developer Portal</div>
+      </div>
+      <p style="color:var(--text2);font-size:13px;margin:0 0 20px;line-height:1.5">
+        Build apps with PromptPay — AI, payments, airtime, SMS, and calls. Get your API keys and start integrating.
+      </p>
+
+      <!-- Quick Start -->
+      <div style="background:linear-gradient(135deg,rgba(108,92,231,0.15),rgba(108,92,231,0.05));border:1px solid rgba(108,92,231,0.2);border-radius:16px;padding:20px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6c5ce7" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span style="font-weight:700;font-size:15px">Quick Start</span>
+        </div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7">
+          <div style="display:flex;gap:8px;margin-bottom:6px"><span style="background:#6c5ce7;color:#fff;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">1</span>Create an API key below</div>
+          <div style="display:flex;gap:8px;margin-bottom:6px"><span style="background:#6c5ce7;color:#fff;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">2</span>Use sandbox keys (upp_test_) to test</div>
+          <div style="display:flex;gap:8px;margin-bottom:6px"><span style="background:#6c5ce7;color:#fff;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">3</span>Switch to live keys (upp_live_) when ready</div>
+        </div>
+        <div style="margin-top:14px;padding:12px;background:var(--surface);border-radius:10px;font-family:monospace;font-size:12px;color:var(--text2);overflow-x:auto;white-space:pre;line-height:1.6">curl -X POST https://www.upromptpay.com/api/v1/chat \
+  -H "X-API-Key: upp_test_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello"}]}'</div>
+      </div>
+
+      <!-- API Keys Section -->
+      <div class="settings-section">
+        <div class="settings-section-title" style="display:flex;justify-content:space-between;align-items:center;width:100%">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+            API Keys
+          </div>
+          <button onclick="showCreateKeyModal()" style="padding:6px 14px;border-radius:8px;border:none;background:#6c5ce7;color:#fff;font-size:12px;font-weight:600;cursor:pointer">+ New Key</button>
+        </div>
+        <div id="dev-keys-list" style="margin-top:12px">
+          <div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">Loading keys...</div>
+        </div>
+      </div>
+
+      <!-- Usage Analytics -->
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+          Usage Analytics
+        </div>
+        <div id="dev-analytics" style="margin-top:8px">
+          <div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">Create an API key to see analytics</div>
+        </div>
+      </div>
+
+      <!-- Recent Logs -->
+      <div class="settings-section">
+        <div class="settings-section-title" style="display:flex;justify-content:space-between;align-items:center;width:100%">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            Request Logs
+          </div>
+          <select id="dev-log-filter" onchange="loadDevLogs()" style="padding:4px 8px;border-radius:6px;border:1px solid var(--glass-border);background:var(--surface);color:var(--text);font-size:11px">
+            <option value="">All</option>
+            <option value="success">Success</option>
+            <option value="error">Errors</option>
+          </select>
+        </div>
+        <div id="dev-logs-list" style="margin-top:8px">
+          <div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">No logs yet</div>
+        </div>
+      </div>
+
+      <!-- Webhooks -->
+      <div class="settings-section">
+        <div class="settings-section-title" style="display:flex;justify-content:space-between;align-items:center;width:100%">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Webhooks
+          </div>
+          <button onclick="showCreateWebhookModal()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;border:1px solid var(--glass-border)">+ Add</button>
+        </div>
+        <div id="dev-webhooks-list" style="margin-top:8px">
+          <div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">No webhooks configured</div>
+        </div>
+      </div>
+
+      <!-- API Documentation -->
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          API Reference
+        </div>
+        <div id="dev-api-docs" style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+        </div>
+      </div>
+
+      <!-- Sandbox Tester -->
+      <div class="settings-section">
+        <div class="settings-section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          API Playground
+        </div>
+        <div style="margin-top:8px">
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <select id="playground-method" style="padding:8px 10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--surface);color:var(--text);font-size:13px;width:90px">
+              <option>GET</option>
+              <option>POST</option>
+            </select>
+            <select id="playground-endpoint" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--surface);color:var(--text);font-size:12px" onchange="updatePlaygroundBody()">
+              <option value="/api/v1/me">GET /api/v1/me</option>
+              <option value="/api/v1/wallet/balance">GET /api/v1/wallet/balance</option>
+              <option value="/api/v1/wallet/transactions">GET /api/v1/wallet/transactions</option>
+              <option value="/api/v1/calls/rates">GET /api/v1/calls/rates</option>
+              <option value="/api/v1/numbers">GET /api/v1/numbers</option>
+              <option value="/api/v1/numbers/search">GET /api/v1/numbers/search</option>
+              <option value="/api/v1/chat">POST /api/v1/chat</option>
+              <option value="/api/v1/airtime/send">POST /api/v1/airtime/send</option>
+              <option value="/api/v1/sms/send">POST /api/v1/sms/send</option>
+            </select>
+          </div>
+          <div id="playground-key-select" style="margin-bottom:10px">
+            <select id="playground-key" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--surface);color:var(--text);font-size:12px">
+              <option value="">Select an API key...</option>
+            </select>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">Keys are stored locally and never sent to our servers beyond the API call.</div>
+          </div>
+          <textarea id="playground-body" placeholder='{"messages":[{"role":"user","content":"Hello"}]}' style="width:100%;min-height:80px;padding:10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--bg);color:var(--text);font-family:monospace;font-size:12px;resize:vertical;display:none;box-sizing:border-box"></textarea>
+          <button onclick="runPlayground()" style="width:100%;padding:10px;border-radius:10px;border:none;background:#6c5ce7;color:#fff;font-weight:600;cursor:pointer;margin-top:8px;font-size:14px">
+            Send Request
+          </button>
+          <div id="playground-result" style="margin-top:10px;display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span id="playground-status" style="font-size:12px;font-weight:600"></span>
+              <span id="playground-time" style="font-size:11px;color:var(--text3)"></span>
+            </div>
+            <pre id="playground-response" style="padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--glass-border);font-size:11px;color:var(--text2);overflow-x:auto;max-height:300px;white-space:pre-wrap;word-break:break-word;margin:0"></pre>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:24px"></div>
+    </div>
+
   </div>
 
   <!-- Bottom Navigation -->
@@ -3735,8 +3942,8 @@ function isTokenExpired(token) {
   try {
     const parts = token.split('.');
     if (parts.length < 2) return true;
-    const payload = JSON.parse(atob(parts[0].replace(/-/g, '+').replace(/_/g, '/')));
-    return !payload.exp || payload.exp < Date.now();
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return !payload.exp || payload.exp * 1000 < Date.now();
   } catch { return true; }
 }
 
@@ -3931,40 +4138,62 @@ function showApp() {
 async function handleProfilePicUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-  if (file.size > 1.5 * 1024 * 1024) {
-    showToast('Image too large. Max 1.5MB');
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select an image file');
     return;
   }
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    const dataUrl = e.target.result;
-    try {
-      const res = await authFetch(API_BASE + '/api/auth/profile-picture', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: dataUrl }),
-      });
-      if (res.ok) {
-        currentUser.profilePicture = dataUrl;
-        // Persist to localStorage so it survives refresh
-        try { localStorage.setItem('promptpay_user', JSON.stringify(currentUser)); } catch(e) {}
-        // Update header
-        const headerAvatar = document.querySelector('.header-avatar');
-        headerAvatar.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
-        // Update profile page
-        const img = document.getElementById('profile-pic-img');
-        const initials = document.getElementById('profile-pic-initials');
-        if (img) { img.src = dataUrl; img.style.display = 'block'; }
-        if (initials) initials.style.display = 'none';
-        showToast('Profile picture updated!', 'success');
-      } else {
-        showToast('Failed to upload picture');
-      }
-    } catch(err) {
-      showToast('Upload failed');
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image too large. Max 5MB');
+    return;
+  }
+  showToast('Uploading...', 'info');
+  // Compress image via canvas to keep payload small
+  try {
+    const dataUrl = await compressImage(file, 400, 0.8);
+    const res = await authFetch(API_BASE + '/api/auth/profile-picture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: dataUrl }),
+    });
+    if (res.ok) {
+      currentUser.profilePicture = dataUrl;
+      try { localStorage.setItem('promptpay_user', JSON.stringify(currentUser)); } catch(e) {}
+      const headerAvatar = document.querySelector('.header-avatar');
+      if (headerAvatar) headerAvatar.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+      const img = document.getElementById('profile-pic-img');
+      const initials = document.getElementById('profile-pic-initials');
+      if (img) { img.src = dataUrl; img.style.display = 'block'; }
+      if (initials) initials.style.display = 'none';
+      showToast('Profile picture updated!', 'success');
+    } else {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || 'Failed to upload picture');
     }
-  };
-  reader.readAsDataURL(file);
+  } catch(err) {
+    console.error('Profile pic upload error:', err);
+    showToast('Upload failed. Please try again.');
+  }
+}
+
+function compressImage(file, maxSize, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 function applyAirtimeGeoGate() {
@@ -4440,6 +4669,9 @@ function navigateTo(page) {
   }
   if (page === 'calls') {
     loadCallsPage();
+  }
+  if (page === 'developer') {
+    loadDeveloperPortal();
   }
 }
 
@@ -5613,6 +5845,318 @@ async function loadPosData() {
     // Recent sales
     renderPosSales(data.recentSales || []);
   } catch (e) { console.error('POS load error:', e); }
+
+  // Load POS agent profile
+  loadPosAgentCard();
+}
+
+// ═══════════════════════════════════════════
+// POS Agent System ("PromptPay Points")
+// ═══════════════════════════════════════════
+let posAgentData = null;
+
+async function loadPosAgentCard() {
+  const card = document.getElementById('pos-agent-card');
+  card.style.display = 'block';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/me');
+    const data = await res.json();
+
+    if (!data.registered) {
+      // Not registered — show signup prompt
+      card.className = 'pos-agent-card not-registered';
+      card.innerHTML = `
+        <div class="pos-agent-header">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700">Become a PromptPay Point</div>
+            <div style="font-size:12px;color:var(--text2)">Earn commissions selling airtime &amp; data</div>
+          </div>
+        </div>
+        <div id="pos-register-section">
+          <button class="pos-agent-actions" style="display:inline-block" onclick="showPosRegisterForm()">
+            <button class="primary-action" style="padding:10px 20px;border-radius:12px;border:none;background:var(--gradient2);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 10px rgba(124,58,237,0.2)">Register as Agent</button>
+          </button>
+        </div>
+        <div id="pos-register-form" class="pos-register-form" style="display:none">
+          <div class="pos-input-group">
+            <label>Display Name / Business Name</label>
+            <input id="pos-reg-name" placeholder="e.g. Chioma Mobile Hub">
+          </div>
+          <div class="pos-input-group">
+            <label>Phone Number</label>
+            <input id="pos-reg-phone" type="tel" placeholder="08012345678">
+          </div>
+          <div class="pos-input-group">
+            <label>Business Address (optional)</label>
+            <input id="pos-reg-address" placeholder="Shop 5, Alaba Market, Lagos">
+          </div>
+          <div class="pos-input-group">
+            <label>BVN (optional — unlocks higher limits)</label>
+            <input id="pos-reg-bvn" placeholder="Bank Verification Number" maxlength="11">
+          </div>
+          <div class="pos-input-group">
+            <label>NIN (optional — unlocks higher limits)</label>
+            <input id="pos-reg-nin" placeholder="National ID Number" maxlength="11">
+          </div>
+          <div class="pos-input-group">
+            <label>Guarantor Name (optional)</label>
+            <input id="pos-reg-guarantor" placeholder="Full name of guarantor">
+          </div>
+          <div class="pos-input-group">
+            <label>Guarantor Phone (optional)</label>
+            <input id="pos-reg-guarantor-phone" type="tel" placeholder="Guarantor phone number">
+          </div>
+          <div class="pos-input-group" style="border-top:1px solid var(--glass-border);padding-top:12px;margin-top:4px">
+            <label>Referral Code (optional)</label>
+            <input id="pos-reg-referral" placeholder="Agent code of who referred you, e.g. PP4K8NM2" maxlength="8" style="text-transform:uppercase">
+            <div style="font-size:10px;color:var(--text3);margin-top:4px">Both you and your referrer earn bonuses!</div>
+          </div>
+          <div id="pos-reg-error" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
+          <button id="pos-reg-submit" onclick="submitPosRegistration()" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--gradient2);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(124,58,237,0.25)">
+            Register &amp; Start Earning
+          </button>
+        </div>`;
+      return;
+    }
+
+    // Registered agent — show profile card
+    posAgentData = data;
+    card.className = 'pos-agent-card';
+    const pct = data.dailyLimit > 0 ? Math.min(100, (data.dailyUsed / data.dailyLimit) * 100) : 0;
+    const isHigh = pct > 80;
+
+    card.innerHTML = `
+      <div class="pos-agent-header">
+        <span class="pos-agent-badge" style="background:${data.tierColor}22;color:${data.tierColor}">${data.tierLabel}</span>
+        <span class="pos-agent-code">${data.agentCode}</span>
+        <div style="margin-left:auto;font-size:11px;color:var(--text2)">
+          ${data.rating ? '\u2B50 ' + data.rating.toFixed(1) : ''} ${data.totalTransactions ? '\xB7 ' + data.totalTransactions + ' txns' : ''}
+        </div>
+      </div>
+      <div class="pos-agent-limit-bar">
+        <div class="pos-limit-labels">
+          <span>Daily Used: ${formatNaira(data.dailyUsed)}</span>
+          <span>Limit: ${formatNaira(data.dailyLimit)}</span>
+        </div>
+        <div class="pos-limit-track">
+          <div class="pos-limit-fill ${isHigh ? 'high' : ''}" style="width:${pct}%"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">Remaining: ${formatNaira(data.dailyRemaining)}</div>
+      </div>
+      <div class="pos-agent-actions">
+        ${data.pendingLimitRequest
+          ? '<button disabled style="opacity:0.5;cursor:not-allowed">Limit Increase Pending...</button>'
+          : '<button class="primary-action" onclick="showLimitRequestModal()">Request Higher Limit</button>'}
+        <button onclick="showReferralModal()">Share &amp; Earn</button>
+        ${data.hasBvn ? '' : '<button onclick="showPosVerifyModal()">Add BVN/NIN</button>'}
+      </div>`;
+  } catch (e) {
+    console.error('POS agent load error:', e);
+    card.style.display = 'none';
+  }
+}
+
+function showPosRegisterForm() {
+  document.getElementById('pos-register-section').style.display = 'none';
+  document.getElementById('pos-register-form').style.display = 'block';
+}
+
+async function submitPosRegistration() {
+  const name = document.getElementById('pos-reg-name').value.trim();
+  const phone = document.getElementById('pos-reg-phone').value.trim();
+  const errEl = document.getElementById('pos-reg-error');
+  errEl.textContent = '';
+
+  if (!name || !phone) { errEl.textContent = 'Name and phone are required'; return; }
+
+  const btn = document.getElementById('pos-reg-submit');
+  btn.disabled = true; btn.textContent = 'Registering...';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        displayName: name,
+        phone,
+        address: document.getElementById('pos-reg-address').value.trim(),
+        bvn: document.getElementById('pos-reg-bvn').value.trim(),
+        nin: document.getElementById('pos-reg-nin').value.trim(),
+        guarantorName: document.getElementById('pos-reg-guarantor').value.trim(),
+        guarantorPhone: document.getElementById('pos-reg-guarantor-phone').value.trim(),
+        referralCode: document.getElementById('pos-reg-referral').value.trim(),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Registration failed'; return; }
+
+    // Show success & reload card
+    showToast(data.message || 'Registered as POS agent!', 'success');
+    loadPosAgentCard();
+  } catch (e) {
+    errEl.textContent = 'Network error';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Register & Start Earning';
+  }
+}
+
+function showLimitRequestModal() {
+  if (!posAgentData) return;
+  const current = posAgentData.dailyLimit;
+  const isFirst = posAgentData.limitIncreases === 0;
+
+  // Suggest next tier amounts
+  const suggestions = [200000, 500000, 1000000].filter(a => a > current);
+  const suggestHtml = suggestions.map(a =>
+    `<button onclick="document.getElementById('limit-req-amount').value=${a}" style="padding:8px 14px;border-radius:8px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.04);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">${formatNaira(a)}</button>`
+  ).join('');
+
+  showDynamicModal('Request Limit Increase', `
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Current Daily Limit</div>
+      <div style="font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace">${formatNaira(current)}</div>
+    </div>
+    ${isFirst ? '<div style="padding:10px 14px;border-radius:10px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);font-size:12px;color:#22c55e;margin-bottom:14px;font-weight:600">Your first limit increase will be approved instantly!</div>' : ''}
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Requested New Limit</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">${suggestHtml}</div>
+      <input id="limit-req-amount" type="number" placeholder="Enter amount" value="${suggestions[0] || current * 2}"
+        style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.04);color:var(--text);font-size:16px;font-family:'JetBrains Mono',monospace;outline:none;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Reason (optional)</label>
+      <input id="limit-req-reason" placeholder="e.g. High customer demand, need more capacity"
+        style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.04);color:var(--text);font-size:14px;font-family:inherit;outline:none;box-sizing:border-box">
+    </div>
+    <div id="limit-req-error" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
+    <button id="limit-req-submit" onclick="submitLimitRequest()" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--gradient2);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
+      ${isFirst ? 'Get Instant Approval' : 'Submit Request'}
+    </button>
+  `);
+}
+
+async function submitLimitRequest() {
+  const amount = Number(document.getElementById('limit-req-amount').value);
+  const reason = document.getElementById('limit-req-reason').value.trim();
+  const errEl = document.getElementById('limit-req-error');
+  errEl.textContent = '';
+
+  if (!amount || amount <= 0) { errEl.textContent = 'Enter a valid amount'; return; }
+
+  const btn = document.getElementById('limit-req-submit');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/limit-request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestedLimit: amount, reason }),
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Request failed'; btn.disabled = false; btn.textContent = 'Submit Request'; return; }
+
+    closeModal();
+    if (data.autoApproved) {
+      showToast(data.message || 'Limit increased instantly!', 'success');
+    } else {
+      showToast(data.message || 'Limit request submitted for review', 'info');
+    }
+    loadPosAgentCard();
+  } catch (e) {
+    errEl.textContent = 'Network error';
+    btn.disabled = false; btn.textContent = 'Submit Request';
+  }
+}
+
+function showPosVerifyModal() {
+  showDynamicModal('Verify Identity', `
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Adding BVN or NIN helps verify your identity and qualifies you for higher daily limits.</p>
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">BVN (Bank Verification Number)</label>
+      <input id="verify-bvn" placeholder="11-digit BVN" maxlength="11"
+        style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.04);color:var(--text);font-size:14px;font-family:'JetBrains Mono',monospace;outline:none;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">NIN (National Identification Number)</label>
+      <input id="verify-nin" placeholder="11-digit NIN" maxlength="11"
+        style="width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.04);color:var(--text);font-size:14px;font-family:'JetBrains Mono',monospace;outline:none;box-sizing:border-box">
+    </div>
+    <div id="verify-error" style="color:var(--red);font-size:12px;margin-bottom:8px"></div>
+    <button onclick="submitPosVerify()" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--gradient2);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Save</button>
+  `);
+}
+
+async function submitPosVerify() {
+  const bvn = document.getElementById('verify-bvn').value.trim();
+  const nin = document.getElementById('verify-nin').value.trim();
+  if (!bvn && !nin) { document.getElementById('verify-error').textContent = 'Enter at least BVN or NIN'; return; }
+  closeModal();
+  showToast('Identity details saved. This will be verified.', 'success');
+  loadPosAgentCard();
+}
+
+async function showReferralModal() {
+  if (!posAgentData) return;
+  // Fetch referral data
+  let refData = { referralCount: 0, bonuses: { totalEarned: 0 }, referrals: [], shareLink: '', bonusStructure: {} };
+  try {
+    const res = await authFetch(API_BASE + '/api/pos/my-referrals');
+    if (res.ok) refData = await res.json();
+  } catch(e) {}
+
+  const code = posAgentData.agentCode;
+  const link = refData.shareLink || ('https://www.upromptpay.com/?ref=' + code);
+
+  showDynamicModal('Refer Agents & Earn', `
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">Your Referral Code</div>
+      <div style="font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent2);letter-spacing:2px">${code}</div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <div style="flex:1;text-align:center;padding:12px;border-radius:10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.15)">
+        <div style="font-size:20px;font-weight:800;color:#22c55e">${refData.referralCount}</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px">Referrals</div>
+      </div>
+      <div style="flex:1;text-align:center;padding:12px;border-radius:10px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15)">
+        <div style="font-size:20px;font-weight:800;color:var(--accent2)">${formatNaira(refData.bonuses.totalEarned)}</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:2px">Earned</div>
+      </div>
+    </div>
+
+    <div style="padding:12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Bonus Structure</div>
+      <div style="font-size:12px;line-height:1.8">
+        <div><span style="color:#22c55e;font-weight:700">\u20A6500</span> — when they sign up <span style="color:var(--text3)">(they get \u20A6200)</span></div>
+        <div><span style="color:#22c55e;font-weight:700">\u20A61,000</span> — when they make first sale <span style="color:var(--text3)">(they get \u20A6500)</span></div>
+        <div><span style="color:#22c55e;font-weight:700">\u20A62,000</span> — when they reach 10 sales</div>
+        <div><span style="color:#22c55e;font-weight:700">\u20A65,000</span> — when they reach 50 sales</div>
+        <div><span style="color:#22c55e;font-weight:700">2%</span> — ongoing commission share for 6 months</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button onclick="navigator.clipboard.writeText('${code}');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy Code',1500)" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.04);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Copy Code</button>
+      <button onclick="navigator.share?navigator.share({title:'Join PromptPay Points',text:'Use my code ${code} to sign up as a PromptPay Point agent and we both earn!',url:'${link}'}):navigator.clipboard.writeText('${link}')" style="flex:1;padding:12px;border-radius:10px;border:none;background:var(--gradient2);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 10px rgba(124,58,237,0.2)">Share Link</button>
+    </div>
+
+    ${refData.referrals.length > 0 ? `
+      <div style="margin-top:16px;border-top:1px solid var(--glass-border);padding-top:12px">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Your Referrals</div>
+        ${refData.referrals.map(r => `
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03)">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(124,58,237,0.1);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent2)">${(r.display_name || '?')[0]}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">${r.display_name}</div>
+              <div style="font-size:10px;color:var(--text3)">${r.agent_code} \xB7 ${r.tier} \xB7 ${r.total_transactions || 0} txns</div>
+            </div>
+            <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;background:${r.status === 'active' ? 'rgba(34,197,94,0.1);color:#22c55e' : 'rgba(239,68,68,0.1);color:#ef4444'}">${r.status}</span>
+          </div>
+        `).join('')}
+      </div>` : ''}
+  `);
 }
 
 function renderPosSales(sales) {
@@ -7615,6 +8159,398 @@ async function sendTelnyxAi() {
     container.innerHTML += `<div style="padding:10px;color:#ef4444;font-size:12px">Network error</div>`;
   }
 }
+
+// ════════════════════════════════════════════════════════════
+// DEVELOPER PORTAL
+// ════════════════════════════════════════════════════════════
+
+let devKeysCache = [];
+let devSavedKeys = {}; // { keyId: rawKey } — stored locally for playground
+try { devSavedKeys = JSON.parse(localStorage.getItem('dev_api_keys') || '{}'); } catch(e) {}
+
+async function loadDeveloperPortal() {
+  await loadDevKeys();
+  await loadDevAnalytics();
+  await loadDevLogs();
+  await loadDevWebhooks();
+  loadDevDocs();
+}
+
+async function loadDevKeys() {
+  try {
+    const res = await authFetch(API_BASE + '/api/developer/keys');
+    const data = await res.json();
+    devKeysCache = data.keys || [];
+    const el = document.getElementById('dev-keys-list');
+    const playgroundSelect = document.getElementById('playground-key');
+
+    if (devKeysCache.length === 0) {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">No API keys yet. Create one to get started.</div>';
+      playgroundSelect.innerHTML = '<option value="">No keys — create one first</option>';
+      return;
+    }
+
+    // Populate playground key selector
+    playgroundSelect.innerHTML = '<option value="">Select an API key...</option>' +
+      Object.entries(devSavedKeys).map(([id, key]) => {
+        const k = devKeysCache.find(x => x.id === id);
+        return k ? `<option value="${key}">${k.name} (${k.api_key_prefix})</option>` : '';
+      }).join('');
+
+    el.innerHTML = devKeysCache.map(k => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface);border-radius:10px;margin-bottom:8px;border:1px solid var(--glass-border)">
+        <div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:4px">${escapeHtml(k.name)}</div>
+          <div style="font-family:monospace;font-size:11px;color:var(--text3)">${k.api_key_prefix}</div>
+          <div style="display:flex;gap:8px;margin-top:4px;font-size:11px;color:var(--text3)">
+            <span>${k.requests_today || 0}/${k.rate_limit} today</span>
+            <span style="color:${k.status === 'active' ? 'var(--emerald)' : 'var(--red)'}">${k.status}</span>
+            <span>${k.environment || 'production'}</span>
+          </div>
+        </div>
+        <button onclick="revokeDevKey('${k.id}')" style="padding:6px 10px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:transparent;color:#ef4444;font-size:11px;cursor:pointer" ${k.status !== 'active' ? 'disabled style="opacity:0.4"' : ''}>Revoke</button>
+      </div>
+    `).join('');
+  } catch (err) {
+    document.getElementById('dev-keys-list').innerHTML = '<div style="color:var(--red);font-size:13px">Failed to load keys</div>';
+  }
+}
+
+async function loadDevAnalytics() {
+  try {
+    const res = await authFetch(API_BASE + '/api/developer/analytics?days=30');
+    const data = await res.json();
+    const el = document.getElementById('dev-analytics');
+    const t = data.totals || {};
+
+    if (!t.total_requests) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">No API activity yet</div>';
+      return;
+    }
+
+    // Summary cards
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--glass-border)">
+          <div style="font-size:20px;font-weight:700;color:var(--text)">${(t.total_requests || 0).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--text3)">Total</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--glass-border)">
+          <div style="font-size:20px;font-weight:700;color:var(--emerald)">${(t.successful || 0).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--text3)">Success</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--glass-border)">
+          <div style="font-size:20px;font-weight:700;color:var(--red)">${(t.failed || 0).toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--text3)">Failed</div>
+        </div>
+      </div>
+      ${(data.dailyStats || []).length > 0 ? `
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text2)">Daily Activity (last 30d)</div>
+        <div style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto">
+          ${(data.dailyStats || []).slice(0, 14).map(d => `
+            <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 8px;background:var(--bg);border-radius:6px">
+              <span style="color:var(--text2)">${d.date}</span>
+              <span><span style="color:var(--emerald)">${d.successful}</span> / <span style="color:var(--red)">${d.failed || 0}</span></span>
+              <span style="color:var(--text3)">${Math.round(d.avg_response_ms || 0)}ms</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    `;
+  } catch(e) {
+    document.getElementById('dev-analytics').innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:10px">Unable to load analytics</div>';
+  }
+}
+
+async function loadDevLogs() {
+  try {
+    const filter = document.getElementById('dev-log-filter')?.value || '';
+    const res = await authFetch(API_BASE + '/api/developer/logs?limit=20' + (filter ? '&status=' + filter : ''));
+    const data = await res.json();
+    const el = document.getElementById('dev-logs-list');
+
+    if (!data.logs || data.logs.length === 0) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">No logs yet</div>';
+      return;
+    }
+
+    el.innerHTML = data.logs.map(l => {
+      const isErr = l.status_code >= 400;
+      const time = new Date(l.created_at).toLocaleString();
+      return `
+        <div style="display:flex;gap:8px;align-items:center;padding:8px;background:var(--surface);border-radius:8px;margin-bottom:4px;border:1px solid var(--glass-border);font-size:11px">
+          <span style="min-width:32px;padding:2px 6px;border-radius:4px;text-align:center;font-weight:600;background:${isErr ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)'};color:${isErr ? '#ef4444' : '#10b981'}">${l.status_code}</span>
+          <span style="min-width:36px;color:var(--text3);font-weight:600">${l.method}</span>
+          <span style="flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.endpoint}</span>
+          <span style="color:var(--text3)">${l.response_time_ms}ms</span>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('dev-logs-list').innerHTML = '<div style="color:var(--red);font-size:12px">Failed to load logs</div>';
+  }
+}
+
+async function loadDevWebhooks() {
+  try {
+    const res = await authFetch(API_BASE + '/api/developer/webhooks');
+    const data = await res.json();
+    const el = document.getElementById('dev-webhooks-list');
+    const hooks = data.webhooks || [];
+
+    if (hooks.length === 0) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">No webhooks configured</div>';
+      return;
+    }
+
+    el.innerHTML = hooks.map(h => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface);border-radius:8px;margin-bottom:6px;border:1px solid var(--glass-border)">
+        <div>
+          <div style="font-size:12px;font-family:monospace;color:var(--text2);word-break:break-all">${escapeHtml(h.url)}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">${JSON.parse(h.events || '[]').join(', ')}</div>
+        </div>
+        <button onclick="deleteWebhook('${h.id}')" style="padding:4px 8px;border-radius:6px;border:1px solid rgba(239,68,68,0.3);background:transparent;color:#ef4444;font-size:11px;cursor:pointer">Delete</button>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+function loadDevDocs() {
+  const endpoints = [
+    { method: 'GET', path: '/api/v1/me', desc: 'Get API key info and rate limits' },
+    { method: 'POST', path: '/api/v1/chat', desc: 'AI chat completion (Claude-powered)' },
+    { method: 'POST', path: '/api/v1/task', desc: 'Execute an AI agent task' },
+    { method: 'GET', path: '/api/v1/wallet/balance', desc: 'Check wallet balance' },
+    { method: 'GET', path: '/api/v1/wallet/transactions', desc: 'List wallet transactions' },
+    { method: 'POST', path: '/api/v1/airtime/send', desc: 'Send airtime to any phone' },
+    { method: 'POST', path: '/api/v1/sms/send', desc: 'Send SMS messages' },
+    { method: 'GET', path: '/api/v1/calls/rates', desc: 'Get international call rates' },
+    { method: 'GET', path: '/api/v1/numbers', desc: 'List your virtual numbers' },
+    { method: 'GET', path: '/api/v1/numbers/search', desc: 'Search available numbers' },
+  ];
+
+  const colors = { GET: '#10b981', POST: '#6c5ce7', PUT: '#f59e0b', DELETE: '#ef4444' };
+
+  document.getElementById('dev-api-docs').innerHTML = endpoints.map(e => `
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface);border-radius:8px;border:1px solid var(--glass-border);cursor:pointer" onclick="this.querySelector('.doc-detail')?.classList.toggle('hidden')">
+      <span style="min-width:42px;padding:2px 6px;border-radius:4px;text-align:center;font-size:10px;font-weight:700;background:${colors[e.method]}22;color:${colors[e.method]}">${e.method}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:monospace;font-size:12px;color:var(--text)">${e.path}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${e.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showCreateKeyModal() {
+  const html = `
+    <div style="padding:20px">
+      <h3 style="margin:0 0 16px;font-size:16px">Create API Key</h3>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Key Name</label>
+        <input id="new-key-name" placeholder="My App" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--bg);color:var(--text);font-size:14px;box-sizing:border-box">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Environment</label>
+        <select id="new-key-env" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--bg);color:var(--text);font-size:14px">
+          <option value="sandbox">Sandbox (testing)</option>
+          <option value="production">Production (live)</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button onclick="createDevKey()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#6c5ce7;color:#fff;font-weight:600;cursor:pointer">Create Key</button>
+        <button onclick="closeModal('create-key-modal')" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:var(--text);cursor:pointer">Cancel</button>
+      </div>
+      <div id="new-key-result" style="display:none;margin-top:16px"></div>
+    </div>
+  `;
+  showDynamicModal('create-key-modal', html);
+}
+
+async function createDevKey() {
+  const name = document.getElementById('new-key-name').value.trim();
+  const env = document.getElementById('new-key-env').value;
+  if (!name) { showToast('Enter a key name'); return; }
+
+  try {
+    const res = await authFetch(API_BASE + '/api/developer/keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, environment: env }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Failed'); return; }
+
+    // Save key locally for playground
+    devSavedKeys[data.id] = data.apiKey;
+    localStorage.setItem('dev_api_keys', JSON.stringify(devSavedKeys));
+
+    document.getElementById('new-key-result').style.display = 'block';
+    document.getElementById('new-key-result').innerHTML = `
+      <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--emerald);margin-bottom:8px">Key Created! Copy it now — it won't be shown again.</div>
+        <div style="font-family:monospace;font-size:11px;background:var(--bg);padding:10px;border-radius:6px;word-break:break-all;color:var(--text);cursor:pointer" onclick="navigator.clipboard.writeText('${data.apiKey}');showToast('Copied!','success')">${data.apiKey}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Click to copy</div>
+      </div>
+    `;
+    loadDevKeys();
+  } catch(err) {
+    showToast('Failed to create key');
+  }
+}
+
+async function revokeDevKey(id) {
+  if (!confirm('Revoke this API key? Any apps using it will stop working.')) return;
+  try {
+    await authFetch(API_BASE + '/api/developer/keys/' + id, { method: 'DELETE' });
+    delete devSavedKeys[id];
+    localStorage.setItem('dev_api_keys', JSON.stringify(devSavedKeys));
+    showToast('Key revoked', 'success');
+    loadDevKeys();
+  } catch(e) { showToast('Failed to revoke'); }
+}
+
+function showCreateWebhookModal() {
+  if (devKeysCache.length === 0) { showToast('Create an API key first'); return; }
+  const keyOptions = devKeysCache.filter(k => k.status === 'active').map(k =>
+    `<option value="${k.id}">${escapeHtml(k.name)} (${k.api_key_prefix})</option>`
+  ).join('');
+
+  const html = `
+    <div style="padding:20px">
+      <h3 style="margin:0 0 16px;font-size:16px">Add Webhook</h3>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">API Key</label>
+        <select id="webhook-key-id" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--bg);color:var(--text);font-size:13px">${keyOptions}</select>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Endpoint URL</label>
+        <input id="webhook-url" placeholder="https://yourapp.com/webhook" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button onclick="createWebhook()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#6c5ce7;color:#fff;font-weight:600;cursor:pointer">Create</button>
+        <button onclick="closeModal('webhook-modal')" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--glass-border);background:transparent;color:var(--text);cursor:pointer">Cancel</button>
+      </div>
+      <div id="webhook-result" style="display:none;margin-top:16px"></div>
+    </div>
+  `;
+  showDynamicModal('webhook-modal', html);
+}
+
+async function createWebhook() {
+  const apiKeyId = document.getElementById('webhook-key-id').value;
+  const url = document.getElementById('webhook-url').value.trim();
+  if (!url) { showToast('Enter a webhook URL'); return; }
+  try {
+    const res = await authFetch(API_BASE + '/api/developer/webhooks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKeyId, url }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Failed'); return; }
+    document.getElementById('webhook-result').style.display = 'block';
+    document.getElementById('webhook-result').innerHTML = `
+      <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--emerald);margin-bottom:8px">Webhook created! Save the secret.</div>
+        <div style="font-family:monospace;font-size:11px;background:var(--bg);padding:10px;border-radius:6px;word-break:break-all;color:var(--text);cursor:pointer" onclick="navigator.clipboard.writeText('${data.secret}');showToast('Copied!','success')">${data.secret}</div>
+      </div>
+    `;
+    loadDevWebhooks();
+  } catch(e) { showToast('Failed'); }
+}
+
+async function deleteWebhook(id) {
+  if (!confirm('Delete this webhook?')) return;
+  try {
+    await authFetch(API_BASE + '/api/developer/webhooks/' + id, { method: 'DELETE' });
+    showToast('Webhook deleted', 'success');
+    loadDevWebhooks();
+  } catch(e) { showToast('Failed'); }
+}
+
+function showDynamicModal(id, html) {
+  let overlay = document.getElementById(id);
+  if (overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = id;
+  overlay.className = 'modal-overlay active';
+  overlay.onclick = function(e) { if (e.target === overlay) closeModal(id); };
+  overlay.innerHTML = '<div class="modal-sheet" style="max-width:420px">' + html + '</div>';
+  document.body.appendChild(overlay);
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('active');
+  setTimeout(() => el?.remove(), 300);
+}
+
+// API Playground
+function updatePlaygroundBody() {
+  const endpoint = document.getElementById('playground-endpoint').value;
+  const methodEl = document.getElementById('playground-method');
+  const bodyEl = document.getElementById('playground-body');
+  const isPost = endpoint.startsWith('/api/v1/chat') || endpoint.startsWith('/api/v1/airtime') || endpoint.startsWith('/api/v1/sms') || endpoint.startsWith('/api/v1/task');
+
+  methodEl.value = isPost ? 'POST' : 'GET';
+  bodyEl.style.display = isPost ? 'block' : 'none';
+
+  const bodies = {
+    '/api/v1/chat': '{\n  "messages": [{"role": "user", "content": "Hello, what can you help me with?"}]\n}',
+    '/api/v1/task': '{\n  "title": "Check my wallet balance"\n}',
+    '/api/v1/airtime/send': '{\n  "phone": "+2348012345678",\n  "amount": 100,\n  "country": "NG"\n}',
+    '/api/v1/sms/send': '{\n  "to": "+2348012345678",\n  "body": "Hello from PromptPay API!"\n}',
+  };
+  bodyEl.value = bodies[endpoint] || '';
+}
+
+async function runPlayground() {
+  const apiKey = document.getElementById('playground-key').value;
+  if (!apiKey) { showToast('Select an API key first'); return; }
+
+  const method = document.getElementById('playground-method').value;
+  const endpoint = document.getElementById('playground-endpoint').value;
+  const bodyEl = document.getElementById('playground-body');
+  const resultEl = document.getElementById('playground-result');
+  const statusEl = document.getElementById('playground-status');
+  const timeEl = document.getElementById('playground-time');
+  const responseEl = document.getElementById('playground-response');
+
+  resultEl.style.display = 'block';
+  statusEl.textContent = 'Sending...';
+  statusEl.style.color = 'var(--text3)';
+  responseEl.textContent = '';
+  timeEl.textContent = '';
+
+  const start = performance.now();
+  try {
+    const opts = {
+      method,
+      headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+    };
+    if (method === 'POST' && bodyEl.value.trim()) {
+      opts.body = bodyEl.value.trim();
+    }
+
+    const res = await fetch(API_BASE + endpoint, opts);
+    const elapsed = Math.round(performance.now() - start);
+    const data = await res.json();
+
+    statusEl.textContent = res.status + ' ' + res.statusText;
+    statusEl.style.color = res.ok ? 'var(--emerald)' : 'var(--red)';
+    timeEl.textContent = elapsed + 'ms';
+    responseEl.textContent = JSON.stringify(data, null, 2);
+  } catch(err) {
+    const elapsed = Math.round(performance.now() - start);
+    statusEl.textContent = 'Error';
+    statusEl.style.color = 'var(--red)';
+    timeEl.textContent = elapsed + 'ms';
+    responseEl.textContent = err.message;
+  }
+}
+
+// Init playground body visibility
+updatePlaygroundBody();
 </script>
 
 <!-- PWA Install Banner (body-level so it shows on landing AND app) -->

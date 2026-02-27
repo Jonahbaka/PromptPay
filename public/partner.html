@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptPay Partner Portal</title>
+  <style>
+    :root {
+      --bg: #0a0e17; --surface: #111827; --surface2: #1a2332;
+      --border: #1e293b; --text: #e2e8f0; --text2: #94a3b8;
+      --accent: #6366f1; --accent2: #818cf8;
+      --green: #22c55e; --yellow: #eab308; --red: #ef4444;
+      --blue: #3b82f6; --purple: #a855f7; --orange: #f97316; --cyan: #06b6d4;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    /* Layout */
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 240px; background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; overflow-y: auto; z-index: 10; }
+    .main { margin-left: 240px; padding: 24px 32px; max-width: 1200px; }
+    .logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .logo h1 { font-size: 18px; font-weight: 700; } .logo h1 span { color: var(--accent); }
+    .logo p { font-size: 11px; color: var(--text2); margin-top: 4px; }
+    .nav-section { padding: 8px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text2); margin-top: 8px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.15s; border-left: 3px solid transparent; border: none; background: none; width: 100%; text-align: left; }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { color: var(--accent2); border-left-color: var(--accent); background: rgba(99,102,241,0.08); }
+    .nav-item svg { flex-shrink: 0; }
+    .nav-item.locked { opacity: 0.4; cursor: not-allowed; }
+    .nav-item .lock-icon { margin-left: auto; font-size: 10px; }
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .header h2 { font-size: 22px; font-weight: 600; }
+    /* Cards */
+    .grid { display: grid; gap: 16px; margin-bottom: 24px; }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .card-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text2); }
+    .card-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+    .card-sub { font-size: 12px; color: var(--text2); }
+    .val-green { color: var(--green); } .val-blue { color: var(--blue); } .val-purple { color: var(--purple); }
+    .val-orange { color: var(--orange); } .val-cyan { color: var(--cyan); } .val-yellow { color: var(--yellow); }
+    /* Badges */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .badge-green { background: rgba(34,197,94,0.12); color: var(--green); }
+    .badge-yellow { background: rgba(234,179,8,0.12); color: var(--yellow); }
+    .badge-red { background: rgba(239,68,68,0.12); color: var(--red); }
+    .badge-blue { background: rgba(59,130,246,0.12); color: var(--blue); }
+    .badge-purple { background: rgba(168,85,247,0.12); color: var(--purple); }
+    /* Tables */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 14px; color: var(--text2); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    tr:hover td { background: var(--surface2); }
+    /* Sections */
+    .section { margin-bottom: 28px; }
+    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    /* Pages */
+    .page { display: none; } .page.active { display: block; }
+    /* Tier badge */
+    .tier-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .tier-standard { background: rgba(99,102,241,0.12); color: var(--accent2); }
+    .tier-professional { background: rgba(168,85,247,0.12); color: var(--purple); }
+    .tier-enterprise { background: rgba(234,179,8,0.12); color: var(--yellow); }
+    /* Buttons */
+    .btn { padding: 8px 18px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: #fff; } .btn-primary:hover { background: var(--accent2); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); } .btn-outline:hover { background: var(--surface2); }
+    .btn-sm { padding: 5px 12px; font-size: 11px; }
+    /* Progress bar */
+    .progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+    /* Feature tags */
+    .feature-tag { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; margin: 2px; background: rgba(99,102,241,0.1); color: var(--accent2); }
+    .feature-tag.locked { background: rgba(255,255,255,0.04); color: var(--text2); opacity: 0.5; }
+    /* Auth gate */
+    .auth-gate { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+    .auth-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 100%; max-width: 440px; }
+    .auth-box h2 { font-size: 22px; margin-bottom: 6px; }
+    .auth-box p { color: var(--text2); font-size: 13px; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+    .form-error { color: var(--red); font-size: 12px; margin-top: 12px; }
+    .doc-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .doc-section h4 { font-size: 13px; font-weight: 600; color: var(--accent2); margin-bottom: 4px; }
+    .doc-section p { font-size: 11px; color: var(--text2); margin-bottom: 14px; }
+    .doc-upload { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; border: 1px dashed var(--border); background: var(--bg); cursor: pointer; transition: all 0.15s; margin-bottom: 10px; }
+    .doc-upload:hover { border-color: var(--accent); background: rgba(99,102,241,0.04); }
+    .doc-upload input[type="file"] { display: none; }
+    .doc-upload .doc-icon { width: 32px; height: 32px; border-radius: 6px; background: rgba(99,102,241,0.1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .doc-upload .doc-info { flex: 1; min-width: 0; }
+    .doc-upload .doc-label { font-size: 12px; font-weight: 600; color: var(--text); }
+    .doc-upload .doc-hint { font-size: 10px; color: var(--text2); margin-top: 1px; }
+    .doc-upload .doc-status { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
+    .doc-upload .doc-status.pending { background: rgba(255,255,255,0.05); color: var(--text2); }
+    .doc-upload .doc-status.ready { background: rgba(34,197,94,0.12); color: var(--green); }
+    .form-tabs { display: flex; gap: 0; margin-bottom: 24px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .form-tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--bg); color: var(--text2); border: none; }
+    .form-tab.active { background: var(--accent); color: #fff; }
+    /* Responsive */
+    @media (max-width: 1200px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+      .sidebar { display: none; } .main { margin-left: 0; padding: 16px; }
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .mobile-nav { display: flex !important; }
+    }
+    .mobile-nav { display: none; position: fixed; top: 0; left: 0; right: 0; background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; z-index: 20; justify-content: space-between; align-items: center; }
+    .mobile-nav h3 { font-size: 16px; } .mobile-nav button { background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; }
+    /* Upgrade card */
+    .upgrade-card { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.1)); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+    .upgrade-card h3 { font-size: 16px; margin-bottom: 6px; } .upgrade-card p { font-size: 13px; color: var(--text2); margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div id="auth-gate" class="auth-gate">
+  <div class="auth-box">
+    <h2>Partner Portal</h2>
+    <p>Sign in to your partner dashboard or apply for a new partnership.</p>
+    <div class="form-tabs">
+      <button class="form-tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="form-tab" onclick="switchTab('apply')">Apply</button>
+    </div>
+
+    <!-- Login -->
+    <div id="tab-login">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="admin@yourbank.upromptpay.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="Your password">
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:12px" onclick="doLogin()">Sign In</button>
+      <div id="login-error" class="form-error"></div>
+    </div>
+
+    <!-- Apply -->
+    <div id="tab-apply" style="display:none">
+      <div class="form-group">
+        <label>Organization Name</label>
+        <input type="text" id="apply-name" placeholder="First Bank Nigeria">
+      </div>
+      <div class="form-group">
+        <label>Contact Email</label>
+        <input type="email" id="apply-email" placeholder="partnerships@yourbank.com">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" id="apply-phone" placeholder="+234 800 000 0000">
+      </div>
+      <div class="form-group">
+        <label>Website</label>
+        <input type="url" id="apply-website" placeholder="https://yourbank.com">
+      </div>
+      <div class="form-group">
+        <label>Tier</label>
+        <select id="apply-tier">
+          <option value="standard">Standard — $99/mo (up to 1,000 users)</option>
+          <option value="professional">Professional — $299/mo (up to 10,000 users)</option>
+          <option value="enterprise">Enterprise — $999/mo (unlimited)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tell us about your business</label>
+        <input type="text" id="apply-desc" placeholder="We are a microfinance bank with 5,000 customers...">
+      </div>
+
+      <div class="doc-section">
+        <h4>Compliance Documents</h4>
+        <p>Upload required regulatory documents. PDF, JPG, or PNG accepted (max 5MB each). Documents marked * are required for Nigerian institutions.</p>
+
+        <div class="doc-upload" onclick="this.querySelector('input').click()">
+          <div class="doc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="doc-info">
+            <div class="doc-label">CBN License / Approval-in-Principle *</div>
+            <div class="doc-hint">Central Bank of Nigeria operating license</div>
+          </div>
+          <span class="doc-status pending" id="status-cbn">No file</span>
+          <input type="file" id="doc-cbn" accept=".pdf,.jpg,.jpeg,.png" onchange="onDocPicked(this, 'cbn')">
+        </div>
+
+        <div class="doc-upload" onclick="this.querySelector('input').click()">
+          <div class="doc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="doc-info">
+            <div class="doc-label">CAC Certificate of Incorporation *</div>
+            <div class="doc-hint">Corporate Affairs Commission registration</div>
+          </div>
+          <span class="doc-status pending" id="status-cac">No file</span>
+          <input type="file" id="doc-cac" accept=".pdf,.jpg,.jpeg,.png" onchange="onDocPicked(this, 'cac')">
+        </div>
+
+        <div class="doc-upload" onclick="this.querySelector('input').click()">
+          <div class="doc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="doc-info">
+            <div class="doc-label">CAC Form 1.1 (Directors & Shareholders)</div>
+            <div class="doc-hint">Particulars of directors/shareholders</div>
+          </div>
+          <span class="doc-status pending" id="status-cac11">No file</span>
+          <input type="file" id="doc-cac11" accept=".pdf,.jpg,.jpeg,.png" onchange="onDocPicked(this, 'cac11')">
+        </div>
+
+        <div class="doc-upload" onclick="this.querySelector('input').click()">
+          <div class="doc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="doc-info">
+            <div class="doc-label">Tax Identification Number (TIN) *</div>
+            <div class="doc-hint">Federal Inland Revenue Service TIN certificate</div>
+          </div>
+          <span class="doc-status pending" id="status-tin">No file</span>
+          <input type="file" id="doc-tin" accept=".pdf,.jpg,.jpeg,.png" onchange="onDocPicked(this, 'tin')">
+        </div>
+
+        <div class="doc-upload" onclick="this.querySelector('input').click()">
+          <div class="doc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="doc-info">
+            <div class="doc-label">SCUML Certificate</div>
+            <div class="doc-hint">Special Control Unit against Money Laundering</div>
+          </div>
+          <span class="doc-status pending" id="status-scuml">No file</span>
+          <input type="file" id="doc-scuml" accept=".pdf,.jpg,.jpeg,.png" onchange="onDocPicked(this, 'scuml')">
+        </div>
+
+        <div class="doc-upload" onclick="this.querySelector('input').click()">
+          <div class="doc-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="doc-info">
+            <div class="doc-label">Signatory ID (Government-issued) *</div>
+            <div class="doc-hint">International passport, NIN slip, or driver's license</div>
+          </div>
+          <span class="doc-status pending" id="status-signatory">No file</span>
+          <input type="file" id="doc-signatory" accept=".pdf,.jpg,.jpeg,.png" onchange="onDocPicked(this, 'signatory')">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;padding:12px;margin-top:16px" onclick="doApply()">Submit Application</button>
+      <div id="apply-error" class="form-error"></div>
+      <div id="apply-success" style="display:none;margin-top:12px;padding:14px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:10px;font-size:13px;color:var(--green)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard (hidden until login) -->
+<div id="dashboard" style="display:none">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <h1>Prompt<span>Pay</span></h1>
+      <p>Partner Portal</p>
+    </div>
+    <div class="nav-section">Dashboard</div>
+    <button class="nav-item active" data-page="overview" onclick="navTo('overview')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </button>
+    <button class="nav-item" data-page="users" onclick="navTo('users')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Users
+    </button>
+    <button class="nav-item" data-page="transactions" onclick="navTo('transactions')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Transactions
+    </button>
+    <button class="nav-item" data-page="revenue" onclick="navTo('revenue')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      Revenue
+    </button>
+    <div class="nav-section">Features</div>
+    <button class="nav-item" data-page="engagement" onclick="navTo('engagement')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      Engagement
+    </button>
+    <button class="nav-item" data-page="api" data-feature="webhooks" onclick="navTo('api')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      API &amp; Webhooks
+    </button>
+    <button class="nav-item" data-page="branding" data-feature="white_label" onclick="navTo('branding')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+      Branding
+    </button>
+    <div class="nav-section">Account</div>
+    <button class="nav-item" data-page="settings" onclick="navTo('settings')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+    <button class="nav-item" onclick="doLogout()" style="color:var(--red)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Logout
+    </button>
+    <div style="padding:20px;margin-top:auto">
+      <div id="sidebar-tier" class="tier-badge tier-standard">Standard</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="header">
+        <div>
+          <h2 id="partner-name">Partner Dashboard</h2>
+          <div style="font-size:13px;color:var(--text2);margin-top:4px" id="partner-status"></div>
+        </div>
+        <div id="header-tier"></div>
+      </div>
+
+      <div id="upgrade-banner"></div>
+
+      <div class="grid grid-4" id="overview-cards">
+        <div class="card"><div class="card-title">TOTAL USERS</div><div class="card-value val-blue" id="stat-users">—</div><div class="card-sub" id="stat-users-sub">loading</div></div>
+        <div class="card"><div class="card-title">ACTIVE (7D)</div><div class="card-value val-green" id="stat-active">—</div><div class="card-sub" id="stat-active-sub">loading</div></div>
+        <div class="card"><div class="card-title">TRANSACTION VOLUME</div><div class="card-value val-purple" id="stat-volume">—</div><div class="card-sub" id="stat-volume-sub">loading</div></div>
+        <div class="card"><div class="card-title">REVENUE SHARE</div><div class="card-value val-orange" id="stat-revenue">—</div><div class="card-sub" id="stat-revenue-sub">loading</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Your Plan Features</div>
+        <div id="features-list" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:12px">ENGAGEMENT</div>
+          <div id="engagement-mini">
+            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text2)">Active Streaks</span><span id="mini-streaks">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text2)">Total Cashback</span><span id="mini-cashback">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text2)">Loyalty Points</span><span id="mini-loyalty">—</span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px"><span style="color:var(--text2)">Achievements</span><span id="mini-achievements">—</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:12px">QUICK ACTIONS</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-outline" style="width:100%;text-align:left" onclick="navTo('users')">View Users</button>
+            <button class="btn btn-outline" style="width:100%;text-align:left" onclick="navTo('transactions')">View Transactions</button>
+            <button class="btn btn-outline" style="width:100%;text-align:left" onclick="navTo('api')">API Keys &amp; Docs</button>
+            <button class="btn btn-outline" style="width:100%;text-align:left" onclick="window.open('https://www.upromptpay.com/api/v1/docs')">API Documentation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="header"><h2>Users</h2>
+        <input type="text" id="user-search" placeholder="Search users..." oninput="loadUsers()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;width:250px">
+      </div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Email</th><th>Country</th><th>Role</th><th>Status</th><th>Last Login</th></tr></thead>
+        <tbody id="users-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text2)">Loading...</td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="page" id="page-transactions">
+      <div class="header"><h2>Transactions</h2></div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>User</th><th>Type</th><th>Amount</th><th>Currency</th><th>Status</th></tr></thead>
+        <tbody id="txn-tbody"><tr><td colspan="6" style="text-align:center;color:var(--text2)">Loading...</td></tr></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- REVENUE -->
+    <div class="page" id="page-revenue">
+      <div class="header"><h2>Revenue</h2>
+        <select id="revenue-period" onchange="loadRevenue()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px">
+          <option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option>
+        </select>
+      </div>
+      <div class="grid grid-3" id="revenue-summary">
+        <div class="card"><div class="card-title">TOTAL VOLUME</div><div class="card-value val-purple" id="rev-total">$0</div></div>
+        <div class="card"><div class="card-title">YOUR COMMISSION</div><div class="card-value val-green" id="rev-commission">$0</div><div class="card-sub" id="rev-cut-label">at 1.5% cut</div></div>
+        <div class="card"><div class="card-title">TRANSACTIONS</div><div class="card-value val-blue" id="rev-count">0</div></div>
+      </div>
+      <div class="section">
+        <div class="section-title">By Transaction Type</div>
+        <div class="card"><div id="rev-by-type" style="font-size:13px">Loading...</div></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Daily Volume</div>
+        <div class="card"><div id="rev-daily" style="font-size:13px;max-height:300px;overflow-y:auto">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ENGAGEMENT -->
+    <div class="page" id="page-engagement">
+      <div class="header"><h2>Engagement &amp; Loyalty</h2></div>
+      <div class="grid grid-4" id="engagement-cards">
+        <div class="card"><div class="card-title">STREAKS</div><div class="card-value val-orange" id="eng-streaks">—</div><div class="card-sub" id="eng-streaks-sub">active streaks</div></div>
+        <div class="card"><div class="card-title">CASHBACK PAID</div><div class="card-value val-green" id="eng-cashback">—</div><div class="card-sub" id="eng-cashback-sub">total paid out</div></div>
+        <div class="card"><div class="card-title">LOYALTY POINTS</div><div class="card-value val-purple" id="eng-loyalty">—</div><div class="card-sub" id="eng-loyalty-sub">across all users</div></div>
+        <div class="card"><div class="card-title">ACHIEVEMENTS</div><div class="card-value val-cyan" id="eng-achievements">—</div><div class="card-sub" id="eng-achievements-sub">total unlocked</div></div>
+      </div>
+    </div>
+
+    <!-- API -->
+    <div class="page" id="page-api">
+      <div class="header"><h2>API &amp; Webhooks</h2></div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title" style="margin-bottom:12px">API KEYS</div>
+        <div id="api-keys-list" style="font-size:13px;color:var(--text2)">Loading...</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">API DOCUMENTATION</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Full REST API documentation available at:</p>
+        <a href="https://www.upromptpay.com/api/v1/docs" target="_blank" class="btn btn-primary btn-sm">View API Docs</a>
+        <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:8px;font-family:monospace;font-size:12px;color:var(--text2);line-height:1.6;overflow-x:auto;white-space:pre">curl -X POST https://www.upromptpay.com/api/v1/chat \
+  -H "X-API-Key: upp_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello"}]}'</div>
+      </div>
+    </div>
+
+    <!-- BRANDING -->
+    <div class="page" id="page-branding">
+      <div class="header"><h2>White-Label Branding</h2></div>
+      <div id="branding-content"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="header"><h2>Settings</h2></div>
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">ORGANIZATION INFO</div>
+          <div style="font-size:13px;line-height:2">
+            <div>Name: <strong id="set-name">—</strong></div>
+            <div>Slug: <strong id="set-slug">—</strong></div>
+            <div>Contact: <strong id="set-email">—</strong></div>
+            <div>Phone: <strong id="set-phone">—</strong></div>
+            <div>Status: <strong id="set-status">—</strong></div>
+            <div>Since: <strong id="set-since">—</strong></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px">YOUR PLAN</div>
+          <div id="set-plan-info" style="font-size:13px;line-height:2">Loading...</div>
+          <div style="margin-top:16px">
+            <a href="mailto:partnerships@upromptpay.com?subject=Tier Upgrade Request" class="btn btn-primary btn-sm">Request Upgrade</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let token = localStorage.getItem('partner_token');
+let partner = null;
+let stats = null;
+
+// ── Auth ──
+function switchTab(tab) {
+  document.querySelectorAll('.form-tab').forEach(t => t.classList.toggle('active', t.textContent.trim().toLowerCase().includes(tab)));
+  document.getElementById('tab-login').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('tab-apply').style.display = tab === 'apply' ? 'block' : 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  document.getElementById('login-error').textContent = '';
+  if (!email || !password) { document.getElementById('login-error').textContent = 'Enter email and password'; return; }
+  try {
+    const res = await fetch(API + '/api/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.token) {
+      document.getElementById('login-error').textContent = data.error || 'Login failed';
+      return;
+    }
+    if (data.user?.role !== 'partner_admin' && data.user?.role !== 'owner') {
+      document.getElementById('login-error').textContent = 'This portal is for partner admins only.';
+      return;
+    }
+    token = data.token;
+    localStorage.setItem('partner_token', token);
+    init();
+  } catch(e) { document.getElementById('login-error').textContent = 'Network error'; }
+}
+
+// ── Document file picker ──
+const docFiles = {};
+function onDocPicked(input, key) {
+  const file = input.files[0];
+  const statusEl = document.getElementById('status-' + key);
+  if (!file) { statusEl.textContent = 'No file'; statusEl.className = 'doc-status pending'; delete docFiles[key]; return; }
+  if (file.size > 5 * 1024 * 1024) { statusEl.textContent = 'Too large'; statusEl.className = 'doc-status pending'; alert('File must be under 5MB'); input.value = ''; return; }
+  docFiles[key] = file;
+  statusEl.textContent = file.name.length > 18 ? file.name.slice(0, 15) + '...' : file.name;
+  statusEl.className = 'doc-status ready';
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function doApply() {
+  const name = document.getElementById('apply-name').value.trim();
+  const email = document.getElementById('apply-email').value.trim();
+  document.getElementById('apply-error').textContent = '';
+  document.getElementById('apply-success').style.display = 'none';
+  if (!name || !email) { document.getElementById('apply-error').textContent = 'Name and email required'; return; }
+
+  // Build documents object (base64)
+  const documents = {};
+  for (const [key, file] of Object.entries(docFiles)) {
+    try {
+      documents[key] = { name: file.name, type: file.type, data: await fileToBase64(file) };
+    } catch(e) { console.error('Failed to read file', key, e); }
+  }
+
+  // Disable submit button while uploading
+  const btn = document.querySelector('#tab-apply .btn-primary');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = Object.keys(documents).length > 0 ? 'Uploading documents...' : 'Submitting...';
+
+  try {
+    const res = await fetch(API + '/api/partners/apply', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, contactEmail: email,
+        contactPhone: document.getElementById('apply-phone').value.trim(),
+        website: document.getElementById('apply-website').value.trim(),
+        description: document.getElementById('apply-desc').value.trim(),
+        tier: document.getElementById('apply-tier').value,
+        documents,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById('apply-error').textContent = data.error || 'Failed'; return; }
+    document.getElementById('apply-success').style.display = 'block';
+    const docCount = Object.keys(documents).length;
+    document.getElementById('apply-success').textContent =
+      'Application submitted! ' + (docCount > 0 ? docCount + ' document(s) uploaded. ' : '') +
+      'We will review and send you login credentials once approved. Reference: ' + data.tenantId;
+  } catch(e) { document.getElementById('apply-error').textContent = 'Network error — please try again'; }
+  finally { btn.disabled = false; btn.textContent = origText; }
+}
+
+function doLogout() {
+  token = null;
+  localStorage.removeItem('partner_token');
+  location.reload();
+}
+
+function authHeaders() {
+  return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+}
+
+// ── Init ──
+async function init() {
+  if (!token) { document.getElementById('auth-gate').style.display = 'flex'; document.getElementById('dashboard').style.display = 'none'; return; }
+  try {
+    const res = await fetch(API + '/api/partners/me', { headers: authHeaders() });
+    if (!res.ok) { doLogout(); return; }
+    partner = await res.json();
+
+    document.getElementById('auth-gate').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    // Set partner info
+    document.getElementById('partner-name').textContent = partner.displayName || partner.name;
+    document.getElementById('partner-status').textContent = partner.slug + ' · ' + partner.status;
+
+    const tierClass = 'tier-' + (partner.tier || 'standard');
+    document.getElementById('header-tier').innerHTML = `<span class="tier-badge ${tierClass}">${(partner.tier || 'standard').charAt(0).toUpperCase() + (partner.tier || 'standard').slice(1)} — $${partner.limits?.price || 99}/mo</span>`;
+    document.getElementById('sidebar-tier').className = 'tier-badge ' + tierClass;
+    document.getElementById('sidebar-tier').textContent = (partner.tier || 'standard').charAt(0).toUpperCase() + (partner.tier || 'standard').slice(1);
+
+    // Feature gating on nav
+    updateFeatureGating();
+
+    // Upgrade banner
+    if (partner.tier === 'standard') {
+      document.getElementById('upgrade-banner').innerHTML = `
+        <div class="upgrade-card">
+          <h3>Upgrade to Professional</h3>
+          <p>Get AI agents, loyalty engine, webhooks, and advanced analytics for your users. 10x user limit.</p>
+          <a href="mailto:partnerships@upromptpay.com?subject=Upgrade to Professional" class="btn btn-primary btn-sm">Contact Us to Upgrade</a>
+        </div>`;
+    } else if (partner.tier === 'professional') {
+      document.getElementById('upgrade-banner').innerHTML = `
+        <div class="upgrade-card">
+          <h3>Go Enterprise</h3>
+          <p>White-label branding, custom domain, unlimited users, dedicated support, and SLA.</p>
+          <a href="mailto:partnerships@upromptpay.com?subject=Upgrade to Enterprise" class="btn btn-primary btn-sm">Contact Us to Upgrade</a>
+        </div>`;
+    } else {
+      document.getElementById('upgrade-banner').innerHTML = '';
+    }
+
+    // Features list
+    const allFeatures = ['wallets','airtime','pos','ai_agents','loyalty','webhooks','advanced_analytics','priority_support','white_label','custom_domain','dedicated_support','sla'];
+    const activeFeatures = partner.limits?.features || [];
+    document.getElementById('features-list').innerHTML = allFeatures.map(f => {
+      const active = activeFeatures.includes(f);
+      return `<span class="feature-tag ${active ? '' : 'locked'}">${active ? '✓' : '🔒'} ${f.replace(/_/g, ' ')}</span>`;
+    }).join('');
+
+    loadStats();
+    loadSettings();
+  } catch(e) { doLogout(); }
+}
+
+function updateFeatureGating() {
+  const features = partner?.limits?.features || [];
+  document.querySelectorAll('.nav-item[data-feature]').forEach(el => {
+    const feat = el.dataset.feature;
+    if (feat && !features.includes(feat)) {
+      el.classList.add('locked');
+      el.innerHTML += '<span class="lock-icon">🔒</span>';
+    }
+  });
+}
+
+async function loadStats() {
+  try {
+    const res = await fetch(API + '/api/partners/me/stats', { headers: authHeaders() });
+    stats = await res.json();
+
+    document.getElementById('stat-users').textContent = (stats.totalUsers || 0).toLocaleString();
+    document.getElementById('stat-users-sub').textContent = `${stats.newUsersThisMonth || 0} new this month`;
+    document.getElementById('stat-active').textContent = (stats.activeUsers || 0).toLocaleString();
+    document.getElementById('stat-active-sub').textContent = 'logged in last 7 days';
+    document.getElementById('stat-volume').textContent = '$' + (stats.transactionVolume || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+    document.getElementById('stat-volume-sub').textContent = `${stats.transactionCount || 0} transactions`;
+    document.getElementById('stat-revenue').textContent = '$' + (stats.revenueShare || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+    document.getElementById('stat-revenue-sub').textContent = `at ${partner?.limits?.transactionCut || 1.5}% cut`;
+
+    // Engagement mini
+    const s = stats.streaks || {}; const c = stats.cashback || {}; const l = stats.loyalty || {}; const a = stats.achievements || {};
+    document.getElementById('mini-streaks').textContent = s.active || 0;
+    document.getElementById('mini-cashback').textContent = '$' + (c.total_cashback || 0).toFixed(2);
+    document.getElementById('mini-loyalty').textContent = (l.total_points || 0).toLocaleString();
+    document.getElementById('mini-achievements').textContent = a.total_unlocks || 0;
+
+    // Engagement page
+    document.getElementById('eng-streaks').textContent = s.active || 0;
+    document.getElementById('eng-streaks-sub').textContent = `avg ${(s.avg_streak || 0).toFixed(1)} days, max ${s.max_streak || 0}`;
+    document.getElementById('eng-cashback').textContent = '$' + (c.total_cashback || 0).toFixed(2);
+    document.getElementById('eng-cashback-sub').textContent = `${c.pending_count || 0} pending ($${(c.pending_amount || 0).toFixed(2)})`;
+    document.getElementById('eng-loyalty').textContent = (l.total_points || 0).toLocaleString();
+    document.getElementById('eng-loyalty-sub').textContent = `${l.accounts || 0} accounts, ${(l.total_earned || 0).toLocaleString()} earned`;
+    document.getElementById('eng-achievements').textContent = a.total_unlocks || 0;
+  } catch(e) {}
+}
+
+async function loadUsers() {
+  try {
+    const search = document.getElementById('user-search')?.value || '';
+    const res = await fetch(API + '/api/partners/me/users?limit=50&search=' + encodeURIComponent(search), { headers: authHeaders() });
+    const data = await res.json();
+    const tbody = document.getElementById('users-tbody');
+    if (!data.users?.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2)">No users</td></tr>'; return; }
+    tbody.innerHTML = data.users.map(u => `<tr>
+      <td>${esc(u.display_name)}</td>
+      <td>${esc(u.email)}</td>
+      <td>${u.country || '—'}</td>
+      <td><span class="badge ${u.role === 'partner_admin' ? 'badge-purple' : 'badge-blue'}">${u.role}</span></td>
+      <td><span class="badge ${u.status === 'active' ? 'badge-green' : 'badge-red'}">${u.status}</span></td>
+      <td style="color:var(--text2)">${u.last_login_at ? new Date(u.last_login_at).toLocaleDateString() : 'Never'}</td>
+    </tr>`).join('');
+  } catch(e) {}
+}
+
+async function loadTransactions() {
+  try {
+    const res = await fetch(API + '/api/partners/me/transactions?limit=50', { headers: authHeaders() });
+    const data = await res.json();
+    const tbody = document.getElementById('txn-tbody');
+    if (!data.transactions?.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2)">No transactions</td></tr>'; return; }
+    tbody.innerHTML = data.transactions.map(t => `<tr>
+      <td style="color:var(--text2)">${new Date(t.created_at).toLocaleDateString()}</td>
+      <td>${esc(t.display_name || t.email || '—')}</td>
+      <td><span class="badge badge-blue">${t.type || '—'}</span></td>
+      <td style="font-weight:600">${(t.amount || 0).toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+      <td>${(t.currency || 'USD').toUpperCase()}</td>
+      <td><span class="badge ${t.status === 'completed' ? 'badge-green' : t.status === 'failed' ? 'badge-red' : 'badge-yellow'}">${t.status || '—'}</span></td>
+    </tr>`).join('');
+  } catch(e) {}
+}
+
+async function loadRevenue() {
+  try {
+    const days = document.getElementById('revenue-period').value;
+    const res = await fetch(API + '/api/partners/me/revenue?days=' + days, { headers: authHeaders() });
+    const data = await res.json();
+    const cut = partner?.limits?.transactionCut || 1.5;
+    const commission = (data.total || 0) * (cut / 100);
+
+    document.getElementById('rev-total').textContent = '$' + (data.total || 0).toLocaleString(undefined, {minimumFractionDigits:2});
+    document.getElementById('rev-commission').textContent = '$' + commission.toLocaleString(undefined, {minimumFractionDigits:2});
+    document.getElementById('rev-cut-label').textContent = `at ${cut}% revenue share`;
+    document.getElementById('rev-count').textContent = (data.daily || []).reduce((s,d) => s + (d.count || 0), 0).toLocaleString();
+
+    // By type
+    document.getElementById('rev-by-type').innerHTML = (data.byType || []).length === 0
+      ? '<div style="color:var(--text2);padding:10px">No transaction data</div>'
+      : data.byType.map(t => `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span>${t.type}</span><span style="font-weight:600">$${(t.volume || 0).toLocaleString(undefined, {minimumFractionDigits:2})} (${t.count})</span>
+        </div>`).join('');
+
+    // Daily
+    document.getElementById('rev-daily').innerHTML = (data.daily || []).length === 0
+      ? '<div style="color:var(--text2);padding:10px">No data for this period</div>'
+      : data.daily.map(d => `
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <span style="color:var(--text2)">${d.date}</span>
+          <span style="font-weight:600">$${(d.volume || 0).toLocaleString(undefined, {minimumFractionDigits:2})}</span>
+          <span style="color:var(--text2)">${d.count} txns</span>
+        </div>`).join('');
+  } catch(e) {}
+}
+
+async function loadApiUsage() {
+  try {
+    const res = await fetch(API + '/api/partners/me/api-usage', { headers: authHeaders() });
+    const data = await res.json();
+    const el = document.getElementById('api-keys-list');
+    if (!data.keys?.length) { el.innerHTML = 'No API keys created by your users yet.'; return; }
+    el.innerHTML = `<div style="margin-bottom:12px;font-size:13px">Total API calls: <strong>${data.totalCalls}</strong> | Today: <strong>${data.todayCalls}</strong></div>` +
+      data.keys.map(k => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:6px;font-size:12px">
+          <div><strong>${esc(k.name)}</strong> <span style="color:var(--text2);font-family:monospace">${k.api_key_prefix}</span></div>
+          <div><span class="badge ${k.status === 'active' ? 'badge-green' : 'badge-red'}">${k.status}</span> ${k.requests_today}/${k.rate_limit} today</div>
+        </div>`).join('');
+  } catch(e) {}
+}
+
+function loadBranding() {
+  const el = document.getElementById('branding-content');
+  if (!partner?.limits?.whiteLabel) {
+    el.innerHTML = `
+      <div class="card" style="text-align:center;padding:40px">
+        <div style="font-size:36px;margin-bottom:12px">🔒</div>
+        <h3 style="margin-bottom:8px">Enterprise Feature</h3>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">White-label branding is available on the Enterprise plan ($999/mo). Customize your logo, colors, and domain.</p>
+        <a href="mailto:partnerships@upromptpay.com?subject=Enterprise Upgrade - White Label" class="btn btn-primary">Contact Us to Upgrade</a>
+      </div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">BRANDING</div>
+        <div class="form-group"><label>Display Name</label><input type="text" id="brand-name" value="${esc(partner.displayName || '')}"></div>
+        <div class="form-group"><label>Logo URL</label><input type="url" id="brand-logo" value="${esc(partner.logoUrl || '')}" placeholder="https://..."></div>
+        <div class="form-group"><label>Primary Color</label><input type="color" id="brand-color" value="${partner.primaryColor || '#6366f1'}" style="height:40px"></div>
+        <button class="btn btn-primary" onclick="saveBranding()">Save Branding</button>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">PREVIEW</div>
+        <div id="brand-preview" style="padding:20px;border-radius:12px;background:var(--bg);text-align:center">
+          <div id="brand-preview-logo" style="width:60px;height:60px;border-radius:12px;background:var(--accent);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;font-weight:700">${(partner.displayName || 'P').charAt(0)}</div>
+          <div id="brand-preview-name" style="font-weight:700;font-size:18px">${esc(partner.displayName || partner.name)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Powered by PromptPay</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function saveBranding() {
+  try {
+    const res = await fetch(API + '/api/partners/me/branding', {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({
+        displayName: document.getElementById('brand-name').value.trim(),
+        logoUrl: document.getElementById('brand-logo').value.trim(),
+        primaryColor: document.getElementById('brand-color').value,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) { alert('Branding saved!'); init(); } else { alert(data.error || 'Failed'); }
+  } catch(e) { alert('Network error'); }
+}
+
+function loadSettings() {
+  if (!partner) return;
+  document.getElementById('set-name').textContent = partner.name;
+  document.getElementById('set-slug').textContent = partner.slug;
+  document.getElementById('set-email').textContent = partner.contactEmail || '—';
+  document.getElementById('set-phone').textContent = partner.contactPhone || '—';
+  document.getElementById('set-status').textContent = partner.status;
+  document.getElementById('set-since').textContent = partner.activatedAt ? new Date(partner.activatedAt).toLocaleDateString() : 'Pending';
+
+  const l = partner.limits || {};
+  document.getElementById('set-plan-info').innerHTML = `
+    <div>Tier: <strong class="tier-badge tier-${partner.tier}">${partner.tier}</strong></div>
+    <div>Price: <strong>$${l.price || 99}/month</strong></div>
+    <div>Max Users: <strong>${l.maxUsers === 'unlimited' ? 'Unlimited' : (l.maxUsers || 1000).toLocaleString()}</strong></div>
+    <div>API Calls: <strong>${l.apiCalls === 'unlimited' ? 'Unlimited' : (l.apiCalls || 10000).toLocaleString()}/month</strong></div>
+    <div>Transaction Cut: <strong>${l.transactionCut || 1.5}%</strong></div>
+    <div>White Label: <strong>${l.whiteLabel ? 'Yes' : 'No'}</strong></div>
+  `;
+}
+
+// ── Navigation ──
+function navTo(page) {
+  // Check feature gating
+  const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (navItem?.classList.contains('locked')) {
+    alert('This feature requires a higher tier. Contact us to upgrade.');
+    return;
+  }
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
+
+  // Load data per page
+  if (page === 'users') loadUsers();
+  if (page === 'transactions') loadTransactions();
+  if (page === 'revenue') loadRevenue();
+  if (page === 'api') loadApiUsage();
+  if (page === 'branding') loadBranding();
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+// ── Boot ──
+init();
+</script>
+</body>
+</html>

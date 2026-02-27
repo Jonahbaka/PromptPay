@@ -349,12 +349,30 @@
   <div class="nav-item" data-page="pos-revenue">
     <span class="nav-icon">&#128722;</span> POS Revenue
   </div>
+  <div class="nav-section">POS Agents</div>
+  <div class="nav-item" data-page="pos-agents">
+    <span class="nav-icon">&#128116;</span> POS Management
+  </div>
+  <div class="nav-item" data-page="pos-referrals">
+    <span class="nav-icon">&#128279;</span> Agent Referrals
+  </div>
   <div class="nav-section">Network</div>
   <div class="nav-item" data-page="agents-network">
     <span class="nav-icon">&#127758;</span> Agent Network
   </div>
   <div class="nav-item" data-page="cross-border">
     <span class="nav-icon">&#128260;</span> Cross-Border
+  </div>
+  <div class="nav-section">HR &amp; Hiring</div>
+  <div class="nav-item" data-page="hr-dashboard">
+    <span class="nav-icon">&#128188;</span> Hiring Pipeline
+  </div>
+  <div class="nav-item" data-page="hr-jobs">
+    <span class="nav-icon">&#128196;</span> Job Listings
+  </div>
+  <div class="nav-section">Strategy</div>
+  <div class="nav-item" data-page="strategy-bootstrap">
+    <span class="nav-icon">&#127919;</span> Abuja Bootstrap
   </div>
   <div class="nav-section" id="nav-section-executive">Executive AI</div>
   <div class="nav-item" data-page="executive" id="nav-executive">
@@ -768,6 +786,331 @@
   </div>
 
   <!-- ── CROSS-BORDER ── -->
+  <!-- ═══ POS AGENTS MANAGEMENT ═══ -->
+  <div class="page" id="page-pos-agents" style="display:none;">
+    <div class="header"><h2>POS Agents Management</h2><span class="badge badge-purple">PromptPay Points</span></div>
+
+    <div class="grid grid-4" id="pos-agents-stats">
+      <div class="card"><div class="card-header"><span class="card-title">Total Agents</span><span class="card-icon">&#128101;</span></div><div class="card-value val-blue" id="pa-total">0</div><div class="card-sub">registered</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Active</span><span class="card-icon">&#9989;</span></div><div class="card-value val-green" id="pa-active">0</div><div class="card-sub">operating</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Suspended</span><span class="card-icon">&#128721;</span></div><div class="card-value val-red" id="pa-suspended">0</div><div class="card-sub">frozen</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Limit Requests</span><span class="card-icon">&#128200;</span></div><div class="card-value val-yellow" id="pa-pending-limits">0</div><div class="card-sub">pending review</div></div>
+    </div>
+
+    <div class="grid grid-3" style="margin-top:16px">
+      <div class="card"><div class="card-header"><span class="card-title">Total Volume</span><span class="card-icon">&#128176;</span></div><div class="card-value val-green" id="pa-volume">&#8358;0</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Total Transactions</span><span class="card-icon">&#128179;</span></div><div class="card-value val-blue" id="pa-txns">0</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Avg Rating</span><span class="card-icon">&#11088;</span></div><div class="card-value val-yellow" id="pa-rating">5.0</div></div>
+    </div>
+
+    <!-- Tier Breakdown -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Tier Breakdown</div>
+      <div id="pa-tier-breakdown" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px"></div>
+    </div>
+
+    <!-- Pending Limit Requests -->
+    <div class="card" style="margin-top:16px" id="pa-limit-requests-card">
+      <div class="section-title">Pending Limit Requests</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Agent</th><th>Code</th><th>Tier</th><th>Current</th><th>Requested</th><th>Txns</th><th>Rating</th><th>Actions</th></tr></thead>
+        <tbody id="pa-limit-tbody"><tr><td colspan="8" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- Agent Search & Table -->
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="section-title" style="margin-bottom:0">All Agents</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="pa-status-filter" onchange="loadPosAgentsList()" style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="pending">Pending</option>
+          </select>
+          <input id="pa-search" placeholder="Search name, code, phone..." onkeyup="clearTimeout(window._paSearchTimer);window._paSearchTimer=setTimeout(loadPosAgentsList,400)" style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;width:200px">
+        </div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Agent</th><th>Code</th><th>Email</th><th>Tier</th><th>Daily Limit</th><th>Volume</th><th>Txns</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="pa-agents-tbody"><tr><td colspan="10" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══ POS AGENT REFERRALS ═══ -->
+  <div class="page" id="page-pos-referrals" style="display:none;">
+    <div class="header"><h2>Agent Referrals &amp; Bonuses</h2></div>
+
+    <div class="grid grid-4" id="pos-ref-stats">
+      <div class="card"><div class="card-header"><span class="card-title">Total Referrals</span><span class="card-icon">&#128279;</span></div><div class="card-value val-blue" id="pr-total-referrals">0</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Active Referred</span><span class="card-icon">&#9989;</span></div><div class="card-value val-green" id="pr-active-referred">0</div><div class="card-sub">became active agents</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Bonuses Paid</span><span class="card-icon">&#128176;</span></div><div class="card-value val-purple" id="pr-bonuses-paid">&#8358;0</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Pending Bonuses</span><span class="card-icon">&#9203;</span></div><div class="card-value val-yellow" id="pr-bonuses-pending">&#8358;0</div></div>
+    </div>
+
+    <!-- Bonus Structure -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Bonus Structure</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Milestone</th><th>Referrer Bonus</th><th>New Agent Bonus</th><th>Condition</th></tr></thead>
+        <tbody>
+          <tr><td>Sign-up</td><td style="color:var(--success)">&#8358;500</td><td style="color:var(--success)">&#8358;200</td><td>Referred agent completes registration</td></tr>
+          <tr><td>First Sale</td><td style="color:var(--success)">&#8358;1,000</td><td style="color:var(--success)">&#8358;500</td><td>Referred agent makes their first sale</td></tr>
+          <tr><td>10 Sales</td><td style="color:var(--success)">&#8358;2,000</td><td>—</td><td>Referred agent reaches 10 completed sales</td></tr>
+          <tr><td>50 Sales</td><td style="color:var(--success)">&#8358;5,000</td><td>—</td><td>Referred agent reaches 50 completed sales</td></tr>
+          <tr><td>Ongoing</td><td style="color:var(--success)">2% of commission</td><td>—</td><td>Ongoing share of referred agent's earnings for 6 months</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- Top Referrers -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Top Referrers</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Agent</th><th>Code</th><th>Referrals</th><th>Active</th><th>Bonuses Earned</th><th>Status</th></tr></thead>
+        <tbody id="pr-top-referrers"><tr><td colspan="7" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- Recent Referral Events -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Recent Referral Events</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Referrer</th><th>New Agent</th><th>Milestone</th><th>Bonus</th><th>Status</th></tr></thead>
+        <tbody id="pr-events-tbody"><tr><td colspan="6" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══ HR HIRING PIPELINE ═══ -->
+  <div class="page" id="page-hr-dashboard" style="display:none;">
+    <div class="header">
+      <h2>Hiring Pipeline</h2>
+      <a href="/careers" target="_blank" style="padding:6px 14px;border-radius:8px;background:rgba(99,102,241,0.1);color:var(--accent2);font-size:12px;font-weight:600;text-decoration:none">View Careers Page &rarr;</a>
+    </div>
+
+    <div class="grid grid-4">
+      <div class="card"><div class="card-header"><span class="card-title">Open Positions</span><span class="card-icon">&#128196;</span></div><div class="card-value val-blue" id="hr-open">0</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Applications</span><span class="card-icon">&#128236;</span></div><div class="card-value val-purple" id="hr-total-apps">0</div><div class="card-sub"><span id="hr-new-week">0</span> this week</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">In Pipeline</span><span class="card-icon">&#128260;</span></div><div class="card-value val-orange" id="hr-pipeline">0</div></div>
+      <div class="card"><div class="card-header"><span class="card-title">Hired</span><span class="card-icon">&#9989;</span></div><div class="card-value val-green" id="hr-hired">0</div></div>
+    </div>
+
+    <!-- Pipeline Funnel -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Pipeline Stages</div>
+      <div id="hr-pipeline-stages" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+    </div>
+
+    <!-- By Department -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">By Department</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Department</th><th>Applications</th><th>Active</th></tr></thead>
+        <tbody id="hr-dept-tbody"><tr><td colspan="3" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- Upcoming Interviews -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">Upcoming Interviews</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Candidate</th><th>Position</th><th>Type</th><th>Scheduled</th><th>Interviewer</th></tr></thead>
+        <tbody id="hr-interviews-tbody"><tr><td colspan="5" style="color:var(--text2);text-align:center">No upcoming interviews</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- Recent Applications -->
+    <div class="card" style="margin-top:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="section-title" style="margin-bottom:0">Recent Applications</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="hr-stage-filter" onchange="filterHrApplications()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:11px">
+            <option value="">All Stages</option>
+            <option value="applied">Applied</option>
+            <option value="screening">Screening</option>
+            <option value="interview">Interview</option>
+            <option value="assessment">Assessment</option>
+            <option value="offer">Offer</option>
+            <option value="hired">Hired</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <input id="hr-search" placeholder="Search..." onkeyup="clearTimeout(window._hrTimer);window._hrTimer=setTimeout(filterHrApplications,400)" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:11px;width:160px">
+        </div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Position</th><th>Dept</th><th>Rating</th><th>Stage</th><th>Applied</th><th>Actions</th></tr></thead>
+        <tbody id="hr-apps-tbody"><tr><td colspan="7" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ═══ HR JOB LISTINGS ═══ -->
+  <div class="page" id="page-hr-jobs" style="display:none;">
+    <div class="header">
+      <h2>Job Listings</h2>
+      <button onclick="showCreateJobModal()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer">+ Create Listing</button>
+    </div>
+
+    <div class="table-wrap"><div class="card"><table>
+      <thead><tr><th>Title</th><th>Department</th><th>Type</th><th>Location</th><th>Salary</th><th>Apps</th><th>Hired</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="hr-jobs-tbody"><tr><td colspan="9" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+    </table></div></div>
+  </div>
+
+  <!-- ═══ Strategy: Abuja Bootstrap ═══ -->
+  <div class="page" id="page-strategy-bootstrap" style="display:none;">
+    <div class="header"><h2>Abuja Bootstrap Strategy</h2><span class="status-badge status-online">Active Plan</span></div>
+
+    <!-- Phase Overview -->
+    <div class="grid grid-3" style="margin-bottom:24px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <div class="card-header"><span class="card-title">Week 1</span><span class="card-icon" style="font-size:20px">&#127793;</span></div>
+        <div style="font-size:18px;font-weight:700;color:var(--green);margin:8px 0">Launch</div>
+        <div style="font-size:12px;color:var(--text2)">You + 1 Field Coordinator (commission-only). Target: 10 POS agents recruited.</div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--yellow)">
+        <div class="card-header"><span class="card-title">Week 2-3</span><span class="card-icon" style="font-size:20px">&#128640;</span></div>
+        <div style="font-size:18px;font-weight:700;color:var(--yellow);margin:8px 0">Scale</div>
+        <div style="font-size:12px;color:var(--text2)">Add CS support + 2nd Field Coordinator. Target: 30-50 agents.</div>
+      </div>
+      <div class="card" style="border-left:3px solid var(--accent)">
+        <div class="card-header"><span class="card-title">Month 2+</span><span class="card-icon" style="font-size:20px">&#128293;</span></div>
+        <div style="font-size:18px;font-weight:700;color:var(--accent2);margin:8px 0">Compound</div>
+        <div style="font-size:12px;color:var(--text2)">100+ agents, referral flywheel, reinvest into branding + gear.</div>
+      </div>
+    </div>
+
+    <!-- Revenue Projections -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">Revenue Projections</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Timeline</th><th>Agents</th><th>Est. Daily Volume</th><th>Daily Revenue (0.5-1%)</th><th>Monthly Revenue</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--green);font-weight:600">Week 1</td><td>5-10</td><td>&#8358;250K - 500K</td><td>&#8358;1,250 - 5,000</td><td>&#8358;37K - 150K</td></tr>
+          <tr><td style="color:var(--green);font-weight:600">Week 2</td><td>20-30</td><td>&#8358;1M - 1.5M</td><td>&#8358;5,000 - 15,000</td><td>&#8358;150K - 450K</td></tr>
+          <tr><td style="color:var(--yellow);font-weight:600">Week 3-4</td><td>50+</td><td>&#8358;2.5M+</td><td>&#8358;12,500 - 25,000</td><td>&#8358;375K - 750K</td></tr>
+          <tr><td style="color:var(--accent2);font-weight:600">Month 2</td><td>100+</td><td>&#8358;5M+</td><td>&#8358;25,000 - 50,000</td><td>&#8358;750K - 1.5M</td></tr>
+          <tr><td style="color:var(--purple);font-weight:600">Month 3+</td><td>200+</td><td>&#8358;10M+</td><td>&#8358;50,000 - 100,000</td><td>&#8358;1.5M - 3M</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- Hiring Order -->
+    <div class="grid grid-2" style="margin-bottom:24px">
+      <div class="card">
+        <div class="section-title" style="color:var(--green)">&#9989; Hire First (Week 1)</div>
+        <div style="margin-top:12px">
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid var(--green)">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px">POS Field Coordinator</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px">&#8358;0 base — 20% of agent transaction fees (commission only)</div>
+            <div style="font-size:11px;color:var(--text2)">
+              <strong style="color:var(--text)">Profile:</strong> Hungry, well-connected in markets. Knows Wuse, Garki, Utako, Maitama.<br>
+              <strong style="color:var(--text)">Job:</strong> Recruit POS agents using the app's referral system. They earn as agents earn — fully aligned incentives.<br>
+              <strong style="color:var(--text)">Target:</strong> 10 agents in first week.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="color:var(--yellow)">&#128337; Hire Next (Week 2-3)</div>
+        <div style="margin-top:12px">
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid var(--yellow)">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px">WhatsApp Customer Support</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px">&#8358;30-40K/month (part-time, works from home)</div>
+            <div style="font-size:11px;color:var(--text2)">Handles agent onboarding questions, troubleshooting. Critical for retention — agents who get stuck churn.</div>
+          </div>
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid var(--yellow)">
+            <div style="font-weight:700;font-size:14px;margin-bottom:4px">2nd Field Coordinator</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Same commission structure — different area of Abuja</div>
+            <div style="font-size:11px;color:var(--text2)">Covers Kubwa/Gwagwalada while first covers Wuse/Garki. Competition between coordinators drives faster recruitment.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ground Game Tactics -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">&#127919; Ground Game Tactics (Zero Cost)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+        <div style="background:var(--surface2);border-radius:8px;padding:14px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:6px">&#127979; Hit the Markets</div>
+          <div style="font-size:12px;color:var(--text2)">Wuse Market, Garki Market, Area 1 — talk to existing POS operators. Show lower fees or better app. Face-to-face is king.</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:6px">&#127891; Target NYSC Corpers</div>
+          <div style="font-size:12px;color:var(--text2)">Thousands in Abuja, tech-savvy, need side income. Perfect as agents or coordinators. Hit orientation camps or corper lodges.</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:6px">&#128136; Barber Shops & Phone Repair</div>
+          <div style="font-size:12px;color:var(--text2)">Already have foot traffic. Adding POS is easy upsell. They become agents with zero acquisition cost.</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:6px">&#9962; Church/Mosque Announcements</div>
+          <div style="font-size:12px;color:var(--text2)">"Earn extra income with your phone" reaches hundreds for free. Weekend announcements, notice boards.</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:6px">&#128241; WhatsApp Broadcast Lists</div>
+          <div style="font-size:12px;color:var(--text2)">Create "PromptPay Abuja Agents" group. Goes viral within communities. Free organic reach.</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:6px">&#128181; Referral Flywheel</div>
+          <div style="font-size:12px;color:var(--text2)">Built-in referral system: &#8358;500 signup bonus, &#8358;1000 first sale, milestones at 10/50 sales. Agents recruit agents.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What NOT To Spend On -->
+    <div class="grid grid-2" style="margin-bottom:24px">
+      <div class="card" style="border-left:3px solid var(--red)">
+        <div class="section-title" style="color:var(--red)">&#10060; Don't Spend On (Yet)</div>
+        <ul style="margin-top:12px;list-style:none;font-size:13px;color:var(--text2)">
+          <li style="padding:6px 0;border-bottom:1px solid var(--border)">&#10007; Office space — work from cafes, co-working day passes</li>
+          <li style="padding:6px 0;border-bottom:1px solid var(--border)">&#10007; Paid ads — organic/ground game only</li>
+          <li style="padding:6px 0;border-bottom:1px solid var(--border)">&#10007; Salaried engineers — the platform is built</li>
+          <li style="padding:6px 0">&#10007; Branded materials — use phone screenshots to demo</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <div class="section-title" style="color:var(--green)">&#128176; First &#8358;100K Reinvest Into</div>
+        <ul style="margin-top:12px;list-style:none;font-size:13px;color:var(--text2)">
+          <li style="padding:6px 0;border-bottom:1px solid var(--border)">&#10003; Simple flyers + business cards (&#8358;5-10K)</li>
+          <li style="padding:6px 0;border-bottom:1px solid var(--border)">&#10003; 2-3 cheap Android phones for demos (&#8358;15-20K each)</li>
+          <li style="padding:6px 0;border-bottom:1px solid var(--border)">&#10003; Agent starter kit (branded pouch + laminated rate card)</li>
+          <li style="padding:6px 0">&#10003; Data bundles for field coordinators</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Key Insight -->
+    <div class="card" style="background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(168,85,247,0.08));border:1px solid rgba(99,102,241,0.25)">
+      <div style="font-size:16px;font-weight:700;margin-bottom:8px">&#128161; The Exponential Growth Formula</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        Each POS agent generates transaction fees on every sale. Each agent can recruit more agents via the referral system.
+        The bonus structure (&#8358;500 signup &#8594; &#8358;1000 first sale &#8594; &#8358;2000 at 10 sales &#8594; &#8358;5000 at 50 sales + 2% ongoing)
+        incentivizes organic network growth without you spending upfront. <strong style="color:var(--text)">You're not hiring a sales team — you're building a self-replicating agent network.</strong>
+      </div>
+    </div>
+
+    <!-- Abuse Prevention Reminder -->
+    <div class="card" style="margin-top:24px">
+      <div class="section-title">&#128737; Agent Abuse Prevention (Built-In)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;font-size:12px;color:var(--text2)">
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">BVN/NIN Verification</strong> — Identity tied to national ID</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">Guarantor System</strong> — Someone vouches for each agent</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">Security Deposit</strong> — Small refundable deposit</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">Progressive Limits</strong> — &#8358;50K &#8594; &#8358;200K &#8594; &#8358;500K &#8594; &#8358;1M tiers</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">Velocity Checks</strong> — Flag unusual transaction patterns</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">Selfie Verification</strong> — Photo match on registration</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">Rating System</strong> — Customers rate agent experience</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">Auto-Suspend</strong> — Bad actors auto-flagged and frozen</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px"><strong style="color:var(--text)">First Increase Auto-Approved</strong> — Then admin review required</div>
+      </div>
+    </div>
+  </div>
+
   <div class="page" id="page-cross-border" style="display:none;">
     <div class="header"><h2>Cross-Border Transfers</h2></div>
     <p style="opacity: 0.6; margin-bottom: 20px;">Wise + USDC stablecoin cross-border payment monitoring</p>
@@ -1626,6 +1969,374 @@ async function savePlatformFee() {
   }
 }
 
+// ═══════════════════════════════════════════
+// POS AGENTS MANAGEMENT
+// ═══════════════════════════════════════════
+async function loadPosAgentsMgmt() {
+  // Load stats
+  const stats = await api('/pos/stats');
+  if (stats) {
+    document.getElementById('pa-total').textContent = fmt(stats.total);
+    document.getElementById('pa-active').textContent = fmt(stats.active);
+    document.getElementById('pa-suspended').textContent = fmt(stats.suspended);
+    document.getElementById('pa-pending-limits').textContent = fmt(stats.pendingRequests);
+    document.getElementById('pa-volume').textContent = '\u20A6' + fmt(stats.totalVolume);
+    document.getElementById('pa-txns').textContent = fmt(stats.totalTransactions);
+    document.getElementById('pa-rating').textContent = stats.avgRating || '5.0';
+
+    // Tier breakdown
+    const tiers = { starter: '#6366f1', verified: '#22c55e', trusted: '#a855f7', premium: '#eab308' };
+    const bd = stats.tierBreakdown || {};
+    document.getElementById('pa-tier-breakdown').innerHTML = Object.entries(tiers).map(([t, c]) =>
+      `<div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;background:${c}18;border:1px solid ${c}30">
+        <div style="width:10px;height:10px;border-radius:50%;background:${c}"></div>
+        <span style="font-weight:600;text-transform:capitalize">${t}</span>
+        <span style="font-weight:800;font-size:18px;margin-left:4px">${bd[t] || 0}</span>
+      </div>`
+    ).join('');
+  }
+
+  // Load pending limit requests
+  loadPosLimitRequests();
+  // Load agents list
+  loadPosAgentsList();
+}
+
+async function loadPosLimitRequests() {
+  const data = await api('/pos/admin/limit-requests?status=pending');
+  if (!data) return;
+  const tbody = document.getElementById('pa-limit-tbody');
+  if (!data.requests || data.requests.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="color:var(--text2);text-align:center">No pending requests</td></tr>';
+    document.getElementById('pa-limit-requests-card').style.display = data.requests?.length ? 'block' : 'block';
+    return;
+  }
+  tbody.innerHTML = data.requests.map(r => `<tr>
+    <td><strong>${r.display_name || 'Agent'}</strong></td>
+    <td style="font-family:monospace;font-size:12px">${r.agent_code}</td>
+    <td><span class="badge badge-purple" style="text-transform:capitalize">${r.tier}</span></td>
+    <td>\u20A6${fmt(r.current_limit)}</td>
+    <td style="font-weight:700;color:var(--success)">\u20A6${fmt(r.requested_limit)}</td>
+    <td>${fmt(r.total_transactions)}</td>
+    <td>\u2B50 ${(r.rating || 5).toFixed(1)}</td>
+    <td>
+      <button class="btn-sm" style="background:var(--success);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600" onclick="approveLimitRequest('${r.id}', ${r.requested_limit})">Approve</button>
+      <button class="btn-sm" style="background:var(--danger);color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;font-weight:600;margin-left:4px" onclick="denyLimitRequest('${r.id}')">Deny</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function approveLimitRequest(id, limit) {
+  const res = await api('/pos/limit-requests/' + id + '/approve', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ approvedLimit: limit }),
+  });
+  if (res) { loadPosLimitRequests(); loadPosAgentsMgmt(); }
+}
+
+async function denyLimitRequest(id) {
+  if (!confirm('Deny this limit request?')) return;
+  const res = await api('/pos/limit-requests/' + id + '/deny', { method: 'PUT' });
+  if (res) { loadPosLimitRequests(); loadPosAgentsMgmt(); }
+}
+
+async function loadPosAgentsList() {
+  const status = document.getElementById('pa-status-filter')?.value || '';
+  const search = document.getElementById('pa-search')?.value || '';
+  const params = new URLSearchParams({ limit: '50' });
+  if (status) params.set('status', status);
+  if (search) params.set('search', search);
+
+  const data = await api('/pos/agents?' + params.toString());
+  if (!data) return;
+  const tbody = document.getElementById('pa-agents-tbody');
+  if (!data.agents || data.agents.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="color:var(--text2);text-align:center">No agents found</td></tr>';
+    return;
+  }
+  const tierColors = { starter: '#6366f1', verified: '#22c55e', trusted: '#a855f7', premium: '#eab308' };
+  tbody.innerHTML = data.agents.map(a => {
+    const tc = tierColors[a.tier] || '#6366f1';
+    const statusBadge = a.status === 'active' ? 'badge-green' : a.status === 'suspended' ? 'badge-red' : 'badge-yellow';
+    return `<tr>
+      <td><strong>${a.display_name}</strong></td>
+      <td style="font-family:monospace;font-size:12px">${a.agent_code}</td>
+      <td style="font-size:12px">${a.email || '—'}</td>
+      <td><span style="padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:${tc}18;color:${tc};text-transform:uppercase">${a.tier}</span></td>
+      <td>\u20A6${fmt(a.daily_limit)}</td>
+      <td>\u20A6${fmt(a.total_volume)}</td>
+      <td>${fmt(a.total_transactions)}</td>
+      <td>\u2B50 ${(a.rating || 5).toFixed(1)}</td>
+      <td><span class="badge ${statusBadge}">${a.status}</span></td>
+      <td>
+        ${a.status === 'active' ?
+          `<button class="btn-sm" style="background:rgba(239,68,68,0.1);color:var(--danger);border:1px solid rgba(239,68,68,0.2);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;font-weight:600" onclick="suspendPosAgent('${a.id}')">Suspend</button>` :
+          `<button class="btn-sm" style="background:rgba(34,197,94,0.1);color:var(--success);border:1px solid rgba(34,197,94,0.2);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;font-weight:600" onclick="activatePosAgent('${a.id}')">Activate</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function suspendPosAgent(id) {
+  const reason = prompt('Reason for suspension (optional):');
+  if (reason === null) return;
+  await api('/pos/agents/' + id + '/suspend', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  });
+  loadPosAgentsList();
+  loadPosAgentsMgmt();
+}
+
+async function activatePosAgent(id) {
+  await api('/pos/agents/' + id + '/activate', { method: 'PUT' });
+  loadPosAgentsList();
+  loadPosAgentsMgmt();
+}
+
+// ═══════════════════════════════════════════
+// POS AGENT REFERRALS & BONUSES
+// ═══════════════════════════════════════════
+async function loadPosReferrals() {
+  const data = await api('/pos/referral-stats');
+  if (!data) return;
+
+  document.getElementById('pr-total-referrals').textContent = fmt(data.totalReferrals);
+  document.getElementById('pr-active-referred').textContent = fmt(data.activeReferred);
+  document.getElementById('pr-bonuses-paid').textContent = '\u20A6' + fmt(data.bonusesPaid);
+  document.getElementById('pr-bonuses-pending').textContent = '\u20A6' + fmt(data.bonusesPending);
+
+  // Top referrers
+  const topTbody = document.getElementById('pr-top-referrers');
+  if (data.topReferrers && data.topReferrers.length > 0) {
+    topTbody.innerHTML = data.topReferrers.map((r, i) => `<tr>
+      <td style="font-weight:700;color:${i < 3 ? 'var(--yellow)' : 'var(--text2)'}">${i + 1}</td>
+      <td><strong>${r.display_name}</strong></td>
+      <td style="font-family:monospace;font-size:12px">${r.agent_code}</td>
+      <td style="font-weight:700">${r.referral_count}</td>
+      <td>${r.active_count}</td>
+      <td style="color:var(--success)">\u20A6${fmt(r.total_bonuses)}</td>
+      <td><span class="badge badge-green">${r.status}</span></td>
+    </tr>`).join('');
+  } else {
+    topTbody.innerHTML = '<tr><td colspan="7" style="color:var(--text2);text-align:center">No referrals yet</td></tr>';
+  }
+
+  // Recent events
+  const eventsTbody = document.getElementById('pr-events-tbody');
+  if (data.recentEvents && data.recentEvents.length > 0) {
+    eventsTbody.innerHTML = data.recentEvents.map(e => {
+      const statusBadge = e.status === 'credited' ? 'badge-green' : e.status === 'pending' ? 'badge-yellow' : 'badge-red';
+      const milestoneLabels = { signup: 'Sign-up', first_sale: 'First Sale', '10_sales': '10 Sales', '50_sales': '50 Sales', commission: 'Commission' };
+      return `<tr>
+        <td style="font-size:12px">${new Date(e.created_at).toLocaleDateString()}</td>
+        <td>${e.referrer_name || e.referrer_code}</td>
+        <td>${e.referred_name || e.referred_code}</td>
+        <td>${milestoneLabels[e.milestone] || e.milestone}</td>
+        <td style="color:var(--success);font-weight:600">\u20A6${fmt(e.bonus_amount)}</td>
+        <td><span class="badge ${statusBadge}">${e.status}</span></td>
+      </tr>`;
+    }).join('');
+  } else {
+    eventsTbody.innerHTML = '<tr><td colspan="6" style="color:var(--text2);text-align:center">No referral events yet</td></tr>';
+  }
+}
+
+// ═══════════════════════════════════════════
+// HR & HIRING
+// ═══════════════════════════════════════════
+const stageColors = { applied: '#3b82f6', screening: '#eab308', interview: '#a855f7', assessment: '#f97316', offer: '#22c55e', hired: '#10b981', rejected: '#ef4444' };
+const stageLabels = { applied: 'Applied', screening: 'Screening', interview: 'Interview', assessment: 'Assessment', offer: 'Offer', hired: 'Hired', rejected: 'Rejected' };
+
+async function loadHrDashboard() {
+  const data = await api('/hr/stats');
+  if (!data) return;
+
+  document.getElementById('hr-open').textContent = fmt(data.openPositions);
+  document.getElementById('hr-total-apps').textContent = fmt(data.totalApplications);
+  document.getElementById('hr-new-week').textContent = fmt(data.newThisWeek);
+  document.getElementById('hr-pipeline').textContent = fmt(data.inPipeline);
+  document.getElementById('hr-hired').textContent = fmt(data.hired);
+
+  // Pipeline stages
+  const stagesEl = document.getElementById('hr-pipeline-stages');
+  stagesEl.innerHTML = (data.pipeline || []).map(s => {
+    const c = stageColors[s.stage] || '#6366f1';
+    return `<div style="flex:1;min-width:100px;padding:14px;border-radius:10px;text-align:center;background:${c}12;border:1px solid ${c}25">
+      <div style="font-size:24px;font-weight:800;color:${c}">${s.count}</div>
+      <div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px">${stageLabels[s.stage] || s.stage}</div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text3);font-size:13px;padding:10px">No active applications</div>';
+
+  // By department
+  const deptTbody = document.getElementById('hr-dept-tbody');
+  deptTbody.innerHTML = (data.byDepartment || []).map(d =>
+    `<tr><td><strong>${d.department}</strong></td><td>${d.applications}</td><td>${d.active}</td></tr>`
+  ).join('') || '<tr><td colspan="3" style="color:var(--text2);text-align:center">No data</td></tr>';
+
+  // Interviews
+  const intTbody = document.getElementById('hr-interviews-tbody');
+  intTbody.innerHTML = (data.interviews || []).map(i => {
+    const dt = new Date(i.scheduled_at);
+    return `<tr>
+      <td><strong>${i.full_name}</strong></td>
+      <td>${i.job_title}</td>
+      <td style="text-transform:capitalize">${i.interview_type}</td>
+      <td>${dt.toLocaleDateString()} ${dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${i.interviewer || '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" style="color:var(--text2);text-align:center">No upcoming interviews</td></tr>';
+
+  // Recent apps
+  renderHrApplications(data.recent || []);
+}
+
+function renderHrApplications(apps) {
+  const tbody = document.getElementById('hr-apps-tbody');
+  if (!apps.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--text2);text-align:center">No applications</td></tr>';
+    return;
+  }
+  tbody.innerHTML = apps.map(a => {
+    const sc = stageColors[a.stage] || '#6366f1';
+    const stars = a.rating ? '\u2B50'.repeat(Math.min(a.rating, 5)) : '<span style="color:var(--text3)">—</span>';
+    return `<tr>
+      <td><strong>${a.full_name}</strong><br><span style="font-size:10px;color:var(--text3)">${a.email}</span></td>
+      <td>${a.job_title}</td>
+      <td>${a.department}</td>
+      <td>${stars}</td>
+      <td><span style="padding:3px 10px;border-radius:8px;font-size:10px;font-weight:700;background:${sc}18;color:${sc}">${stageLabels[a.stage] || a.stage}</span></td>
+      <td style="font-size:11px">${new Date(a.created_at).toLocaleDateString()}</td>
+      <td>
+        <select onchange="moveAppStage('${a.id}',this.value)" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:10px">
+          ${Object.entries(stageLabels).map(([k,v]) => `<option value="${k}" ${k===a.stage?'selected':''}>${v}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function filterHrApplications() {
+  const stage = document.getElementById('hr-stage-filter')?.value || '';
+  const search = document.getElementById('hr-search')?.value || '';
+  const params = new URLSearchParams({ limit: '50' });
+  if (stage) params.set('stage', stage);
+  if (search) params.set('search', search);
+  const data = await api('/hr/applications?' + params.toString());
+  if (data) renderHrApplications(data.applications || []);
+}
+
+async function moveAppStage(appId, stage) {
+  let reason = null;
+  if (stage === 'rejected') { reason = prompt('Rejection reason (optional):'); if (reason === null) return; }
+  await api('/hr/applications/' + appId + '/stage', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stage, rejectionReason: reason }),
+  });
+  loadHrDashboard();
+}
+
+// ── Job Listings CRUD ──
+async function loadHrJobs() {
+  const data = await api('/hr/jobs');
+  if (!data) return;
+  const tbody = document.getElementById('hr-jobs-tbody');
+  if (!data.jobs || data.jobs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="color:var(--text2);text-align:center">No job listings. Click "+ Create Listing" to add one.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.jobs.map(j => {
+    const statusBadge = j.status === 'published' ? 'badge-green' : j.status === 'draft' ? 'badge-yellow' : j.status === 'closed' ? 'badge-red' : 'badge-blue';
+    const salary = j.salary_min ? `${j.salary_currency} ${Number(j.salary_min).toLocaleString()}${j.salary_max ? '-' + Number(j.salary_max).toLocaleString() : '+'}` : '—';
+    return `<tr>
+      <td><strong>${j.title}</strong></td>
+      <td>${j.department}</td>
+      <td>${j.type}</td>
+      <td>${j.location}${j.remote_ok ? ' (R)' : ''}</td>
+      <td style="font-size:12px">${salary}</td>
+      <td>${j.applications_count || 0}</td>
+      <td>${j.hired_count || 0}/${j.positions}</td>
+      <td><span class="badge ${statusBadge}">${j.status}</span></td>
+      <td style="white-space:nowrap">
+        ${j.status === 'draft' ? `<button onclick="publishJob('${j.id}')" style="padding:4px 10px;border-radius:6px;border:none;background:rgba(34,197,94,0.12);color:var(--success);font-size:10px;font-weight:600;cursor:pointer">Publish</button>` : ''}
+        ${j.status === 'published' ? `<button onclick="closeJob('${j.id}')" style="padding:4px 10px;border-radius:6px;border:none;background:rgba(239,68,68,0.12);color:var(--danger);font-size:10px;font-weight:600;cursor:pointer">Close</button>` : ''}
+        ${j.status === 'closed' ? `<button onclick="publishJob('${j.id}')" style="padding:4px 10px;border-radius:6px;border:none;background:rgba(34,197,94,0.12);color:var(--success);font-size:10px;font-weight:600;cursor:pointer">Reopen</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function publishJob(id) {
+  await api('/hr/jobs/' + id + '/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'published' }) });
+  loadHrJobs();
+}
+async function closeJob(id) {
+  await api('/hr/jobs/' + id + '/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'closed' }) });
+  loadHrJobs();
+}
+
+function showCreateJobModal() {
+  const depts = ['Engineering', 'Operations', 'Sales', 'Marketing', 'Customer Support', 'Compliance', 'Finance', 'POS Network', 'HR'];
+  const modal = document.getElementById('creds-modal');
+  document.getElementById('creds-content').innerHTML = `
+    <div style="margin-bottom:14px"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Job Title *</label><input id="jf-title" placeholder="e.g. Backend Engineer" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px"></div>
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="flex:1"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Department *</label><select id="jf-dept" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">${depts.map(d=>`<option>${d}</option>`).join('')}</select></div>
+      <div style="flex:1"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Type</label><select id="jf-type" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px"><option>full-time</option><option>part-time</option><option>contract</option><option>internship</option></select></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="flex:1"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Location</label><input id="jf-loc" value="Lagos, Nigeria" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px"></div>
+      <div style="flex:1"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Positions</label><input id="jf-pos" type="number" value="1" min="1" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="flex:1"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Salary Min (NGN/month)</label><input id="jf-sal-min" type="number" placeholder="300000" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px"></div>
+      <div style="flex:1"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Salary Max</label><input id="jf-sal-max" type="number" placeholder="600000" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="flex:1"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Priority</label><select id="jf-priority" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px"><option value="normal">Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+      <div style="flex:1;display:flex;align-items:end;padding-bottom:4px"><label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="jf-remote"> Remote OK</label></div>
+    </div>
+    <div style="margin-bottom:14px"><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">Description *</label><textarea id="jf-desc" rows="4" placeholder="Describe the role, responsibilities, and what a typical day looks like..." style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:inherit;resize:vertical"></textarea></div>
+    <div id="jf-error" style="color:var(--danger);font-size:12px;margin-bottom:8px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="createJobListing('draft')" style="flex:1;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer">Save as Draft</button>
+      <button onclick="createJobListing('published')" style="flex:1;padding:12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Publish Now</button>
+    </div>
+  `;
+  document.querySelector('#creds-modal h3').textContent = 'Create Job Listing';
+  modal.classList.remove('hidden');
+}
+
+async function createJobListing(publishStatus) {
+  const title = document.getElementById('jf-title').value.trim();
+  const description = document.getElementById('jf-desc').value.trim();
+  const errEl = document.getElementById('jf-error');
+  if (!title || !description) { errEl.textContent = 'Title and description are required'; return; }
+
+  const res = await api('/hr/jobs', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title, description,
+      department: document.getElementById('jf-dept').value,
+      type: document.getElementById('jf-type').value,
+      location: document.getElementById('jf-loc').value.trim(),
+      positions: parseInt(document.getElementById('jf-pos').value) || 1,
+      salaryMin: parseFloat(document.getElementById('jf-sal-min').value) || null,
+      salaryMax: parseFloat(document.getElementById('jf-sal-max').value) || null,
+      salaryCurrency: 'NGN',
+      priority: document.getElementById('jf-priority').value,
+      remoteOk: document.getElementById('jf-remote').checked,
+    }),
+  });
+
+  if (res && res.id && publishStatus === 'published') {
+    await api('/hr/jobs/' + res.id + '/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'published' }) });
+  }
+
+  closeCredsModal();
+  loadHrJobs();
+}
+
 function loadPage(page) {
   const loaders = {
     dashboard: loadDashboard, agents: loadAgents, tasks: loadTasks,
@@ -1635,6 +2346,9 @@ function loadPage(page) {
     providers: loadProviders, audit: loadAudit, health: loadHealth,
     'agents-network': loadAgentNetwork, 'cross-border': loadCrossBorder,
     'pos-revenue': loadPosRevenue, executive: loadExecutive,
+    'pos-agents': loadPosAgentsMgmt, 'pos-referrals': loadPosReferrals,
+    'hr-dashboard': loadHrDashboard, 'hr-jobs': loadHrJobs,
+    'strategy-bootstrap': () => {}, // Static page, no API calls needed
   };
   if (loaders[page]) loaders[page]();
 }
