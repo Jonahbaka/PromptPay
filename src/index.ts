@@ -20,6 +20,7 @@ import { createPartnerRoutes } from './gateway/partner-routes.js';
 import { createDeveloperRoutes } from './gateway/developer-routes.js';
 import { createPosRoutes } from './gateway/pos-routes.js';
 import { createHrRoutes } from './gateway/hr-routes.js';
+import { createCalendarRoutes } from './gateway/calendar-routes.js';
 import { HookEngine } from './hooks/engine.js';
 import { FeeEngine } from './hooks/fees.js';
 import { DaemonLoop } from './daemon/loop.js';
@@ -173,6 +174,10 @@ async function main(): Promise<void> {
   // HR & Hiring routes (careers + admin pipeline)
   const hrRouter = createHrRoutes({ memory, auditTrail, logger });
   app.use(hrRouter);
+
+  // Calendar AI routes (Chrono agent — admin + partner paid feature)
+  const calendarRouter = createCalendarRoutes({ memory, auditTrail, logger });
+  app.use(calendarRouter);
 
   // Admin routes (dashboard, hooks, providers, audit)
   const adminRouter = createAdminRoutes({

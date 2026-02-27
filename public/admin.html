@@ -370,6 +370,16 @@
   <div class="nav-item" data-page="hr-jobs">
     <span class="nav-icon">&#128196;</span> Job Listings
   </div>
+  <div class="nav-section">Calendar AI</div>
+  <div class="nav-item" data-page="calendar">
+    <span class="nav-icon">📅</span> Chrono Dashboard
+  </div>
+  <div class="nav-item" data-page="calendar-todos">
+    <span class="nav-icon">✅</span> To-Do List
+  </div>
+  <div class="nav-item" data-page="calendar-events">
+    <span class="nav-icon">🗓️</span> Events
+  </div>
   <div class="nav-section">Strategy</div>
   <div class="nav-item" data-page="strategy-bootstrap">
     <span class="nav-icon">&#127919;</span> Abuja Bootstrap
@@ -958,6 +968,265 @@
       <thead><tr><th>Title</th><th>Department</th><th>Type</th><th>Location</th><th>Salary</th><th>Apps</th><th>Hired</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="hr-jobs-tbody"><tr><td colspan="9" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
     </table></div></div>
+  </div>
+
+  <!-- ═══ Calendar AI: Chrono Dashboard ═══ -->
+  <div class="page" id="page-calendar" style="display:none;">
+    <div class="header">
+      <h2>📅 Chrono — Calendar AI</h2>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span id="chrono-stream-status" style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:12px;font-size:11px;font-weight:600;background:rgba(239,68,68,0.12);color:#ef4444">
+          <span style="width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s infinite"></span> Offline
+        </span>
+        <span id="chrono-streak-badge" style="padding:4px 14px;border-radius:12px;font-size:12px;font-weight:600;background:rgba(234,179,8,0.12);color:#eab308">🔥 0-day streak</span>
+      </div>
+    </div>
+
+    <!-- Motivation Stream -->
+    <div id="chrono-motivation-strip" style="background:linear-gradient(135deg,rgba(99,102,241,0.1),rgba(168,85,247,0.06));border:1px solid rgba(99,102,241,0.2);border-radius:14px;padding:18px 22px;margin-bottom:20px;position:relative;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:22px">🧠</span>
+        <span style="font-weight:700;font-size:14px">Chrono Says</span>
+        <button onclick="refreshMotivation()" style="margin-left:auto;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer">↻ Refresh</button>
+      </div>
+      <div id="chrono-motivation-messages" style="font-size:13px;color:var(--text);line-height:1.8">
+        <div style="color:var(--text2)">Connecting to Chrono...</div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-4" style="margin-bottom:20px">
+      <div class="card" style="border-top:3px solid var(--accent)">
+        <div class="card-header"><span class="card-title">Pending Tasks</span><span class="card-icon">📋</span></div>
+        <div class="card-value val-blue" id="chrono-pending">0</div>
+        <div class="card-sub" id="chrono-due-today">0 due today</div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--green)">
+        <div class="card-header"><span class="card-title">Completed Today</span><span class="card-icon">✅</span></div>
+        <div class="card-value val-green" id="chrono-completed-today">0</div>
+        <div class="card-sub" id="chrono-week-total">0 this week</div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--red)">
+        <div class="card-header"><span class="card-title">Overdue</span><span class="card-icon">⚠️</span></div>
+        <div class="card-value val-red" id="chrono-overdue">0</div>
+        <div class="card-sub" id="chrono-high-priority">0 high priority</div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--yellow)">
+        <div class="card-header"><span class="card-title">Productivity</span><span class="card-icon">📊</span></div>
+        <div class="card-value val-yellow" id="chrono-percent">0%</div>
+        <div class="card-sub" id="chrono-total-all">0 lifetime completed</div>
+      </div>
+    </div>
+
+    <!-- Quick Add -->
+    <div class="card" style="margin-bottom:20px">
+      <div style="display:flex;gap:10px;align-items:center">
+        <input id="chrono-quick-title" type="text" placeholder="Add a task... (press Enter)" style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px" onkeydown="if(event.key==='Enter')chronoQuickAdd()">
+        <select id="chrono-quick-priority" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="medium">Medium</option>
+          <option value="urgent">🔴 Urgent</option>
+          <option value="high">🟠 High</option>
+          <option value="low">🟢 Low</option>
+        </select>
+        <select id="chrono-quick-category" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="general">📌 General</option>
+          <option value="business">💼 Business</option>
+          <option value="hiring">👥 Hiring</option>
+          <option value="finance">💰 Finance</option>
+          <option value="marketing">📢 Marketing</option>
+          <option value="product">🛠️ Product</option>
+          <option value="operations">⚙️ Operations</option>
+          <option value="meeting">📅 Meeting</option>
+          <option value="call">📞 Call</option>
+          <option value="strategy">🎯 Strategy</option>
+        </select>
+        <input id="chrono-quick-due" type="date" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+        <button onclick="chronoQuickAdd()" style="padding:10px 20px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Live Reminders Feed -->
+    <div class="grid grid-2">
+      <div class="card" style="max-height:400px;overflow-y:auto">
+        <div class="section-title">🔔 Live Reminders <span id="chrono-unread-badge" style="margin-left:6px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:var(--red);color:#fff;display:none">0</span></div>
+        <div id="chrono-reminders-feed" style="margin-top:12px;font-size:13px">
+          <div style="color:var(--text2);text-align:center;padding:20px">No reminders yet. Add tasks with due dates.</div>
+        </div>
+      </div>
+      <div class="card" style="max-height:400px;overflow-y:auto">
+        <div class="section-title">⚡ Today's Focus</div>
+        <div id="chrono-today-list" style="margin-top:12px;font-size:13px">
+          <div style="color:var(--text2);text-align:center;padding:20px">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Calendar AI: To-Do List ═══ -->
+  <div class="page" id="page-calendar-todos" style="display:none;">
+    <div class="header">
+      <h2>✅ To-Do List</h2>
+      <div style="display:flex;gap:8px">
+        <button onclick="showAddTodoModal()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer">+ New Task</button>
+        <button onclick="chronoClearCompleted()" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer">Clear Completed</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <select id="todo-filter-status" onchange="loadTodoList()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="">All Status</option>
+          <option value="pending" selected>Pending</option>
+          <option value="completed">Completed</option>
+        </select>
+        <select id="todo-filter-priority" onchange="loadTodoList()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="">All Priority</option>
+          <option value="urgent">🔴 Urgent</option>
+          <option value="high">🟠 High</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+        <select id="todo-filter-category" onchange="loadTodoList()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="">All Categories</option>
+          <option value="business">💼 Business</option>
+          <option value="hiring">👥 Hiring</option>
+          <option value="finance">💰 Finance</option>
+          <option value="marketing">📢 Marketing</option>
+          <option value="product">🛠️ Product</option>
+          <option value="operations">⚙️ Operations</option>
+          <option value="meeting">📅 Meeting</option>
+          <option value="strategy">🎯 Strategy</option>
+          <option value="general">📌 General</option>
+        </select>
+        <input id="todo-search" type="text" placeholder="Search tasks..." oninput="loadTodoList()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;flex:1;min-width:200px">
+      </div>
+    </div>
+
+    <!-- Todo List -->
+    <div id="todo-list-container" class="card">
+      <div style="color:var(--text2);text-align:center;padding:40px">Loading tasks...</div>
+    </div>
+  </div>
+
+  <!-- ═══ Calendar AI: Events ═══ -->
+  <div class="page" id="page-calendar-events" style="display:none;">
+    <div class="header">
+      <h2>🗓️ Events & Schedule</h2>
+      <button onclick="showAddEventModal()" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer">+ New Event</button>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="section-title">📅 Upcoming Events</div>
+        <div id="events-upcoming-list" style="margin-top:12px;font-size:13px">
+          <div style="color:var(--text2);text-align:center;padding:20px">Loading...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Today's Schedule</div>
+        <div id="events-today-list" style="margin-top:12px;font-size:13px">
+          <div style="color:var(--text2);text-align:center;padding:20px">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">All Events</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Title</th><th>Category</th><th>Start</th><th>End</th><th>Location</th><th>Actions</th></tr></thead>
+        <tbody id="events-all-tbody"><tr><td colspan="6" style="color:var(--text2);text-align:center">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- Add Todo Modal -->
+  <div id="add-todo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:500px;max-height:90vh;overflow-y:auto">
+      <h3 style="margin-bottom:16px">📝 New Task</h3>
+      <div style="display:grid;gap:12px">
+        <input id="modal-todo-title" type="text" placeholder="Task title *" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px">
+        <textarea id="modal-todo-desc" placeholder="Description (optional)" rows="3" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;resize:vertical"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <select id="modal-todo-priority" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+            <option value="medium">🟡 Medium Priority</option>
+            <option value="urgent">🔴 Urgent</option>
+            <option value="high">🟠 High</option>
+            <option value="low">🟢 Low</option>
+          </select>
+          <select id="modal-todo-category" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+            <option value="general">📌 General</option>
+            <option value="business">💼 Business</option>
+            <option value="hiring">👥 Hiring</option>
+            <option value="finance">💰 Finance</option>
+            <option value="marketing">📢 Marketing</option>
+            <option value="product">🛠️ Product</option>
+            <option value="operations">⚙️ Operations</option>
+            <option value="strategy">🎯 Strategy</option>
+            <option value="meeting">📅 Meeting</option>
+            <option value="call">📞 Call</option>
+            <option value="deadline">⏰ Deadline</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Due Date</label>
+            <input id="modal-todo-due-date" type="date" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Due Time</label>
+            <input id="modal-todo-due-time" type="time" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Remind me at</label>
+          <input id="modal-todo-reminder" type="datetime-local" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+        </div>
+        <select id="modal-todo-recurrence" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="none">No Recurrence</option>
+          <option value="daily">🔄 Daily</option>
+          <option value="weekly">🔄 Weekly</option>
+          <option value="monthly">🔄 Monthly</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="closeAddTodoModal()" style="padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer">Cancel</button>
+        <button onclick="submitNewTodo()" style="padding:8px 22px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer">Create Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Event Modal -->
+  <div id="add-event-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:none;align-items:center;justify-content:center">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:500px;max-height:90vh;overflow-y:auto">
+      <h3 style="margin-bottom:16px">📅 New Event</h3>
+      <div style="display:grid;gap:12px">
+        <input id="modal-event-title" type="text" placeholder="Event title *" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px">
+        <textarea id="modal-event-desc" placeholder="Description (optional)" rows="2" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;resize:vertical"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">Start *</label>
+            <input id="modal-event-start" type="datetime-local" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">End</label>
+            <input id="modal-event-end" type="datetime-local" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          </div>
+        </div>
+        <input id="modal-event-location" type="text" placeholder="Location (optional)" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px">
+        <select id="modal-event-category" style="padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px">
+          <option value="meeting">📅 Meeting</option>
+          <option value="call">📞 Call</option>
+          <option value="review">🔍 Review</option>
+          <option value="deadline">⏰ Deadline</option>
+          <option value="personal">🏠 Personal</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="closeAddEventModal()" style="padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;cursor:pointer">Cancel</button>
+        <button onclick="submitNewEvent()" style="padding:8px 22px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer">Create Event</button>
+      </div>
+    </div>
   </div>
 
   <!-- ═══ Strategy: Abuja Bootstrap ═══ -->
@@ -2349,6 +2618,7 @@ function loadPage(page) {
     'pos-agents': loadPosAgentsMgmt, 'pos-referrals': loadPosReferrals,
     'hr-dashboard': loadHrDashboard, 'hr-jobs': loadHrJobs,
     'strategy-bootstrap': () => {}, // Static page, no API calls needed
+    'calendar': loadChronoDashboard, 'calendar-todos': loadTodoList, 'calendar-events': loadCalendarEvents,
   };
   if (loaders[page]) loaders[page]();
 }
@@ -2376,6 +2646,369 @@ function connectWs() {
   } catch(e) {
     setTimeout(connectWs, 3000);
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHRONO — Calendar AI Agent
+// ══════════════════════════════════════════════════════════════
+
+let chronoEventSource = null;
+const priorityColors = { urgent: '#ef4444', high: '#f97316', medium: '#eab308', low: '#22c55e' };
+const priorityIcons = { urgent: '🔴', high: '🟠', medium: '🟡', low: '🟢' };
+const categoryIcons = { business: '💼', hiring: '👥', finance: '💰', marketing: '📢', product: '🛠️', operations: '⚙️', personal: '🏠', meeting: '📅', call: '📞', email: '✉️', review: '🔍', deadline: '⏰', followup: '🔄', strategy: '🎯', general: '📌' };
+
+function updateChronoStats(stats) {
+  const el = (id) => document.getElementById(id);
+  if (el('chrono-pending')) el('chrono-pending').textContent = fmt(stats.pending);
+  if (el('chrono-due-today')) el('chrono-due-today').textContent = stats.dueToday + ' due today';
+  if (el('chrono-completed-today')) el('chrono-completed-today').textContent = fmt(stats.completedToday);
+  if (el('chrono-week-total')) el('chrono-week-total').textContent = stats.completedThisWeek + ' this week';
+  if (el('chrono-overdue')) el('chrono-overdue').textContent = fmt(stats.overdue);
+  if (el('chrono-high-priority')) el('chrono-high-priority').textContent = stats.highPriority + ' high priority';
+  if (el('chrono-percent')) el('chrono-percent').textContent = stats.percent + '%';
+  if (el('chrono-total-all')) el('chrono-total-all').textContent = stats.totalCompleted + ' lifetime completed';
+  if (el('chrono-streak-badge')) el('chrono-streak-badge').textContent = '🔥 ' + stats.streak + '-day streak';
+}
+
+function renderMotivation(messages) {
+  const container = document.getElementById('chrono-motivation-messages');
+  if (!container || !messages || messages.length === 0) return;
+  container.innerHTML = messages.map((m, i) => `
+    <div style="padding:6px 0;${i > 0 ? 'border-top:1px solid rgba(255,255,255,0.04);' : ''}opacity:${1 - i*0.08}">
+      ${m}
+    </div>
+  `).join('');
+}
+
+function startChronoStream() {
+  if (chronoEventSource) { chronoEventSource.close(); }
+  const token = getToken();
+  if (!token) return;
+
+  // SSE with auth via query param (EventSource doesn't support headers)
+  chronoEventSource = new EventSource(API + '/api/calendar/stream?token=' + encodeURIComponent(token));
+
+  const statusEl = document.getElementById('chrono-stream-status');
+
+  chronoEventSource.onopen = () => {
+    if (statusEl) statusEl.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s infinite"></span> Live';
+    if (statusEl) { statusEl.style.background = 'rgba(34,197,94,0.12)'; statusEl.style.color = '#22c55e'; }
+  };
+
+  chronoEventSource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.type === 'init') {
+        updateChronoStats(data.stats);
+        renderMotivation(data.motivations);
+        loadTodayFocus();
+      } else if (data.type === 'heartbeat') {
+        updateChronoStats(data.stats);
+      } else if (data.type === 'reminder' || data.type === 'event_reminder') {
+        appendReminder(data.message, data.type);
+        loadTodayFocus();
+      } else if (data.type === 'motivation') {
+        appendMotivation(data.message);
+      } else if (data.type === 'unread_reminders') {
+        const feed = document.getElementById('chrono-reminders-feed');
+        if (feed && data.reminders) {
+          feed.innerHTML = data.reminders.map(r => `
+            <div style="padding:8px 12px;border-radius:8px;background:var(--surface2);margin-bottom:6px;border-left:3px solid ${r.message_type === 'motivation' ? 'var(--accent)' : 'var(--yellow)'}">
+              <div style="font-size:12px">${r.message}</div>
+              <div style="font-size:10px;color:var(--text2);margin-top:4px">${new Date(r.created_at).toLocaleString()}</div>
+            </div>
+          `).join('');
+          const badge = document.getElementById('chrono-unread-badge');
+          if (badge) { badge.textContent = data.reminders.length; badge.style.display = data.reminders.length > 0 ? 'inline' : 'none'; }
+        }
+      }
+    } catch(err) { console.error('Chrono stream error:', err); }
+  };
+
+  chronoEventSource.onerror = () => {
+    if (statusEl) statusEl.innerHTML = '<span style="width:8px;height:8px;border-radius:50%;background:currentColor"></span> Reconnecting...';
+    if (statusEl) { statusEl.style.background = 'rgba(234,179,8,0.12)'; statusEl.style.color = '#eab308'; }
+  };
+}
+
+function appendReminder(message, type) {
+  const feed = document.getElementById('chrono-reminders-feed');
+  if (!feed) return;
+  const placeholder = feed.querySelector('[style*="text-align:center"]');
+  if (placeholder) feed.innerHTML = '';
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:8px 12px;border-radius:8px;background:var(--surface2);margin-bottom:6px;border-left:3px solid ' + (type === 'event_reminder' ? 'var(--accent)' : 'var(--yellow)') + ';animation:fadeIn 0.3s ease';
+  div.innerHTML = `<div style="font-size:12px">${message}</div><div style="font-size:10px;color:var(--text2);margin-top:4px">${new Date().toLocaleString()}</div>`;
+  feed.prepend(div);
+}
+
+function appendMotivation(message) {
+  const container = document.getElementById('chrono-motivation-messages');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'padding:6px 0;border-top:1px solid rgba(255,255,255,0.04);animation:fadeIn 0.5s ease';
+  div.innerHTML = `<span style="opacity:0.6;font-size:10px;margin-right:6px">${new Date().toLocaleTimeString()}</span> ${message}`;
+  container.prepend(div);
+}
+
+async function loadChronoDashboard() {
+  startChronoStream();
+  loadTodayFocus();
+  // Also fetch motivation via API as fallback
+  const data = await api('/calendar/motivation');
+  if (data) {
+    updateChronoStats(data.stats);
+    renderMotivation(data.messages);
+  }
+}
+
+async function loadTodayFocus() {
+  const data = await api('/calendar/todos?status=pending');
+  if (!data || !data.todos) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const todayTasks = data.todos.filter(t => t.due_date === today || t.priority === 'urgent' || t.priority === 'high');
+  const container = document.getElementById('chrono-today-list');
+  if (!container) return;
+
+  if (todayTasks.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);text-align:center;padding:20px">No urgent tasks for today. Nice! 🎉</div>';
+    return;
+  }
+
+  container.innerHTML = todayTasks.slice(0, 10).map(t => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--surface2);margin-bottom:6px;border-left:3px solid ${priorityColors[t.priority] || '#eab308'}">
+      <input type="checkbox" onchange="chronoToggleTodo('${t.id}', this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${categoryIcons[t.category] || '📌'} ${t.title}</div>
+        <div style="font-size:10px;color:var(--text2)">${t.due_time || ''} ${t.due_date === today ? '• Today' : t.due_date ? '• ' + t.due_date : ''}</div>
+      </div>
+      <span style="font-size:9px;padding:2px 6px;border-radius:6px;font-weight:700;background:${priorityColors[t.priority]}18;color:${priorityColors[t.priority]}">${t.priority.toUpperCase()}</span>
+    </div>
+  `).join('');
+}
+
+async function chronoQuickAdd() {
+  const title = document.getElementById('chrono-quick-title').value.trim();
+  if (!title) return;
+  const priority = document.getElementById('chrono-quick-priority').value;
+  const category = document.getElementById('chrono-quick-category').value;
+  const dueDate = document.getElementById('chrono-quick-due').value;
+
+  const data = await api('/calendar/todos', {
+    method: 'POST', body: { title, priority, category, dueDate: dueDate || null }
+  });
+  if (data) {
+    document.getElementById('chrono-quick-title').value = '';
+    document.getElementById('chrono-quick-due').value = '';
+    loadTodayFocus();
+    const motiv = await api('/calendar/motivation');
+    if (motiv) updateChronoStats(motiv.stats);
+    if (data.message) appendMotivation(data.message);
+  }
+}
+
+async function chronoToggleTodo(id, completed) {
+  const data = await api('/calendar/todos/' + id, {
+    method: 'PUT', body: { status: completed ? 'completed' : 'pending' }
+  });
+  if (data && data.message) appendMotivation(data.message);
+  loadTodayFocus();
+  const motiv = await api('/calendar/motivation');
+  if (motiv) updateChronoStats(motiv.stats);
+}
+
+async function refreshMotivation() {
+  const data = await api('/calendar/motivation');
+  if (data) {
+    renderMotivation(data.messages);
+    updateChronoStats(data.stats);
+  }
+}
+
+// ── To-Do List Page ──
+async function loadTodoList() {
+  const status = document.getElementById('todo-filter-status')?.value || '';
+  const priority = document.getElementById('todo-filter-priority')?.value || '';
+  const category = document.getElementById('todo-filter-category')?.value || '';
+  const search = document.getElementById('todo-search')?.value || '';
+
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (priority) params.set('priority', priority);
+  if (category) params.set('category', category);
+  if (search) params.set('search', search);
+
+  const data = await api('/calendar/todos?' + params.toString());
+  if (!data) return;
+
+  const container = document.getElementById('todo-list-container');
+  if (!data.todos || data.todos.length === 0) {
+    container.innerHTML = '<div style="color:var(--text2);text-align:center;padding:40px">No tasks found. Click "+ New Task" to add one.</div>';
+    return;
+  }
+
+  container.innerHTML = data.todos.map(t => {
+    const isCompleted = t.status === 'completed';
+    const overdue = !isCompleted && t.due_date && t.due_date < new Date().toISOString().slice(0, 10);
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);${isCompleted ? 'opacity:0.5;' : ''}${overdue ? 'background:rgba(239,68,68,0.04);' : ''}" id="todo-row-${t.id}">
+      <input type="checkbox" ${isCompleted ? 'checked' : ''} onchange="chronoToggleTodo('${t.id}', this.checked)" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent);flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:600;${isCompleted ? 'text-decoration:line-through;' : ''}white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          ${categoryIcons[t.category] || '📌'} ${t.title}
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">
+          ${t.description ? t.description.slice(0, 80) + (t.description.length > 80 ? '...' : '') : ''}
+          ${t.due_date ? '<span style="margin-left:8px' + (overdue ? ';color:var(--red);font-weight:600' : '') + '">📅 ' + t.due_date + (t.due_time ? ' ' + t.due_time : '') + (overdue ? ' OVERDUE' : '') + '</span>' : ''}
+          ${t.recurrence !== 'none' ? ' <span style="color:var(--accent2)">🔄 ' + t.recurrence + '</span>' : ''}
+        </div>
+      </div>
+      <span style="font-size:10px;padding:3px 8px;border-radius:8px;font-weight:700;background:${priorityColors[t.priority]}18;color:${priorityColors[t.priority]};white-space:nowrap">${priorityIcons[t.priority] || ''} ${(t.priority || 'medium').toUpperCase()}</span>
+      <button onclick="deleteTodo('${t.id}')" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer" title="Delete">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteTodo(id) {
+  if (!confirm('Delete this task?')) return;
+  await api('/calendar/todos/' + id, { method: 'DELETE' });
+  loadTodoList();
+}
+
+async function chronoClearCompleted() {
+  if (!confirm('Remove all completed tasks?')) return;
+  await api('/calendar/todos/bulk', { method: 'POST', body: { action: 'clear_completed', ids: [] } });
+  loadTodoList();
+}
+
+function showAddTodoModal() {
+  const modal = document.getElementById('add-todo-modal');
+  modal.style.display = 'flex';
+  document.getElementById('modal-todo-title').value = '';
+  document.getElementById('modal-todo-desc').value = '';
+  document.getElementById('modal-todo-title').focus();
+}
+function closeAddTodoModal() { document.getElementById('add-todo-modal').style.display = 'none'; }
+
+async function submitNewTodo() {
+  const title = document.getElementById('modal-todo-title').value.trim();
+  if (!title) { alert('Title is required'); return; }
+
+  const data = await api('/calendar/todos', {
+    method: 'POST', body: {
+      title,
+      description: document.getElementById('modal-todo-desc').value,
+      priority: document.getElementById('modal-todo-priority').value,
+      category: document.getElementById('modal-todo-category').value,
+      dueDate: document.getElementById('modal-todo-due-date').value || null,
+      dueTime: document.getElementById('modal-todo-due-time').value || null,
+      reminderAt: document.getElementById('modal-todo-reminder').value || null,
+      recurrence: document.getElementById('modal-todo-recurrence').value,
+    }
+  });
+  if (data) {
+    closeAddTodoModal();
+    loadTodoList();
+    if (data.message) appendMotivation(data.message);
+  }
+}
+
+// ── Calendar Events Page ──
+async function loadCalendarEvents() {
+  const data = await api('/calendar/events');
+  if (!data) return;
+
+  const now = new Date().toISOString();
+  const today = new Date().toISOString().slice(0, 10);
+  const events = data.events || [];
+
+  // Upcoming events
+  const upcoming = events.filter(e => e.start_time >= now).slice(0, 8);
+  const upcomingEl = document.getElementById('events-upcoming-list');
+  if (upcoming.length === 0) {
+    upcomingEl.innerHTML = '<div style="color:var(--text2);text-align:center;padding:20px">No upcoming events. Schedule one!</div>';
+  } else {
+    upcomingEl.innerHTML = upcoming.map(e => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:var(--surface2);margin-bottom:6px;border-left:3px solid ${e.color || 'var(--accent)'}">
+        <div style="width:42px;height:42px;border-radius:10px;background:${e.color || 'var(--accent)'}20;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+          ${categoryIcons[e.category] || '📅'}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.title}</div>
+          <div style="font-size:11px;color:var(--text2)">${new Date(e.start_time).toLocaleString()}${e.location ? ' • 📍 ' + e.location : ''}</div>
+        </div>
+        <button onclick="deleteEvent('${e.id}')" style="padding:3px 6px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:10px;cursor:pointer">✕</button>
+      </div>
+    `).join('');
+  }
+
+  // Today's events
+  const todayEvents = events.filter(e => e.start_time.slice(0, 10) === today);
+  const todayEl = document.getElementById('events-today-list');
+  if (todayEvents.length === 0) {
+    todayEl.innerHTML = '<div style="color:var(--text2);text-align:center;padding:20px">No events scheduled for today.</div>';
+  } else {
+    todayEl.innerHTML = todayEvents.map(e => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:var(--surface2);margin-bottom:6px;border-left:3px solid ${e.color || 'var(--accent)'}">
+        <div style="font-size:16px">${categoryIcons[e.category] || '📅'}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600">${e.title}</div>
+          <div style="font-size:11px;color:var(--text2)">${new Date(e.start_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}${e.end_time ? ' - ' + new Date(e.end_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : ''}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // All events table
+  const tbody = document.getElementById('events-all-tbody');
+  if (events.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text2);text-align:center">No events yet.</td></tr>';
+  } else {
+    tbody.innerHTML = events.map(e => `<tr>
+      <td><strong>${e.title}</strong></td>
+      <td>${categoryIcons[e.category] || ''} ${e.category}</td>
+      <td style="font-size:12px">${new Date(e.start_time).toLocaleString()}</td>
+      <td style="font-size:12px">${e.end_time ? new Date(e.end_time).toLocaleString() : '—'}</td>
+      <td style="font-size:12px">${e.location || '—'}</td>
+      <td><button onclick="deleteEvent('${e.id}')" style="padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--red);font-size:11px;cursor:pointer">Delete</button></td>
+    </tr>`).join('');
+  }
+}
+
+function showAddEventModal() {
+  const modal = document.getElementById('add-event-modal');
+  modal.style.display = 'flex';
+  document.getElementById('modal-event-title').value = '';
+  document.getElementById('modal-event-desc').value = '';
+  document.getElementById('modal-event-title').focus();
+}
+function closeAddEventModal() { document.getElementById('add-event-modal').style.display = 'none'; }
+
+async function submitNewEvent() {
+  const title = document.getElementById('modal-event-title').value.trim();
+  const startTime = document.getElementById('modal-event-start').value;
+  if (!title || !startTime) { alert('Title and start time are required'); return; }
+
+  const data = await api('/calendar/events', {
+    method: 'POST', body: {
+      title,
+      description: document.getElementById('modal-event-desc').value,
+      startTime: new Date(startTime).toISOString(),
+      endTime: document.getElementById('modal-event-end').value ? new Date(document.getElementById('modal-event-end').value).toISOString() : null,
+      location: document.getElementById('modal-event-location').value,
+      category: document.getElementById('modal-event-category').value,
+    }
+  });
+  if (data) {
+    closeAddEventModal();
+    loadCalendarEvents();
+  }
+}
+
+async function deleteEvent(id) {
+  if (!confirm('Delete this event?')) return;
+  await api('/calendar/events/' + id, { method: 'DELETE' });
+  loadCalendarEvents();
 }
 
 // ── Auto-refresh ──

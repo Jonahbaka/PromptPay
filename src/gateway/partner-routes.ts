@@ -32,11 +32,11 @@ const TIER_LIMITS: Record<string, {
   },
   professional: {
     maxUsers: 10000, apiCalls: 100000, price: 299, transactionCut: 1.0, whiteLabel: false,
-    features: ['wallets', 'airtime', 'pos', 'ai_agents', 'loyalty', 'webhooks', 'advanced_analytics', 'priority_support'],
+    features: ['wallets', 'airtime', 'pos', 'ai_agents', 'loyalty', 'webhooks', 'advanced_analytics', 'priority_support', 'calendar_ai'],
   },
   enterprise: {
     maxUsers: Infinity, apiCalls: Infinity, price: 999, transactionCut: 0.5, whiteLabel: true,
-    features: ['wallets', 'airtime', 'pos', 'ai_agents', 'loyalty', 'webhooks', 'advanced_analytics', 'priority_support', 'white_label', 'custom_domain', 'dedicated_support', 'sla'],
+    features: ['wallets', 'airtime', 'pos', 'ai_agents', 'loyalty', 'webhooks', 'advanced_analytics', 'priority_support', 'calendar_ai', 'white_label', 'custom_domain', 'dedicated_support', 'sla'],
   },
 };
 

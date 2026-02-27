@@ -102,6 +102,54 @@ export class DaemonLoop {
       }
     });
 
+    // Calendar AI (Chrono) — proactive reminder checks (every 5 minutes)
+    this.addJob('calendar_reminders', 'Chrono Calendar Reminder Check', 300000, async () => {
+      try {
+        const now = new Date().toISOString();
+        // Check todos with due reminders
+        const dueReminders = this.deps.db.prepare(`
+          SELECT id, owner_id, owner_type, title, priority FROM calendar_todos
+          WHERE status = 'pending' AND reminder_at IS NOT NULL
+            AND reminder_at <= ? AND reminder_sent = 0
+        `).all(now) as Array<{ id: string; owner_id: string; owner_type: string; title: string; priority: string }>;
+
+        for (const todo of dueReminders) {
+          this.deps.db.prepare("UPDATE calendar_todos SET reminder_sent = 1 WHERE id = ?").run(todo.id);
+          const msg = `⏰ Reminder: "${todo.title}" — ${todo.priority === 'urgent' ? 'URGENT!' : 'needs attention'}`;
+          this.deps.db.prepare(`INSERT INTO calendar_reminders_log (id, owner_id, owner_type, message, message_type)
+            VALUES (?, ?, ?, ?, 'reminder')`).run(
+            'cr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+            todo.owner_id, todo.owner_type, msg
+          );
+        }
+
+        // Check events with approaching start times (15 min window)
+        const soon = new Date(Date.now() + 15 * 60000).toISOString();
+        const upcomingEvents = this.deps.db.prepare(`
+          SELECT id, owner_id, owner_type, title, location FROM calendar_events
+          WHERE start_time > ? AND start_time <= ? AND reminder_sent = 0
+        `).all(now, soon) as Array<{ id: string; owner_id: string; owner_type: string; title: string; location: string }>;
+
+        for (const evt of upcomingEvents) {
+          this.deps.db.prepare("UPDATE calendar_events SET reminder_sent = 1 WHERE id = ?").run(evt.id);
+          this.deps.db.prepare(`INSERT INTO calendar_reminders_log (id, owner_id, owner_type, message, message_type)
+            VALUES (?, ?, ?, ?, 'event_reminder')`).run(
+            'ce_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+            evt.owner_id, evt.owner_type,
+            `📅 "${evt.title}" starts soon${evt.location ? ` at ${evt.location}` : ''}`
+          );
+        }
+
+        const total = dueReminders.length + upcomingEvents.length;
+        if (total > 0) {
+          this.deps.logger.info(`[Daemon/Chrono] Processed ${total} calendar reminders`);
+        }
+      } catch (err) {
+        // Tables may not exist yet if calendar routes haven't been loaded
+        this.deps.logger.debug(`[Daemon/Chrono] Calendar check skipped: ${err}`);
+      }
+    });
+
     // Referral bonus crediting (every 4 hours)
     this.addJob('referral_credits', 'Referral Bonus Credits', 14400000, async () => {
       const credited = this.deps.hookEngine.referrals.creditPending();
