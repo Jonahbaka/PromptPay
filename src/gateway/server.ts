@@ -157,7 +157,15 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     res.send(svg);
   });
 
-  app.use(express.static(publicDir));
+  app.use(express.static(publicDir, {
+    setHeaders: (res, filePath) => {
+      // Prevent browser caching of HTML files so updates appear immediately
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+      }
+    },
+  }));
 
   // ── Request logging ──
   app.use((req: Request, _res: Response, next: NextFunction) => {
