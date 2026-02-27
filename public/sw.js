@@ -1,50 +1,65 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay Service Worker — PWA + Offline Support
+// v4.1 — HTML pages always fetched fresh (never cached)
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'promptpay-v3.0';
+const CACHE_NAME = 'promptpay-v4.1';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];
 
-// Install — cache shell
+// Install — cache only static assets (NOT HTML pages)
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
 
-// Activate — clean old caches
+// Activate — purge ALL old caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
+    caches.keys().then((keys) =>
+      Promise.all(
         keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
+      )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch — network first, fallback to cache
+// Fetch handler
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // Skip non-GET requests
+  // Skip non-GET
   if (request.method !== 'GET') return;
 
-  // Skip API requests, WebSocket, health checks
-  if (request.url.includes('/api/') || request.url.includes('/ws') || request.url.includes('/health')) {
+  // Skip API, WebSocket, health, SSE streams
+  if (request.url.includes('/api/') || request.url.includes('/ws') ||
+      request.url.includes('/health') || request.url.includes('/stream')) {
     return;
   }
 
+  // HTML pages (navigation) — ALWAYS go to network, never serve from cache
+  // This ensures users always see the latest version
+  if (request.mode === 'navigate' || request.url.endsWith('.html')) {
+    event.respondWith(
+      fetch(request).catch(() => {
+        // Only use cache as offline fallback
+        return caches.match(request).then((cached) => {
+          return cached || new Response('Offline — please check your connection', {
+            status: 503,
+            headers: { 'Content-Type': 'text/html' },
+          });
+        });
+      })
+    );
+    return;
+  }
+
+  // Static assets (CSS, JS, images, fonts) — network first with cache fallback
   event.respondWith(
     fetch(request)
       .then((response) => {
@@ -56,11 +71,7 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => {
         return caches.match(request).then((cached) => {
-          if (cached) return cached;
-          if (request.mode === 'navigate') {
-            return caches.match('/');
-          }
-          return new Response('Offline', { status: 503 });
+          return cached || new Response('Offline', { status: 503 });
         });
       })
   );
@@ -92,7 +103,6 @@ self.addEventListener('notificationclick', (event) => {
   const url = event.notification.data?.url || '/';
   event.waitUntil(
     self.clients.matchAll({ type: 'window' }).then((clients) => {
-      // Focus existing window if open
       for (const client of clients) {
         if (client.url.includes(self.registration.scope) && 'focus' in client) {
           return client.focus();
