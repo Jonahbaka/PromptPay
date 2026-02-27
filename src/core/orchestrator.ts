@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay :: Core Orchestrator
-// DeepSeek-first, cost-optimized multi-model orchestration
+// Ollama-first, cost-optimized multi-model orchestration
 // 9 agents (4 agentic + 5 payment), ~93 tools
-// Default: DeepSeek | Escalation: Claude/GPT-4o/Gemini (premium only)
+// Default: Ollama (free) | Escalation: Claude/GPT-4o/Gemini (premium)
 // ═══════════════════════════════════════════════════════════════
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -108,9 +108,47 @@ const SUB_AGENT_CONFIGS: Record<string, SubAgentConfig> = {
 // Orchestrator
 // ═══════════════════════════════════════════════════════════
 
+// ── Ollama Client (OpenAI-compatible HTTP) ──────────────────
+
+interface OllamaChatMessage { role: 'system' | 'user' | 'assistant'; content: string }
+interface OllamaChatResponse {
+  id: string; model: string;
+  choices: Array<{ index: number; message: { role: string; content: string }; finish_reason: string }>;
+  usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+}
+
+class OllamaClient {
+  constructor(private baseUrl: string) {}
+
+  async chat(model: string, messages: OllamaChatMessage[], maxTokens = 4096, temperature = 0.3): Promise<OllamaChatResponse> {
+    const url = `${this.baseUrl}/v1/chat/completions`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature }),
+    });
+    if (!res.ok) throw new Error(`Ollama error ${res.status}: ${await res.text()}`);
+    return res.json() as Promise<OllamaChatResponse>;
+  }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/tags`, { signal: AbortSignal.timeout(3000) });
+      return res.ok;
+    } catch { return false; }
+  }
+
+  async listModels(): Promise<string[]> {
+    const res = await fetch(`${this.baseUrl}/api/tags`);
+    const data = await res.json() as { models: Array<{ name: string }> };
+    return data.models.map(m => m.name);
+  }
+}
+
 export class Orchestrator extends EventEmitter<OrchestratorEvents> {
   private identity: AgentIdentity;
   private client: Anthropic;
+  private ollamaClient: OllamaClient;
   private systemPrompt: string;
   private tools: Map<string, ToolDefinition> = new Map();
   private agents: Map<string, AgentState> = new Map();
@@ -126,6 +164,7 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
     super();
     this.logger = logger;
     this.client = new Anthropic({ apiKey: CONFIG.anthropic.apiKey });
+    this.ollamaClient = new OllamaClient(CONFIG.ollama.baseUrl);
 
     this.identity = {
       id: 'orchestrator-primary',
@@ -290,23 +329,66 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
 
   // ── Direct Execution ──────────────────────────────────────
 
-  /** Resolve which model to use based on task context */
-  private resolveModel(task: Task): { model: string; maxTokens: number } {
-    // Partner bank custom AI model
+  /** Resolve which model/provider to use based on task context */
+  private resolveModel(task: Task): { provider: 'ollama' | 'anthropic'; model: string; maxTokens: number } {
+    // Partner bank custom AI model → always Anthropic
     if (task.payload?.tenantAiModel) {
-      return { model: task.payload.tenantAiModel as string, maxTokens: CONFIG.anthropic.maxTokens };
+      return { provider: 'anthropic', model: task.payload.tenantAiModel as string, maxTokens: CONFIG.anthropic.maxTokens };
     }
 
+    // Super admin tasks → Anthropic premium
+    if (task.payload?.superAdmin) {
+      return { provider: 'anthropic', model: CONFIG.anthropic.adminModel, maxTokens: CONFIG.anthropic.maxTokens };
+    }
+
+    // Default: route through Ollama (free)
+    const defaultProvider = CONFIG.modelRouting.defaultProvider;
+    if (defaultProvider === 'ollama') {
+      const isCodeTask = task.type === 'custom' && (task.payload?.codeTask === true);
+      const ollamaModel = isCodeTask ? CONFIG.ollama.codeModel : CONFIG.ollama.model;
+      return { provider: 'ollama', model: ollamaModel, maxTokens: CONFIG.ollama.maxTokens };
+    }
+
+    // Fallback: user tasks → cheap Anthropic, admin → premium Anthropic
     const isUserTask = task.payload?.userInitiated;
     if (isUserTask) {
-      return { model: CONFIG.anthropic.userModel, maxTokens: CONFIG.anthropic.userMaxTokens };
+      return { provider: 'anthropic', model: CONFIG.anthropic.userModel, maxTokens: CONFIG.anthropic.userMaxTokens };
     }
-    return { model: CONFIG.anthropic.adminModel, maxTokens: CONFIG.anthropic.maxTokens };
+    return { provider: 'anthropic', model: CONFIG.anthropic.adminModel, maxTokens: CONFIG.anthropic.maxTokens };
   }
 
-  private async executeDirect(task: Task): Promise<TaskResult> {
+  /** Execute via Ollama (OpenAI-compatible, free) */
+  private async executeViaOllama(task: Task, model: string, maxTokens: number): Promise<TaskResult> {
+    const messages: OllamaChatMessage[] = [
+      { role: 'system', content: this.systemPrompt },
+      ...this.conversationHistory.slice(-20).map(m => ({
+        role: m.role as 'user' | 'assistant',
+        content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
+      })),
+      {
+        role: 'user' as const,
+        content: `TASK [${task.priority.toUpperCase()}]: ${task.title}\n\n${task.description}\n\nPayload: ${JSON.stringify(task.payload, null, 2)}`,
+      },
+    ];
+
+    const response = await this.ollamaClient.chat(model, messages, maxTokens, CONFIG.ollama.temperature);
+    const output = response.choices[0]?.message?.content || null;
+
+    this.conversationHistory.push({ role: 'user', content: task.description });
+    this.conversationHistory.push({ role: 'assistant', content: output || '' });
+
+    this.logger.info(`Ollama [${model}] responded — ${response.usage.total_tokens} tokens`);
+
+    return {
+      success: true, output,
+      tokensUsed: response.usage.total_tokens,
+      executionTimeMs: 0, subTasksSpawned: [], errors: [],
+    };
+  }
+
+  /** Execute via Anthropic (premium, paid) */
+  private async executeViaAnthropic(task: Task, model: string, maxTokens: number): Promise<TaskResult> {
     const toolDefs = this.getAnthropicTools();
-    const { model, maxTokens } = this.resolveModel(task);
 
     const messages: Anthropic.MessageParam[] = [
       ...this.conversationHistory.slice(-20),
@@ -325,9 +407,7 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
       messages,
     });
 
-    const subTasksSpawned: string[] = [];
     let output: unknown = null;
-
     for (const block of response.content) {
       if (block.type === 'text') {
         output = block.text;
@@ -346,8 +426,25 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
     return {
       success: true, output,
       tokensUsed: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0),
-      executionTimeMs: 0, subTasksSpawned, errors: [],
+      executionTimeMs: 0, subTasksSpawned: [], errors: [],
     };
+  }
+
+  private async executeDirect(task: Task): Promise<TaskResult> {
+    const { provider, model, maxTokens } = this.resolveModel(task);
+
+    // Try Ollama first; auto-fallback to Anthropic if Ollama is down
+    if (provider === 'ollama') {
+      const ollamaUp = await this.ollamaClient.isAvailable();
+      if (ollamaUp) {
+        this.logger.info(`Routing task ${task.id} to Ollama [${model}]`);
+        return this.executeViaOllama(task, model, maxTokens);
+      }
+      this.logger.warn(`Ollama unavailable, falling back to Anthropic for task ${task.id}`);
+    }
+
+    this.logger.info(`Routing task ${task.id} to Anthropic [${model}]`);
+    return this.executeViaAnthropic(task, model, maxTokens);
   }
 
   // ── Sub-Agent Spawning ────────────────────────────────────
@@ -396,19 +493,42 @@ Available tools: ${config.tools.join(', ')}
 
 Execute the given task with precision.`;
 
-      const subTools = this.getAnthropicToolsForAgent(config.tools);
       const resolved = this.resolveModel(task);
+      const taskContent = `Execute: ${task.title}\n\n${task.description}\nPriority: ${task.priority}\nPayload: ${JSON.stringify(task.payload, null, 2)}`;
 
+      // Route sub-agents through Ollama when available
+      if (resolved.provider === 'ollama' && await this.ollamaClient.isAvailable()) {
+        this.logger.info(`Sub-agent ${config.name} → Ollama [${resolved.model}]`);
+        const ollamaMessages: OllamaChatMessage[] = [
+          { role: 'system', content: subPrompt },
+          { role: 'user', content: taskContent },
+        ];
+        const ollamaRes = await this.ollamaClient.chat(
+          resolved.model, ollamaMessages,
+          config.maxTokens || resolved.maxTokens,
+          config.temperature ?? CONFIG.ollama.temperature,
+        );
+        const output = ollamaRes.choices[0]?.message?.content || null;
+        agentState.status = 'idle';
+        agentState.executionCount++;
+        agentState.lastExecution = new Date();
+        return {
+          success: true, output,
+          tokensUsed: ollamaRes.usage.total_tokens,
+          executionTimeMs: 0, subTasksSpawned: [], errors: [],
+        };
+      }
+
+      // Fallback: Anthropic
+      this.logger.info(`Sub-agent ${config.name} → Anthropic [${resolved.model}]`);
+      const subTools = this.getAnthropicToolsForAgent(config.tools);
       const response = await this.client.messages.create({
         model: resolved.model,
         max_tokens: config.maxTokens || resolved.maxTokens,
         temperature: config.temperature ?? CONFIG.anthropic.temperature,
         system: subPrompt,
         tools: subTools.length > 0 ? subTools : undefined,
-        messages: [{
-          role: 'user',
-          content: `Execute: ${task.title}\n\n${task.description}\nPriority: ${task.priority}\nPayload: ${JSON.stringify(task.payload, null, 2)}`,
-        }],
+        messages: [{ role: 'user', content: taskContent }],
       });
 
       let output: unknown = null;
@@ -503,25 +623,38 @@ Execute the given task with precision.`;
     const toolInvocations = recentEvents.filter(e => e.type === 'tool:invoked').length;
     const errors = recentEvents.filter(e => e.type === 'system:error' || e.type === 'agent:error').length;
 
-    const response = await this.client.messages.create({
-      model: CONFIG.anthropic.adminModel,
-      max_tokens: 4096,
-      temperature: 0.5,
-      system: 'You are performing a metacognitive self-evaluation of PromptPay financial operations. Be ruthlessly honest.',
-      messages: [{
-        role: 'user',
-        content: `24h metrics: ${tasksCompleted} completed, ${tasksFailed} failed, ${subAgentsSpawned} agents spawned, ${toolInvocations} tool calls, ${errors} errors.\n\nAnalyze performance, identify bottlenecks, and recommend optimizations.`,
-      }],
-    });
+    const evalPrompt = `24h metrics: ${tasksCompleted} completed, ${tasksFailed} failed, ${subAgentsSpawned} agents spawned, ${toolInvocations} tool calls, ${errors} errors.\n\nAnalyze performance, identify bottlenecks, and recommend optimizations.`;
+    const evalSystem = 'You are performing a metacognitive self-evaluation of PromptPay financial operations. Be ruthlessly honest.';
 
-    const analysis = response.content.find(b => b.type === 'text')?.text || 'No analysis generated.';
+    let analysis: string;
+    let tokensUsed: number;
+
+    // Self-eval via Ollama if available (saves premium tokens)
+    if (CONFIG.modelRouting.defaultProvider === 'ollama' && await this.ollamaClient.isAvailable()) {
+      const ollamaRes = await this.ollamaClient.chat(CONFIG.ollama.model, [
+        { role: 'system', content: evalSystem },
+        { role: 'user', content: evalPrompt },
+      ], 4096, 0.5);
+      analysis = ollamaRes.choices[0]?.message?.content || 'No analysis generated.';
+      tokensUsed = ollamaRes.usage.total_tokens;
+    } else {
+      const response = await this.client.messages.create({
+        model: CONFIG.anthropic.adminModel,
+        max_tokens: 4096,
+        temperature: 0.5,
+        system: evalSystem,
+        messages: [{ role: 'user', content: evalPrompt }],
+      });
+      analysis = response.content.find(b => b.type === 'text')?.text || 'No analysis generated.';
+      tokensUsed = (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0);
+    }
 
     const evaluation: SelfEvaluation = {
       id: uuid(), timestamp: now,
       period: { start: oneDayAgo, end: now },
       metrics: {
         tasksCompleted, tasksFailed, avgExecutionTimeMs: 0,
-        tokensConsumed: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0),
+        tokensConsumed: tokensUsed,
         subAgentsSpawned, toolInvocations, memoryOperations: 0, errorsEncountered: errors,
       },
       analysis, recommendations: [], routingChanges: [], applied: false,

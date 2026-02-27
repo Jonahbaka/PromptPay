@@ -26,7 +26,16 @@ export const CONFIG = {
     adminModel: env('ANTHROPIC_ADMIN_MODEL', 'claude-opus-4-6'),
   },
 
-  // ── DeepSeek (Default model — intent detection, entity extraction, basic tasks) ──
+  // ── Ollama (Default model — cost-free local/cloud inference) ──
+  ollama: {
+    baseUrl: env('OLLAMA_BASE_URL', 'http://localhost:11434'),
+    model: env('OLLAMA_MODEL', 'llama3.2:3b'),
+    codeModel: env('OLLAMA_CODE_MODEL', 'qwen2.5-coder:3b'),
+    maxTokens: parseInt(env('OLLAMA_MAX_TOKENS', '4096')),
+    temperature: 0.3,
+  },
+
+  // ── DeepSeek (Fallback cheap model — intent detection, entity extraction) ──
   deepseek: {
     apiKey: env('DEEPSEEK_API_KEY', ''),
     model: env('DEEPSEEK_MODEL', 'deepseek-chat'),
@@ -55,8 +64,8 @@ export const CONFIG = {
 
   // ── Model Routing Strategy ──
   modelRouting: {
-    // Default model for all conversational interactions
-    defaultProvider: env('MODEL_DEFAULT_PROVIDER', 'deepseek') as 'deepseek' | 'anthropic' | 'openai' | 'google',
+    // Default model for all conversational interactions (ollama = free)
+    defaultProvider: env('MODEL_DEFAULT_PROVIDER', 'ollama') as 'ollama' | 'deepseek' | 'anthropic' | 'openai' | 'google',
     // Premium escalation target (Claude, OpenAI, or Gemini)
     premiumProvider: env('MODEL_PREMIUM_PROVIDER', 'anthropic') as 'anthropic' | 'openai' | 'google',
     // Confidence threshold — below this, escalate or clarify
