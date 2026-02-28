@@ -203,7 +203,45 @@ async function main(): Promise<void> {
   channelManager.register(telegram);
   await telegram.start();
 
-  // ── 9b. Telegram Inbound Message Handler ──
+  // ── 9b. OpenClaw Agent — Owner-Only Telegram AI ──
+  const openclawHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  const OPENCLAW_PROMPT = `You are OpenClaw, a private AI agent for the owner of PromptPay (upromptpay.com).
+You are NOT a customer-facing chatbot. You are a full autonomous agent with executive-level intelligence.
+
+## Who You Are
+- Name: OpenClaw
+- Role: Personal AI agent for the PromptPay founder
+- Platform: Telegram (@promtpay_bot)
+- Personality: Sharp, direct, resourceful. You think like a CTO + CEO hybrid.
+
+## Your Capabilities
+- General knowledge & reasoning (you are a large language model)
+- Business strategy, market analysis, competitive intelligence
+- Code review, debugging advice, architecture decisions
+- Financial analysis, unit economics, growth strategy
+- Research: summarize topics, explain concepts, brainstorm ideas
+- Draft emails, messages, documents, pitch decks
+- Daily briefings on platform health, metrics, news
+- Anything the owner asks — you are not limited to fintech
+
+## Platform Context
+- PromptPay: AI-powered fintech platform for Africa + global
+- Stack: TypeScript, Express 5, SQLite, PM2 on EC2
+- Domain: upromptpay.com
+- 7 agents, ~75 tools
+- GitHub: github.com/Jonahbaka/PromptPay
+- Admin: /secure/admin
+
+## Rules
+- You serve ONLY the owner. This channel is private.
+- Be direct. No fluff, no "I'd be happy to help", no menus.
+- If asked about something you don't know, say so honestly and suggest how to find out.
+- You can discuss ANY topic — tech, business, news, personal, creative, anything.
+- Keep responses concise for Telegram (under 4000 chars). Use markdown formatting.
+- When discussing code or technical issues, be specific with file paths and line numbers.
+- If the owner asks you to do something on the server, explain the exact commands needed.
+- You have memory of this conversation session. Reference earlier messages when relevant.`;
+
   telegram.on('message', async (msg: ChannelMessage) => {
     if (msg.direction !== 'inbound') return;
 
@@ -213,27 +251,69 @@ async function main(): Promise<void> {
 
     if (!userText) return;
 
-    logger.info(`Telegram inbound from @${username} (${chatId}): ${userText.slice(0, 80)}`);
+    // Owner-only access
+    const ownerChatId = CONFIG.telegram.ownerChatId;
+    if (ownerChatId && chatId !== ownerChatId) {
+      await telegram.sendMessage(chatId, 'This is a private agent. Access denied.');
+      logger.warn(`Telegram unauthorized: @${username} (${chatId}) blocked`);
+      return;
+    }
+
+    logger.info(`OpenClaw command from @${username}: ${userText.slice(0, 80)}`);
 
     try {
-      // Route through the orchestrator for full agentic response
-      const task = orchestrator.createTask(
-        'custom', 'high', 'Telegram Chat',
-        userText,
-        { userInitiated: true, userId: `tg:${chatId}`, chatMode: true, channel: 'telegram', username }
-      );
-      const result = await orchestrator.executeTask(task);
+      // Build conversation with rolling history (last 20 exchanges)
+      openclawHistory.push({ role: 'user', content: userText });
+      if (openclawHistory.length > 40) openclawHistory.splice(0, openclawHistory.length - 40);
 
-      const reply = (result.success && result.output)
-        ? String(result.output)
-        : "I'm PromptPay, your AI fintech assistant. I couldn't process that right now — please try again shortly.";
+      const messages = [
+        { role: 'system' as const, content: OPENCLAW_PROMPT },
+        ...openclawHistory,
+      ];
 
-      await telegram.sendMessage(chatId, reply);
-      auditTrail.record('telegram', 'chat_reply', `tg:${chatId}`, { input: userText.slice(0, 200), taskId: task.id });
+      // Call Ollama directly with OpenClaw's own prompt (bypasses fintech soul.md)
+      const ollamaRes = await fetch(`${CONFIG.ollama.baseUrl}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${CONFIG.ollama.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: CONFIG.ollama.model,
+          messages,
+          max_tokens: CONFIG.ollama.maxTokens,
+          temperature: 0.4,
+        }),
+      });
+
+      if (!ollamaRes.ok) {
+        const errText = await ollamaRes.text();
+        logger.error(`OpenClaw Ollama error: ${ollamaRes.status} ${errText}`);
+        await telegram.sendMessage(chatId, `AI error (${ollamaRes.status}). Check logs.`);
+        return;
+      }
+
+      const data = await ollamaRes.json() as { choices: Array<{ message: { content: string } }>; usage?: { total_tokens: number } };
+      const reply = data.choices?.[0]?.message?.content || 'No response generated.';
+
+      openclawHistory.push({ role: 'assistant', content: reply });
+      logger.info(`OpenClaw responded — ${data.usage?.total_tokens || '?'} tokens`);
+
+      // Telegram max message = 4096 chars; split if needed
+      if (reply.length <= 4096) {
+        await telegram.sendMessage(chatId, reply);
+      } else {
+        const chunks = reply.match(/[\s\S]{1,4000}/g) || [reply];
+        for (const chunk of chunks) {
+          await telegram.sendMessage(chatId, chunk);
+        }
+      }
+
+      auditTrail.record('openclaw', 'command', `tg:${chatId}`, { input: userText.slice(0, 200), tokens: data.usage?.total_tokens });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      logger.error(`Telegram reply error: ${errMsg}`);
-      await telegram.sendMessage(chatId, "Sorry, I'm having trouble right now. Please try again in a moment.").catch(() => {});
+      logger.error(`OpenClaw error: ${errMsg}`);
+      await telegram.sendMessage(chatId, `Error: ${errMsg.slice(0, 200)}`).catch(() => {});
     }
   });
 
