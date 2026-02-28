@@ -29,6 +29,7 @@ fi
 
 # ── 2. Pull latest code ──
 echo "[2/6] Pulling latest from main..."
+git checkout -- .
 git pull origin main
 
 # ── 3. Install dependencies ──
