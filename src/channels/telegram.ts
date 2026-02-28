@@ -56,17 +56,9 @@ export class TelegramChannel extends BaseChannel {
       return;
     }
 
-    // Delete any stale webhook to ensure clean polling
-    try {
-      await fetch(`https://api.telegram.org/bot${CONFIG.telegram.botToken}/deleteWebhook`);
-    } catch { /* ignore */ }
-
     this.active = true;
     this.running = true;
     this.logger.info('Telegram channel started (long-polling)');
-
-    // Brief delay on startup to let any previous process's long-poll expire
-    await this.sleep(3000);
     this.pollLoop(); // fire-and-forget — runs until stop()
   }
 
@@ -80,7 +72,7 @@ export class TelegramChannel extends BaseChannel {
     while (this.running) {
       try {
         const response = await fetch(
-          `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=25`
+          `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=5`
         );
         const data = await response.json() as {
           ok: boolean;
@@ -94,9 +86,8 @@ export class TelegramChannel extends BaseChannel {
         if (!data.ok) {
           const desc = data.description || 'unknown';
           if (desc.includes('Conflict')) {
-            // Another getUpdates in flight (stale connection from previous restart)
-            this.logger.info('Telegram poll conflict — waiting for stale connection to expire...');
-            await this.sleep(30000);
+            // Stale connection from previous restart — short retry
+            await this.sleep(5000);
           } else {
             this.logger.warn(`Telegram poll error: ${desc}`);
             await this.sleep(3000);
