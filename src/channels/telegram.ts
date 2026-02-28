@@ -11,6 +11,7 @@ import { BaseChannel } from './base.js';
 export class TelegramChannel extends BaseChannel {
   private lastUpdateId = 0;
   private running = false;
+  private pollAbort: AbortController | null = null;
 
   constructor(logger: LoggerHandle) {
     super('telegram', logger);
@@ -87,14 +88,21 @@ export class TelegramChannel extends BaseChannel {
   async stop(): Promise<void> {
     this.running = false;
     this.active = false;
+    // Abort any in-flight long-poll request so Telegram releases the session immediately
+    if (this.pollAbort) {
+      this.pollAbort.abort();
+      this.pollAbort = null;
+    }
   }
 
   /** Sequential long-poll loop — only one getUpdates at a time, no overlap */
   private async pollLoop(): Promise<void> {
     while (this.running) {
       try {
+        this.pollAbort = new AbortController();
         const response = await fetch(
-          `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=5`
+          `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=5`,
+          { signal: this.pollAbort.signal }
         );
         const data = await response.json() as {
           ok: boolean;
@@ -108,9 +116,18 @@ export class TelegramChannel extends BaseChannel {
         if (!data.ok) {
           const desc = data.description || 'unknown';
           if (desc.includes('Conflict')) {
-            // 409: Another getUpdates is active — wait for old worker to fully shut down
-            this.logger.warn('Telegram 409 Conflict — waiting for old session to release...');
-            await this.sleep(8000);
+            // 409: Another getUpdates is active — force-claim and retry
+            this.logger.warn('Telegram 409 Conflict — force-claiming session...');
+            try {
+              const claimRes = await fetch(
+                `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=-1&timeout=0`
+              );
+              const claimData = await claimRes.json() as { ok: boolean; result: Array<{ update_id: number }> };
+              if (claimData.ok && claimData.result.length > 0) {
+                this.lastUpdateId = claimData.result[claimData.result.length - 1].update_id;
+              }
+            } catch { /* ignore claim errors */ }
+            await this.sleep(3000);
           } else {
             this.logger.warn(`Telegram poll error: ${desc}`);
             await this.sleep(3000);
