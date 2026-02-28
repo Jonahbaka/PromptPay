@@ -316,15 +316,16 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
       }
 
       // Route through the orchestrator as a custom task for full agentic capability
+      // Note: do NOT set superAdmin here — it forces Anthropic routing which requires a paid API key.
+      // All chat goes through Ollama (free) by default; Anthropic is only for premium escalation.
       const task = deps.orchestrator.createTask(
         'custom', 'high',
         'Agentic Chat',
         message.trim(),
         {
-          userInitiated: role === 'user',
+          userInitiated: true,
           userId,
           chatMode: true,
-          superAdmin: role === 'owner',
         }
       );
       const result = await deps.orchestrator.executeTask(task);
