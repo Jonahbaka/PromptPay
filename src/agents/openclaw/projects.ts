@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // OpenClaw :: Project Registry
-// Multi-project management from a single Telegram agent
+// Multi-project management — manage all projects from Telegram
 // ═══════════════════════════════════════════════════════════════
 
 export interface Project {
