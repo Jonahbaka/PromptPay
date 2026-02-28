@@ -4669,7 +4669,7 @@ if ('serviceWorker' in navigator) {
   if ('caches' in window) {
     caches.keys().then(keys => {
       keys.forEach(key => {
-        if (!key.includes('v4.1')) caches.delete(key);
+        if (!key.includes('v5.0')) caches.delete(key);
       });
     });
   }

@@ -1,16 +1,18 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay Service Worker — PWA + Offline Support
-// v4.1 — HTML pages always fetched fresh (never cached)
+// v5.0 — Network-first with timeout fallback, proper offline page
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'promptpay-v4.1';
+const CACHE_NAME = 'promptpay-v5.0';
+const OFFLINE_URL = '/offline.html';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  OFFLINE_URL,
 ];
 
-// Install — cache only static assets (NOT HTML pages)
+// Install — cache static assets + offline page
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
@@ -18,16 +20,35 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate — purge ALL old caches immediately
+// Activate — purge ALL old caches, enable navigation preload
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    ).then(() => self.clients.claim())
+    Promise.all([
+      // Delete old caches
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        )
+      ),
+      // Enable navigation preload for faster page loads
+      self.registration.navigationPreload?.enable().catch(() => {}),
+    ]).then(() => self.clients.claim())
   );
 });
+
+// Message handler for skip waiting
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Fetch with timeout helper
+function fetchWithTimeout(request, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(request, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
 
 // Fetch handler
 self.addEventListener('fetch', (event) => {
@@ -36,32 +57,52 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET
   if (request.method !== 'GET') return;
 
-  // Skip API, WebSocket, health, SSE streams
-  if (request.url.includes('/api/') || request.url.includes('/ws') ||
-      request.url.includes('/health') || request.url.includes('/stream')) {
+  // Skip API, WebSocket, health, SSE streams, chrome-extension
+  const url = request.url;
+  if (url.includes('/api/') || url.includes('/ws') ||
+      url.includes('/health') || url.includes('/stream') ||
+      url.startsWith('chrome-extension://')) {
     return;
   }
 
-  // HTML pages (navigation) — ALWAYS go to network, never serve from cache
-  // This ensures users always see the latest version
-  if (request.mode === 'navigate' || request.url.endsWith('.html')) {
+  // HTML pages (navigation) — network-first with 8s timeout + offline fallback
+  if (request.mode === 'navigate' || url.endsWith('.html')) {
     event.respondWith(
-      fetch(request).catch(() => {
-        // Only use cache as offline fallback
-        return caches.match(request).then((cached) => {
-          return cached || new Response('Offline — please check your connection', {
-            status: 503,
-            headers: { 'Content-Type': 'text/html' },
-          });
-        });
-      })
+      (async () => {
+        // Try navigation preload first (faster on supported browsers)
+        try {
+          const preloadResponse = await event.preloadResponse;
+          if (preloadResponse) return preloadResponse;
+        } catch {}
+
+        // Network with timeout
+        try {
+          const response = await fetchWithTimeout(request, 8000);
+          if (response.ok) {
+            // Cache the successful HTML response for offline use
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(request, response.clone());
+          }
+          return response;
+        } catch {
+          // Network failed or timed out — try cache, then offline page
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const offlinePage = await caches.match(OFFLINE_URL);
+          if (offlinePage) return offlinePage;
+          return new Response(
+            '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PromptPay — Offline</title></head><body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0d1117;color:#fff;text-align:center"><div><h2>You\'re offline</h2><p>Check your internet connection and try again.</p><button onclick="location.reload()" style="padding:12px 24px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;margin-top:16px">Retry</button></div></body></html>',
+            { status: 503, headers: { 'Content-Type': 'text/html' } }
+          );
+        }
+      })()
     );
     return;
   }
 
-  // Static assets (CSS, JS, images, fonts) — network first with cache fallback
+  // Static assets — network-first with cache fallback
   event.respondWith(
-    fetch(request)
+    fetchWithTimeout(request, 10000)
       .then((response) => {
         if (response.ok) {
           const clone = response.clone();
@@ -71,7 +112,7 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => {
         return caches.match(request).then((cached) => {
-          return cached || new Response('Offline', { status: 503 });
+          return cached || new Response('', { status: 503 });
         });
       })
   );
