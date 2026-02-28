@@ -64,6 +64,9 @@ export class TelegramChannel extends BaseChannel {
     this.active = true;
     this.running = true;
     this.logger.info('Telegram channel started (long-polling)');
+
+    // Brief delay on startup to let any previous process's long-poll expire
+    await this.sleep(3000);
     this.pollLoop(); // fire-and-forget — runs until stop()
   }
 
@@ -90,8 +93,15 @@ export class TelegramChannel extends BaseChannel {
         };
 
         if (!data.ok) {
-          this.logger.warn(`Telegram poll error: ${data.description || 'unknown'}`);
-          await this.sleep(3000);
+          const desc = data.description || 'unknown';
+          if (desc.includes('Conflict')) {
+            // Another getUpdates in flight (stale connection from previous restart)
+            this.logger.info('Telegram poll conflict — waiting for stale connection to expire...');
+            await this.sleep(30000);
+          } else {
+            this.logger.warn(`Telegram poll error: ${desc}`);
+            await this.sleep(3000);
+          }
           continue;
         }
 
