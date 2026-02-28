@@ -56,18 +56,26 @@ export class TelegramChannel extends BaseChannel {
       return;
     }
 
-    // Clear any stale webhook/polling sessions from previous workers
-    // This prevents 409 "Conflict" errors during PM2 cluster reloads
+    // Force-claim the polling session from any stale connection
+    // A short getUpdates (timeout=0) terminates any existing long-poll on Telegram's side
     try {
       await fetch(`https://api.telegram.org/bot${CONFIG.telegram.botToken}/deleteWebhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ drop_pending_updates: false }),
       });
-      // Brief pause to let Telegram release the old polling session
-      await this.sleep(2000);
+      // Force-claim: a getUpdates with timeout=0 kicks the old session off
+      const claimRes = await fetch(
+        `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=-1&timeout=0`
+      );
+      const claimData = await claimRes.json() as { ok: boolean; result: Array<{ update_id: number }> };
+      if (claimData.ok && claimData.result.length > 0) {
+        // Set offset past the last update to avoid re-processing
+        this.lastUpdateId = claimData.result[claimData.result.length - 1].update_id;
+      }
+      this.logger.info('Telegram session claimed (old polls terminated)');
     } catch (err) {
-      this.logger.warn(`Telegram webhook cleanup failed: ${err}`);
+      this.logger.warn(`Telegram session claim failed: ${err}`);
     }
 
     this.active = true;
