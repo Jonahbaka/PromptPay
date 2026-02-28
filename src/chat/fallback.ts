@@ -31,7 +31,7 @@ export function detectTaskType(text: string): string {
 
 const FALLBACK_RESPONSES: Record<string, string> = {
   shopping_list_create: "I'll help with shopping. Want me to create a list, compare prices, or track an order?",
-  calls: "I can help with calls! Go to the Calls tab to dial, video call, or buy virtual numbers.",
+  calls: "I can help with calls! Go to the Calls tab to dial or video call anyone.",
   assistant_subscriptions: "I'll manage that for you. I can list subscriptions, set alerts, or schedule appointments.",
   wallet_transfer: "Got it. Who are you sending to and how much?",
   bill_pay: "I'll handle that bill. What's the bill type and amount?",

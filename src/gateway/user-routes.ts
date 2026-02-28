@@ -16,8 +16,7 @@ import type { PushChannel } from '../channels/push.js';
 // ensureStripeCustomer moved inline as getOrCreateStripeCustomer to prevent duplicate customer creation
 import { detectOperator, sendTopup, getOperatorById, getDataBundles, sendDataTopup } from '../providers/reloadly.js';
 import {
-  initiateCall, getCallRate, searchNumbers, orderNumber, listOwnedNumbers,
-  releaseNumber, orderSimCards, listSimCards, activateSimCard, getSimCard,
+  initiateCall, getCallRate,
   aiInference, aiTranslate, getTelnyxBalance,
 } from '../providers/telnyx.js';
 
@@ -2194,157 +2193,9 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   });
 
   // ═══════════════════════════════════════════════════════════════
-  // TELNYX SERVICES — Virtual Numbers, SIMs, SMS, AI
+  // TELNYX SERVICES — AI Inference & Calls
   // ═══════════════════════════════════════════════════════════════
-
-  // ── Virtual Numbers ──
-
-  /** Search available numbers */
-  router.get('/api/numbers/search', authenticate, async (req: Request, res: Response) => {
-    try {
-      const countryCode = String(req.query.country || 'US');
-      const numberType = (req.query.type as string) || undefined;
-      const limit = parseInt(String(req.query.limit || '10'));
-      const result = await searchNumbers({ countryCode, numberType: numberType as 'local' | 'toll_free', limit });
-      res.json(result);
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to search numbers' });
-    }
-  });
-
-  /** Purchase a number */
-  router.post('/api/numbers/buy', authenticate, async (req: Request, res: Response) => {
-    try {
-      const { phoneNumber, countryCode } = req.body;
-      if (!phoneNumber) { res.status(400).json({ error: 'Phone number is required' }); return; }
-
-      // Charge user's wallet $2 for a virtual number (platform markup)
-      const numberFeeUsd = 2.00;
-      const wallet = db.prepare(`SELECT balance FROM wallet WHERE user_id = ?`).get(req.auth!.userId) as Record<string, unknown> | undefined;
-      const balance = parseFloat(String(wallet?.balance || '0'));
-      if (balance < numberFeeUsd) {
-        res.status(400).json({
-          error: `Insufficient wallet balance. Virtual numbers cost $${numberFeeUsd.toFixed(2)}/mo. Your balance: $${balance.toFixed(2)}. Fund your wallet first.`,
-          required: numberFeeUsd,
-          balance,
-        });
-        return;
-      }
-
-      // Order from Telnyx
-      const result = await orderNumber({ phoneNumber });
-      if (!result.success) {
-        res.status(400).json({ error: result.error || 'Telnyx could not provision this number. Try a different one.' });
-        return;
-      }
-
-      // Debit wallet
-      db.prepare(`UPDATE wallet SET balance = balance - ? WHERE user_id = ?`).run(numberFeeUsd, req.auth!.userId);
-      db.prepare(`INSERT INTO wallet_transactions (id, user_id, type, amount, description, created_at) VALUES (?, ?, 'debit', ?, ?, datetime('now'))`)
-        .run(crypto.randomUUID(), req.auth!.userId, numberFeeUsd, `Virtual number: ${phoneNumber}`);
-
-      // Record in DB
-      const id = crypto.randomUUID();
-      db.prepare(`
-        INSERT INTO virtual_numbers (id, user_id, phone_number, telnyx_order_id, country_code, number_type, status, monthly_cost_usd, purchased_at, created_at)
-        VALUES (?, ?, ?, ?, ?, 'local', 'active', ?, datetime('now'), datetime('now'))
-      `).run(id, req.auth!.userId, phoneNumber, result.orderId, countryCode || 'US', numberFeeUsd);
-
-      res.json({ success: true, numberId: id, phoneNumber, orderId: result.orderId, charged: numberFeeUsd });
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to purchase number. Please try again.' });
-    }
-  });
-
-  /** List my virtual numbers */
-  router.get('/api/numbers/mine', authenticate, (req: Request, res: Response) => {
-    const numbers = db.prepare(`
-      SELECT * FROM virtual_numbers WHERE user_id = ? AND status != 'released'
-      ORDER BY created_at DESC
-    `).all(req.auth!.userId);
-    res.json({ numbers });
-  });
-
-  /** Release a number */
-  router.delete('/api/numbers/:id', authenticate, async (req: Request, res: Response) => {
-    const number = db.prepare(`SELECT * FROM virtual_numbers WHERE id = ? AND user_id = ?`)
-      .get(req.params.id, req.auth!.userId) as Record<string, unknown> | undefined;
-    if (!number) { res.status(404).json({ error: 'Number not found' }); return; }
-
-    if (number.telnyx_number_id) {
-      await releaseNumber(number.telnyx_number_id as string);
-    }
-    db.prepare(`UPDATE virtual_numbers SET status = 'released' WHERE id = ?`).run(req.params.id);
-    res.json({ success: true });
-  });
-
-  // ── SIM Cards / eSIMs ──
-
-  /** Order eSIM or physical SIM */
-  router.post('/api/sims/order', authenticate, async (req: Request, res: Response) => {
-    try {
-      const { simType, quantity } = req.body;
-      const qty = Math.min(Math.max(parseInt(quantity) || 1, 1), 10);
-      const type = simType === 'physical' ? 'physical' : 'esim';
-
-      const result = await orderSimCards({ quantity: qty, simType: type });
-      if (!result.success) {
-        res.status(400).json({ error: result.error || 'SIM order failed. Please try again or contact support.' });
-        return;
-      }
-
-      // Record order in database
-      const id = crypto.randomUUID();
-      db.prepare(`
-        INSERT INTO sim_card_orders (id, user_id, telnyx_order_id, sim_type, quantity, status, created_at)
-        VALUES (?, ?, ?, ?, ?, 'pending', datetime('now'))
-      `).run(id, req.auth!.userId, result.orderId, type, qty);
-
-      res.json({ success: true, orderId: id, telnyxOrderId: result.orderId });
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to place SIM order. Please try again.' });
-    }
-  });
-
-  /** List my SIM orders */
-  router.get('/api/sims/orders', authenticate, (req: Request, res: Response) => {
-    const orders = db.prepare(`
-      SELECT * FROM sim_card_orders WHERE user_id = ? ORDER BY created_at DESC
-    `).all(req.auth!.userId);
-    res.json({ orders });
-  });
-
-  /** List active SIMs on Telnyx account */
-  router.get('/api/sims/active', authenticate, async (req: Request, res: Response) => {
-    try {
-      const result = await listSimCards({ status: 'active' });
-      res.json(result);
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to list SIMs' });
-    }
-  });
-
-  /** Activate a SIM */
-  router.post('/api/sims/:simId/activate', authenticate, async (req: Request, res: Response) => {
-    try {
-      const result = await activateSimCard(String(req.params.simId));
-      res.json(result);
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to activate SIM' });
-    }
-  });
-
-  /** Get SIM details */
-  router.get('/api/sims/:simId', authenticate, async (req: Request, res: Response) => {
-    try {
-      const sim = await getSimCard(String(req.params.simId));
-      res.json({ sim });
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to get SIM details' });
-    }
-  });
-
-  // SMS/MMS routes removed — not part of our service offering
+  // Virtual Numbers, SIM Cards — on hold (provider functions preserved in src/providers/telnyx.ts)
 
   // ── Telnyx AI (Free LLM Inference) ──
 

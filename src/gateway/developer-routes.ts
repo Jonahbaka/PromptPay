@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay :: Developer API Portal
 // Full REST API for third-party developers to integrate
-// payments, airtime, SMS, calls, AI, and wallet services.
+// payments, airtime, calls, AI, and wallet services.
 // ═══════════════════════════════════════════════════════════════
 
 import { Router, type Request, type Response } from 'express';
@@ -197,7 +197,7 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
 
     const id = randomBytes(16).toString('hex');
     const secret = `whsec_${randomBytes(24).toString('hex')}`;
-    const eventList = events || ['payment.completed', 'airtime.completed', 'sms.sent', 'transfer.completed'];
+    const eventList = events || ['payment.completed', 'airtime.completed', 'call.completed', 'transfer.completed'];
 
     db.prepare(`
       INSERT INTO developer_webhooks (id, user_id, api_key_id, url, secret, events, created_at)
@@ -531,84 +531,6 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
     }
   });
 
-  // ── Send SMS ──
-  router.post('/api/v1/sms/send', devAuth, async (req: Request, res: Response) => {
-    const start = Date.now();
-    const isSandbox = (req as unknown as Record<string, unknown>).isSandbox;
-    const { to, from, body } = req.body as {
-      to?: string; from?: string; body?: string;
-    };
-
-    if (!to || !body) {
-      res.status(400).json({ error: 'to and body are required' });
-      logApiRequest(req, 400, start, 'Missing to/body');
-      return;
-    }
-
-    if (isSandbox) {
-      res.json({
-        id: `sms_test_${randomBytes(8).toString('hex')}`,
-        to, from: from || '+15555555555',
-        body,
-        status: 'delivered',
-        sandbox: true,
-      });
-      logApiRequest(req, 200, start);
-      return;
-    }
-
-    try {
-      // Use Telnyx to send SMS
-      const telnyxKey = CONFIG.telnyx?.apiKey || process.env.TELNYX_API_KEY;
-      if (!telnyxKey) {
-        res.status(503).json({ error: 'SMS service not configured' });
-        logApiRequest(req, 503, start, 'No Telnyx key');
-        return;
-      }
-
-      const devKey = (req as unknown as Record<string, unknown>).devKey as Record<string, unknown>;
-      // Get user's number or use provided 'from'
-      let fromNumber = from;
-      if (!fromNumber) {
-        const num = db.prepare('SELECT phone_number FROM virtual_numbers WHERE user_id = ? AND status = ? LIMIT 1')
-          .get(devKey.user_id, 'active') as { phone_number: string } | undefined;
-        fromNumber = num?.phone_number;
-      }
-
-      if (!fromNumber) {
-        res.status(400).json({ error: 'No from number available. Provide a "from" number or buy a virtual number first.' });
-        logApiRequest(req, 400, start, 'No from number');
-        return;
-      }
-
-      const smsRes = await fetch('https://api.telnyx.com/v2/messages', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${telnyxKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: fromNumber, to, text: body }),
-      });
-
-      const smsData = await smsRes.json() as Record<string, unknown>;
-
-      if (!smsRes.ok) {
-        const errMsg = JSON.stringify(smsData);
-        res.status(400).json({ error: 'SMS send failed', details: smsData });
-        logApiRequest(req, 400, start, errMsg);
-        return;
-      }
-
-      res.json({
-        id: (smsData.data as Record<string, unknown>)?.id || `sms_${randomBytes(8).toString('hex')}`,
-        to, from: fromNumber,
-        status: 'sent',
-      });
-      logApiRequest(req, 200, start);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      res.status(500).json({ error: message });
-      logApiRequest(req, 500, start, message);
-    }
-  });
-
   // ── Call Rates ──
   router.get('/api/v1/calls/rates', devAuth, async (req: Request, res: Response) => {
     const start = Date.now();
@@ -632,79 +554,6 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
     logApiRequest(req, 200, start);
   });
 
-  // ── Virtual Numbers ──
-  router.get('/api/v1/numbers', devAuth, (req: Request, res: Response) => {
-    const start = Date.now();
-    const isSandbox = (req as unknown as Record<string, unknown>).isSandbox;
-
-    if (isSandbox) {
-      res.json({
-        numbers: [
-          { id: 'num_test_1', phone: '+15551234567', country: 'US', status: 'active', monthlyRate: 2.00 },
-        ],
-        sandbox: true,
-      });
-      logApiRequest(req, 200, start);
-      return;
-    }
-
-    const devKey = (req as unknown as Record<string, unknown>).devKey as Record<string, unknown>;
-    const numbers = db.prepare(`
-      SELECT id, phone_number as phone, country_code as country, status, created_at
-      FROM virtual_numbers WHERE user_id = ? ORDER BY created_at DESC
-    `).all(devKey.user_id);
-    res.json({ numbers });
-    logApiRequest(req, 200, start);
-  });
-
-  // ── Search Available Numbers ──
-  router.get('/api/v1/numbers/search', devAuth, async (req: Request, res: Response) => {
-    const start = Date.now();
-    const country = (req.query.country as string || 'US').toUpperCase();
-    const isSandbox = (req as unknown as Record<string, unknown>).isSandbox;
-
-    if (isSandbox) {
-      res.json({
-        available: [
-          { phone: '+15559876543', country: 'US', monthlyRate: 2.00, features: ['sms', 'voice'] },
-          { phone: '+15559876544', country: 'US', monthlyRate: 2.00, features: ['sms', 'voice'] },
-        ],
-        sandbox: true,
-      });
-      logApiRequest(req, 200, start);
-      return;
-    }
-
-    try {
-      const telnyxKey = CONFIG.telnyx?.apiKey || process.env.TELNYX_API_KEY;
-      if (!telnyxKey) {
-        res.status(503).json({ error: 'Number service not configured' });
-        logApiRequest(req, 503, start);
-        return;
-      }
-
-      const searchRes = await fetch(
-        `https://api.telnyx.com/v2/available_phone_numbers?filter[country_code]=${country}&filter[limit]=10`,
-        { headers: { 'Authorization': `Bearer ${telnyxKey}` } },
-      );
-      const data = await searchRes.json() as { data?: Array<Record<string, unknown>> };
-
-      res.json({
-        available: (data.data || []).map((n: Record<string, unknown>) => ({
-          phone: n.phone_number,
-          country,
-          monthlyRate: 2.00,
-          features: n.features || ['sms', 'voice'],
-        })),
-      });
-      logApiRequest(req, 200, start);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      res.status(500).json({ error: message });
-      logApiRequest(req, 500, start, message);
-    }
-  });
-
   // ── API Documentation endpoint ──
   router.get('/api/v1/docs', (_req: Request, res: Response) => {
     res.json({
@@ -723,10 +572,7 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
         { method: 'GET', path: '/api/v1/wallet/balance', description: 'Get wallet balance' },
         { method: 'GET', path: '/api/v1/wallet/transactions', description: 'List transactions', query: { limit: 'optional', offset: 'optional' } },
         { method: 'POST', path: '/api/v1/airtime/send', description: 'Send airtime top-up', body: { phone: 'required', amount: 'required', country: 'optional (default: NG)' } },
-        { method: 'POST', path: '/api/v1/sms/send', description: 'Send SMS', body: { to: 'required', body: 'required', from: 'optional' } },
         { method: 'GET', path: '/api/v1/calls/rates', description: 'Get call rates', query: { country: 'optional (default: NG)' } },
-        { method: 'GET', path: '/api/v1/numbers', description: 'List your virtual numbers' },
-        { method: 'GET', path: '/api/v1/numbers/search', description: 'Search available numbers', query: { country: 'optional (default: US)' } },
       ],
       sandbox: {
         description: 'Use test keys (upp_test_xxx) for sandbox mode. All operations are simulated with mock data.',
@@ -737,7 +583,7 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
         header: 'X-RateLimit-Remaining (coming soon)',
       },
       webhooks: {
-        events: ['payment.completed', 'airtime.completed', 'sms.sent', 'sms.received', 'call.completed', 'transfer.completed'],
+        events: ['payment.completed', 'airtime.completed', 'call.completed', 'transfer.completed'],
         setup: 'POST /api/developer/webhooks',
         verification: 'HMAC-SHA256 signature in X-Webhook-Signature header',
       },
