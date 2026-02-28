@@ -10,8 +10,8 @@
 
   <!-- SEO -->
   <title>PromptPay — AI-Powered Payments, Calls & Chat</title>
-  <meta name="description" content="PromptPay is your AI-powered fintech platform. Send money, make international calls, buy virtual numbers, send SMS, shop, and chat — all with AI agents.">
-  <meta name="keywords" content="PromptPay, AI payments, international calling, virtual numbers, SMS, digital wallet, fintech, AI chat, money transfer, airtime, POS agent">
+  <meta name="description" content="PromptPay is your AI-powered fintech platform. Send money, make international calls, video calls, buy virtual numbers, and chat — all with AI agents.">
+  <meta name="keywords" content="PromptPay, AI payments, international calling, video calls, virtual numbers, digital wallet, fintech, AI chat, money transfer, airtime, POS agent">
   <meta name="author" content="PromptPay Inc.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.upromptpay.com/">
@@ -20,14 +20,14 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.upromptpay.com/">
   <meta property="og:title" content="PromptPay — AI Life Assistant">
-  <meta property="og:description" content="AI-powered payments, international calls, virtual numbers, SMS, and money transfers. Your all-in-one fintech platform.">
+  <meta property="og:description" content="AI-powered payments, international calls, video calls, virtual numbers, and money transfers. Your all-in-one fintech platform.">
   <meta property="og:image" content="https://www.upromptpay.com/icons/icon-512.png">
   <meta property="og:site_name" content="PromptPay">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PromptPay — AI Life Assistant">
-  <meta name="twitter:description" content="AI-powered payments, international calls, virtual numbers, SMS, and money transfers.">
+  <meta name="twitter:description" content="AI-powered payments, international calls, video calls, virtual numbers, and money transfers.">
   <meta name="twitter:image" content="https://www.upromptpay.com/icons/icon-512.png">
 
   <!-- Structured Data -->
@@ -3047,7 +3047,7 @@
         </div>
       </div>
 
-      <!-- SERVICES TAB — Virtual Numbers, SIMs, SMS, AI -->
+      <!-- SERVICES TAB — Virtual Numbers, SIMs, AI -->
       <div id="calls-tab-services" style="display:none">
 
         <!-- Telnyx Account Balance -->
@@ -3079,15 +3079,6 @@
             </div>
             <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">eSIM / SIM</div>
             <div style="font-size:11px;color:var(--text3)">IoT & travel SIMs</div>
-          </div>
-
-          <!-- SMS Card -->
-          <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.2s" onclick="showServicePanel('sms')">
-            <div style="width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">SMS / MMS</div>
-            <div style="font-size:11px;color:var(--text3)">Send global texts</div>
           </div>
 
           <!-- AI Chat Card -->
@@ -3443,7 +3434,7 @@
         <div class="section-title">Developer Portal</div>
       </div>
       <p style="color:var(--text2);font-size:13px;margin:0 0 20px;line-height:1.5">
-        Build apps with PromptPay — AI, payments, airtime, SMS, and calls. Get your API keys and start integrating.
+        Build apps with PromptPay — AI, payments, airtime, and calls. Get your API keys and start integrating.
       </p>
 
       <!-- Quick Start -->
@@ -3551,7 +3542,6 @@
               <option value="/api/v1/numbers/search">GET /api/v1/numbers/search</option>
               <option value="/api/v1/chat">POST /api/v1/chat</option>
               <option value="/api/v1/airtime/send">POST /api/v1/airtime/send</option>
-              <option value="/api/v1/sms/send">POST /api/v1/sms/send</option>
             </select>
           </div>
           <div id="playground-key-select" style="margin-bottom:10px">
@@ -3940,7 +3930,7 @@
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px">
       <button onclick="shareInvite('whatsapp')" style="flex:1;padding:12px;border-radius:12px;border:none;background:#25D366;color:white;font-weight:600;font-size:13px;cursor:pointer">WhatsApp</button>
-      <button onclick="shareInvite('sms')" style="flex:1;padding:12px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:600;font-size:13px;cursor:pointer">SMS</button>
+      <button onclick="shareInvite('sms')" style="flex:1;padding:12px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:600;font-size:13px;cursor:pointer">Text</button>
       <button onclick="shareInvite('share')" style="flex:1;padding:12px;border-radius:12px;border:none;background:#8b5cf6;color:white;font-weight:600;font-size:13px;cursor:pointer">Share</button>
     </div>
     <button onclick="pickContactsToInvite()" style="width:100%;padding:14px;border-radius:12px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.04);color:var(--text);font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
@@ -5638,8 +5628,8 @@ function detectTaskType(text) {
   // Agentic agents checked FIRST
   // Shopping (Aria)
   if (t.includes('shop') || t.includes('grocery') || t.includes('shopping list') || t.includes('buy ') || t.includes('order') || t.includes('reorder') || t.includes('price compare')) return 'shopping_list_create';
-  // Calls & SMS
-  if (t.includes('call') || t.includes('dial') || t.includes('phone') || t.includes('sms') || t.includes('text') || t.includes('number') || t.includes('sim')) return 'calls_sms';
+  // Calls & Video
+  if (t.includes('call') || t.includes('dial') || t.includes('phone') || t.includes('video') || t.includes('number') || t.includes('sim')) return 'calls';
   // Assistant (Otto)
   if (t.includes('subscription') || t.includes('negotiate') || t.includes('appointment') || t.includes('document') || t.includes('price alert') || t.includes('return') || t.includes('deal') || t.includes('auto pay')) return 'assistant_subscriptions';
   // Payment infrastructure
@@ -5661,14 +5651,14 @@ function getSmartFallback(text) {
   const responses = {
     // Agentic agents
     shopping_list_create: "I'll help with shopping. Want me to create a list, compare prices, or track an order?",
-    calls_sms: "I can help with calls and messaging! Go to the Calls tab to dial international numbers, buy virtual numbers, send SMS, or chat with AI. What do you need?",
+    calls: "I can help with calls! Go to the Calls tab to dial, video call, or buy virtual numbers.",
     assistant_subscriptions: "I'll manage that for you. I can list subscriptions, set alerts, or schedule appointments.",
     wallet_transfer: "Got it. Who are you sending to and how much?",
     bill_pay: "I'll handle that bill. What's the bill type and amount?",
     tx_history: `Your balance is ${document.getElementById('balance-display')?.textContent || '$0.00'}. Need transaction details?`,
     payment_initiate: "On it. What would you like to pay for?",
     payment_method_manage: "You can manage your cards in the Wallet tab. Need help with something specific?",
-    custom: "I can help you shop, make calls, send SMS, manage subscriptions, send money, pay bills, and more. What do you need?"
+    custom: "I can help you make calls, manage subscriptions, send money, pay bills, and more. What do you need?"
   };
   return responses[type] || responses.custom;
 }
@@ -8147,7 +8137,7 @@ async function pickContactsToInvite() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// TELNYX SERVICES — Virtual Numbers, SIMs, SMS, AI
+// TELNYX SERVICES — Virtual Numbers, SIMs, AI
 // ══════════════════════════════════════════════════════════════
 
 let currentServicePanel = '';
@@ -8187,7 +8177,7 @@ function showServicePanel(panel) {
           <div style="font-size:16px;font-weight:700;color:var(--text)">Virtual Numbers</div>
           <button onclick="showServicePanel('')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;font-family:inherit">&times;</button>
         </div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Buy a phone number in any country for calling, SMS, and verification.</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Buy a phone number in any country for calling and verification.</div>
 
         <!-- My Numbers -->
         <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">My Numbers</div>
@@ -8224,52 +8214,35 @@ function showServicePanel(panel) {
           <button onclick="showServicePanel('')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;font-family:inherit">&times;</button>
         </div>
 
-        <!-- Coming Soon Banner -->
-        <div style="text-align:center;padding:40px 20px;background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(217,119,6,0.04));border:1px dashed rgba(245,158,11,0.3);border-radius:16px;margin-bottom:16px">
-          <div style="font-size:48px;margin-bottom:12px">&#128225;</div>
-          <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px">Coming Soon</div>
-          <div style="font-size:13px;color:var(--text3);max-width:280px;margin:0 auto;line-height:1.6">eSIM and physical SIM card ordering is being activated. You'll be able to order instant eSIMs for IoT, travel, and secondary lines.</div>
-          <div style="margin-top:16px;padding:8px 16px;display:inline-block;border-radius:20px;background:rgba(245,158,11,0.1);color:#f59e0b;font-size:12px;font-weight:600">We'll notify you when it's ready</div>
+        <!-- Order Form -->
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Order eSIM or physical SIM cards for IoT, travel, and secondary lines.</div>
+        <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:16px;margin-bottom:16px">
+          <div style="margin-bottom:10px">
+            <label style="font-size:12px;color:var(--text2);margin-bottom:4px;display:block">SIM Type</label>
+            <select id="sim-order-type" style="width:100%;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px;box-sizing:border-box">
+              <option value="esim">eSIM (instant activation)</option>
+              <option value="physical">Physical SIM (shipped)</option>
+            </select>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:12px;color:var(--text2);margin-bottom:4px;display:block">Quantity</label>
+            <select id="sim-order-qty" style="width:100%;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px;box-sizing:border-box">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="5">5</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <button onclick="orderSim()" style="width:100%;padding:12px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;cursor:pointer;font-weight:700;font-size:14px;font-family:inherit">Order SIM</button>
         </div>
 
-        <!-- My Orders (if any from before) -->
+        <!-- My Orders -->
         <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">My Orders</div>
         <div id="sim-orders-list">
           <div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Loading...</div>
         </div>
       </div>`;
     loadSimOrders();
-
-  } else if (panel === 'sms') {
-    container.innerHTML = `
-      <div style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-size:16px;font-weight:700;color:var(--text)">SMS / MMS</div>
-          <button onclick="showServicePanel('')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;font-family:inherit">&times;</button>
-        </div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:16px">Send SMS/MMS globally using your virtual numbers. $0.05 per message.</div>
-
-        <!-- Compose SMS -->
-        <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;padding:16px;margin-bottom:16px">
-          <input type="text" id="sms-to" placeholder="To: +1234567890 (E.164)" style="width:100%;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px;margin-bottom:8px;box-sizing:border-box">
-          <textarea id="sms-body" placeholder="Type your message..." rows="3" style="width:100%;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px;resize:none;margin-bottom:8px;box-sizing:border-box"></textarea>
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-size:11px;color:var(--text3)" id="sms-char-count">0/160</div>
-            <button onclick="sendSmsMessage()" style="padding:10px 24px;border-radius:10px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit">Send SMS</button>
-          </div>
-        </div>
-
-        <!-- SMS History -->
-        <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px">Recent Messages</div>
-        <div id="sms-history-list">
-          <div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Loading...</div>
-        </div>
-      </div>`;
-    loadSmsHistory();
-    // Character counter
-    document.getElementById('sms-body')?.addEventListener('input', function() {
-      document.getElementById('sms-char-count').textContent = this.value.length + '/160';
-    });
 
   } else if (panel === 'telnyxai') {
     container.innerHTML = `
@@ -8285,7 +8258,7 @@ function showServicePanel(panel) {
           <button onclick="aiQuickAction('Translate this to French: Hello, how are you?')" style="padding:6px 12px;border-radius:20px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);color:var(--accent2);font-size:11px;cursor:pointer;font-family:inherit">Translate</button>
           <button onclick="aiQuickAction('Summarize: international calling rates in Africa')" style="padding:6px 12px;border-radius:20px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);color:#3b82f6;font-size:11px;cursor:pointer;font-family:inherit">Summarize</button>
           <button onclick="aiQuickAction('What is the cheapest way to call Nigeria from the US?')" style="padding:6px 12px;border-radius:20px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);color:#10b981;font-size:11px;cursor:pointer;font-family:inherit">Call Advice</button>
-          <button onclick="aiQuickAction('Write a business SMS template for airtime POS agents')" style="padding:6px 12px;border-radius:20px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);color:#f59e0b;font-size:11px;cursor:pointer;font-family:inherit">SMS Template</button>
+          <button onclick="aiQuickAction('What are the best budgeting strategies for saving money?')" style="padding:6px 12px;border-radius:20px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);color:#f59e0b;font-size:11px;cursor:pointer;font-family:inherit">Budget Tips</button>
         </div>
 
         <!-- Chat Area -->
@@ -8436,65 +8409,6 @@ async function orderSim() {
     }
   } catch (e) {
     showToast('Network error');
-  }
-}
-
-// ── SMS ──
-async function loadSmsHistory() {
-  const container = document.getElementById('sms-history-list');
-  if (!container) return;
-  try {
-    const res = await authFetch(API_BASE + '/api/sms/history');
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    const messages = data.messages || [];
-    if (messages.length === 0) {
-      container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">No messages yet. Send your first SMS above.</div>';
-      return;
-    }
-    container.innerHTML = messages.map(m => `
-      <div style="padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;margin-bottom:6px">
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-          <div style="font-size:12px;font-weight:600;color:var(--text)">${m.direction === 'outbound' ? 'To: ' + m.to_number : 'From: ' + m.from_number}</div>
-          <div style="font-size:10px;color:var(--text3)">${new Date(m.created_at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>
-        </div>
-        <div style="font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.body)}</div>
-      </div>
-    `).join('');
-  } catch (e) {
-    container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px">Failed to load</div>';
-  }
-}
-
-async function sendSmsMessage() {
-  const to = document.getElementById('sms-to').value.trim();
-  const text = document.getElementById('sms-body').value.trim();
-  if (!to || !text) { showToast('Enter recipient and message', 'error'); return; }
-  if (!to.startsWith('+')) { showToast('Number must start with + (E.164 format, e.g. +1234567890)', 'error'); return; }
-  if (!confirm('Send SMS to ' + to + '?\nCost: $0.05 from your wallet balance.')) return;
-
-  const sendBtn = event?.target;
-  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = 'Sending...'; }
-  try {
-    const res = await authFetch(API_BASE + '/api/sms/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to, text })
-    });
-    const data = await res.json();
-    if (data.success) {
-      showToast('SMS sent to ' + to, 'success');
-      document.getElementById('sms-to').value = '';
-      document.getElementById('sms-body').value = '';
-      document.getElementById('sms-char-count').textContent = '0/160';
-      loadSmsHistory();
-    } else {
-      showToast(data.error || 'Send failed', 'error');
-    }
-  } catch (e) {
-    showToast('Network error — please try again', 'error');
-  } finally {
-    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Send SMS'; }
   }
 }
 
@@ -8704,7 +8618,6 @@ function loadDevDocs() {
     { method: 'GET', path: '/api/v1/wallet/balance', desc: 'Check wallet balance' },
     { method: 'GET', path: '/api/v1/wallet/transactions', desc: 'List wallet transactions' },
     { method: 'POST', path: '/api/v1/airtime/send', desc: 'Send airtime to any phone' },
-    { method: 'POST', path: '/api/v1/sms/send', desc: 'Send SMS messages' },
     { method: 'GET', path: '/api/v1/calls/rates', desc: 'Get international call rates' },
     { method: 'GET', path: '/api/v1/numbers', desc: 'List your virtual numbers' },
     { method: 'GET', path: '/api/v1/numbers/search', desc: 'Search available numbers' },
@@ -8872,7 +8785,7 @@ function updatePlaygroundBody() {
   const endpoint = document.getElementById('playground-endpoint').value;
   const methodEl = document.getElementById('playground-method');
   const bodyEl = document.getElementById('playground-body');
-  const isPost = endpoint.startsWith('/api/v1/chat') || endpoint.startsWith('/api/v1/airtime') || endpoint.startsWith('/api/v1/sms') || endpoint.startsWith('/api/v1/task');
+  const isPost = endpoint.startsWith('/api/v1/chat') || endpoint.startsWith('/api/v1/airtime') || endpoint.startsWith('/api/v1/task');
 
   methodEl.value = isPost ? 'POST' : 'GET';
   bodyEl.style.display = isPost ? 'block' : 'none';
@@ -8881,7 +8794,6 @@ function updatePlaygroundBody() {
     '/api/v1/chat': '{\n  "messages": [{"role": "user", "content": "Hello, what can you help me with?"}]\n}',
     '/api/v1/task': '{\n  "title": "Check my wallet balance"\n}',
     '/api/v1/airtime/send': '{\n  "phone": "+2348012345678",\n  "amount": 100,\n  "country": "NG"\n}',
-    '/api/v1/sms/send': '{\n  "to": "+2348012345678",\n  "body": "Hello from PromptPay API!"\n}',
   };
   bodyEl.value = bodies[endpoint] || '';
 }

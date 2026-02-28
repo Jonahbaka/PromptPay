@@ -18,7 +18,7 @@ import { detectOperator, sendTopup, getOperatorById, getDataBundles, sendDataTop
 import {
   initiateCall, getCallRate, searchNumbers, orderNumber, listOwnedNumbers,
   releaseNumber, orderSimCards, listSimCards, activateSimCard, getSimCard,
-  sendSms, aiInference, aiTranslate, getTelnyxBalance,
+  aiInference, aiTranslate, getTelnyxBalance,
 } from '../providers/telnyx.js';
 
 export interface UserRouteDependencies {
@@ -2280,14 +2280,30 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
 
   // ── SIM Cards / eSIMs ──
 
-  /** Order eSIM or physical SIM — currently requires Telnyx account upgrade */
-  router.post('/api/sims/order', authenticate, async (_req: Request, res: Response) => {
-    // Telnyx requires an upgraded account for SIM ordering.
-    // This will be enabled once the Telnyx account is upgraded from free tier.
-    res.status(400).json({
-      error: 'eSIM/SIM ordering is coming soon. This feature requires a Telnyx account upgrade which is in progress. Check back shortly!',
-      status: 'coming_soon',
-    });
+  /** Order eSIM or physical SIM */
+  router.post('/api/sims/order', authenticate, async (req: Request, res: Response) => {
+    try {
+      const { simType, quantity } = req.body;
+      const qty = Math.min(Math.max(parseInt(quantity) || 1, 1), 10);
+      const type = simType === 'physical' ? 'physical' : 'esim';
+
+      const result = await orderSimCards({ quantity: qty, simType: type });
+      if (!result.success) {
+        res.status(400).json({ error: result.error || 'SIM order failed. Please try again or contact support.' });
+        return;
+      }
+
+      // Record order in database
+      const id = crypto.randomUUID();
+      db.prepare(`
+        INSERT INTO sim_card_orders (id, user_id, telnyx_order_id, sim_type, quantity, status, created_at)
+        VALUES (?, ?, ?, ?, ?, 'pending', datetime('now'))
+      `).run(id, req.auth!.userId, result.orderId, type, qty);
+
+      res.json({ success: true, orderId: id, telnyxOrderId: result.orderId });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to place SIM order. Please try again.' });
+    }
   });
 
   /** List my SIM orders */
@@ -2328,69 +2344,7 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
     }
   });
 
-  // ── SMS / MMS Messaging ──
-
-  /** Send SMS */
-  router.post('/api/sms/send', authenticate, async (req: Request, res: Response) => {
-    try {
-      const { to, from, text, mediaUrls } = req.body;
-      if (!to || !text) { res.status(400).json({ error: 'Enter a recipient phone number and message text' }); return; }
-      if (!to.startsWith('+')) { res.status(400).json({ error: 'Phone number must be in international format (+1234567890)' }); return; }
-
-      // Check user has a virtual number
-      let fromNumber = from;
-      if (!fromNumber) {
-        const myNumber = db.prepare(`
-          SELECT phone_number FROM virtual_numbers WHERE user_id = ? AND status = 'active' LIMIT 1
-        `).get(req.auth!.userId) as Record<string, unknown> | undefined;
-        fromNumber = myNumber?.phone_number as string;
-        if (!fromNumber) {
-          res.status(400).json({ error: 'You need a virtual number to send SMS. Go to Services → Virtual Numbers to buy one (costs $2).' });
-          return;
-        }
-      }
-
-      // Charge wallet $0.05 per SMS (platform markup over Telnyx ~$0.004 cost)
-      const smsFeeUsd = 0.05;
-      const wallet = db.prepare(`SELECT balance FROM wallet WHERE user_id = ?`).get(req.auth!.userId) as Record<string, unknown> | undefined;
-      const balance = parseFloat(String(wallet?.balance || '0'));
-      if (balance < smsFeeUsd) {
-        res.status(400).json({
-          error: `Insufficient wallet balance. SMS costs $${smsFeeUsd.toFixed(2)} each. Your balance: $${balance.toFixed(2)}. Fund your wallet first.`,
-          required: smsFeeUsd,
-          balance,
-        });
-        return;
-      }
-
-      const result = await sendSms({ to, from: fromNumber, text, mediaUrls });
-      if (!result.success) { res.status(400).json({ error: result.error || 'SMS delivery failed. Check the recipient number.' }); return; }
-
-      // Debit wallet
-      db.prepare(`UPDATE wallet SET balance = balance - ? WHERE user_id = ?`).run(smsFeeUsd, req.auth!.userId);
-      db.prepare(`INSERT INTO wallet_transactions (id, user_id, type, amount, description, created_at) VALUES (?, ?, 'debit', ?, ?, datetime('now'))`)
-        .run(crypto.randomUUID(), req.auth!.userId, smsFeeUsd, `SMS to ${to}`);
-
-      // Record message
-      const id = crypto.randomUUID();
-      db.prepare(`
-        INSERT INTO sms_messages (id, user_id, telnyx_message_id, direction, from_number, to_number, body, media_urls, status, cost_usd, created_at)
-        VALUES (?, ?, ?, 'outbound', ?, ?, ?, ?, 'sent', ?, datetime('now'))
-      `).run(id, req.auth!.userId, result.messageId, fromNumber, to, text, JSON.stringify(mediaUrls || []), smsFeeUsd);
-
-      res.json({ success: true, messageId: id, telnyxId: result.messageId, charged: smsFeeUsd });
-    } catch (e) {
-      res.status(500).json({ error: 'Failed to send SMS. Please try again.' });
-    }
-  });
-
-  /** List sent/received SMS */
-  router.get('/api/sms/history', authenticate, (req: Request, res: Response) => {
-    const messages = db.prepare(`
-      SELECT * FROM sms_messages WHERE user_id = ? ORDER BY created_at DESC LIMIT 50
-    `).all(req.auth!.userId);
-    res.json({ messages });
-  });
+  // SMS/MMS routes removed — not part of our service offering
 
   // ── Telnyx AI (Free LLM Inference) ──
 

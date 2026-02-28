@@ -15,8 +15,8 @@ export function detectTaskType(text: string): string {
   // Agentic agents checked FIRST
   // Shopping (Aria)
   if (t.includes('shop') || t.includes('grocery') || t.includes('shopping list') || t.includes('buy ') || t.includes('order') || t.includes('reorder') || t.includes('price compare')) return 'shopping_list_create';
-  // Calls & SMS
-  if (t.includes('call') || t.includes('dial') || t.includes('phone') || t.includes('sms') || t.includes('text') || t.includes('number') || t.includes('sim')) return 'calls_sms';
+  // Calls & Video
+  if (t.includes('call') || t.includes('dial') || t.includes('phone') || t.includes('video') || t.includes('number') || t.includes('sim')) return 'calls';
   // Assistant (Otto)
   if (t.includes('subscription') || t.includes('negotiate') || t.includes('appointment') || t.includes('document') || t.includes('price alert') || t.includes('return') || t.includes('deal') || t.includes('auto pay')) return 'assistant_subscriptions';
   // Payment infrastructure
@@ -31,14 +31,14 @@ export function detectTaskType(text: string): string {
 
 const FALLBACK_RESPONSES: Record<string, string> = {
   shopping_list_create: "I'll help with shopping. Want me to create a list, compare prices, or track an order?",
-  calls_sms: "I can help with calls! Go to the Calls tab to dial international numbers or buy virtual numbers.",
+  calls: "I can help with calls! Go to the Calls tab to dial, video call, or buy virtual numbers.",
   assistant_subscriptions: "I'll manage that for you. I can list subscriptions, set alerts, or schedule appointments.",
   wallet_transfer: "Got it. Who are you sending to and how much?",
   bill_pay: "I'll handle that bill. What's the bill type and amount?",
   tx_history: "I can pull up your balance and transaction history. Check the Wallet tab for details, or ask me a specific question.",
   payment_initiate: "On it. What would you like to pay for?",
   payment_method_manage: "You can manage your cards in the Wallet tab. Need help with something specific?",
-  custom: "I can help you shop, make calls, manage subscriptions, send money, pay bills, and more. What do you need?",
+  custom: "I can help you make calls, manage subscriptions, send money, pay bills, and more. What do you need?",
 };
 
 export function getServerFallback(text: string): FallbackResponse {
