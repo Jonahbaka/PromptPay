@@ -30,11 +30,13 @@ export function createToken(
   role: UserRole,
   secret: string,
   expiryMs: number = TOKEN_EXPIRY_MS,
+  permissions: string[] = [],
 ): string {
   const payload: AuthPayload = {
     userId,
     tenantId,
     role,
+    permissions,
     exp: Date.now() + expiryMs,
   };
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString('base64url');

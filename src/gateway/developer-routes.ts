@@ -12,6 +12,7 @@ import { CONFIG } from '../core/config.js';
 import type { MemoryStore } from '../memory/store.js';
 import type { Orchestrator } from '../core/orchestrator.js';
 import type { LoggerHandle } from '../core/types.js';
+import { getServerFallback } from '../chat/fallback.js';
 
 export interface DeveloperRouteDependencies {
   memory: MemoryStore;
@@ -379,8 +380,20 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
         res.status(401).json({ error: 'Invalid AI API key' });
         logApiRequest(req, 401, start, message);
       } else {
-        res.status(500).json({ error: message });
-        logApiRequest(req, 500, start, message);
+        // Return context-aware fallback instead of 500
+        const inputMsgs = req.body?.messages;
+        const lastMsg = Array.isArray(inputMsgs) && inputMsgs.length > 0 ? String(inputMsgs[inputMsgs.length - 1]?.content || '') : '';
+        const fallback = getServerFallback(lastMsg);
+        res.json({
+          id: 'fallback',
+          model: 'fallback',
+          content: [{ type: 'text', text: fallback.reply }],
+          usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
+          stop_reason: 'fallback',
+          fallback: true,
+          taskType: fallback.taskType,
+        });
+        logApiRequest(req, 200, start, `fallback: ${message}`);
       }
     }
   });
@@ -405,12 +418,23 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
       );
       const result = await deps.orchestrator.executeTask(task);
 
+      // If task failed or produced no output, return context-aware fallback
+      if (!result.success || !result.output) {
+        const fallback = getServerFallback(description || title);
+        res.json({ taskId: task.id, result: { ...result, output: fallback.reply, fallback: true, taskType: fallback.taskType } });
+        logApiRequest(req, 200, start, 'fallback');
+        return;
+      }
+
       res.json({ taskId: task.id, result });
       logApiRequest(req, 200, start);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      res.status(500).json({ error: message });
-      logApiRequest(req, 500, start, message);
+      // Never return 500 to user — use context-aware fallback
+      const inputText = String(req.body?.description || req.body?.title || '');
+      const fallback = getServerFallback(inputText);
+      res.json({ result: { success: false, output: fallback.reply, fallback: true, taskType: fallback.taskType, error: message } });
+      logApiRequest(req, 200, start, `fallback: ${message}`);
     }
   });
 

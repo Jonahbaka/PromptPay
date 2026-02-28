@@ -10,6 +10,7 @@ import { authenticate } from '../auth/middleware.js';
 import { CONFIG } from '../core/config.js';
 import type { MemoryStore } from '../memory/store.js';
 import type { LoggerHandle, CommunicationChannel } from '../core/types.js';
+import { resolveUserPermissions } from '../auth/permissions.js';
 import type { EmailChannel } from '../channels/email.js';
 import type { PushChannel } from '../channels/push.js';
 // ensureStripeCustomer moved inline as getOrCreateStripeCustomer to prevent duplicate customer creation
@@ -67,7 +68,8 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
         VALUES (?, 'anthropic', '', ?)
       `).run(id, now);
 
-      const token = createToken(id, null, 'user', CONFIG.auth.jwtSecret, CONFIG.auth.tokenExpiryMs);
+      const permissions = resolveUserPermissions(db, id);
+      const token = createToken(id, null, 'user', CONFIG.auth.jwtSecret, CONFIG.auth.tokenExpiryMs, permissions);
 
       deps.logger.info(`User registered: ${email}`, { userId: id });
 
@@ -124,12 +126,14 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?')
         .run(new Date().toISOString(), user.id);
 
+      const permissions = resolveUserPermissions(db, user.id);
       const token = createToken(
         user.id,
         user.tenant_id,
         user.role as 'owner' | 'partner_admin' | 'user',
         CONFIG.auth.jwtSecret,
         CONFIG.auth.tokenExpiryMs,
+        permissions,
       );
 
       deps.logger.info(`User logged in: ${email}`, { role: user.role });

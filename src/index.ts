@@ -57,6 +57,7 @@ async function main(): Promise<void> {
   memory.seedAchievements();
   memory.seedDefaultCashbackRules();
   memory.seedOwnerAccount(hashPassword);
+  memory.seedRoles();
 
   // ── 2. Audit Trail ──
   const auditTrail = new AuditTrail(db, logger);

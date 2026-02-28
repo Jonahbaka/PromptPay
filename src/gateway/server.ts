@@ -15,6 +15,7 @@ import type { Orchestrator } from '../core/orchestrator.js';
 import { TaskSchema } from '../core/types.js';
 import { authenticate } from '../auth/middleware.js';
 import type { MemoryStore } from '../memory/store.js';
+import { getServerFallback } from '../chat/fallback.js';
 
 export interface GatewayDependencies {
   orchestrator: Orchestrator;
@@ -386,6 +387,14 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
       const task = deps.orchestrator.createTask(type, priority, title, description || '', taskPayload);
       const result = await deps.orchestrator.executeTask(task);
 
+      // If task failed or produced no output, return context-aware fallback
+      if (!result.success || !result.output) {
+        const fallback = getServerFallback(description || title);
+        broadcastWs(wss, { type: 'task:result', taskId: task.id, result: { ...result, output: fallback.reply, fallback: true } });
+        res.json({ taskId: task.id, result: { ...result, output: fallback.reply, fallback: true, taskType: fallback.taskType } });
+        return;
+      }
+
       // Broadcast via WebSocket
       broadcastWs(wss, { type: 'task:result', taskId: task.id, result });
 
@@ -393,7 +402,10 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       deps.logger.error(`Task execution error: ${message}`);
-      res.status(500).json({ error: message });
+      // Never return 500 to user — use context-aware fallback
+      const inputText = String(req.body?.description || req.body?.title || '');
+      const fallback = getServerFallback(inputText);
+      res.json({ result: { success: false, output: fallback.reply, fallback: true, taskType: fallback.taskType, error: message } });
     }
   });
 

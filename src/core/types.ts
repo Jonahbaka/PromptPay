@@ -738,7 +738,7 @@ export interface GovernancePolicy {
 
 // ── Access Control & Multi-Tenancy ──────────────────────────
 
-export type UserRole = 'owner' | 'partner_admin' | 'user';
+export type UserRole = 'owner' | 'partner_admin' | 'user' | (string & {});
 export type TenantStatus = 'pending' | 'active' | 'suspended' | 'deactivated';
 
 export type CommunicationChannel =
@@ -791,7 +791,20 @@ export interface AuthPayload {
   userId: string;
   tenantId: string | null;
   role: UserRole;
+  permissions: string[];
   exp: number;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  hierarchyLevel: number;
+  isSystem: boolean;
+  tenantId: string | null;
+  permissions: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ── Zod Schemas ─────────────────────────────────────────────

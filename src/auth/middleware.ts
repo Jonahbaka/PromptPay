@@ -7,6 +7,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { verifyToken } from './tokens.js';
 import { CONFIG } from '../core/config.js';
 import type { AuthPayload, UserRole } from '../core/types.js';
+import { hasAnyPermission } from './permissions.js';
 
 // Extend Express Request to carry auth payload
 declare global {
@@ -30,7 +31,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
 
   if (!raw) {
     if (CONFIG.gateway.secret === 'promptpay-local') {
-      req.auth = { userId: 'system', tenantId: null, role: 'owner', exp: Infinity };
+      req.auth = { userId: 'system', tenantId: null, role: 'owner', permissions: ['*'], exp: Infinity };
       next();
       return;
     }
@@ -40,7 +41,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
 
   // Legacy gateway secret → owner access
   if (raw === CONFIG.gateway.secret) {
-    req.auth = { userId: 'system', tenantId: null, role: 'owner', exp: Infinity };
+    req.auth = { userId: 'system', tenantId: null, role: 'owner', permissions: ['*'], exp: Infinity };
     next();
     return;
   }
@@ -66,6 +67,30 @@ export function requireRole(...roles: UserRole[]) {
       return;
     }
     if (!roles.includes(req.auth.role)) {
+      res.status(403).json({ error: 'Insufficient permissions' });
+      return;
+    }
+    next();
+  };
+}
+
+/**
+ * Require specific permission(s). Must be used after authenticate().
+ * Owner always passes. Checks permissions from token payload.
+ */
+export function requirePermission(...permissions: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.auth) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+    // Owner always passes
+    if (req.auth.role === 'owner') {
+      next();
+      return;
+    }
+    const userPerms = req.auth.permissions || [];
+    if (!hasAnyPermission(userPerms, permissions)) {
       res.status(403).json({ error: 'Insufficient permissions' });
       return;
     }

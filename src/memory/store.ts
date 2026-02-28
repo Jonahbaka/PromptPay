@@ -447,6 +447,41 @@ export class MemoryStore extends EventEmitter {
       CREATE INDEX IF NOT EXISTS idx_user_tenant ON users(tenant_id);
       CREATE INDEX IF NOT EXISTS idx_user_role ON users(role);
 
+      -- ═══ RBAC: ROLES ═══
+      CREATE TABLE IF NOT EXISTS roles (
+        id TEXT PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL,
+        description TEXT DEFAULT '',
+        hierarchy_level INTEGER NOT NULL DEFAULT 10,
+        is_system INTEGER NOT NULL DEFAULT 0,
+        tenant_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_roles_name ON roles(name);
+
+      -- ═══ RBAC: ROLE PERMISSIONS ═══
+      CREATE TABLE IF NOT EXISTS role_permissions (
+        role_id TEXT NOT NULL,
+        permission TEXT NOT NULL,
+        PRIMARY KEY (role_id, permission),
+        FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_role_perms_role ON role_permissions(role_id);
+
+      -- ═══ RBAC: USER ROLES ═══
+      CREATE TABLE IF NOT EXISTS user_roles (
+        user_id TEXT NOT NULL,
+        role_id TEXT NOT NULL,
+        granted_by TEXT,
+        granted_at TEXT NOT NULL,
+        PRIMARY KEY (user_id, role_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_roles_user ON user_roles(user_id);
+      CREATE INDEX IF NOT EXISTS idx_user_roles_role ON user_roles(role_id);
+
       -- ═══ USER SETTINGS ═══
       CREATE TABLE IF NOT EXISTS user_settings (
         user_id TEXT PRIMARY KEY,
@@ -1229,6 +1264,68 @@ export class MemoryStore extends EventEmitter {
     `).run(id, now);
 
     this.logger.info(`Seeded owner account: ${email}`);
+  }
+
+  seedRoles(): void {
+    const now = new Date().toISOString();
+
+    // Seed system roles (idempotent)
+    const systemRoles = [
+      { id: 'role_owner', name: 'owner', description: 'Platform owner — full access', level: 100 },
+      { id: 'role_partner_admin', name: 'partner_admin', description: 'Partner administrator', level: 50 },
+      { id: 'role_user', name: 'user', description: 'Standard user', level: 10 },
+    ];
+
+    const insertRole = this.db.prepare(`
+      INSERT OR IGNORE INTO roles (id, name, description, hierarchy_level, is_system, tenant_id, created_at, updated_at)
+      VALUES (?, ?, ?, ?, 1, NULL, ?, ?)
+    `);
+    for (const r of systemRoles) {
+      insertRole.run(r.id, r.name, r.description, r.level, now, now);
+    }
+
+    // Seed role permissions (idempotent)
+    const insertPerm = this.db.prepare('INSERT OR IGNORE INTO role_permissions (role_id, permission) VALUES (?, ?)');
+
+    // Owner gets wildcard
+    insertPerm.run('role_owner', '*');
+
+    // Partner admin gets admin view permissions
+    const partnerPerms = [
+      'admin.dashboard.view', 'admin.users.view', 'admin.agents.view', 'admin.tasks.view',
+      'admin.audit.view', 'admin.health.view', 'admin.hooks.view', 'admin.providers.view',
+      'admin.revenue.view', 'admin.tools.view',
+      'chat.send', 'wallet.view', 'wallet.transfer', 'wallet.topup', 'wallet.withdraw',
+      'payments.execute', 'payments.view', 'profile.view', 'profile.edit',
+      'shopping.use', 'assistant.use', 'partner.manage',
+    ];
+    for (const p of partnerPerms) { insertPerm.run('role_partner_admin', p); }
+
+    // Standard user permissions
+    const userPerms = [
+      'chat.send', 'wallet.view', 'wallet.transfer', 'wallet.topup', 'wallet.withdraw',
+      'payments.execute', 'payments.view', 'profile.view', 'profile.edit',
+      'shopping.use', 'assistant.use',
+    ];
+    for (const p of userPerms) { insertPerm.run('role_user', p); }
+
+    // Backfill: assign roles to existing users who don't have user_roles entries
+    const usersWithoutRoles = this.db.prepare(`
+      SELECT u.id, u.role FROM users u
+      WHERE NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = u.id)
+    `).all() as Array<{ id: string; role: string }>;
+
+    const insertUserRole = this.db.prepare('INSERT OR IGNORE INTO user_roles (user_id, role_id, granted_by, granted_at) VALUES (?, ?, ?, ?)');
+    for (const u of usersWithoutRoles) {
+      const roleId = `role_${u.role}`;
+      insertUserRole.run(u.id, roleId, 'system', now);
+    }
+
+    if (usersWithoutRoles.length > 0) {
+      this.logger.info(`Backfilled ${usersWithoutRoles.length} users into user_roles`);
+    }
+
+    this.logger.info('Seeded RBAC roles and permissions');
   }
 
   close(): void {

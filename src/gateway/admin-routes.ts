@@ -12,10 +12,12 @@ import type { HookEngine } from '../hooks/engine.js';
 import type { FeeEngine } from '../hooks/fees.js';
 import type { DaemonLoop } from '../daemon/loop.js';
 import type { MemoryStore } from '../memory/store.js';
-import { authenticate, requireRole, getTenantFilter } from '../auth/middleware.js';
+import { authenticate, requireRole, requirePermission, getTenantFilter } from '../auth/middleware.js';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { CONFIG } from '../core/config.js';
+import { PERMISSIONS, resolveUserPermissions } from '../auth/permissions.js';
+import { v4 as uuid } from 'uuid';
 
 const EXECUTIVE_PERSONAS: Record<string, string> = {
   ceo: 'CEO',
@@ -833,6 +835,270 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
     res.json({ success: true, platformFeePct: platformFeePct ?? null });
   });
 
-  deps.logger.info('Admin portal: 29 routes registered');
+  // ═══════════════════════════════════════════════════════
+  // RBAC MANAGEMENT ENDPOINTS (7 routes)
+  // ═══════════════════════════════════════════════════════
+
+  // 30. GET /admin/permissions — List all known permissions from catalog
+  router.get('/admin/permissions', authenticate, requirePermission('admin.roles.manage'), (_req: Request, res: Response) => {
+    const grouped: Record<string, Array<{ key: string; description: string }>> = {};
+    for (const p of PERMISSIONS) {
+      if (!grouped[p.category]) grouped[p.category] = [];
+      grouped[p.category].push({ key: p.key, description: p.description });
+    }
+    res.json({ permissions: PERMISSIONS, grouped });
+  });
+
+  // 31. GET /admin/roles — List all roles with their permissions
+  router.get('/admin/roles', authenticate, requirePermission('admin.roles.manage'), (_req: Request, res: Response) => {
+    const roles = db.prepare('SELECT * FROM roles ORDER BY hierarchy_level DESC').all() as Array<Record<string, unknown>>;
+    const result = roles.map(role => {
+      const perms = db.prepare('SELECT permission FROM role_permissions WHERE role_id = ?').all(role.id) as Array<{ permission: string }>;
+      return {
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        hierarchyLevel: role.hierarchy_level,
+        isSystem: !!role.is_system,
+        tenantId: role.tenant_id,
+        permissions: perms.map(p => p.permission),
+        createdAt: role.created_at,
+        updatedAt: role.updated_at,
+      };
+    });
+    res.json({ roles: result });
+  });
+
+  // 32. POST /admin/roles — Create a custom role
+  router.post('/admin/roles', authenticate, requirePermission('admin.roles.manage'), (req: Request, res: Response) => {
+    try {
+      const { name, description, hierarchyLevel, permissions } = req.body as {
+        name?: string; description?: string; hierarchyLevel?: number; permissions?: string[];
+      };
+
+      if (!name || typeof hierarchyLevel !== 'number' || !Array.isArray(permissions)) {
+        res.status(400).json({ error: 'name, hierarchyLevel (number), and permissions (array) are required' });
+        return;
+      }
+
+      // Enforce: can't create role at or above your own level
+      if (req.auth!.role !== 'owner') {
+        const callerRole = db.prepare(`
+          SELECT MAX(r.hierarchy_level) as maxLevel FROM user_roles ur
+          JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = ?
+        `).get(req.auth!.userId) as { maxLevel: number } | undefined;
+        if (callerRole && hierarchyLevel >= (callerRole.maxLevel || 0)) {
+          res.status(403).json({ error: 'Cannot create a role at or above your own hierarchy level' });
+          return;
+        }
+      }
+
+      // Check duplicate name
+      const existing = db.prepare('SELECT id FROM roles WHERE name = ?').get(name);
+      if (existing) {
+        res.status(409).json({ error: 'Role name already exists' });
+        return;
+      }
+
+      const id = `role_${uuid().slice(0, 8)}`;
+      const now = new Date().toISOString();
+      db.prepare(`
+        INSERT INTO roles (id, name, description, hierarchy_level, is_system, tenant_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 0, ?, ?, ?)
+      `).run(id, name, description || '', hierarchyLevel, req.auth!.tenantId, now, now);
+
+      // Insert permissions
+      const insertPerm = db.prepare('INSERT INTO role_permissions (role_id, permission) VALUES (?, ?)');
+      for (const p of permissions) { insertPerm.run(id, p); }
+
+      deps.auditTrail.record('admin', 'role_created', req.auth!.userId, { roleId: id, name, hierarchyLevel, permissions });
+
+      res.status(201).json({ id, name, description: description || '', hierarchyLevel, permissions, isSystem: false });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`[Admin] Create role error: ${msg}`);
+      res.status(500).json({ error: 'Failed to create role' });
+    }
+  });
+
+  // 33. PUT /admin/roles/:id — Update a custom role (system roles protected)
+  router.put('/admin/roles/:id', authenticate, requirePermission('admin.roles.manage'), (req: Request, res: Response) => {
+    try {
+      const roleId = String(req.params.id);
+      const role = db.prepare('SELECT * FROM roles WHERE id = ?').get(roleId) as Record<string, unknown> | undefined;
+      if (!role) {
+        res.status(404).json({ error: 'Role not found' });
+        return;
+      }
+      if (role.is_system) {
+        res.status(403).json({ error: 'Cannot modify system roles' });
+        return;
+      }
+
+      const { name, description, hierarchyLevel, permissions } = req.body as {
+        name?: string; description?: string; hierarchyLevel?: number; permissions?: string[];
+      };
+
+      const now = new Date().toISOString();
+      db.prepare(`
+        UPDATE roles SET
+          name = COALESCE(?, name),
+          description = COALESCE(?, description),
+          hierarchy_level = COALESCE(?, hierarchy_level),
+          updated_at = ?
+        WHERE id = ?
+      `).run(name || null, description ?? null, hierarchyLevel ?? null, now, roleId);
+
+      // Update permissions if provided
+      if (Array.isArray(permissions)) {
+        db.prepare('DELETE FROM role_permissions WHERE role_id = ?').run(roleId);
+        const insertPerm = db.prepare('INSERT INTO role_permissions (role_id, permission) VALUES (?, ?)');
+        for (const p of permissions) { insertPerm.run(roleId, p); }
+      }
+
+      deps.auditTrail.record('admin', 'role_updated', req.auth!.userId, { roleId, changes: { name, description, hierarchyLevel, permissions } });
+
+      res.json({ success: true, roleId });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`[Admin] Update role error: ${msg}`);
+      res.status(500).json({ error: 'Failed to update role' });
+    }
+  });
+
+  // 34. DELETE /admin/roles/:id — Delete a custom role (fails if users assigned)
+  router.delete('/admin/roles/:id', authenticate, requirePermission('admin.roles.manage'), (req: Request, res: Response) => {
+    try {
+      const roleId = String(req.params.id);
+      const role = db.prepare('SELECT * FROM roles WHERE id = ?').get(roleId) as Record<string, unknown> | undefined;
+      if (!role) {
+        res.status(404).json({ error: 'Role not found' });
+        return;
+      }
+      if (role.is_system) {
+        res.status(403).json({ error: 'Cannot delete system roles' });
+        return;
+      }
+
+      // Check if users are assigned
+      const assigned = db.prepare('SELECT COUNT(*) as c FROM user_roles WHERE role_id = ?').get(roleId) as { c: number };
+      if (assigned.c > 0) {
+        res.status(409).json({ error: `Cannot delete role — ${assigned.c} user(s) are still assigned` });
+        return;
+      }
+
+      db.prepare('DELETE FROM role_permissions WHERE role_id = ?').run(roleId);
+      db.prepare('DELETE FROM roles WHERE id = ?').run(roleId);
+
+      deps.auditTrail.record('admin', 'role_deleted', req.auth!.userId, { roleId, name: role.name });
+
+      res.json({ success: true, deleted: roleId });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`[Admin] Delete role error: ${msg}`);
+      res.status(500).json({ error: 'Failed to delete role' });
+    }
+  });
+
+  // 35. POST /admin/users/:id/roles — Assign a role to a user
+  router.post('/admin/users/:id/roles', authenticate, requirePermission('admin.roles.manage'), (req: Request, res: Response) => {
+    try {
+      const userId = String(req.params.id);
+      const { roleId } = req.body as { roleId?: string };
+      if (!roleId) {
+        res.status(400).json({ error: 'roleId is required' });
+        return;
+      }
+
+      // Verify user exists
+      const user = db.prepare('SELECT id, role FROM users WHERE id = ?').get(userId) as { id: string; role: string } | undefined;
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Verify role exists
+      const role = db.prepare('SELECT * FROM roles WHERE id = ?').get(roleId) as Record<string, unknown> | undefined;
+      if (!role) {
+        res.status(404).json({ error: 'Role not found' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      db.prepare('INSERT OR IGNORE INTO user_roles (user_id, role_id, granted_by, granted_at) VALUES (?, ?, ?, ?)')
+        .run(userId, roleId, req.auth!.userId, now);
+
+      // Update users.role to the highest hierarchy role for backward compatibility
+      const highest = db.prepare(`
+        SELECT r.name FROM user_roles ur
+        JOIN roles r ON ur.role_id = r.id
+        WHERE ur.user_id = ?
+        ORDER BY r.hierarchy_level DESC LIMIT 1
+      `).get(userId) as { name: string } | undefined;
+
+      if (highest) {
+        const validRoles = ['owner', 'partner_admin', 'user'];
+        const newRole = validRoles.includes(highest.name) ? highest.name : 'user';
+        db.prepare('UPDATE users SET role = ?, updated_at = ? WHERE id = ?').run(newRole, now, userId);
+      }
+
+      deps.auditTrail.record('admin', 'role_assigned', req.auth!.userId, { userId, roleId, roleName: role.name });
+
+      res.json({ success: true, userId, roleId, permissions: resolveUserPermissions(db, userId) });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`[Admin] Assign role error: ${msg}`);
+      res.status(500).json({ error: 'Failed to assign role' });
+    }
+  });
+
+  // 36. DELETE /admin/users/:id/roles/:roleId — Revoke a role from a user
+  router.delete('/admin/users/:id/roles/:roleId', authenticate, requirePermission('admin.roles.manage'), (req: Request, res: Response) => {
+    try {
+      const userId = String(req.params.id);
+      const roleId = String(req.params.roleId);
+
+      // Check the user has this role
+      const assignment = db.prepare('SELECT * FROM user_roles WHERE user_id = ? AND role_id = ?').get(userId, roleId);
+      if (!assignment) {
+        res.status(404).json({ error: 'Role assignment not found' });
+        return;
+      }
+
+      // Can't remove last role
+      const count = db.prepare('SELECT COUNT(*) as c FROM user_roles WHERE user_id = ?').get(userId) as { c: number };
+      if (count.c <= 1) {
+        res.status(409).json({ error: 'Cannot remove last role from user' });
+        return;
+      }
+
+      db.prepare('DELETE FROM user_roles WHERE user_id = ? AND role_id = ?').run(userId, roleId);
+
+      // Update users.role to the highest remaining role for backward compatibility
+      const now = new Date().toISOString();
+      const highest = db.prepare(`
+        SELECT r.name FROM user_roles ur
+        JOIN roles r ON ur.role_id = r.id
+        WHERE ur.user_id = ?
+        ORDER BY r.hierarchy_level DESC LIMIT 1
+      `).get(userId) as { name: string } | undefined;
+
+      if (highest) {
+        const validRoles = ['owner', 'partner_admin', 'user'];
+        const newRole = validRoles.includes(highest.name) ? highest.name : 'user';
+        db.prepare('UPDATE users SET role = ?, updated_at = ? WHERE id = ?').run(newRole, now, userId);
+      }
+
+      deps.auditTrail.record('admin', 'role_revoked', req.auth!.userId, { userId, roleId });
+
+      res.json({ success: true, userId, revokedRoleId: roleId, permissions: resolveUserPermissions(db, userId) });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`[Admin] Revoke role error: ${msg}`);
+      res.status(500).json({ error: 'Failed to revoke role' });
+    }
+  });
+
+  deps.logger.info('Admin portal: 36 routes registered (29 original + 7 RBAC)');
   return router;
 }
