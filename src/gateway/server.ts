@@ -34,10 +34,11 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const publicDir = path.resolve(__dirname, '..', '..', 'public');
 
-  // Block direct access to admin.html, partner.html, careers.html
+  // Block direct access to admin.html, partner.html, careers.html, analytics.html
   app.get('/admin.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/partner.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/careers.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
+  app.get('/analytics.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
 
   // Serve admin dashboard at secret path only (no-cache to prevent stale JS)
   const secretAdminPath = `/${CONFIG.admin.secretPath}`;
@@ -45,6 +46,13 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.sendFile(path.join(publicDir, 'admin.html'));
+  });
+
+  // Serve analytics dashboard at clean URL
+  app.get('/secure/analytics', (_req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.sendFile(path.join(publicDir, 'analytics.html'));
   });
 
   // Serve partner portal
