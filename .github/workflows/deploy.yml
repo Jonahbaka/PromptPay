@@ -38,8 +38,8 @@ jobs:
         run: |
           mkdir -p ~/.ssh
 
-          # Decode base64-encoded SSH key (avoids newline issues)
-          echo "$EC2_SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
+          # Decode base64-encoded SSH key (strip whitespace before decoding)
+          echo "$EC2_SSH_KEY_B64" | tr -d ' \t\n\r' | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
           # SSH config
