@@ -186,6 +186,97 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     });
   });
 
+  // ── Public AI Chat (Homepage Agent — no auth, rate-limited by IP) ──
+  const publicChatLimiter = new Map<string, { count: number; resetAt: number }>();
+  app.post('/api/chat/public', async (req: Request, res: Response) => {
+    try {
+      const { message, sessionId } = req.body as { message?: string; sessionId?: string };
+      if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        res.status(400).json({ error: 'message is required' });
+        return;
+      }
+      if (message.length > 1000) {
+        res.status(400).json({ error: 'Message too long (max 1000 chars)' });
+        return;
+      }
+
+      // Rate limit: 30 messages per hour per IP
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      const now = Date.now();
+      const limit = publicChatLimiter.get(ip);
+      if (limit && limit.resetAt > now && limit.count >= 30) {
+        res.status(429).json({ error: 'Rate limit reached. Try again later.', retryAfterMs: limit.resetAt - now });
+        return;
+      }
+      if (!limit || limit.resetAt <= now) {
+        publicChatLimiter.set(ip, { count: 1, resetAt: now + 3600_000 });
+      } else {
+        limit.count++;
+      }
+
+      // Call Ollama Cloud directly for the homepage agent
+      const systemPrompt = `You are PromptPay, a friendly AI-powered fintech assistant on the PromptPay homepage (upromptpay.com).
+
+Your job is to welcome visitors, answer questions about PromptPay, and guide them to sign up.
+
+## What PromptPay Does
+PromptPay is an agentic fintech platform with 9 AI agents and ~93 tools:
+- **Payments**: Send money via M-Pesa, MTN MoMo, Flutterwave, Paystack, Razorpay, Stripe, Apple Pay, Google Pay
+- **Wallet**: P2P transfers, bill payments, smart split, PayTags, QR payments
+- **Shopping** (Aria): Price comparison, order tracking, smart recommendations
+- **Life Assistant** (Otto): Subscription management, bill negotiation, appointments, document storage
+- **Financial Advisor** (Sage): Budgeting, spending analysis, savings goals
+- **Trading** (Quant): Stocks, crypto, DCA, portfolio management
+- **Open Banking** (Plutus): Bank account linking (Nigeria via Mono, South Africa via Stitch)
+- **Financial Ops** (Atlas): Credit assessment, dispute automation, payment plans
+- **US Payments** (Janus): Stripe, ACH, Apple Pay, Google Pay, Wise cross-border, USDC
+
+## Coverage
+Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopia), India, and USA/Global.
+
+## Rules
+- You are PromptPay. NOT ChatGPT, NOT GPT, NOT OpenAI.
+- Be warm, concise, and helpful.
+- Encourage visitors to sign up or try the Telegram bot @promtpay_bot.
+- For specific account operations, tell them to sign up first.
+- Keep responses short (2-4 sentences) unless they ask for details.
+- Do NOT mention internal model names or infrastructure details.`;
+
+      const ollamaRes = await fetch('https://ollama.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + CONFIG.ollama.apiKey,
+        },
+        body: JSON.stringify({
+          model: CONFIG.ollama.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message.trim() },
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!ollamaRes.ok) {
+        const errText = await ollamaRes.text();
+        deps.logger.error(`Public chat Ollama error: ${ollamaRes.status} ${errText}`);
+        res.json({ reply: "I'm having a moment. Try again in a few seconds!", sessionId });
+        return;
+      }
+
+      const data = await ollamaRes.json() as { choices: Array<{ message: { content: string } }> };
+      const reply = data.choices?.[0]?.message?.content || "I'm PromptPay, your AI fintech assistant. How can I help?";
+
+      res.json({ reply, sessionId: sessionId || uuid() });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Public chat error: ${message}`);
+      res.json({ reply: "Something went wrong. Please try again!", sessionId: req.body?.sessionId });
+    }
+  });
+
   // ── Task submission (authenticated) ──
   app.post('/api/task', authenticate, async (req: Request, res: Response) => {
     try {

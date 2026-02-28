@@ -30,7 +30,7 @@ export const CONFIG = {
   ollama: {
     baseUrl: env('OLLAMA_BASE_URL', 'https://ollama.com'),
     apiKey: env('OLLAMA_API_KEY', ''),
-    model: env('OLLAMA_MODEL', 'gpt-oss:20b'),
+    model: env('OLLAMA_MODEL', 'qwen3.5:397b'),
     codeModel: env('OLLAMA_CODE_MODEL', 'qwen3-coder:480b'),
     maxTokens: parseInt(env('OLLAMA_MAX_TOKENS', '16384')),
     temperature: 0.3,
