@@ -118,13 +118,18 @@ interface OllamaChatResponse {
 }
 
 class OllamaClient {
-  constructor(private baseUrl: string) {}
+  private headers: Record<string, string>;
 
-  async chat(model: string, messages: OllamaChatMessage[], maxTokens = 4096, temperature = 0.3): Promise<OllamaChatResponse> {
+  constructor(private baseUrl: string, apiKey?: string) {
+    this.headers = { 'Content-Type': 'application/json' };
+    if (apiKey) this.headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  async chat(model: string, messages: OllamaChatMessage[], maxTokens = 16384, temperature = 0.3): Promise<OllamaChatResponse> {
     const url = `${this.baseUrl}/v1/chat/completions`;
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: this.headers,
       body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature }),
     });
     if (!res.ok) throw new Error(`Ollama error ${res.status}: ${await res.text()}`);
@@ -133,13 +138,13 @@ class OllamaClient {
 
   async isAvailable(): Promise<boolean> {
     try {
-      const res = await fetch(`${this.baseUrl}/api/tags`, { signal: AbortSignal.timeout(3000) });
+      const res = await fetch(`${this.baseUrl}/api/tags`, { headers: this.headers, signal: AbortSignal.timeout(5000) });
       return res.ok;
     } catch { return false; }
   }
 
   async listModels(): Promise<string[]> {
-    const res = await fetch(`${this.baseUrl}/api/tags`);
+    const res = await fetch(`${this.baseUrl}/api/tags`, { headers: this.headers });
     const data = await res.json() as { models: Array<{ name: string }> };
     return data.models.map(m => m.name);
   }
@@ -164,7 +169,7 @@ export class Orchestrator extends EventEmitter<OrchestratorEvents> {
     super();
     this.logger = logger;
     this.client = new Anthropic({ apiKey: CONFIG.anthropic.apiKey });
-    this.ollamaClient = new OllamaClient(CONFIG.ollama.baseUrl);
+    this.ollamaClient = new OllamaClient(CONFIG.ollama.baseUrl, CONFIG.ollama.apiKey);
 
     this.identity = {
       id: 'orchestrator-primary',

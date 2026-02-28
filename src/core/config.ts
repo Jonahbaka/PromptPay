@@ -26,12 +26,13 @@ export const CONFIG = {
     adminModel: env('ANTHROPIC_ADMIN_MODEL', 'claude-opus-4-6'),
   },
 
-  // ── Ollama (Default model — cost-free local/cloud inference) ──
+  // ── Ollama Cloud ($20/mo unlimited GPU inference) ──
   ollama: {
-    baseUrl: env('OLLAMA_BASE_URL', 'http://localhost:11434'),
-    model: env('OLLAMA_MODEL', 'llama3.2:3b'),
-    codeModel: env('OLLAMA_CODE_MODEL', 'qwen2.5-coder:3b'),
-    maxTokens: parseInt(env('OLLAMA_MAX_TOKENS', '4096')),
+    baseUrl: env('OLLAMA_BASE_URL', 'https://ollama.com'),
+    apiKey: env('OLLAMA_API_KEY', ''),
+    model: env('OLLAMA_MODEL', 'gpt-oss:20b'),
+    codeModel: env('OLLAMA_CODE_MODEL', 'qwen3-coder:480b'),
+    maxTokens: parseInt(env('OLLAMA_MAX_TOKENS', '16384')),
     temperature: 0.3,
   },
 
