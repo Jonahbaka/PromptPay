@@ -40,26 +40,31 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   app.get('/careers.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/analytics.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
 
-  // Serve admin dashboard at secret path only (no-cache to prevent stale JS)
+  // Serve admin dashboard at clean URL (keep legacy secret path too)
   const secretAdminPath = `/${CONFIG.admin.secretPath}`;
+  const noCache = { 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache' };
+  app.get('/secure/admin', (_req: Request, res: Response) => {
+    res.set(noCache);
+    res.sendFile(path.join(publicDir, 'admin.html'));
+  });
   app.get(secretAdminPath, (_req: Request, res: Response) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.set('Pragma', 'no-cache');
+    res.set(noCache);
     res.sendFile(path.join(publicDir, 'admin.html'));
   });
 
-  // Serve analytics dashboard at clean URL
-  app.get('/secure/analytics', (_req: Request, res: Response) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.sendFile(path.join(publicDir, 'analytics.html'));
+  // Serve partner portal
+  app.get('/secure/partners', (_req: Request, res: Response) => {
+    res.set(noCache);
+    res.sendFile(path.join(publicDir, 'partner.html'));
+  });
+  app.get('/partners', (_req: Request, res: Response) => {
+    res.redirect(301, '/secure/partners');
   });
 
-  // Serve partner portal
-  app.get('/partners', (_req: Request, res: Response) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.sendFile(path.join(publicDir, 'partner.html'));
+  // Serve analytics dashboard
+  app.get('/secure/analytics', (_req: Request, res: Response) => {
+    res.set(noCache);
+    res.sendFile(path.join(publicDir, 'analytics.html'));
   });
 
   // Serve careers page
