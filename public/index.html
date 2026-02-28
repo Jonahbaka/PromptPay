@@ -2634,29 +2634,23 @@
           </div>
           <div class="quick-label">Airtime</div>
         </div>
-        <div class="quick-item" onclick="sendSuggestion({dataset:{text:'Create a shopping list'}})">
-          <div class="quick-icon qi-pink" style="background:rgba(236,72,153,0.15)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-          </div>
-          <div class="quick-label">Shop</div>
-        </div>
         <div class="quick-item" id="bills-quick-btn" onclick="sendSuggestion({dataset:{text:'Pay my bills'}})">
           <div class="quick-icon qi-red" style="background:rgba(239,68,68,0.12)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
           </div>
           <div class="quick-label">Bills</div>
         </div>
-        <div class="quick-item" onclick="window.open('/partners','_blank')">
-          <div class="quick-icon" style="background:rgba(168,85,247,0.15)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="quick-item" onclick="pickContacts()">
+          <div class="quick-icon" style="background:rgba(59,130,246,0.15)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
           </div>
-          <div class="quick-label">Partners</div>
+          <div class="quick-label">Contacts</div>
         </div>
-        <div class="quick-item" onclick="window.open('/careers','_blank')">
+        <div class="quick-item" onclick="openInviteModal()">
           <div class="quick-icon" style="background:rgba(16,185,129,0.15)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
           </div>
-          <div class="quick-label">Careers</div>
+          <div class="quick-label">Invite</div>
         </div>
       </div>
 
@@ -2703,15 +2697,15 @@
 
         <div class="chat-messages" id="chat-messages">
           <div class="msg msg-ai">
-            Hey! I'm your PromptPay AI assistant. I can help you send money, make international calls, buy virtual numbers, send SMS, shop, track subscriptions, pay bills, and more. Just tell me what you need.
+            Hey! I'm your PromptPay AI assistant. I can help you send money, make international calls, buy virtual numbers, track subscriptions, pay bills, and more. Just tell me what you need.
           </div>
         </div>
 
         <div class="chat-input-area">
           <div class="chat-suggestions" id="chat-suggestions">
-            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Create a shopping list for groceries">Shopping List</div>
-            <div class="chat-suggestion" onclick="navigateTo('calls')">Calls & SMS</div>
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Send money to a friend">Send Money</div>
+            <div class="chat-suggestion" onclick="navigateTo('calls')">Calls</div>
+            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Pay my bills">Pay Bills</div>
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Show my subscriptions">Subscriptions</div>
           </div>
           <div class="chat-input-wrap">
@@ -2980,14 +2974,18 @@
           </button>
         </div>
         <!-- Quick actions under dialpad -->
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:8px 0">
-          <div style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="startVideoCall()">
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:8px 0">
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="pickContacts()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            Contacts
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="startVideoCall()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
             Video Call <span class="free-badge">Free</span>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="openSmartDial()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            AI Smart Dial <span class="free-badge">Free</span>
+          <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="openInviteModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            Invite Friends
           </div>
         </div>
       </div>
@@ -3908,6 +3906,47 @@
     <input id="request-amount" type="number" placeholder="Amount ($)" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
     <input id="request-message" type="text" placeholder="What's it for? (optional)" style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; margin-bottom: 12px; box-sizing: border-box;">
     <button onclick="executeRequestMoney()" style="width: 100%; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; font-weight: 600; font-size: 1rem; cursor: pointer;">Send Request</button>
+  </div>
+</div>
+
+<!-- Contact Picker Results Modal -->
+<div class="modal-overlay" id="contacts-modal" onclick="if(event.target===this)closeContactsModal()">
+  <div class="modal-sheet" style="max-height:85vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:4px">Phone Contacts</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Select a contact to call, message, or invite</p>
+    <div id="contacts-list" style="display:flex;flex-direction:column;gap:2px"></div>
+    <div id="contacts-empty" style="display:none;text-align:center;padding:32px 0;color:var(--text3)">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:8px"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/></svg>
+      <div style="font-size:13px">No contacts found</div>
+    </div>
+    <div id="contacts-unsupported" style="display:none;text-align:center;padding:24px 0">
+      <div style="font-size:14px;font-weight:600;margin-bottom:8px;color:var(--text)">Contact Picker not available</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Your browser doesn't support contact access. You can manually enter a number or share your invite link.</p>
+      <button onclick="closeContactsModal();openInviteModal()" style="padding:12px 24px;border-radius:12px;border:none;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;font-weight:600;font-size:14px;cursor:pointer">Share Invite Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Friends Modal -->
+<div class="modal-overlay" id="invite-modal" onclick="if(event.target===this)closeInviteModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:4px">Invite Friends</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Share PromptPay with friends and family</p>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1;font-size:13px;color:var(--text);word-break:break-all" id="invite-link-text">https://upromptpay.com/join</div>
+      <button onclick="copyInviteLink()" style="padding:8px 14px;border-radius:8px;border:none;background:#7c3aed;color:white;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0">Copy</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button onclick="shareInvite('whatsapp')" style="flex:1;padding:12px;border-radius:12px;border:none;background:#25D366;color:white;font-weight:600;font-size:13px;cursor:pointer">WhatsApp</button>
+      <button onclick="shareInvite('sms')" style="flex:1;padding:12px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:600;font-size:13px;cursor:pointer">SMS</button>
+      <button onclick="shareInvite('share')" style="flex:1;padding:12px;border-radius:12px;border:none;background:#8b5cf6;color:white;font-weight:600;font-size:13px;cursor:pointer">Share</button>
+    </div>
+    <button onclick="pickContactsToInvite()" style="width:100%;padding:14px;border-radius:12px;border:1px solid var(--glass-border);background:rgba(255,255,255,0.04);color:var(--text);font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+      Pick from Contacts
+    </button>
   </div>
 </div>
 
@@ -7975,6 +8014,136 @@ function openSmartDial() {
       input.focus();
     }
   }, 200);
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONTACT PICKER + INVITE FRIENDS
+// ══════════════════════════════════════════════════════════════
+
+async function pickContacts() {
+  const modal = document.getElementById('contacts-modal');
+  const listEl = document.getElementById('contacts-list');
+  const emptyEl = document.getElementById('contacts-empty');
+  const unsupportedEl = document.getElementById('contacts-unsupported');
+
+  listEl.innerHTML = '';
+  emptyEl.style.display = 'none';
+  unsupportedEl.style.display = 'none';
+  modal.classList.add('active');
+
+  // Check Contact Picker API support
+  if (!('contacts' in navigator && 'ContactsManager' in window)) {
+    unsupportedEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const props = ['name', 'tel'];
+    const opts = { multiple: true };
+    const contacts = await navigator.contacts.select(props, opts);
+
+    if (!contacts || contacts.length === 0) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    contacts.forEach(contact => {
+      const name = contact.name?.[0] || 'Unknown';
+      const phones = contact.tel || [];
+      phones.forEach(phone => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;cursor:pointer;transition:background 0.15s';
+        row.onmouseenter = () => row.style.background = 'rgba(255,255,255,0.04)';
+        row.onmouseleave = () => row.style.background = 'none';
+        row.innerHTML = `
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:white;flex-shrink:0">${name.charAt(0).toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+            <div style="font-size:12px;color:var(--text2)">${phone}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button onclick="event.stopPropagation();dialFromContact('${phone.replace(/'/g,'')}')" style="padding:6px 12px;border-radius:8px;border:none;background:rgba(16,185,129,0.15);color:#10b981;font-size:11px;font-weight:600;cursor:pointer" title="Call">Call</button>
+            <button onclick="event.stopPropagation();inviteContact('${phone.replace(/'/g,'')}','${name.replace(/'/g,'')}')" style="padding:6px 12px;border-radius:8px;border:none;background:rgba(124,58,237,0.15);color:#a78bfa;font-size:11px;font-weight:600;cursor:pointer" title="Invite">Invite</button>
+          </div>
+        `;
+        listEl.appendChild(row);
+      });
+    });
+
+    if (listEl.children.length === 0) {
+      emptyEl.style.display = 'block';
+    }
+  } catch (err) {
+    if (err.name !== 'InvalidStateError' && err.name !== 'TypeError') {
+      console.error('Contact picker error:', err);
+    }
+    // User cancelled or error
+    closeContactsModal();
+  }
+}
+
+function closeContactsModal() {
+  document.getElementById('contacts-modal').classList.remove('active');
+}
+
+function dialFromContact(phone) {
+  closeContactsModal();
+  navigateTo('calls');
+  const cleaned = phone.replace(/[\s\-()]/g, '');
+  const display = document.getElementById('dial-number');
+  if (display) display.textContent = cleaned;
+}
+
+function inviteContact(phone, name) {
+  const msg = `Hey${name ? ' ' + name : ''}, try PromptPay! Free international calls, AI assistant, send money & more. Download: https://upromptpay.com/join`;
+  const encoded = encodeURIComponent(msg);
+  const cleaned = phone.replace(/[\s\-()]/g, '');
+  // Try SMS
+  window.open(`sms:${cleaned}?body=${encoded}`, '_blank');
+}
+
+function openInviteModal() {
+  const user = currentUser;
+  const ref = user?.paytag || user?.email || '';
+  const link = ref ? `https://upromptpay.com/join?ref=${encodeURIComponent(ref)}` : 'https://upromptpay.com/join';
+  document.getElementById('invite-link-text').textContent = link;
+  document.getElementById('invite-modal').classList.add('active');
+}
+
+function closeInviteModal() {
+  document.getElementById('invite-modal').classList.remove('active');
+}
+
+function copyInviteLink() {
+  const link = document.getElementById('invite-link-text').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  }).catch(() => {});
+}
+
+function shareInvite(method) {
+  const link = document.getElementById('invite-link-text').textContent;
+  const msg = `Join me on PromptPay! Free international calls, AI assistant, send money & pay bills. ${link}`;
+  const encoded = encodeURIComponent(msg);
+
+  if (method === 'whatsapp') {
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  } else if (method === 'sms') {
+    window.open(`sms:?body=${encoded}`, '_blank');
+  } else if (method === 'share' && navigator.share) {
+    navigator.share({ title: 'Join PromptPay', text: msg, url: link }).catch(() => {});
+  } else {
+    // Fallback — copy to clipboard
+    navigator.clipboard.writeText(msg).catch(() => {});
+    alert('Invite copied to clipboard!');
+  }
+}
+
+async function pickContactsToInvite() {
+  closeInviteModal();
+  await pickContacts();
 }
 
 // ══════════════════════════════════════════════════════════════
