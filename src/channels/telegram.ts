@@ -80,8 +80,7 @@ export class TelegramChannel extends BaseChannel {
     while (this.running) {
       try {
         const response = await fetch(
-          `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=25`,
-          { signal: AbortSignal.timeout(30000) }
+          `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=25`
         );
         const data = await response.json() as {
           ok: boolean;
