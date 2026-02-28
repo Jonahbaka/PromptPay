@@ -105,10 +105,8 @@
       background: var(--bg); color: var(--text);
       -webkit-font-smoothing: antialiased;
       -webkit-text-size-adjust: 100%;
-      overflow-x: hidden;
     }
-    html { overscroll-behavior: none; }
-    body.app-mode { overflow: hidden; overscroll-behavior-y: contain; }
+    body.app-mode { overflow: hidden; }
     body.landing-mode { overflow-x: hidden; overflow-y: auto; }
 
     /* ── App Shell ── */
@@ -177,7 +175,6 @@
       padding: 0 16px 100px;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain;
       opacity: 0; transform: translateY(12px); pointer-events: none;
       transition: opacity 0.35s ease, transform 0.35s ease;
     }
