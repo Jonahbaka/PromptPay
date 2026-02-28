@@ -21,6 +21,7 @@ import { createDeveloperRoutes } from './gateway/developer-routes.js';
 import { createPosRoutes } from './gateway/pos-routes.js';
 import { createHrRoutes } from './gateway/hr-routes.js';
 import { createCalendarRoutes } from './gateway/calendar-routes.js';
+import { createAnalyticsRoutes } from './gateway/analytics-routes.js';
 import { HookEngine } from './hooks/engine.js';
 import { FeeEngine } from './hooks/fees.js';
 import { DaemonLoop } from './daemon/loop.js';
@@ -180,6 +181,10 @@ async function main(): Promise<void> {
   // Calendar AI routes (Chrono agent — admin + partner paid feature)
   const calendarRouter = createCalendarRoutes({ memory, auditTrail, logger });
   app.use(calendarRouter);
+
+  // Analytics routes (predictive analytics + AI insights)
+  const analyticsRouter = createAnalyticsRoutes({ memory, logger });
+  app.use(analyticsRouter);
 
   // Admin routes (dashboard, hooks, providers, audit)
   const adminRouter = createAdminRoutes({
