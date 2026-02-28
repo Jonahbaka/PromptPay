@@ -31,14 +31,14 @@ export function detectTaskType(text: string): string {
 
 const FALLBACK_RESPONSES: Record<string, string> = {
   shopping_list_create: "I'll help with shopping. Want me to create a list, compare prices, or track an order?",
-  calls_sms: "I can help with calls and messaging! Go to the Calls tab to dial international numbers, buy virtual numbers, send SMS, or chat with AI. What do you need?",
+  calls_sms: "I can help with calls! Go to the Calls tab to dial international numbers or buy virtual numbers.",
   assistant_subscriptions: "I'll manage that for you. I can list subscriptions, set alerts, or schedule appointments.",
   wallet_transfer: "Got it. Who are you sending to and how much?",
   bill_pay: "I'll handle that bill. What's the bill type and amount?",
   tx_history: "I can pull up your balance and transaction history. Check the Wallet tab for details, or ask me a specific question.",
   payment_initiate: "On it. What would you like to pay for?",
   payment_method_manage: "You can manage your cards in the Wallet tab. Need help with something specific?",
-  custom: "I can help you shop, make calls, send SMS, manage subscriptions, send money, pay bills, and more. What do you need?",
+  custom: "I can help you shop, make calls, manage subscriptions, send money, pay bills, and more. What do you need?",
 };
 
 export function getServerFallback(text: string): FallbackResponse {
