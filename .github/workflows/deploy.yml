@@ -34,17 +34,13 @@ jobs:
     steps:
       - name: Deploy to EC2
         env:
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          EC2_SSH_KEY_B64: ${{ secrets.EC2_SSH_KEY_B64 }}
         run: |
-          # Write SSH key — normalize line endings and trim whitespace
           mkdir -p ~/.ssh
-          printf '%s\n' "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
 
-          # Debug: verify key format (first/last line only, no secrets)
-          head -1 ~/.ssh/deploy_key
-          tail -1 ~/.ssh/deploy_key
-          wc -l ~/.ssh/deploy_key
+          # Decode base64-encoded SSH key (avoids newline issues)
+          echo "$EC2_SSH_KEY_B64" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
           # SSH config
           cat >> ~/.ssh/config << 'SSHEOF'
@@ -55,7 +51,7 @@ jobs:
           SSHEOF
           chmod 600 ~/.ssh/config
 
-          # Run deploy script on EC2
+          # Deploy
           ssh -i ~/.ssh/deploy_key -o ConnectTimeout=10 ec2-user@upromptpay.com \
             'cd /home/ec2-user/PromptPay && chmod +x scripts/deploy.sh && bash scripts/deploy.sh'
 
