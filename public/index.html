@@ -104,13 +104,16 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
       background: var(--bg); color: var(--text);
       -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+      overflow-x: hidden;
     }
-    body.app-mode { overflow: hidden; }
+    html { overscroll-behavior: none; }
+    body.app-mode { overflow: hidden; overscroll-behavior-y: contain; }
     body.landing-mode { overflow-x: hidden; overflow-y: auto; }
 
     /* ── App Shell ── */
     .app {
-      width: 100%; margin: 0 auto; height: 100vh; height: 100dvh;
+      width: 100%; max-width: 100vw; margin: 0 auto; height: 100vh; height: 100dvh;
       position: relative; overflow: hidden;
       display: flex; flex-direction: column;
       background: var(--bg);
@@ -121,7 +124,7 @@
       .app { max-width: 480px; }
     }
     .app::before {
-      content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      content: ''; position: fixed; inset: 0;
       background: radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.06) 0%, transparent 50%),
                   radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 50%),
                   radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.03) 0%, transparent 50%);
@@ -139,11 +142,9 @@
 
     /* ── Header ── */
     .header {
-      position: relative; z-index: 10;
-      padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
-      padding-top: max(12px, var(--safe-top));
-      padding-left: max(20px, calc(20px + var(--safe-left)));
-      padding-right: max(20px, calc(20px + var(--safe-right)));
+      position: relative; z-index: 10; flex-shrink: 0;
+      padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
+      padding-top: max(10px, var(--safe-top));
     }
     .header-left { display: flex; align-items: center; gap: 12px; }
     .header-avatar {
@@ -173,17 +174,15 @@
     }
     .page {
       position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
-      padding: 0 max(16px, calc(16px + var(--safe-left))) 100px;
-      padding-right: max(16px, calc(16px + var(--safe-right)));
+      padding: 0 16px 100px;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
       opacity: 0; transform: translateY(12px); pointer-events: none;
       transition: opacity 0.35s ease, transform 0.35s ease;
     }
     @media (min-width: 400px) {
-      .page {
-        padding-left: max(20px, calc(20px + var(--safe-left)));
-        padding-right: max(20px, calc(20px + var(--safe-right)));
-      }
+      .page { padding-left: 20px; padding-right: 20px; }
     }
     .page::-webkit-scrollbar { display: none; }
     .page.active {
@@ -192,8 +191,8 @@
 
     /* ── Balance Card ── */
     .balance-card {
-      position: relative; border-radius: 24px; padding: 28px 24px;
-      margin-bottom: 24px; overflow: hidden;
+      position: relative; border-radius: 20px; padding: 24px 20px;
+      margin-bottom: 20px; overflow: hidden;
       background: linear-gradient(145deg, rgba(124,58,237,0.15), rgba(59,130,246,0.1), rgba(6,182,212,0.08));
       border: 1px solid rgba(255,255,255,0.08);
       backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
@@ -220,13 +219,14 @@
       display: flex; align-items: center; gap: 4px;
     }
     .balance-actions {
-      display: flex; gap: 10px; margin-top: 24px; position: relative; z-index: 1;
+      display: flex; gap: 8px; margin-top: 20px; position: relative; z-index: 1;
     }
     .bal-btn {
-      flex: 1; padding: 13px; border-radius: var(--radius-sm); border: none;
-      font-size: 14px; font-weight: 600; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; gap: 8px;
-      transition: all 0.2s; font-family: inherit;
+      flex: 1; padding: 12px 8px; border-radius: var(--radius-sm); border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer; display: flex;
+      align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.15s; font-family: inherit;
+      min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .bal-btn:active { transform: scale(0.96); }
     .bal-btn-primary {
@@ -240,21 +240,25 @@
 
     /* ── Quick Actions Grid ── */
     .quick-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 10px;
-      margin-bottom: 28px;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 8px;
+      margin-bottom: 24px;
     }
     .quick-item {
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-      cursor: pointer; transition: transform 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      cursor: pointer; transition: transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
     }
-    .quick-item:active { transform: scale(0.92); }
+    .quick-item:active { transform: scale(0.9); }
     .quick-icon {
-      width: 54px; height: 54px; border-radius: 16px;
+      width: 50px; height: 50px; border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px; transition: all 0.2s;
+      font-size: 20px; transition: all 0.2s;
       border: 1px solid rgba(255,255,255,0.06);
     }
-    .quick-label { font-size: 11px; color: var(--text2); font-weight: 500; text-align: center; }
+    @media (min-width: 380px) {
+      .quick-icon { width: 54px; height: 54px; font-size: 22px; border-radius: 16px; }
+    }
+    .quick-label { font-size: 11px; color: var(--text2); font-weight: 500; text-align: center; line-height: 1.2; }
     .qi-violet { background: rgba(124,58,237,0.12); }
     .qi-blue { background: rgba(59,130,246,0.12); }
     .qi-cyan { background: rgba(6,182,212,0.12); }
@@ -328,21 +332,25 @@
 
     /* ── AI Chat Page ── */
     .chat-container {
-      display: flex; flex-direction: column; height: calc(100dvh - 140px);
+      display: flex; flex-direction: column;
+      height: calc(100dvh - 120px);
       position: relative;
     }
     .chat-header-bar {
-      display: flex; align-items: center; gap: 12px; padding-bottom: 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px; padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px;
+      flex-shrink: 0;
     }
     .chat-messages {
       flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
-      padding-bottom: 80px; scrollbar-width: none;
+      padding-bottom: 90px; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
     }
     .chat-messages::-webkit-scrollbar { display: none; }
     .msg {
-      max-width: 85%; padding: 14px 16px; font-size: 14px; line-height: 1.5;
-      animation: msgIn 0.3s ease;
+      max-width: 88%; padding: 12px 16px; font-size: 14px; line-height: 1.5;
+      animation: msgIn 0.3s ease; word-break: break-word;
     }
     @keyframes msgIn {
       from { opacity: 0; transform: translateY(8px); }
@@ -376,13 +384,13 @@
     }
     .chat-input-area {
       position: absolute; bottom: 0; left: 0; right: 0;
-      background: linear-gradient(to top, var(--bg) 70%, transparent);
-      padding: 16px 0 8px;
+      background: linear-gradient(to top, var(--bg) 80%, transparent);
+      padding: 12px 0 max(8px, var(--safe-bottom));
     }
     .chat-input-wrap {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 8px;
       background: var(--surface); border: 1px solid var(--glass-border);
-      border-radius: 28px; padding: 6px 6px 6px 18px;
+      border-radius: 28px; padding: 5px 5px 5px 16px;
     }
     .chat-input {
       flex: 1; border: none; background: none; color: var(--text);
@@ -399,12 +407,14 @@
     .chat-send-btn:disabled { opacity: 0.4; }
     .chat-suggestions {
       display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+      overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
     }
+    .chat-suggestions::-webkit-scrollbar { display: none; }
     .chat-suggestion {
       padding: 8px 14px; border-radius: 20px; font-size: 12px;
       background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.15);
-      color: var(--accent2); cursor: pointer; transition: all 0.2s;
-      white-space: nowrap;
+      color: var(--accent2); cursor: pointer; transition: all 0.15s;
+      white-space: nowrap; flex-shrink: 0;
     }
     .chat-suggestion:active { transform: scale(0.95); background: rgba(124,58,237,0.15); }
 
@@ -412,13 +422,17 @@
     .card-carousel {
       display: flex; gap: 14px; overflow-x: auto; padding-bottom: 16px;
       scrollbar-width: none; scroll-snap-type: x mandatory;
-      margin-bottom: 24px;
+      margin: 0 -16px 24px; padding-left: 16px; padding-right: 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (min-width: 400px) {
+      .card-carousel { margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; }
     }
     .card-carousel::-webkit-scrollbar { display: none; }
     .payment-card {
-      min-width: 280px; padding: 24px; border-radius: 20px;
+      min-width: min(280px, 80vw); padding: 24px; border-radius: 20px;
       position: relative; overflow: hidden; scroll-snap-align: start;
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;
     }
     .payment-card.pc-violet {
       background: linear-gradient(145deg, rgba(124,58,237,0.25), rgba(59,130,246,0.15));
@@ -603,19 +617,18 @@
 
     /* ── Bottom Navigation ── */
     .bottom-nav {
-      position: relative; z-index: 20;
+      position: relative; z-index: 20; flex-shrink: 0;
       display: flex; justify-content: space-around; align-items: center;
-      padding: 8px 12px; padding-bottom: max(8px, var(--safe-bottom));
-      padding-left: max(12px, calc(12px + var(--safe-left)));
-      padding-right: max(12px, calc(12px + var(--safe-right)));
-      background: rgba(6,6,10,0.92);
+      padding: 6px 8px; padding-bottom: max(6px, var(--safe-bottom));
+      background: rgba(6,6,10,0.95);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255,255,255,0.05);
     }
     .nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      padding: 6px 16px; cursor: pointer; transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 6px 12px; cursor: pointer; transition: all 0.2s;
       border-radius: 12px; position: relative;
+      -webkit-tap-highlight-color: transparent;
     }
     .nav-item:active { transform: scale(0.9); }
     .nav-icon { font-size: 20px; transition: all 0.2s; opacity: 0.5; }
@@ -658,9 +671,11 @@
     .modal-overlay.active { opacity: 1; pointer-events: auto; }
     .modal-sheet {
       background: var(--bg2); border-radius: 24px 24px 0 0;
-      width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto;
-      padding: 20px; padding-bottom: max(20px, var(--safe-bottom));
+      width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+      padding: 20px 16px; padding-bottom: max(20px, calc(16px + var(--safe-bottom)));
       transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
     }
     .modal-overlay.active .modal-sheet { transform: translateY(0); }
     .modal-handle {
@@ -863,12 +878,11 @@
     }
     .auth-card {
       position: relative; z-index: 1;
-      width: 100%; max-width: 400px;
-      margin: 0 max(20px, calc(20px + var(--safe-left)));
-      margin-right: max(20px, calc(20px + var(--safe-right)));
+      width: calc(100% - 40px); max-width: 400px;
+      margin: 0 auto;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 24px; padding: 40px 28px;
+      border-radius: 24px; padding: 36px 24px;
       backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
       box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     }
@@ -1013,9 +1027,9 @@
     }
     .nav-drawer-overlay.open { opacity: 1; pointer-events: auto; }
     .nav-drawer {
-      position: fixed; top: 0; left: 0; bottom: 0; width: 280px;
+      position: fixed; top: 0; left: 0; bottom: 0; width: min(280px, 85vw);
       background: var(--bg2); z-index: 201;
-      transform: translateX(-100%); transition: transform 0.3s ease;
+      transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
       display: flex; flex-direction: column;
       padding-top: max(20px, env(safe-area-inset-top));
       box-shadow: 4px 0 24px rgba(0,0,0,0.3);
@@ -1216,9 +1230,9 @@
     }
 
     .lp-nav {
-      position: fixed; top: 0; width: 100%; z-index: 50;
-      transition: all 0.3s ease; padding: 20px 0;
-      padding-top: max(20px, var(--safe-top));
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      transition: all 0.3s ease; padding: 16px 0;
+      padding-top: max(16px, var(--safe-top));
     }
     .lp-nav.scrolled {
       background: rgba(3,3,8,0.92); backdrop-filter: blur(20px);
@@ -2036,8 +2050,9 @@
     .pp-chat-fab.open { display: none; }
 
     .pp-chat-widget {
-      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-      width: 380px; max-width: calc(100vw - 32px); height: 520px; max-height: calc(100vh - 48px);
+      position: fixed; bottom: 16px; right: 16px; left: 16px; z-index: 9999;
+      max-width: 380px; height: 520px; max-height: calc(100dvh - 80px);
+      margin-left: auto;
       background: #0d0d15; border: 1px solid rgba(124,58,237,0.3);
       border-radius: 20px; display: none; flex-direction: column;
       box-shadow: 0 8px 40px rgba(0,0,0,0.5);

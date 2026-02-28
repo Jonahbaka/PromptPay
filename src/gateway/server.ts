@@ -263,7 +263,9 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
       if (!ollamaRes.ok) {
         const errText = await ollamaRes.text();
         deps.logger.error(`Public chat Ollama error: ${ollamaRes.status} ${errText}`);
-        res.json({ reply: "I'm having a moment. Try again in a few seconds!", sessionId });
+        // Use context-aware fallback instead of generic error
+        const fallback = getServerFallback(message.trim());
+        res.json({ reply: fallback.reply, sessionId: sessionId || uuid(), fallback: true });
         return;
       }
 
@@ -272,9 +274,11 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
 
       res.json({ reply, sessionId: sessionId || uuid() });
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      deps.logger.error(`Public chat error: ${message}`);
-      res.json({ reply: "Something went wrong. Please try again!", sessionId: req.body?.sessionId });
+      const errMsg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Public chat error: ${errMsg}`);
+      const inputText = String(req.body?.message || '');
+      const fallback = getServerFallback(inputText);
+      res.json({ reply: fallback.reply, sessionId: req.body?.sessionId || uuid(), fallback: true });
     }
   });
 
@@ -331,18 +335,29 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
       );
       const result = await deps.orchestrator.executeTask(task);
 
+      // If orchestrator failed or returned nothing, use context-aware fallback
+      if (!result.success || !result.output) {
+        const fallback = getServerFallback(message.trim());
+        broadcastWs(wss, { type: 'chat:reply', userId, taskId: task.id });
+        res.json({ reply: fallback.reply, taskId: task.id, fallback: true });
+        return;
+      }
+
       // Broadcast via WebSocket
       broadcastWs(wss, { type: 'chat:reply', userId, taskId: task.id });
 
       res.json({
-        reply: result.output || "I'm here to help. Could you rephrase that?",
+        reply: result.output,
         taskId: task.id,
         tokensUsed: result.tokensUsed,
       });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
       deps.logger.error(`Agentic chat error: ${errMsg}`);
-      res.status(500).json({ error: 'Chat failed. Please try again.' });
+      // Never return 500 to user — use context-aware fallback
+      const inputText = String(req.body?.message || '');
+      const fallback = getServerFallback(inputText);
+      res.json({ reply: fallback.reply, fallback: true });
     }
   });
 
