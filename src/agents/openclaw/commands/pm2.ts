@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // OpenClaw :: /pm2 — PM2 process management
+// Project-aware: targets active project's PM2 process
 // restart/reload are DANGEROUS, list/status are safe
 // ═══════════════════════════════════════════════════════════════
 
@@ -19,6 +20,7 @@ export const pm2Command: OpenClawCommand = {
 
   async execute(args: string, ctx: CommandContext): Promise<CommandResult> {
     const action = args.trim().split(/\s+/)[0]?.toLowerCase() || 'list';
+    const project = ctx.activeProject;
 
     if (!ALL_ACTIONS.includes(action)) {
       return { success: false, output: `Unknown action: ${action}\nAllowed: ${ALL_ACTIONS.join(', ')}` };
@@ -29,9 +31,9 @@ export const pm2Command: OpenClawCommand = {
     if (action === 'list' || action === 'status') {
       cmd = 'pm2 jlist 2>/dev/null';
     } else if (action === 'describe') {
-      cmd = 'pm2 describe upromptpay 2>/dev/null';
+      cmd = `pm2 describe ${project.pm2Name} 2>/dev/null`;
     } else {
-      cmd = `pm2 ${action} upromptpay 2>/dev/null`;
+      cmd = `pm2 ${action} ${project.pm2Name} 2>/dev/null`;
     }
 
     return new Promise((resolve) => {
@@ -49,17 +51,18 @@ export const pm2Command: OpenClawCommand = {
             const lines = procs.map(p => {
               const mem = (p.monit.memory / 1024 / 1024).toFixed(1);
               const uptime = Math.floor((Date.now() - p.pm2_env.pm_uptime) / 60000);
-              return `${p.name}[${p.pm_id}] | ${p.pm2_env.status} | PID:${p.pid} | ${mem}MB | CPU:${p.monit.cpu}% | Up:${uptime}m | Restarts:${p.pm2_env.restart_time}`;
+              const marker = p.name === project.pm2Name ? '→ ' : '  ';
+              return `${marker}${p.name}[${p.pm_id}] | ${p.pm2_env.status} | PID:${p.pid} | ${mem}MB | CPU:${p.monit.cpu}% | Up:${uptime}m | Restarts:${p.pm2_env.restart_time}`;
             });
             output = lines.join('\n') || 'No processes';
           } catch {}
         }
 
-        ctx.auditTrail.record('openclaw', 'pm2_action', ctx.chatId, { action });
+        ctx.auditTrail.record('openclaw', 'pm2_action', ctx.chatId, { action, project: project.id });
 
         resolve({
           success: !error,
-          output: `*PM2 ${action}:*\n\`\`\`\n${output.slice(0, 3500)}\n\`\`\``,
+          output: `*[${project.name}] PM2 ${action}:*\n\`\`\`\n${output.slice(0, 3500)}\n\`\`\``,
         });
       });
     });

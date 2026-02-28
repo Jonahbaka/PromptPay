@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // Agent::OpenClaw — Owner's Autonomous Telegram Agent
-// Commands + Ollama conversation + confirm/cancel flow
+// Multi-project commands + Ollama conversation + confirm/cancel
 // ═══════════════════════════════════════════════════════════════
 
 import type Database from 'better-sqlite3';
@@ -10,6 +10,7 @@ import type { Orchestrator } from '../../core/orchestrator.js';
 import type { TelegramChannel } from '../../channels/telegram.js';
 import type { OpenClawCommand, CommandContext } from './commands.js';
 import { CONFIG } from '../../core/config.js';
+import { PROJECTS, resolveProject, type Project } from './projects.js';
 
 // Import all commands
 import { shellCommand } from './commands/shell.js';
@@ -22,6 +23,7 @@ import { healthCommand } from './commands/health.js';
 import { fileCommand } from './commands/file.js';
 import { envCommand } from './commands/env.js';
 import { statusCommand } from './commands/status.js';
+import { projectCommand } from './commands/project.js';
 
 interface OpenClawDeps {
   telegram: TelegramChannel;
@@ -38,12 +40,12 @@ interface PendingCommand {
   timestamp: number;
 }
 
-const OPENCLAW_PROMPT = `You are OpenClaw, a private AI agent for the owner of PromptPay (upromptpay.com).
+const OPENCLAW_PROMPT = `You are OpenClaw, a private AI agent for the owner of PromptPay (upromptpay.com) and DoctaRx (teledoc platform).
 You are NOT a customer-facing chatbot. You are a full autonomous agent with executive-level intelligence.
 
 ## Who You Are
 - Name: OpenClaw
-- Role: Personal AI agent for the PromptPay founder
+- Role: Personal AI agent for the founder
 - Platform: Telegram (@promtpay_bot)
 - Personality: Sharp, direct, resourceful. You think like a CTO + CEO hybrid.
 
@@ -57,14 +59,18 @@ You are NOT a customer-facing chatbot. You are a full autonomous agent with exec
 - Daily briefings on platform health, metrics, news
 - Anything the owner asks — you are not limited to fintech
 - SERVER COMMANDS: The owner can use slash commands (/help for list)
+- MULTI-PROJECT: Manage both PromptPay and DoctaRx from here
 
-## Platform Context
-- PromptPay: AI-powered fintech platform for Africa + global
-- Stack: TypeScript, Express 5, SQLite, PM2 cluster on EC2
-- Domain: upromptpay.com
-- 7 agents, ~75 tools, zero-downtime deploys
-- GitHub: github.com/Jonahbaka/PromptPay
-- Admin: /secure/admin
+## Projects You Manage
+1. **PromptPay** — AI-powered fintech platform for Africa + global
+   - Stack: TypeScript, Express 5, SQLite, PM2 cluster on EC2
+   - Domain: upromptpay.com
+   - GitHub: github.com/Jonahbaka/PromptPay
+
+2. **DoctaRx** — HIPAA-compliant telehealth platform
+   - Stack: Next.js 15, Express 4, PostgreSQL, Redis, Socket.io
+   - PM2: doctarx
+   - GitHub: github.com/Jonahbaka/zuma-teledoc
 
 ## Rules
 - You serve ONLY the owner. This channel is private.
@@ -74,7 +80,8 @@ You are NOT a customer-facing chatbot. You are a full autonomous agent with exec
 - Keep responses concise for Telegram (under 4000 chars). Use markdown formatting.
 - When discussing code or technical issues, be specific with file paths and line numbers.
 - If the owner asks you to do something on the server, suggest the relevant slash command.
-- You have memory of this conversation session. Reference earlier messages when relevant.`;
+- You have memory of this conversation session. Reference earlier messages when relevant.
+- Use /project to switch between PromptPay and DoctaRx contexts.`;
 
 export class OpenClawAgent {
   private commands = new Map<string, OpenClawCommand>();
@@ -85,6 +92,7 @@ export class OpenClawAgent {
   private logger: LoggerHandle;
   private db: Database.Database;
   private orchestrator: Orchestrator;
+  private activeProject: Project = PROJECTS.promptpay;
 
   constructor(deps: OpenClawDeps) {
     this.telegram = deps.telegram;
@@ -97,7 +105,7 @@ export class OpenClawAgent {
     const allCommands = [
       shellCommand, logsCommand, pm2Command, deployCommand,
       githubCommand, adminCommand, healthCommand, fileCommand,
-      envCommand, statusCommand,
+      envCommand, statusCommand, projectCommand,
     ];
 
     for (const cmd of allCommands) {
@@ -109,7 +117,7 @@ export class OpenClawAgent {
   }
 
   async handleMessage(chatId: string, username: string, text: string): Promise<void> {
-    this.logger.info(`OpenClaw from @${username}: ${text.slice(0, 80)}`);
+    this.logger.info(`OpenClaw [${this.activeProject.id}] from @${username}: ${text.slice(0, 80)}`);
 
     try {
       // Handle /confirm
@@ -166,7 +174,7 @@ export class OpenClawAgent {
       if (dangerousPm2.includes(action)) {
         this.pending = { command, args, chatId, timestamp: Date.now() };
         await this.sendMessage(chatId,
-          `*Dangerous:* \`/pm2 ${action}\` will affect the running server.\nSend /confirm to proceed or /cancel to abort.`
+          `*[${this.activeProject.name}] Dangerous:* \`/pm2 ${action}\` will affect ${this.activeProject.pm2Name}.\nSend /confirm to proceed or /cancel to abort.`
         );
         return;
       }
@@ -176,7 +184,7 @@ export class OpenClawAgent {
       // Store pending and ask for confirmation
       this.pending = { command, args, chatId, timestamp: Date.now() };
       await this.sendMessage(chatId,
-        `*Dangerous command:* \`/${command.name} ${args}\`\n${command.description}\n\nSend /confirm to proceed or /cancel to abort.`
+        `*[${this.activeProject.name}] Dangerous command:* \`/${command.name} ${args}\`\n${command.description}\n\nSend /confirm to proceed or /cancel to abort.`
       );
       return;
     }
@@ -184,6 +192,19 @@ export class OpenClawAgent {
     // Execute safe command directly
     const ctx = this.createContext(chatId);
     const result = await command.execute(args, ctx);
+
+    // Handle project switch
+    if (result.output.startsWith('__SWITCH_PROJECT__:')) {
+      const projectId = result.output.split(':')[1];
+      const project = PROJECTS[projectId];
+      if (project) {
+        this.activeProject = project;
+        await this.sendMessage(chatId, `Switched to *${project.name}*\n\`${project.path}\` | PM2: \`${project.pm2Name}\`\nAll commands now target this project.`);
+        this.auditTrail.record('openclaw', 'project_switch', chatId, { project: project.id });
+      }
+      return;
+    }
+
     await this.sendMessage(chatId, result.output);
   }
 
@@ -205,7 +226,7 @@ export class OpenClawAgent {
 
     const ctx = this.createContext(chatId);
     this.logger.info(`OpenClaw confirmed: /${command.name} ${args.slice(0, 80)}`);
-    this.auditTrail.record('openclaw', 'command_confirmed', chatId, { command: command.name, args: args.slice(0, 200) });
+    this.auditTrail.record('openclaw', 'command_confirmed', chatId, { command: command.name, args: args.slice(0, 200), project: this.activeProject.id });
 
     const result = await command.execute(args, ctx);
     await this.sendMessage(chatId, result.output);
@@ -235,7 +256,7 @@ export class OpenClawAgent {
       lines.push(`\`${cmd.usage}\`${aliases}${danger}\n  ${cmd.description}`);
     }
 
-    const output = `*OpenClaw Commands*\n\n${lines.join('\n\n')}\n\n_Dangerous commands require /confirm_\n_Any non-command text goes to AI chat_`;
+    const output = `*OpenClaw Commands*\n*Active project:* ${this.activeProject.name}\n\n${lines.join('\n\n')}\n\n_Dangerous commands require /confirm_\n_Use /project to switch between projects_\n_Any non-command text goes to AI chat_`;
     await this.sendMessage(chatId, output);
   }
 
@@ -295,6 +316,7 @@ export class OpenClawAgent {
       logger: this.logger,
       auditTrail: this.auditTrail,
       orchestrator: this.orchestrator,
+      activeProject: this.activeProject,
       sendMessage: (text: string) => this.sendMessage(chatId, text),
     };
   }

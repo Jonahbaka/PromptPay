@@ -1,22 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
 // OpenClaw :: /file — Read server files (whitelisted dirs only)
+// Project-aware: uses active project context
 // ═══════════════════════════════════════════════════════════════
 
 import fs from 'fs';
 import path from 'path';
 import type { OpenClawCommand, CommandContext, CommandResult } from '../commands.js';
-
-const PROJECT_ROOT = '/home/ec2-user/PromptPay';
-
-const ALLOWED_DIRS = [
-  'src/',
-  'config/',
-  'logs/',
-  'public/',
-  'scripts/',
-  'dist/',
-  'data/',
-];
 
 const BLOCKED_FILES = [
   '.env',
@@ -43,28 +32,30 @@ export const fileCommand: OpenClawCommand = {
     const linesIdx = parts.indexOf('--lines');
     const maxLines = linesIdx !== -1 ? parseInt(parts[linesIdx + 1] || '100', 10) : 100;
 
+    const project = ctx.activeProject;
+
     if (!filePath) {
-      return { success: false, output: 'Usage: /file <path> [--lines N]\nAllowed dirs: ' + ALLOWED_DIRS.join(', ') };
+      return { success: false, output: `Usage: /file <path> [--lines N]\n*Project:* ${project.name}\nAllowed dirs: ${project.allowedDirs.join(', ')}` };
     }
 
-    // Resolve relative to project root
+    // Resolve relative to active project root
     if (!filePath.startsWith('/')) {
-      filePath = path.join(PROJECT_ROOT, filePath);
+      filePath = path.join(project.path, filePath);
     }
 
     // Normalize and check for path traversal
     const resolved = path.resolve(filePath);
-    if (!resolved.startsWith(PROJECT_ROOT)) {
-      return { success: false, output: 'Access denied: path outside project directory.' };
+    if (!resolved.startsWith(project.path)) {
+      return { success: false, output: `Access denied: path outside ${project.name} directory.` };
     }
 
     // Check against allowed dirs
-    const relative = path.relative(PROJECT_ROOT, resolved);
-    const inAllowedDir = ALLOWED_DIRS.some(dir => relative.startsWith(dir)) ||
-      ['package.json', 'tsconfig.json', 'ecosystem.config.cjs', '.gitignore'].includes(relative);
+    const relative = path.relative(project.path, resolved);
+    const inAllowedDir = project.allowedDirs.some(dir => relative.startsWith(dir)) ||
+      project.rootFiles.includes(relative);
 
     if (!inAllowedDir) {
-      return { success: false, output: `Access denied: \`${relative}\` not in allowed directories.\nAllowed: ${ALLOWED_DIRS.join(', ')}` };
+      return { success: false, output: `Access denied: \`${relative}\` not in allowed directories.\n*${project.name}* allowed: ${project.allowedDirs.join(', ')}` };
     }
 
     // Check blocked files
@@ -80,7 +71,7 @@ export const fileCommand: OpenClawCommand = {
         const entries = fs.readdirSync(resolved);
         return {
           success: true,
-          output: `*Directory: ${relative}/*\n\`\`\`\n${entries.join('\n')}\n\`\`\``,
+          output: `*[${project.name}] ${relative}/*\n\`\`\`\n${entries.join('\n')}\n\`\`\``,
         };
       }
 
@@ -96,7 +87,7 @@ export const fileCommand: OpenClawCommand = {
 
       return {
         success: true,
-        output: `*${relative}* (${lines.length} lines, ${(stat.size / 1024).toFixed(1)}KB)\n\`\`\`${ext}\n${shown.slice(0, 3500)}\n\`\`\`${truncated ? `\n(showing first ${maxLines} of ${lines.length} lines)` : ''}`,
+        output: `*[${project.name}] ${relative}* (${lines.length} lines, ${(stat.size / 1024).toFixed(1)}KB)\n\`\`\`${ext}\n${shown.slice(0, 3500)}\n\`\`\`${truncated ? `\n(showing first ${maxLines} of ${lines.length} lines)` : ''}`,
       };
     } catch (err) {
       return { success: false, output: `Error: ${err instanceof Error ? err.message : String(err)}` };

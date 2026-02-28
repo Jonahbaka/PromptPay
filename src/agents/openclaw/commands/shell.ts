@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // OpenClaw :: /shell — Execute shell commands on the server
+// Project-aware: runs in active project directory
 // DANGEROUS: requires /confirm
 // ═══════════════════════════════════════════════════════════════
 
@@ -49,15 +50,17 @@ export const shellCommand: OpenClawCommand = {
     // Check blocklist
     for (const pattern of BLOCKED_PATTERNS) {
       if (pattern.test(args)) {
-        ctx.auditTrail.record('openclaw', 'shell_blocked', ctx.chatId, { command: args });
+        ctx.auditTrail.record('openclaw', 'shell_blocked', ctx.chatId, { command: args, project: ctx.activeProject.id });
         return { success: false, output: `Blocked: dangerous command pattern detected.\nPattern: \`${pattern.source}\`` };
       }
     }
 
+    const project = ctx.activeProject;
+
     return new Promise((resolve) => {
       const timeout = 30_000;
-      const child = exec(args, {
-        cwd: '/home/ec2-user/PromptPay',
+      exec(args, {
+        cwd: project.path,
         timeout,
         maxBuffer: 1024 * 512,
         env: { ...process.env, TERM: 'dumb' },
@@ -74,13 +77,14 @@ export const shellCommand: OpenClawCommand = {
 
         ctx.auditTrail.record('openclaw', 'shell_exec', ctx.chatId, {
           command: args.slice(0, 200),
+          project: project.id,
           exitCode,
           outputLength: result.length,
         });
 
         resolve({
           success: exitCode === 0,
-          output: `\`\`\`\n$ ${args}\n${result.slice(0, 3500)}\n\`\`\`${result.length > 3500 ? '\n(truncated)' : ''}`,
+          output: `*[${project.name}]*\n\`\`\`\n$ ${args}\n${result.slice(0, 3400)}\n\`\`\`${result.length > 3400 ? '\n(truncated)' : ''}`,
         });
       });
     });

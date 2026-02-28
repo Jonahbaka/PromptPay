@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
-// OpenClaw :: /github — GitHub operations via gh CLI
+// OpenClaw :: /github — GitHub operations via git/gh CLI
+// Project-aware: runs in active project directory
 // ═══════════════════════════════════════════════════════════════
 
 import { exec } from 'child_process';
@@ -31,9 +32,11 @@ export const githubCommand: OpenClawCommand = {
       return { success: false, output: `Unknown action: ${action}\nAvailable: ${Object.keys(ACTIONS).join(', ')}` };
     }
 
+    const project = ctx.activeProject;
+
     return new Promise((resolve) => {
       exec(cmd, {
-        cwd: '/home/ec2-user/PromptPay',
+        cwd: project.path,
         timeout: 15_000,
         maxBuffer: 1024 * 256,
       }, (error, stdout) => {
@@ -41,7 +44,7 @@ export const githubCommand: OpenClawCommand = {
 
         resolve({
           success: !error,
-          output: `*GitHub — ${action}:*\n\`\`\`\n${output.slice(0, 3500)}\n\`\`\``,
+          output: `*[${project.name}] GitHub — ${action}:*\n\`\`\`\n${output.slice(0, 3500)}\n\`\`\``,
         });
       });
     });
