@@ -63,24 +63,51 @@ export class AuditTrail {
   }
 
   record(actor: string, action: string, target: string, details: Record<string, unknown> = {}): AuditEntry {
-    this.sequenceCounter++;
+    // Use DB-level atomic sequence to prevent cluster race conditions
+    // Re-read max sequence from DB each time to handle concurrent workers
+    const maxRow = this.db.prepare(
+      'SELECT MAX(sequence_number) as max_seq FROM audit_trail'
+    ).get() as { max_seq: number | null } | undefined;
+    const nextSeq = (maxRow?.max_seq ?? 0) + 1;
+
     const id = uuid();
     const now = new Date();
 
-    const payload = `${this.lastHash}|${this.sequenceCounter}|${now.toISOString()}|${actor}|${action}|${target}|${JSON.stringify(details)}`;
+    const payload = `${this.lastHash}|${nextSeq}|${now.toISOString()}|${actor}|${action}|${target}|${JSON.stringify(details)}`;
     const hash = createHash('sha256').update(payload).digest('hex');
 
     const entry: AuditEntry = {
-      id, sequenceNumber: this.sequenceCounter, timestamp: now,
+      id, sequenceNumber: nextSeq, timestamp: now,
       actor, action, target, details, previousHash: this.lastHash, hash,
     };
 
-    this.db.prepare(`
-      INSERT INTO audit_trail (id, sequence_number, timestamp, actor, action, target, details, previous_hash, hash)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, this.sequenceCounter, now.toISOString(), actor, action, target, JSON.stringify(details), this.lastHash, hash);
+    try {
+      this.db.prepare(`
+        INSERT INTO audit_trail (id, sequence_number, timestamp, actor, action, target, details, previous_hash, hash)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(id, nextSeq, now.toISOString(), actor, action, target, JSON.stringify(details), this.lastHash, hash);
+    } catch (err: unknown) {
+      // If UNIQUE constraint fails (concurrent worker wrote same seq), retry once with fresh seq
+      if (err instanceof Error && err.message.includes('UNIQUE constraint')) {
+        const retryRow = this.db.prepare(
+          'SELECT MAX(sequence_number) as max_seq FROM audit_trail'
+        ).get() as { max_seq: number | null } | undefined;
+        const retrySeq = (retryRow?.max_seq ?? 0) + 1;
+        const retryPayload = `${this.lastHash}|${retrySeq}|${now.toISOString()}|${actor}|${action}|${target}|${JSON.stringify(details)}`;
+        const retryHash = createHash('sha256').update(retryPayload).digest('hex');
+        entry.sequenceNumber = retrySeq;
+        entry.hash = retryHash;
+        this.db.prepare(`
+          INSERT INTO audit_trail (id, sequence_number, timestamp, actor, action, target, details, previous_hash, hash)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, retrySeq, now.toISOString(), actor, action, target, JSON.stringify(details), this.lastHash, retryHash);
+      } else {
+        throw err;
+      }
+    }
 
-    this.lastHash = hash;
+    this.sequenceCounter = entry.sequenceNumber;
+    this.lastHash = entry.hash;
     return entry;
   }
 

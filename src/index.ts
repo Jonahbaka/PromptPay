@@ -68,12 +68,16 @@ async function main(): Promise<void> {
 
   // ── 2. Audit Trail ──
   const auditTrail = new AuditTrail(db, logger);
-  auditTrail.record('system', 'boot', 'upromptpay', {
-    version: CONFIG.platform.version,
-    domain: CONFIG.platform.domainUrl,
-    workerId,
-    primary,
-  });
+  try {
+    auditTrail.record('system', 'boot', 'upromptpay', {
+      version: CONFIG.platform.version,
+      domain: CONFIG.platform.domainUrl,
+      workerId,
+      primary,
+    });
+  } catch (err) {
+    logger.warn(`Boot audit record failed (cluster race): ${err instanceof Error ? err.message : err}`);
+  }
 
   // ── 3. Circuit Breakers ──
   const circuitBreakers = new CircuitBreakerRegistry(CONFIG.healing, logger);
@@ -267,12 +271,16 @@ async function main(): Promise<void> {
     logger.info(` Cluster: Worker ${workerId} | Primary: ${primary}`);
     logger.info('═══════════════════════════════════════════');
 
-    auditTrail.record('system', 'online', 'promptpay', {
-      port: CONFIG.gateway.port,
-      tools: orchestrator.getState().toolCount,
-      workerId,
-      primary,
-    });
+    try {
+      auditTrail.record('system', 'online', 'promptpay', {
+        port: CONFIG.gateway.port,
+        tools: orchestrator.getState().toolCount,
+        workerId,
+        primary,
+      });
+    } catch (err) {
+      logger.warn(`Online audit record failed: ${err instanceof Error ? err.message : err}`);
+    }
 
     // Signal PM2 that this worker is ready to accept traffic
     signalReady();
@@ -306,8 +314,12 @@ async function main(): Promise<void> {
     }
     orchestrator.stop();
 
-    // 4. Record shutdown in audit trail
-    auditTrail.record('system', 'shutdown', 'promptpay', { workerId, signal });
+    // 4. Record shutdown in audit trail (best-effort — don't crash on DB errors)
+    try {
+      auditTrail.record('system', 'shutdown', 'promptpay', { workerId, signal });
+    } catch {
+      // DB may already be closed or sequence conflict — safe to ignore during shutdown
+    }
 
     // 5. Wait for in-flight requests to drain (up to 10s)
     await new Promise<void>(resolve => setTimeout(resolve, 2000));
@@ -321,13 +333,13 @@ async function main(): Promise<void> {
     process.exit(0);
   };
 
-  process.on('SIGINT', () => shutdown('SIGINT'));
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => { shutdown('SIGINT').catch(() => process.exit(1)); });
+  process.on('SIGTERM', () => { shutdown('SIGTERM').catch(() => process.exit(1)); });
 
   // PM2 sends 'shutdown' message before SIGINT in cluster mode
   process.on('message', (msg) => {
     if (msg === 'shutdown') {
-      shutdown('pm2-shutdown');
+      shutdown('pm2-shutdown').catch(() => process.exit(1));
     }
   });
 }

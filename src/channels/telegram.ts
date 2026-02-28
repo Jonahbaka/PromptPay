@@ -56,6 +56,20 @@ export class TelegramChannel extends BaseChannel {
       return;
     }
 
+    // Clear any stale webhook/polling sessions from previous workers
+    // This prevents 409 "Conflict" errors during PM2 cluster reloads
+    try {
+      await fetch(`https://api.telegram.org/bot${CONFIG.telegram.botToken}/deleteWebhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ drop_pending_updates: false }),
+      });
+      // Brief pause to let Telegram release the old polling session
+      await this.sleep(2000);
+    } catch (err) {
+      this.logger.warn(`Telegram webhook cleanup failed: ${err}`);
+    }
+
     this.active = true;
     this.running = true;
     this.logger.info('Telegram channel started (long-polling)');
@@ -86,8 +100,9 @@ export class TelegramChannel extends BaseChannel {
         if (!data.ok) {
           const desc = data.description || 'unknown';
           if (desc.includes('Conflict')) {
-            // Stale connection from previous restart — short retry
-            await this.sleep(5000);
+            // 409: Another getUpdates is active — wait for old worker to fully shut down
+            this.logger.warn('Telegram 409 Conflict — waiting for old session to release...');
+            await this.sleep(8000);
           } else {
             this.logger.warn(`Telegram poll error: ${desc}`);
             await this.sleep(3000);
