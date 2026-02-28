@@ -12,7 +12,10 @@ import { CONFIG } from '../../core/config.js';
 // ── Helper: get DB ──
 
 function getDb(): Database.Database {
-  return new Database(CONFIG.database.path);
+  const db = new Database(CONFIG.database.path);
+  db.pragma('journal_mode = WAL');
+  db.pragma('busy_timeout = 5000');
+  return db;
 }
 
 // ── Create Shopping List ──

@@ -1,8 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // PromptPay v2.0 :: Entry Point
 // Agentic-first platform — 9 agents (4 agentic + 5 payment), ~93 tools
-// Aria (Shopping) + Sage (Advisor) + Quant (Trading) + Otto (Assistant)
-// + Nexus + Janus + Mercury + Plutus + Atlas
+// Cluster-mode aware for zero-downtime deploys
 // https://www.upromptpay.com
 // ═══════════════════════════════════════════════════════════════
 
@@ -30,6 +29,8 @@ import { ChannelManager } from './channels/manager.js';
 import { EmailChannel, EmailTemplates } from './channels/email.js';
 import { PushChannel } from './channels/push.js';
 import { TelegramChannel } from './channels/telegram.js';
+import { OpenClawAgent } from './agents/openclaw/index.js';
+import { isPrimaryWorker, getWorkerId, signalReady } from './core/cluster.js';
 import type { ChannelMessage } from './core/types.js';
 
 // Import agentic agent tools (primary)
@@ -44,10 +45,13 @@ import { bankingTools } from './agents/banking/index.js';
 import { financialTools } from './agents/financial/index.js';
 
 async function main(): Promise<void> {
+  const workerId = getWorkerId();
+  const primary = isPrimaryWorker();
   const logger = createLogger('promptpay');
+
   logger.info('═══════════════════════════════════════════');
-  logger.info(' PromptPay v2.0 — Starting...');
-  logger.info(' Agentic-First Platform');
+  logger.info(` PromptPay v2.0 — Worker ${workerId} starting...`);
+  logger.info(` Primary: ${primary} | Agentic-First Platform`);
   logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
   logger.info('═══════════════════════════════════════════');
 
@@ -56,7 +60,7 @@ async function main(): Promise<void> {
   const db = memory.getDb();
   logger.info('Memory store initialized');
 
-  // Seed data
+  // Seed data (safe to run on all workers — idempotent)
   memory.seedAchievements();
   memory.seedDefaultCashbackRules();
   memory.seedOwnerAccount(hashPassword);
@@ -64,7 +68,12 @@ async function main(): Promise<void> {
 
   // ── 2. Audit Trail ──
   const auditTrail = new AuditTrail(db, logger);
-  auditTrail.record('system', 'boot', 'upromptpay', { version: CONFIG.platform.version, domain: CONFIG.platform.domainUrl });
+  auditTrail.record('system', 'boot', 'upromptpay', {
+    version: CONFIG.platform.version,
+    domain: CONFIG.platform.domainUrl,
+    workerId,
+    primary,
+  });
 
   // ── 3. Circuit Breakers ──
   const circuitBreakers = new CircuitBreakerRegistry(CONFIG.healing, logger);
@@ -116,7 +125,7 @@ async function main(): Promise<void> {
   await channelManager.startAll();
 
   // ── 8. Gateway ──
-  const { app, server } = createGateway({ orchestrator, memory, logger });
+  const { app, server, wss } = createGateway({ orchestrator, memory, logger });
 
   // Webhook routes
   const webhookRouter = createWebhookRoutes({
@@ -198,134 +207,53 @@ async function main(): Promise<void> {
   });
   app.use(adminRouter);
 
-  // ── 9. Telegram Channel + Daemon ──
-  const telegram = new TelegramChannel(logger);
-  channelManager.register(telegram);
-  await telegram.start();
+  // ── 9. Singletons: Telegram + OpenClaw + Daemon (primary worker only) ──
+  let telegram: TelegramChannel | null = null;
+  let daemon: DaemonLoop | null = null;
+  let openclaw: OpenClawAgent | null = null;
 
-  // ── 9b. OpenClaw Agent — Owner-Only Telegram AI ──
-  const openclawHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
-  const OPENCLAW_PROMPT = `You are OpenClaw, a private AI agent for the owner of PromptPay (upromptpay.com).
-You are NOT a customer-facing chatbot. You are a full autonomous agent with executive-level intelligence.
+  if (primary) {
+    telegram = new TelegramChannel(logger);
+    channelManager.register(telegram);
+    await telegram.start();
+    logger.info('Telegram polling started (primary worker)');
 
-## Who You Are
-- Name: OpenClaw
-- Role: Personal AI agent for the PromptPay founder
-- Platform: Telegram (@promtpay_bot)
-- Personality: Sharp, direct, resourceful. You think like a CTO + CEO hybrid.
+    // OpenClaw agent — owner-only autonomous Telegram AI
+    openclaw = new OpenClawAgent({ telegram, auditTrail, logger, db, orchestrator });
 
-## Your Capabilities
-- General knowledge & reasoning (you are a large language model)
-- Business strategy, market analysis, competitive intelligence
-- Code review, debugging advice, architecture decisions
-- Financial analysis, unit economics, growth strategy
-- Research: summarize topics, explain concepts, brainstorm ideas
-- Draft emails, messages, documents, pitch decks
-- Daily briefings on platform health, metrics, news
-- Anything the owner asks — you are not limited to fintech
+    telegram.on('message', async (msg: ChannelMessage) => {
+      if (msg.direction !== 'inbound') return;
 
-## Platform Context
-- PromptPay: AI-powered fintech platform for Africa + global
-- Stack: TypeScript, Express 5, SQLite, PM2 on EC2
-- Domain: upromptpay.com
-- 7 agents, ~75 tools
-- GitHub: github.com/Jonahbaka/PromptPay
-- Admin: /secure/admin
+      const chatId = String(msg.metadata.chatId || msg.senderId);
+      const username = String(msg.metadata.username || 'telegram-user');
+      const userText = msg.content.trim();
 
-## Rules
-- You serve ONLY the owner. This channel is private.
-- Be direct. No fluff, no "I'd be happy to help", no menus.
-- If asked about something you don't know, say so honestly and suggest how to find out.
-- You can discuss ANY topic — tech, business, news, personal, creative, anything.
-- Keep responses concise for Telegram (under 4000 chars). Use markdown formatting.
-- When discussing code or technical issues, be specific with file paths and line numbers.
-- If the owner asks you to do something on the server, explain the exact commands needed.
-- You have memory of this conversation session. Reference earlier messages when relevant.`;
+      if (!userText) return;
 
-  telegram.on('message', async (msg: ChannelMessage) => {
-    if (msg.direction !== 'inbound') return;
-
-    const chatId = String(msg.metadata.chatId || msg.senderId);
-    const username = msg.metadata.username || 'telegram-user';
-    const userText = msg.content.trim();
-
-    if (!userText) return;
-
-    // Owner-only access
-    const ownerChatId = CONFIG.telegram.ownerChatId;
-    if (ownerChatId && chatId !== ownerChatId) {
-      await telegram.sendMessage(chatId, 'This is a private agent. Access denied.');
-      logger.warn(`Telegram unauthorized: @${username} (${chatId}) blocked`);
-      return;
-    }
-
-    logger.info(`OpenClaw command from @${username}: ${userText.slice(0, 80)}`);
-
-    try {
-      // Build conversation with rolling history (last 20 exchanges)
-      openclawHistory.push({ role: 'user', content: userText });
-      if (openclawHistory.length > 40) openclawHistory.splice(0, openclawHistory.length - 40);
-
-      const messages = [
-        { role: 'system' as const, content: OPENCLAW_PROMPT },
-        ...openclawHistory,
-      ];
-
-      // Call Ollama directly with OpenClaw's own prompt (bypasses fintech soul.md)
-      const ollamaRes = await fetch(`${CONFIG.ollama.baseUrl}/v1/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${CONFIG.ollama.apiKey}`,
-        },
-        body: JSON.stringify({
-          model: CONFIG.ollama.model,
-          messages,
-          max_tokens: CONFIG.ollama.maxTokens,
-          temperature: 0.4,
-        }),
-      });
-
-      if (!ollamaRes.ok) {
-        const errText = await ollamaRes.text();
-        logger.error(`OpenClaw Ollama error: ${ollamaRes.status} ${errText}`);
-        await telegram.sendMessage(chatId, `AI error (${ollamaRes.status}). Check logs.`);
+      // Owner-only access
+      const ownerChatId = CONFIG.telegram.ownerChatId;
+      if (ownerChatId && chatId !== ownerChatId) {
+        await telegram!.sendMessage(chatId, 'This is a private agent. Access denied.');
+        logger.warn(`Telegram unauthorized: @${username} (${chatId}) blocked`);
         return;
       }
 
-      const data = await ollamaRes.json() as { choices: Array<{ message: { content: string } }>; usage?: { total_tokens: number } };
-      const reply = data.choices?.[0]?.message?.content || 'No response generated.';
+      await openclaw!.handleMessage(chatId, username, userText);
+    });
 
-      openclawHistory.push({ role: 'assistant', content: reply });
-      logger.info(`OpenClaw responded — ${data.usage?.total_tokens || '?'} tokens`);
-
-      // Telegram max message = 4096 chars; split if needed
-      if (reply.length <= 4096) {
-        await telegram.sendMessage(chatId, reply);
-      } else {
-        const chunks = reply.match(/[\s\S]{1,4000}/g) || [reply];
-        for (const chunk of chunks) {
-          await telegram.sendMessage(chatId, chunk);
-        }
-      }
-
-      auditTrail.record('openclaw', 'command', `tg:${chatId}`, { input: userText.slice(0, 200), tokens: data.usage?.total_tokens });
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : String(err);
-      logger.error(`OpenClaw error: ${errMsg}`);
-      await telegram.sendMessage(chatId, `Error: ${errMsg.slice(0, 200)}`).catch(() => {});
-    }
-  });
-
-  const daemon = new DaemonLoop({ orchestrator, db, auditTrail, hookEngine, telegram, feeEngine, logger });
+    daemon = new DaemonLoop({ orchestrator, db, auditTrail, hookEngine, telegram, feeEngine, logger });
+    daemon.start();
+    logger.info('Daemon loop started (primary worker)');
+  } else {
+    logger.info(`Worker ${workerId}: skipping Telegram/Daemon/OpenClaw (non-primary)`);
+  }
 
   // ── 10. Start everything ──
   orchestrator.start();
-  daemon.start();
 
   server.listen(CONFIG.gateway.port, CONFIG.gateway.host, () => {
     logger.info('═══════════════════════════════════════════');
-    logger.info(` PromptPay v2.0 ONLINE — Agentic-First`);
+    logger.info(` PromptPay v2.0 ONLINE — Worker ${workerId}`);
     logger.info(` Local:  http://${CONFIG.gateway.host}:${CONFIG.gateway.port}`);
     logger.info(` Domain: ${CONFIG.platform.domainUrl}`);
     logger.info(` Agents: 7 (Aria, Otto + Nexus, Janus, Mercury, Plutus, Atlas)`);
@@ -336,26 +264,72 @@ You are NOT a customer-facing chatbot. You are a full autonomous agent with exec
     logger.info(` Auth: Multi-tenant (Owner + Partner + User + Developer)`);
     logger.info(` Admin: /${CONFIG.admin.secretPath}`);
     logger.info(` Owner: ${CONFIG.auth.ownerEmail}`);
+    logger.info(` Cluster: Worker ${workerId} | Primary: ${primary}`);
     logger.info('═══════════════════════════════════════════');
 
     auditTrail.record('system', 'online', 'promptpay', {
       port: CONFIG.gateway.port,
       tools: orchestrator.getState().toolCount,
+      workerId,
+      primary,
     });
+
+    // Signal PM2 that this worker is ready to accept traffic
+    signalReady();
   });
 
   // ── Graceful shutdown ──
-  const shutdown = async (): Promise<void> => {
-    logger.info('Shutting down PromptPay...');
-    daemon.stop();
-    orchestrator.stop();
+  let shuttingDown = false;
+
+  const shutdown = async (signal: string): Promise<void> => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+
+    logger.info(`Worker ${workerId} shutting down (${signal})...`);
+
+    // 1. Stop accepting new connections
     server.close();
-    auditTrail.record('system', 'shutdown', 'promptpay', {});
+
+    // 2. Close WebSocket clients gracefully
+    for (const client of wss.clients) {
+      try {
+        client.close(1001, 'Server restarting');
+      } catch {}
+    }
+
+    // 3. Stop singletons (primary only)
+    if (primary) {
+      daemon?.stop();
+      if (telegram) {
+        await telegram.stop().catch(() => {});
+      }
+    }
+    orchestrator.stop();
+
+    // 4. Record shutdown in audit trail
+    auditTrail.record('system', 'shutdown', 'promptpay', { workerId, signal });
+
+    // 5. Wait for in-flight requests to drain (up to 10s)
+    await new Promise<void>(resolve => setTimeout(resolve, 2000));
+
+    // 6. Close database
+    try {
+      db.close();
+    } catch {}
+
+    logger.info(`Worker ${workerId} shutdown complete.`);
     process.exit(0);
   };
 
-  process.on('SIGINT', shutdown);
-  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+  // PM2 sends 'shutdown' message before SIGINT in cluster mode
+  process.on('message', (msg) => {
+    if (msg === 'shutdown') {
+      shutdown('pm2-shutdown');
+    }
+  });
 }
 
 main().catch(err => {

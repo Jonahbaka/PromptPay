@@ -26,6 +26,7 @@ export class MemoryStore extends EventEmitter {
 
     this.db = new Database(CONFIG.database.path);
     this.db.pragma('journal_mode = WAL');
+    this.db.pragma('busy_timeout = 5000');
     this.db.pragma('foreign_keys = ON');
     this.initSchema();
     this.logger.info('MemoryStore initialized', { dbPath: CONFIG.database.path });
