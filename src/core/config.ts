@@ -16,7 +16,7 @@ function env(key: string, fallback?: string): string {
 export const CONFIG = {
   // ── AI Models (tiered) ──
   anthropic: {
-    apiKey: env('ANTHROPIC_API_KEY'),
+    apiKey: env('ANTHROPIC_API_KEY', ''),
     model: env('ANTHROPIC_MODEL', 'claude-opus-4-6'),
     maxTokens: 16384,
     temperature: 0.3,
