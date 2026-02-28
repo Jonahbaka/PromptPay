@@ -123,10 +123,11 @@
     }
     .app::before {
       content: ''; position: fixed; inset: 0;
-      background: radial-gradient(ellipse at 30% 20%, rgba(124,58,237,0.06) 0%, transparent 50%),
-                  radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 50%),
-                  radial-gradient(ellipse at 50% 50%, rgba(6,182,212,0.03) 0%, transparent 50%);
+      background: radial-gradient(circle at 0% 0%, rgba(99,102,241,0.12) 0%, transparent 50%),
+                  radial-gradient(circle at 100% 100%, rgba(168,85,247,0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 50%, rgba(59,130,246,0.04) 0%, transparent 40%);
       pointer-events: none; z-index: 0;
+      filter: blur(60px);
       animation: ambientDrift 20s ease-in-out infinite alternate;
     }
     @keyframes ambientDrift {
@@ -174,7 +175,7 @@
     .page {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       overflow-y: auto; overflow-x: hidden;
-      padding: 0 16px 100px;
+      padding: 0 16px 120px;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
       opacity: 0; pointer-events: none;
@@ -191,21 +192,22 @@
 
     /* ── Balance Card ── */
     .balance-card {
-      position: relative; border-radius: 24px; padding: 28px 24px;
+      position: relative; border-radius: 28px; padding: 28px 24px;
       margin-bottom: 24px; overflow: hidden;
-      background: linear-gradient(145deg, rgba(124,58,237,0.15), rgba(59,130,246,0.1), rgba(6,182,212,0.08));
-      border: 1px solid rgba(255,255,255,0.08);
+      background: linear-gradient(145deg, rgba(99,102,241,0.18), rgba(168,85,247,0.12), rgba(59,130,246,0.08));
+      border: 1px solid rgba(255,255,255,0.1);
       backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+      box-shadow: 0 16px 48px -12px rgba(99,102,241,0.15);
     }
     .balance-card::before {
-      content: ''; position: absolute; top: -50%; right: -20%; width: 200px; height: 200px;
-      background: radial-gradient(circle, rgba(124,58,237,0.2), transparent 70%);
-      filter: blur(40px); pointer-events: none;
+      content: ''; position: absolute; top: -50%; right: -20%; width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(99,102,241,0.25), transparent 70%);
+      filter: blur(50px); pointer-events: none;
     }
     .balance-card::after {
-      content: ''; position: absolute; bottom: -30%; left: -10%; width: 160px; height: 160px;
-      background: radial-gradient(circle, rgba(6,182,212,0.15), transparent 70%);
-      filter: blur(40px); pointer-events: none;
+      content: ''; position: absolute; bottom: -30%; left: -10%; width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(168,85,247,0.18), transparent 70%);
+      filter: blur(50px); pointer-events: none;
     }
     .balance-label { font-size: 13px; color: var(--text2); margin-bottom: 6px; position: relative; z-index: 1; }
     .balance-amount {
@@ -222,20 +224,21 @@
       display: flex; gap: 10px; margin-top: 24px; position: relative; z-index: 1;
     }
     .bal-btn {
-      flex: 1; padding: 13px; border-radius: var(--radius-sm); border: none;
-      font-size: 14px; font-weight: 600; cursor: pointer; display: flex;
+      flex: 1; padding: 14px; border-radius: 16px; border: none;
+      font-size: 14px; font-weight: 700; cursor: pointer; display: flex;
       align-items: center; justify-content: center; gap: 8px;
-      transition: all 0.2s; font-family: inherit;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); font-family: inherit;
       min-width: 0;
     }
-    .bal-btn:active { transform: scale(0.96); }
+    .bal-btn:active { transform: scale(0.93); }
     .bal-btn-primary {
-      background: var(--gradient2); color: white;
-      box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+      background: linear-gradient(135deg, #6366f1, #a855f7); color: white;
+      box-shadow: 0 8px 24px rgba(99,102,241,0.35);
     }
     .bal-btn-secondary {
       background: rgba(255,255,255,0.08); color: var(--text);
       border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
     }
 
     /* ── Quick Actions Grid ── */
@@ -245,25 +248,31 @@
     }
     .quick-item {
       display: flex; flex-direction: column; align-items: center; gap: 8px;
-      cursor: pointer; transition: transform 0.2s;
+      cursor: pointer; transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       -webkit-tap-highlight-color: transparent;
     }
-    .quick-item:active { transform: scale(0.92); }
+    .quick-item:active { transform: scale(0.88); }
     .quick-icon {
-      width: 54px; height: 54px; border-radius: 16px;
+      width: 56px; height: 56px; border-radius: 20px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px; transition: all 0.2s;
+      font-size: 22px; transition: all 0.25s;
       border: 1px solid rgba(255,255,255,0.06);
+      position: relative; overflow: hidden;
     }
-    .quick-label { font-size: 11px; color: var(--text2); font-weight: 500; text-align: center; }
-    .qi-violet { background: rgba(124,58,237,0.12); }
-    .qi-blue { background: rgba(59,130,246,0.12); }
-    .qi-cyan { background: rgba(6,182,212,0.12); }
-    .qi-green { background: rgba(16,185,129,0.12); }
-    .qi-pink { background: rgba(236,72,153,0.12); }
-    .qi-orange { background: rgba(249,115,22,0.12); }
-    .qi-yellow { background: rgba(245,158,11,0.12); }
-    .qi-red { background: rgba(239,68,68,0.12); }
+    .quick-icon::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .quick-label { font-size: 11px; color: var(--text2); font-weight: 600; text-align: center; letter-spacing: -0.01em; }
+    .qi-violet { background: rgba(124,58,237,0.18); border-color: rgba(124,58,237,0.15); }
+    .qi-blue { background: rgba(59,130,246,0.18); border-color: rgba(59,130,246,0.15); }
+    .qi-cyan { background: rgba(6,182,212,0.18); border-color: rgba(6,182,212,0.15); }
+    .qi-green { background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.15); }
+    .qi-pink { background: rgba(236,72,153,0.18); border-color: rgba(236,72,153,0.15); }
+    .qi-orange { background: rgba(249,115,22,0.18); border-color: rgba(249,115,22,0.15); }
+    .qi-yellow { background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.15); }
+    .qi-red { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.15); }
 
     /* ── Section Headers ── */
     .section-header {
@@ -275,14 +284,17 @@
 
     /* ── AI Agent Card ── */
     .ai-card {
-      background: var(--surface); border: 1px solid var(--glass-border);
-      border-radius: var(--radius); padding: 18px; margin-bottom: 24px;
-      cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+      background: rgba(99,102,241,0.06);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 24px; padding: 20px; margin-bottom: 24px;
+      cursor: pointer; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative; overflow: hidden;
     }
-    .ai-card:active { transform: scale(0.98); }
+    .ai-card:active { transform: scale(0.97); background: rgba(99,102,241,0.1); }
     .ai-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: var(--gradient2);
+      content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 50%);
+      pointer-events: none;
     }
     .ai-card-header {
       display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
@@ -314,9 +326,9 @@
     }
     .tx-item:last-child { border-bottom: none; }
     .tx-icon {
-      width: 44px; height: 44px; border-radius: 14px;
+      width: 44px; height: 44px; border-radius: 16px;
       display: flex; align-items: center; justify-content: center; font-size: 18px;
-      flex-shrink: 0;
+      flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05);
     }
     .tx-info { flex: 1; min-width: 0; }
     .tx-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -620,39 +632,65 @@
       justify-content: center;
     }
 
-    /* ── Bottom Navigation ── */
+    /* ── Bottom Navigation: Floating Dock ── */
     .bottom-nav {
-      position: relative; z-index: 20; flex-shrink: 0;
+      position: fixed; z-index: 20;
+      bottom: max(16px, var(--safe-bottom));
+      left: 20px; right: 20px;
+      height: 68px;
       display: flex; justify-content: space-around; align-items: center;
-      padding: 8px 12px;
-      padding-bottom: max(8px, var(--safe-bottom));
-      background: rgba(6,6,10,0.95);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.05);
+      background: rgba(12, 12, 16, 0.75);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow:
+        0 20px 50px -10px rgba(0,0,0,0.7),
+        0 0 0 0.5px rgba(255,255,255,0.05) inset,
+        0 1px 0 0 rgba(255,255,255,0.05) inset;
     }
     .nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      padding: 6px 16px; cursor: pointer; transition: all 0.2s;
-      border-radius: 12px; position: relative;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 8px 0; cursor: pointer; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative; width: 52px;
       -webkit-tap-highlight-color: transparent;
     }
-    .nav-item:active { transform: scale(0.9); }
-    .nav-icon { font-size: 20px; transition: all 0.2s; opacity: 0.5; }
-    .nav-label { font-size: 10px; color: var(--text2); font-weight: 500; transition: color 0.2s; }
-    .nav-item.active .nav-icon { opacity: 1; }
-    .nav-item.active .nav-label { color: var(--accent2); }
+    .nav-item:active { transform: scale(0.85); }
+    .nav-icon {
+      transition: all 0.25s; color: #52525b;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-icon svg { width: 22px; height: 22px; stroke-width: 2; }
+    .nav-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.02em;
+      color: #52525b; transition: all 0.25s;
+    }
+    .nav-item.active .nav-icon { color: #fff; }
+    .nav-item.active .nav-label { color: #a78bfa; font-weight: 700; }
     .nav-item.active::after {
-      content: ''; position: absolute; top: -8px; width: 24px; height: 3px;
-      background: var(--gradient2); border-radius: 3px;
-      transition: width 0.2s;
+      content: ''; position: absolute; bottom: 0;
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent), 0 0 16px rgba(124,58,237,0.3);
     }
+
+    /* Center AI FAB — elevated white pill */
     .nav-ai {
-      background: var(--gradient2); width: 52px; height: 52px;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      margin-top: -20px; box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+      width: 56px; height: 56px;
+      border-radius: 22px;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: -36px;
+      box-shadow:
+        0 12px 30px rgba(255,255,255,0.15),
+        0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .nav-ai .nav-icon { opacity: 1; color: white; font-size: 22px; }
+    .nav-ai:active { transform: scale(0.88) rotate(5deg); }
+    .nav-ai .nav-icon { color: #000; opacity: 1; }
+    .nav-ai .nav-icon svg { width: 26px; height: 26px; stroke: #000; stroke-width: 2.2; }
     .nav-ai .nav-label { display: none; }
+    .nav-ai.active::after { display: none; }
 
     /* ── Utility ── */
     .fade-up { animation: fadeUp 0.4s ease both; }
@@ -2177,8 +2215,11 @@
       /* Fund modal amounts */
       .fund-modal-amounts { gap: 6px; }
 
-      /* Nav labels */
+      /* Floating dock: tighter on small screens */
+      .bottom-nav { left: 12px; right: 12px; height: 64px; border-radius: 24px; }
+      .nav-item { width: 46px; }
       .nav-label { font-size: 9px; }
+      .nav-ai { width: 50px; height: 50px; border-radius: 20px; margin-top: -30px; }
     }
 
     /* Mid-small screens (381px-480px) */
@@ -3568,37 +3609,37 @@
 
   </div>
 
-  <!-- Bottom Navigation -->
+  <!-- Bottom Navigation: Floating Dock -->
   <div class="bottom-nav">
     <div class="nav-item active" data-page="home">
       <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
       </div>
       <div class="nav-label">Home</div>
     </div>
-    <div class="nav-item" data-page="pos">
+    <div class="nav-item" data-page="wallet">
       <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="15" r="1.5"/></svg>
       </div>
-      <div class="nav-label">POS</div>
+      <div class="nav-label">Wallet</div>
     </div>
     <div class="nav-item nav-ai" data-page="ai">
       <div class="nav-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v12m6-6H6"/></svg>
       </div>
       <div class="nav-label">AI</div>
     </div>
     <div class="nav-item" data-page="calls">
       <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </div>
-      <div class="nav-label">Calls</div>
+      <div class="nav-label">Chat</div>
     </div>
     <div class="nav-item" data-page="profile">
       <div class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </div>
-      <div class="nav-label">Profile</div>
+      <div class="nav-label">Me</div>
     </div>
   </div>
 
