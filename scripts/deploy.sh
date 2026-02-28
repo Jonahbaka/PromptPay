@@ -7,7 +7,7 @@
 set -euo pipefail
 
 APP_DIR="/home/ec2-user/PromptPay"
-HEALTH_URL="http://127.0.0.1:19000/api/health"
+HEALTH_URL="http://127.0.0.1:19000/"
 MAX_RETRIES=5
 RETRY_INTERVAL=3
 
