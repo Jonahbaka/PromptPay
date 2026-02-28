@@ -36,15 +36,23 @@ jobs:
         env:
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          # Write SSH key to file
+          # Write SSH key — normalize line endings and trim whitespace
           mkdir -p ~/.ssh
-          echo "$EC2_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$EC2_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          # Disable strict host key checking for CI
-          echo "Host upromptpay.com" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          # Debug: verify key format (first/last line only, no secrets)
+          head -1 ~/.ssh/deploy_key
+          tail -1 ~/.ssh/deploy_key
+          wc -l ~/.ssh/deploy_key
+
+          # SSH config
+          cat >> ~/.ssh/config << 'SSHEOF'
+          Host upromptpay.com
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            LogLevel ERROR
+          SSHEOF
           chmod 600 ~/.ssh/config
 
           # Run deploy script on EC2
