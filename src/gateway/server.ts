@@ -277,6 +277,73 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
     }
   });
 
+  // ── Agentic Chat (authenticated in-app chat with full agent access) ──
+  app.post('/api/chat', authenticate, async (req: Request, res: Response) => {
+    try {
+      const { message } = req.body as { message?: string };
+      if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        res.status(400).json({ error: 'message is required' });
+        return;
+      }
+      if (message.length > 5000) {
+        res.status(400).json({ error: 'Message too long (max 5000 chars)' });
+        return;
+      }
+
+      const userId = req.auth?.userId || 'anonymous';
+      const role = req.auth?.role || 'user';
+
+      // Rate limit for non-owner users
+      if (role === 'user') {
+        const today = new Date().toISOString().slice(0, 10);
+        const row = deps.memory.getDb().prepare(
+          'SELECT messages_used FROM usage_tracking WHERE user_id = ? AND date = ?'
+        ).get(userId, today) as { messages_used: number } | undefined;
+        const used = row?.messages_used || 0;
+        if (used >= CONFIG.rateLimits.freeMessagesPerDay) {
+          res.status(429).json({
+            error: 'Daily message limit reached',
+            limit: CONFIG.rateLimits.freeMessagesPerDay,
+            used,
+          });
+          return;
+        }
+        deps.memory.getDb().prepare(`
+          INSERT INTO usage_tracking (user_id, date, messages_used)
+          VALUES (?, ?, 1)
+          ON CONFLICT(user_id, date) DO UPDATE SET messages_used = messages_used + 1
+        `).run(userId, today);
+      }
+
+      // Route through the orchestrator as a custom task for full agentic capability
+      const task = deps.orchestrator.createTask(
+        'custom', 'high',
+        'Agentic Chat',
+        message.trim(),
+        {
+          userInitiated: role === 'user',
+          userId,
+          chatMode: true,
+          superAdmin: role === 'owner',
+        }
+      );
+      const result = await deps.orchestrator.executeTask(task);
+
+      // Broadcast via WebSocket
+      broadcastWs(wss, { type: 'chat:reply', userId, taskId: task.id });
+
+      res.json({
+        reply: result.output || "I'm here to help. Could you rephrase that?",
+        taskId: task.id,
+        tokensUsed: result.tokensUsed,
+      });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Agentic chat error: ${errMsg}`);
+      res.status(500).json({ error: 'Chat failed. Please try again.' });
+    }
+  });
+
   // ── Task submission (authenticated) ──
   app.post('/api/task', authenticate, async (req: Request, res: Response) => {
     try {

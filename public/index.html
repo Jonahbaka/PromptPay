@@ -5464,26 +5464,22 @@ async function sendMessage() {
       return;
     }
 
-    // Send to backend
-    const res = await authFetch(API_BASE + '/api/task', {
+    // Send to agentic chat endpoint (full AI with 9 agents + 93 tools)
+    const res = await authFetch(API_BASE + '/api/chat', {
       method: 'POST',
-      body: JSON.stringify({
-        type: detectTaskType(text),
-        priority: 'normal',
-        title: text.slice(0, 100),
-        description: text,
-        payload: { userMessage: text, source: 'chat' }
-      })
+      body: JSON.stringify({ message: text })
     });
 
     typing.remove();
 
     if (res.ok) {
       const data = await res.json();
-      const output = data.result?.output || data.result?.message || 'Task completed successfully.';
+      const output = data.reply || data.result?.output || 'How can I help you?';
       const responseTokens = Math.ceil(output.length / 4);
       tokenStats.used += responseTokens;
       addChatMessage(formatAIResponse(output), 'ai');
+    } else if (res.status === 429) {
+      addChatMessage('You have reached your daily message limit. Upgrade to Premium for unlimited access.', 'ai');
     } else {
       addChatMessage(getSmartFallback(text), 'ai');
     }
