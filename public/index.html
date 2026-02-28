@@ -3826,20 +3826,6 @@
         </div>
       </div>
 
-      <!-- Analytics Dashboard (Admin Only) -->
-      <div class="settings-section" id="analytics-dashboard-link" style="display:none">
-        <div class="settings-section-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-          Analytics &amp; Insights
-        </div>
-        <div style="padding:4px 0 12px;color:var(--text2);font-size:13px;line-height:1.5">
-          Predictive analytics, AI insights, cash flow forecasting, and partner intelligence dashboard.
-        </div>
-        <button class="settings-btn settings-btn-primary settings-btn-full" onclick="window.open('/secure/analytics','_blank')" style="background:linear-gradient(135deg,#6c5ce7,#a855f7)">
-          Open Analytics Dashboard
-        </button>
-      </div>
-
       <!-- Save Preferences Button -->
       <button class="settings-btn settings-btn-primary settings-btn-full" onclick="savePreferences()">
         Save Preferences
@@ -5030,11 +5016,6 @@ function showApp() {
   loadSettings();
   loadPaymentMethods();
   initStripeElements(); // Pre-load Stripe for card form
-  // Show analytics link for admin/partner users
-  const analyticsLink = document.getElementById('analytics-dashboard-link');
-  if (analyticsLink && currentUser && (currentUser.role === 'owner' || currentUser.role === 'partner_admin')) {
-    analyticsLink.style.display = '';
-  }
 }
 
 async function handleProfilePicUpload(event) {

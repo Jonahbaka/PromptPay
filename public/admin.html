@@ -267,6 +267,48 @@
       font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s;
     }
     .pos-period-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    /* ── Analytics Tab ── */
+    .an-tabs { display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; margin-bottom:16px; }
+    .an-tabs::-webkit-scrollbar { display:none; }
+    .an-tab { padding:7px 14px; border-radius:20px; border:1px solid var(--border); background:var(--surface);
+      color:var(--text2); font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .2s; }
+    .an-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+    .kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; transition:border-color .2s; }
+    .kpi-card:hover { border-color:var(--accent); }
+    .kpi-label { font-size:10px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+    .kpi-value { font-size:22px; font-weight:700; margin-bottom:4px; }
+    .kpi-trend { font-size:11px; font-weight:600; }
+    .kpi-trend.up { color:var(--green); } .kpi-trend.down { color:var(--red); } .kpi-trend.stable { color:var(--text2); }
+    .kpi-sparkline { margin-top:8px; height:24px; } .kpi-sparkline svg { width:100%; height:100%; }
+    .an-section { margin-bottom:20px; }
+    .an-section-title2 { font-size:14px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+    .an-section-title2 .badge { font-size:10px; padding:2px 8px; border-radius:10px; background:var(--accent); color:#fff; }
+    .chart-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; min-height:180px; }
+    .chart-box canvas { width:100% !important; height:auto !important; }
+    .chart-filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+    .chart-filter { padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg);
+      color:var(--text2); font-size:12px; cursor:pointer; outline:none; }
+    .chart-filter:focus { border-color:var(--accent); }
+    .insight-card2 { background:var(--surface); border:1px solid var(--border); border-radius:10px;
+      padding:12px 14px; margin-bottom:8px; display:flex; gap:10px; align-items:flex-start; }
+    .insight-icon2 { width:32px; height:32px; border-radius:8px; display:flex; align-items:center;
+      justify-content:center; font-size:16px; flex-shrink:0; }
+    .insight-icon2.warning { background:rgba(245,158,11,.15); }
+    .insight-icon2.positive { background:rgba(34,197,94,.15); }
+    .insight-icon2.info { background:rgba(124,58,237,.15); }
+    .forecast-meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .forecast-pill { padding:5px 10px; border-radius:8px; background:var(--bg); border:1px solid var(--border);
+      font-size:11px; color:var(--text2); }
+    .forecast-pill b { color:var(--text); }
+    .cf-legend { display:flex; gap:14px; margin-top:8px; font-size:12px; color:var(--text2); }
+    .cf-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; vertical-align:middle; }
+    .rank-table2 { width:100%; border-collapse:collapse; font-size:13px; }
+    .rank-table2 th { text-align:left; padding:8px 12px; color:var(--text2); font-size:11px;
+      text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); }
+    .rank-table2 td { padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.03); }
+    .rank-table2 tr:hover td { background:rgba(99,102,241,.05); }
+    @media (max-width: 900px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } }
   </style>
 </head>
 <body>
@@ -387,6 +429,10 @@
   <div class="nav-section" id="nav-section-executive">Executive AI</div>
   <div class="nav-item" data-page="executive" id="nav-executive">
     <span class="nav-icon">&#129504;</span> AI Board
+  </div>
+  <div class="nav-section">Intelligence</div>
+  <div class="nav-item" data-page="analytics">
+    <span class="nav-icon">&#128202;</span> Analytics
   </div>
   <div class="nav-section">System</div>
   <div class="nav-item" data-page="providers">
@@ -1407,6 +1453,101 @@
         <thead><tr><th>ID</th><th>Provider</th><th>From</th><th>To</th><th>Rate</th><th>Status</th></tr></thead>
         <tbody id="xborder-table-body"><tr><td colspan="6" style="color:var(--text2);text-align:center">No transfers yet</td></tr></tbody>
       </table></div>
+    </div>
+  </div>
+
+  <!-- ── ANALYTICS ── -->
+  <div class="page" id="page-analytics" style="display:none;">
+    <div class="header"><h2>Analytics &amp; Insights</h2></div>
+    <div class="an-tabs" id="an-tabs">
+      <div class="an-tab active" onclick="switchAnTab('an-overview')">Overview</div>
+      <div class="an-tab" onclick="switchAnTab('an-trends')">Trends</div>
+      <div class="an-tab" onclick="switchAnTab('an-forecast')">Forecast</div>
+      <div class="an-tab" onclick="switchAnTab('an-insights')">AI Insights</div>
+      <div class="an-tab" onclick="switchAnTab('an-cashflow')">Cash Flow</div>
+      <div class="an-tab" onclick="switchAnTab('an-partners')">Partners</div>
+    </div>
+
+    <!-- Overview -->
+    <div id="an-overview" class="an-section">
+      <div class="kpi-grid" id="an-kpi-grid">
+        <div style="color:var(--text2);padding:20px;grid-column:1/-1;text-align:center">Loading metrics...</div>
+      </div>
+    </div>
+
+    <!-- Trends -->
+    <div id="an-trends" class="an-section" style="display:none">
+      <div class="chart-filters">
+        <select class="chart-filter" id="an-trend-agg" onchange="anLoadTrends()">
+          <option value="hourly">Hourly</option><option value="daily" selected>Daily</option>
+          <option value="weekly">Weekly</option><option value="monthly">Monthly</option>
+        </select>
+        <select class="chart-filter" id="an-trend-metric" onchange="anRenderTrendChart()">
+          <option value="volume">Volume</option><option value="transactions">Transactions</option><option value="revenue">Revenue</option>
+        </select>
+      </div>
+      <div class="chart-box"><canvas id="an-trend-chart" height="250"></canvas></div>
+      <div style="margin-top:14px">
+        <div class="an-section-title2">User Growth</div>
+        <div class="chart-box"><canvas id="an-user-chart" height="180"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Forecast -->
+    <div id="an-forecast" class="an-section" style="display:none">
+      <div class="chart-filters">
+        <select class="chart-filter" id="an-fc-horizon" onchange="anLoadForecast()">
+          <option value="7">7 Days</option><option value="30" selected>30 Days</option><option value="90">90 Days</option>
+        </select>
+        <select class="chart-filter" id="an-fc-metric" onchange="anLoadForecast()">
+          <option value="volume">Volume</option><option value="revenue">Revenue</option><option value="transactions">Transactions</option>
+        </select>
+      </div>
+      <div class="chart-box"><canvas id="an-forecast-chart" height="280"></canvas></div>
+      <div class="forecast-meta" id="an-fc-meta"></div>
+    </div>
+
+    <!-- AI Insights -->
+    <div id="an-insights" class="an-section" style="display:none">
+      <div class="an-section-title2">AI-Generated Insights <span class="badge">Live</span></div>
+      <div id="an-insights-summary" style="font-size:13px;color:var(--text2);margin-bottom:10px;padding:10px;background:var(--surface);border-radius:10px;border:1px solid var(--border)"></div>
+      <div id="an-insights-list">
+        <div style="color:var(--text2);text-align:center;padding:20px">Loading insights...</div>
+      </div>
+    </div>
+
+    <!-- Cash Flow -->
+    <div id="an-cashflow" class="an-section" style="display:none">
+      <div class="an-section-title2">Cash Flow Projection</div>
+      <div class="chart-box"><canvas id="an-cf-chart" height="260"></canvas></div>
+      <div class="cf-legend">
+        <span><span class="cf-dot" style="background:var(--green)"></span>Inflow</span>
+        <span><span class="cf-dot" style="background:var(--red)"></span>Outflow</span>
+        <span><span class="cf-dot" style="background:var(--accent)"></span>Balance</span>
+      </div>
+      <div id="an-cf-warning" style="display:none;margin-top:10px;padding:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;font-size:13px;color:var(--red)">
+        Low liquidity warning: Projected balance drops below zero.
+      </div>
+    </div>
+
+    <!-- Partners -->
+    <div id="an-partners" class="an-section" style="display:none">
+      <div class="an-section-title2">Top Partners</div>
+      <div class="chart-filters">
+        <select class="chart-filter" id="an-partner-sort" onchange="anLoadPartnerRankings()">
+          <option value="volume">By Volume</option><option value="revenue">By Revenue</option>
+        </select>
+      </div>
+      <div class="chart-box" style="overflow-x:auto">
+        <table class="rank-table2">
+          <thead><tr><th>#</th><th>Partner</th><th>Volume</th><th>Revenue</th><th>Transactions</th></tr></thead>
+          <tbody id="an-partner-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px">
+        <div class="an-section-title2">At-Risk Partners <span class="badge" style="background:var(--red)">Churn</span></div>
+        <div id="an-at-risk-list"></div>
+      </div>
     </div>
   </div>
 
@@ -2619,6 +2760,7 @@ function loadPage(page) {
     'hr-dashboard': loadHrDashboard, 'hr-jobs': loadHrJobs,
     'strategy-bootstrap': () => {}, // Static page, no API calls needed
     'calendar': loadChronoDashboard, 'calendar-todos': loadTodoList, 'calendar-events': loadCalendarEvents,
+    'analytics': loadAnalyticsDashboard,
   };
   if (loaders[page]) loaders[page]();
 }
@@ -3009,6 +3151,296 @@ async function deleteEvent(id) {
   if (!confirm('Delete this event?')) return;
   await api('/calendar/events/' + id, { method: 'DELETE' });
   loadCalendarEvents();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ANALYTICS — Predictive Analytics & AI Insights
+// ══════════════════════════════════════════════════════════════
+
+let anTrendData = null;
+
+function anApiGet(path) {
+  return api('/super-analytics' + path, { method: 'GET' }).catch(() => null);
+}
+
+function switchAnTab(tab) {
+  document.querySelectorAll('#an-tabs .an-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`#an-tabs .an-tab[onclick*="${tab}"]`)?.classList.add('active');
+  ['an-overview','an-trends','an-forecast','an-insights','an-cashflow','an-partners'].forEach(t => {
+    const el = document.getElementById(t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'an-trends') anLoadTrends();
+  if (tab === 'an-forecast') anLoadForecast();
+  if (tab === 'an-insights') anLoadInsights();
+  if (tab === 'an-cashflow') anLoadCashFlow();
+  if (tab === 'an-partners') anLoadPartnerRankings();
+}
+
+function anSparkline(points, color) {
+  if (!points || points.length < 2) return '';
+  const max = Math.max(...points, 1);
+  const w = 100, h = 24;
+  const coords = points.map((v, i) => `${(i / (points.length - 1)) * w},${h - (v / max) * h}`);
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <polyline points="${coords.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function anFmtShort(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toFixed(0);
+}
+
+async function loadAnalyticsDashboard() {
+  // Reset to overview tab
+  switchAnTab('an-overview');
+  const data = await anApiGet('/metrics');
+  if (!data || !data.metrics) {
+    document.getElementById('an-kpi-grid').innerHTML = '<div style="color:var(--text2);padding:20px;grid-column:1/-1">Unable to load metrics.</div>';
+    return;
+  }
+  const m = data.metrics;
+  const sp = data.sparklines || {};
+  const cards = [
+    { label: 'Total Volume', value: '$' + fmt(m.totalVolume), trend: m.growth30d, spark: sp.volume, color: '#6366f1' },
+    { label: 'Transactions', value: fmt(m.totalTransactions), trend: m.growth7d, spark: sp.transactions, color: '#3b82f6' },
+    { label: 'Active Users', value: fmt(m.activeUsers), trend: null, spark: sp.users, color: '#22c55e' },
+    { label: 'Revenue', value: '$' + fmt(m.totalRevenue), trend: m.growth30d, spark: sp.revenue, color: '#f59e0b' },
+    { label: 'Avg Tx Size', value: '$' + (m.avgTransactionSize || 0).toFixed(2), trend: null, spark: null, color: '#8b5cf6' },
+    { label: 'Growth 24h', value: (m.growth24h || 0) + '%', trend: m.growth24h, spark: null, color: (m.growth24h || 0) >= 0 ? '#22c55e' : '#ef4444' },
+    { label: 'Growth 7d', value: (m.growth7d || 0) + '%', trend: m.growth7d, spark: null, color: (m.growth7d || 0) >= 0 ? '#22c55e' : '#ef4444' },
+    { label: 'Partners', value: fmt(m.activePartners || 0), trend: null, spark: null, color: '#06b6d4' },
+  ];
+  document.getElementById('an-kpi-grid').innerHTML = cards.map(c => `
+    <div class="kpi-card">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value">${c.value}</div>
+      ${c.trend !== null ? `<div class="kpi-trend ${c.trend > 0 ? 'up' : c.trend < 0 ? 'down' : 'stable'}">
+        ${c.trend > 0 ? '&#9650;' : c.trend < 0 ? '&#9660;' : '&#9644;'} ${Math.abs(c.trend)}%
+      </div>` : ''}
+      ${c.spark ? `<div class="kpi-sparkline">${anSparkline(c.spark, c.color)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function anLoadTrends() {
+  const agg = document.getElementById('an-trend-agg').value;
+  const result = await anApiGet('/trends?agg=' + agg);
+  if (!result) return;
+  anTrendData = result;
+  anRenderTrendChart();
+  if (result.userGrowth) {
+    anDrawLine('an-user-chart', result.userGrowth.map(t => t.users), '#22c55e');
+  }
+}
+
+function anRenderTrendChart() {
+  if (!anTrendData) return;
+  const metric = document.getElementById('an-trend-metric').value;
+  const points = anTrendData.trends.map(t => t[metric]);
+  anDrawLine('an-trend-chart', points, metric === 'revenue' ? '#f59e0b' : '#6366f1');
+}
+
+function anDrawLine(canvasId, data, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !data.length) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const h = parseInt(canvas.getAttribute('height')) || 200;
+  canvas.width = rect.width * dpr; canvas.height = h * dpr;
+  canvas.style.width = rect.width + 'px'; canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+  const w = rect.width;
+  const pad = { top: 20, right: 10, bottom: 30, left: 50 };
+  const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+  ctx.clearRect(0, 0, w, h);
+  const max = Math.max(...data, 1) * 1.1;
+  const min = Math.min(...data, 0);
+  const range = max - min || 1;
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + ch - (i / 4) * ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+    ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(anFmtShort(min + (range * i / 4)), pad.left - 4, y + 3);
+  }
+  ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+  data.forEach((v, i) => {
+    const x = pad.left + (i / (data.length - 1)) * cw;
+    const y = pad.top + ch - ((v - min) / range) * ch;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.lineTo(pad.left + cw, pad.top + ch); ctx.lineTo(pad.left, pad.top + ch); ctx.closePath();
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+  grad.addColorStop(0, color + '30'); grad.addColorStop(1, color + '05');
+  ctx.fillStyle = grad; ctx.fill();
+}
+
+async function anLoadForecast() {
+  const days = document.getElementById('an-fc-horizon').value;
+  const metric = document.getElementById('an-fc-metric').value;
+  const result = await anApiGet('/forecast?days=' + days + '&metric=' + metric);
+  if (!result) return;
+  const all = [...(result.historical || []), ...(result.forecast || [])];
+  const values = all.map(p => p.value);
+  const lowers = all.map(p => p.lower);
+  const uppers = all.map(p => p.upper);
+  const fcStart = (result.historical || []).length;
+  anDrawForecast('an-forecast-chart', values, lowers, uppers, fcStart);
+  document.getElementById('an-fc-meta').innerHTML = `
+    <div class="forecast-pill">Method: <b>${result.method}</b></div>
+    <div class="forecast-pill">Accuracy: <b>${result.accuracy}%</b></div>
+    <div class="forecast-pill">Trend: <b style="color:${result.trend === 'up' ? 'var(--green)' : result.trend === 'down' ? 'var(--red)' : 'var(--text2)'}">${result.trend === 'up' ? '&#9650; Up' : result.trend === 'down' ? '&#9660; Down' : '&#9644; Stable'} (${result.growthRate}%)</b></div>
+  `;
+}
+
+function anDrawForecast(canvasId, values, lowers, uppers, fcStart) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !values.length) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const h = 280;
+  canvas.width = rect.width * dpr; canvas.height = h * dpr;
+  canvas.style.width = rect.width + 'px'; canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+  const w = rect.width;
+  const pad = { top: 20, right: 10, bottom: 30, left: 50 };
+  const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+  ctx.clearRect(0, 0, w, h);
+  const allV = [...values, ...lowers, ...uppers];
+  const max = Math.max(...allV, 1) * 1.1;
+  const min = Math.min(...allV.filter(v => v >= 0), 0);
+  const range = max - min || 1;
+  const toX = i => pad.left + (i / (values.length - 1)) * cw;
+  const toY = v => pad.top + ch - ((v - min) / range) * ch;
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + ch - (i / 4) * ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+    ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(anFmtShort(min + (range * i / 4)), pad.left - 4, y + 3);
+  }
+  if (fcStart > 0 && fcStart < values.length) {
+    const fx = toX(fcStart);
+    ctx.strokeStyle = 'rgba(99,102,241,.3)'; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(fx, pad.top); ctx.lineTo(fx, pad.top + ch); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#6366f1'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Forecast →', fx + 30, pad.top + 10);
+  }
+  ctx.fillStyle = 'rgba(99,102,241,.1)'; ctx.beginPath();
+  for (let i = fcStart; i < values.length; i++) ctx.lineTo(toX(i), toY(uppers[i]));
+  for (let i = values.length - 1; i >= fcStart; i--) ctx.lineTo(toX(i), toY(lowers[i]));
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.strokeStyle = '#6366f1'; ctx.lineWidth = 2;
+  for (let i = 0; i < fcStart; i++) { const x = toX(i), y = toY(values[i]); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+  ctx.stroke();
+  ctx.beginPath(); ctx.strokeStyle = '#818cf8'; ctx.lineWidth = 2; ctx.setLineDash([6, 3]);
+  for (let i = Math.max(0, fcStart - 1); i < values.length; i++) { const x = toX(i), y = toY(values[i]); if (i === Math.max(0, fcStart - 1)) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+  ctx.stroke(); ctx.setLineDash([]);
+}
+
+async function anLoadInsights() {
+  const result = await anApiGet('/insights');
+  if (!result) return;
+  document.getElementById('an-insights-summary').textContent = result.summary || 'No summary available.';
+  if (!result.insights || result.insights.length === 0) {
+    document.getElementById('an-insights-list').innerHTML = '<div style="color:var(--text2);padding:20px;text-align:center">All metrics normal. No anomalies detected.</div>';
+    return;
+  }
+  document.getElementById('an-insights-list').innerHTML = result.insights.map(i => `
+    <div class="insight-card2">
+      <div class="insight-icon2 ${i.type}">${i.type === 'warning' ? '&#9888;' : i.type === 'positive' ? '&#10003;' : '&#8505;'}</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:2px">${i.title}</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.4">${i.description}</div>
+        <div style="font-size:10px;color:var(--text2);margin-top:4px">
+          <span style="padding:1px 6px;border-radius:4px;font-weight:600;background:${i.confidence > 75 ? 'rgba(34,197,94,.15);color:var(--green)' : 'rgba(245,158,11,.15);color:var(--yellow)'}">${i.confidence}% confidence</span>
+          &nbsp; Impact: <b>${i.impact_level}</b>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function anLoadCashFlow() {
+  const result = await anApiGet('/cash-flow?days=30');
+  if (!result || !result.balanceProjection) return;
+  const inflow = result.balanceProjection.map(p => p.inflow);
+  const outflow = result.balanceProjection.map(p => p.outflow);
+  const balance = result.balanceProjection.map(p => p.balance);
+  anDrawMultiLine('an-cf-chart', [
+    { data: inflow, color: '#22c55e' },
+    { data: outflow, color: '#ef4444' },
+    { data: balance, color: '#6366f1' },
+  ]);
+  document.getElementById('an-cf-warning').style.display = result.lowLiquidityWarning ? '' : 'none';
+}
+
+function anDrawMultiLine(canvasId, series) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const h = 260;
+  canvas.width = rect.width * dpr; canvas.height = h * dpr;
+  canvas.style.width = rect.width + 'px'; canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+  const w = rect.width;
+  const pad = { top: 20, right: 10, bottom: 30, left: 50 };
+  const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+  ctx.clearRect(0, 0, w, h);
+  const allVals = series.flatMap(s => s.data);
+  const max = Math.max(...allVals, 1) * 1.1;
+  const min = Math.min(...allVals, 0) * (Math.min(...allVals) < 0 ? 1.1 : 1);
+  const range = max - min || 1;
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + ch - (i / 4) * ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+    ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(anFmtShort(min + (range * i / 4)), pad.left - 4, y + 3);
+  }
+  for (const s of series) {
+    ctx.beginPath(); ctx.strokeStyle = s.color; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+    s.data.forEach((v, i) => {
+      const x = pad.left + (i / (s.data.length - 1)) * cw;
+      const y = pad.top + ch - ((v - min) / range) * ch;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+}
+
+async function anLoadPartnerRankings() {
+  const sort = document.getElementById('an-partner-sort')?.value || 'volume';
+  const result = await anApiGet('/partners?sort=' + sort);
+  if (!result) return;
+  document.getElementById('an-partner-tbody').innerHTML = (result.rankings || []).map((p, i) => `
+    <tr>
+      <td style="font-weight:800;color:var(--accent)">${i + 1}</td>
+      <td>${p.partnerName || p.partnerId}</td>
+      <td>$${fmt(p.volume)}</td>
+      <td>$${fmt(p.revenue)}</td>
+      <td>${fmt(p.transactions)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text2)">No partner data yet</td></tr>';
+
+  document.getElementById('an-at-risk-list').innerHTML = (result.atRisk || []).map(p => `
+    <div class="insight-card2">
+      <div class="insight-icon2 warning">&#9888;</div>
+      <div>
+        <div style="font-size:13px;font-weight:700">${p.partnerName || p.partnerId}</div>
+        <div style="font-size:12px;color:var(--text2)">Inactive — Volume: $${fmt(p.volume)}, Revenue: $${fmt(p.revenue)}</div>
+      </div>
+    </div>
+  `).join('') || '<div style="color:var(--text2);padding:12px">No at-risk partners.</div>';
 }
 
 // ── Auto-refresh ──

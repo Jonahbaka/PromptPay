@@ -34,11 +34,10 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const publicDir = path.resolve(__dirname, '..', '..', 'public');
 
-  // Block direct access to admin.html, partner.html, careers.html, analytics.html
+  // Block direct access to .html files
   app.get('/admin.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/partner.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/careers.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
-  app.get('/analytics.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
 
   // Serve admin dashboard at clean URL (keep legacy secret path too)
   const secretAdminPath = `/${CONFIG.admin.secretPath}`;
@@ -59,12 +58,6 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   });
   app.get('/partners', (_req: Request, res: Response) => {
     res.redirect(301, '/secure/partners');
-  });
-
-  // Serve analytics dashboard
-  app.get('/secure/analytics', (_req: Request, res: Response) => {
-    res.set(noCache);
-    res.sendFile(path.join(publicDir, 'analytics.html'));
   });
 
   // Serve careers page
