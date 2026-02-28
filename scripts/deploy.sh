@@ -1,7 +1,7 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════
 # PromptPay :: Zero-Downtime Deploy Script
-# Run on EC2: ./scripts/deploy.sh
+# Run on EC2: bash scripts/deploy.sh
 # ═══════════════════════════════════════════════════════════════
 
 set -euo pipefail
