@@ -153,6 +153,8 @@ export const CONFIG = {
   telegram: {
     botToken: env('TELEGRAM_BOT_TOKEN', ''),
     webhookUrl: env('TELEGRAM_WEBHOOK_URL', ''),
+    ownerChatId: env('TELEGRAM_OWNER_CHAT_ID', ''),
+    briefingHourUtc: parseInt(env('TELEGRAM_BRIEFING_HOUR_UTC', '6'), 10), // 7 AM WAT = 6 UTC
   },
   sms: {
     twilioAccountSid: env('TWILIO_ACCOUNT_SID', ''),

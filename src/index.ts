@@ -28,6 +28,7 @@ import { hashPassword } from './auth/tokens.js';
 import { ChannelManager } from './channels/manager.js';
 import { EmailChannel, EmailTemplates } from './channels/email.js';
 import { PushChannel } from './channels/push.js';
+import { TelegramChannel } from './channels/telegram.js';
 
 // Import agentic agent tools (primary)
 import { shoppingTools } from './agents/shopping/index.js';
@@ -191,8 +192,12 @@ async function main(): Promise<void> {
   });
   app.use(adminRouter);
 
-  // ── 9. Daemon ──
-  const daemon = new DaemonLoop({ orchestrator, db, auditTrail, hookEngine, logger });
+  // ── 9. Telegram Channel + Daemon ──
+  const telegram = new TelegramChannel(logger);
+  channelManager.register(telegram);
+  await telegram.start();
+
+  const daemon = new DaemonLoop({ orchestrator, db, auditTrail, hookEngine, telegram, feeEngine, logger });
 
   // ── 10. Start everything ──
   orchestrator.start();

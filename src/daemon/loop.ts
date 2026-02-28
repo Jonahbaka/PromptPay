@@ -9,6 +9,8 @@ import type { LoggerHandle } from '../core/types.js';
 import type { Orchestrator } from '../core/orchestrator.js';
 import type { AuditTrail } from '../protocols/audit-trail.js';
 import type { HookEngine } from '../hooks/engine.js';
+import type { TelegramChannel } from '../channels/telegram.js';
+import type { FeeEngine } from '../hooks/fees.js';
 import { CONFIG } from '../core/config.js';
 
 export interface DaemonDependencies {
@@ -16,6 +18,8 @@ export interface DaemonDependencies {
   db: Database.Database;
   auditTrail: AuditTrail;
   hookEngine: HookEngine;
+  telegram?: TelegramChannel;
+  feeEngine?: FeeEngine;
   logger: LoggerHandle;
 }
 
@@ -213,6 +217,22 @@ export class DaemonLoop {
         });
       }
     });
+
+    // ── Owner Daily Briefing via Telegram (every hour, fires at configured hour) ──
+    this.addJob('owner_daily_briefing', 'Owner Daily Telegram Briefing', 3600000, async () => {
+      const now = new Date();
+      if (now.getUTCHours() !== CONFIG.telegram.briefingHourUtc) return;
+      if (!CONFIG.telegram.ownerChatId || !this.deps.telegram?.isActive()) return;
+
+      try {
+        const briefing = this.buildDailyBriefing();
+        await this.deps.telegram.sendMessage(CONFIG.telegram.ownerChatId, briefing);
+        this.deps.auditTrail.record('daemon', 'daily_briefing_sent', 'system', { channel: 'telegram' });
+        this.deps.logger.info('[Daemon] Daily briefing sent to owner via Telegram');
+      } catch (err) {
+        this.deps.logger.error(`[Daemon] Daily briefing failed: ${err}`);
+      }
+    });
   }
 
   private addJob(id: string, name: string, intervalMs: number, execute: () => Promise<void>): void {
@@ -254,6 +274,141 @@ export class DaemonLoop {
         this.deps.logger.error(`[Daemon] Job ${job.id} failed: ${err}`);
       }
     }
+  }
+
+  private buildDailyBriefing(): string {
+    const db = this.deps.db;
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+
+    // ── Revenue & Fees ──
+    const revenueToday = this.deps.feeEngine?.getRevenueSummary('today') as Record<string, unknown> | undefined;
+    const revenueMonth = this.deps.feeEngine?.getRevenueSummary('month') as Record<string, unknown> | undefined;
+    const todayVolume = Number(revenueToday?.total_volume || 0);
+    const todayFees = Number(revenueToday?.total_fees_net || 0);
+    const todayTxCount = Number(revenueToday?.transaction_count || 0);
+    const monthVolume = Number(revenueMonth?.total_volume || 0);
+    const monthFees = Number(revenueMonth?.total_fees_net || 0);
+    const monthTxCount = Number(revenueMonth?.transaction_count || 0);
+
+    // ── POS Agent Network ──
+    const posTotal = (db.prepare('SELECT COUNT(*) as c FROM pos_agents').get() as { c: number })?.c || 0;
+    const posActive = (db.prepare("SELECT COUNT(*) as c FROM pos_agents WHERE status = 'active'").get() as { c: number })?.c || 0;
+    let posDailyVolume = 0;
+    let posDailyTx = 0;
+    try {
+      const posStats = db.prepare(`
+        SELECT COUNT(*) as tx_count, COALESCE(SUM(amount), 0) as volume
+        FROM agent_transactions WHERE created_at >= ?
+      `).get(today) as { tx_count: number; volume: number } | undefined;
+      posDailyVolume = posStats?.volume || 0;
+      posDailyTx = posStats?.tx_count || 0;
+    } catch { /* table may not have data */ }
+
+    // ── Users ──
+    const totalUsers = (db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number })?.c || 0;
+    const newUsersToday = (db.prepare('SELECT COUNT(*) as c FROM users WHERE created_at >= ?').get(today) as { c: number })?.c || 0;
+    const activeToday = (db.prepare("SELECT COUNT(DISTINCT id) as c FROM users WHERE last_login_at >= ?").get(today) as { c: number })?.c || 0;
+    const newUsersYesterday = (db.prepare('SELECT COUNT(*) as c FROM users WHERE created_at >= ? AND created_at < ?').get(yesterday, today) as { c: number })?.c || 0;
+
+    // ── User Growth Trajectory ──
+    const usersLastWeek = (db.prepare('SELECT COUNT(*) as c FROM users WHERE created_at >= ?').get(weekAgo) as { c: number })?.c || 0;
+
+    // ── Cross-Border ──
+    let xbCount = 0;
+    let xbVolume = 0;
+    try {
+      const xb = db.prepare('SELECT COUNT(*) as c, COALESCE(SUM(source_amount), 0) as vol FROM cross_border_transfers WHERE created_at >= ?').get(today) as { c: number; vol: number } | undefined;
+      xbCount = xb?.c || 0;
+      xbVolume = xb?.vol || 0;
+    } catch { /* table may not exist */ }
+
+    // ── Wallet Balances ──
+    let totalWalletBalance = 0;
+    try {
+      const wb = db.prepare("SELECT COALESCE(SUM(balance), 0) as total FROM users WHERE status = 'active'").get() as { total: number } | undefined;
+      totalWalletBalance = wb?.total || 0;
+    } catch { /* no balance column */ }
+
+    // ── Calendar / Upcoming Events ──
+    let todosOverdue = 0;
+    let todosToday = 0;
+    let eventsToday = 0;
+    try {
+      todosOverdue = (db.prepare("SELECT COUNT(*) as c FROM calendar_todos WHERE status = 'pending' AND due_date < ?").get(today) as { c: number })?.c || 0;
+      todosToday = (db.prepare("SELECT COUNT(*) as c FROM calendar_todos WHERE status = 'pending' AND due_date = ?").get(today) as { c: number })?.c || 0;
+      eventsToday = (db.prepare("SELECT COUNT(*) as c FROM calendar_events WHERE DATE(start_time) = ?").get(today) as { c: number })?.c || 0;
+    } catch { /* calendar tables may not exist yet */ }
+
+    // ── System Health ──
+    const uptime = Math.round(process.uptime() / 3600);
+    const state = this.deps.orchestrator.getState() as Record<string, unknown>;
+
+    // ── Engagement Hooks ──
+    let activeSavingsGoals = 0;
+    let totalSaved = 0;
+    try {
+      const sg = db.prepare("SELECT COUNT(*) as c, COALESCE(SUM(current_amount), 0) as saved FROM savings_goals WHERE status = 'active'").get() as { c: number; saved: number } | undefined;
+      activeSavingsGoals = sg?.c || 0;
+      totalSaved = sg?.saved || 0;
+    } catch { /* */ }
+
+    // ── Build Trajectory Analysis ──
+    const userGrowthRate = totalUsers > 0 ? ((usersLastWeek / totalUsers) * 100).toFixed(1) : '0';
+    const avgDailyRevenue = monthFees > 0 ? (monthFees / 30).toFixed(2) : '0';
+
+    // ── Build Solutions ──
+    const solutions: string[] = [];
+    if (todayTxCount === 0) solutions.push('💡 No transactions today — consider a push notification campaign or flash cashback promo to activate users');
+    if (newUsersToday === 0 && newUsersYesterday === 0) solutions.push('💡 Zero signups for 2 days — amplify referral bonuses or run a social media campaign');
+    if (posActive < posTotal * 0.5 && posTotal > 0) solutions.push(`💡 Only ${posActive}/${posTotal} POS agents active — reach out to dormant agents with incentives`);
+    if (todosOverdue > 3) solutions.push(`💡 ${todosOverdue} overdue tasks — block time today to clear the backlog`);
+    if (monthFees < 100 && monthTxCount > 0) solutions.push('💡 Revenue below $100/month — review fee structure or push cross-border & merchant transactions (higher margin)');
+    if (totalWalletBalance > 10000) solutions.push(`💡 $${totalWalletBalance.toFixed(0)} sitting in wallets — promote investment features or interest-bearing products`);
+    if (solutions.length === 0) solutions.push('✅ All metrics healthy — keep executing the current strategy');
+
+    // ── Format Message ──
+    const lines = [
+      `☀️ *PromptPay Daily Briefing — ${today}*`,
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━',
+      '📊 *REVENUE & TRANSACTIONS*',
+      `• Today: $${todayFees.toFixed(2)} fees on $${todayVolume.toFixed(2)} volume (${todayTxCount} tx)`,
+      `• This Month: $${monthFees.toFixed(2)} fees on $${monthVolume.toFixed(2)} volume (${monthTxCount} tx)`,
+      `• Avg Daily Revenue: $${avgDailyRevenue}`,
+      '',
+      '🏪 *POS NETWORK*',
+      `• Agents: ${posActive} active / ${posTotal} total`,
+      `• Daily Volume: $${posDailyVolume.toFixed(2)} (${posDailyTx} transactions)`,
+      '',
+      '👥 *USERS & GROWTH*',
+      `• Total Users: ${totalUsers}`,
+      `• New Today: ${newUsersToday} | Active Today: ${activeToday}`,
+      `• Weekly Signup Rate: ${usersLastWeek} (${userGrowthRate}% of base)`,
+      '',
+      '🌍 *CROSS-BORDER*',
+      `• Today: ${xbCount} transfers ($${xbVolume.toFixed(2)} volume)`,
+      '',
+      '💰 *FINANCIAL HEALTH*',
+      `• Platform Wallet Float: $${totalWalletBalance.toFixed(2)}`,
+      `• Active Savings Goals: ${activeSavingsGoals} ($${totalSaved.toFixed(2)} saved)`,
+      '',
+      '📅 *CALENDAR SYNC*',
+      `• Today's Events: ${eventsToday}`,
+      `• Pending Tasks: ${todosToday} | Overdue: ${todosOverdue}`,
+      '',
+      '🖥️ *SYSTEM*',
+      `• Uptime: ${uptime}h | Tools: ${state.toolCount} | Agents: 7`,
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━',
+      '🎯 *RECOMMENDED ACTIONS*',
+      ...solutions.map(s => `${s}`),
+      '',
+      `_Sent by POI Orchestrator at ${new Date().toISOString().slice(11, 16)} UTC_`,
+    ];
+
+    return lines.join('\n');
   }
 
   getJobs(): Array<{ id: string; name: string; lastRun: Date | null; nextRun: Date; enabled: boolean }> {
