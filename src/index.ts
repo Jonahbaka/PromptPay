@@ -224,8 +224,8 @@ async function main(): Promise<void> {
       );
       const result = await orchestrator.executeTask(task);
 
-      const reply = result.success && result.output
-        ? result.output
+      const reply = (result.success && result.output)
+        ? String(result.output)
         : "I'm PromptPay, your AI fintech assistant. I couldn't process that right now — please try again shortly.";
 
       await telegram.sendMessage(chatId, reply);
