@@ -16,7 +16,7 @@ export function detectTaskType(text: string): string {
   // Shopping (Aria)
   if (t.includes('shop') || t.includes('grocery') || t.includes('shopping list') || t.includes('buy ') || t.includes('order') || t.includes('reorder') || t.includes('price compare')) return 'shopping_list_create';
   // Calls & Video
-  if (t.includes('call') || t.includes('dial') || t.includes('phone') || t.includes('video') || t.includes('number') || t.includes('sim')) return 'calls';
+  if (t.includes('call') || t.includes('phone') || t.includes('video')) return 'calls';
   // Assistant (Otto)
   if (t.includes('subscription') || t.includes('negotiate') || t.includes('appointment') || t.includes('document') || t.includes('price alert') || t.includes('return') || t.includes('deal') || t.includes('auto pay')) return 'assistant_subscriptions';
   // Payment infrastructure
@@ -31,7 +31,7 @@ export function detectTaskType(text: string): string {
 
 const FALLBACK_RESPONSES: Record<string, string> = {
   shopping_list_create: "I'll help with shopping. Want me to create a list, compare prices, or track an order?",
-  calls: "I can help with calls! Go to the Calls tab to dial or video call anyone.",
+  calls: "I can help with calls! Go to the Calls tab to chat or start a video call.",
   assistant_subscriptions: "I'll manage that for you. I can list subscriptions, set alerts, or schedule appointments.",
   wallet_transfer: "Got it. Who are you sending to and how much?",
   bill_pay: "I'll handle that bill. What's the bill type and amount?",

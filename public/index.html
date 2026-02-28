@@ -1753,51 +1753,6 @@
     }
     .calls-tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 12px rgba(124,58,237,0.3); }
 
-    /* Dialpad */
-    .dialpad-display {
-      text-align: center; padding: 24px 0 12px;
-    }
-    .dialpad-number {
-      font-size: 32px; font-weight: 700; color: var(--text);
-      font-family: 'JetBrains Mono', monospace; letter-spacing: 2px;
-      min-height: 44px; word-break: break-all;
-    }
-    .dialpad-rate {
-      font-size: 12px; color: var(--text3); margin-top: 6px;
-    }
-    .dialpad-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-      max-width: 280px; margin: 0 auto; padding: 12px 0;
-    }
-    .dial-key {
-      width: 72px; height: 72px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04); display: flex; flex-direction: column;
-      align-items: center; justify-content: center; cursor: pointer;
-      transition: all 0.15s; margin: 0 auto; font-family: inherit;
-      color: var(--text);
-    }
-    .dial-key:active { background: rgba(124,58,237,0.2); transform: scale(0.93); }
-    .dial-key-num { font-size: 26px; font-weight: 600; line-height: 1; }
-    .dial-key-sub { font-size: 9px; color: var(--text3); letter-spacing: 2px; margin-top: 2px; }
-    .dial-actions {
-      display: flex; justify-content: center; gap: 32px; align-items: center;
-      padding: 16px 0;
-    }
-    .dial-call-btn {
-      width: 64px; height: 64px; border-radius: 50%;
-      background: linear-gradient(135deg, #10b981, #059669);
-      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 20px rgba(16,185,129,0.4); transition: all 0.2s;
-    }
-    .dial-call-btn:active { transform: scale(0.92); }
-    .dial-call-btn.hangup { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 20px rgba(239,68,68,0.4); }
-    .dial-backspace {
-      width: 48px; height: 48px; border-radius: 50%; border: none;
-      background: rgba(255,255,255,0.06); cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text2); transition: all 0.15s; font-family: inherit;
-    }
-    .dial-backspace:active { background: rgba(255,255,255,0.12); }
 
     /* Active Call Screen Overlay */
     .call-screen {
@@ -2158,6 +2113,102 @@
       cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
     .pp-chat-suggestion:hover { background: rgba(124,58,237,0.25); color: white; }
+
+    /* ═══════════════════════════════════════════════════ */
+    /* RESPONSIVE: Small screens (320px-380px phones)     */
+    /* ═══════════════════════════════════════════════════ */
+    @media (max-width: 380px) {
+      /* Quick actions: 3 columns instead of 4 */
+      .quick-grid { grid-template-columns: repeat(3, 1fr); gap: 10px 8px; }
+      .quick-icon { width: 48px; height: 48px; border-radius: 14px; font-size: 20px; }
+      .quick-label { font-size: 10px; }
+
+      /* Achievements: 2 columns instead of 3 */
+      .achievements-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .achievement { padding: 12px; }
+      .ach-icon { font-size: 24px; margin-bottom: 4px; }
+
+      /* POS stats: shrink font, prevent overflow */
+      .pos-stat-card .ps-val { font-size: 16px; }
+      .pos-stat-card { padding: 10px 8px; }
+
+      /* POS wallet balance: prevent push */
+      .pos-wallet-strip { gap: 8px; }
+      .pos-wallet-bal { min-width: 0; overflow: hidden; }
+      .pos-wallet-bal .pw-amount { font-size: 20px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pos-fund-btn { padding: 8px 14px; font-size: 12px; }
+
+      /* POS sell card: tighter */
+      .pos-sell-card { padding: 14px; }
+      .pos-amount-grid { gap: 6px; }
+
+      /* Settings: stack language/timezone dropdowns vertically */
+      .settings-row { flex-direction: column; gap: 8px; }
+
+      /* Calls tabs: tighter */
+      .calls-tab { font-size: 12px; padding: 8px 0; }
+
+      /* Balance card: tighter padding */
+      .balance-card { padding: 22px 16px; }
+      .balance-amount { letter-spacing: -0.5px; }
+
+      /* Wallet carousel cards: fit screen */
+      .wallet-holo-card { min-width: 260px; padding: 20px; }
+      .wallet-reward-card { min-width: 260px; }
+      .payment-card { min-width: 260px; padding: 18px; }
+      .holo-number { font-size: 15px !important; letter-spacing: 2px !important; }
+      .pc-number { font-size: 16px; letter-spacing: 2px; }
+
+      /* Page padding tighter */
+      .page { padding-left: 12px; padding-right: 12px; }
+
+      /* Profile page */
+      .streak-card { padding: 14px; }
+
+      /* Developer page */
+      .settings-section { padding: 14px; }
+
+      /* Modal sheets: tighter padding */
+      .modal-sheet { padding: 16px; }
+
+      /* Send money modal tabs: smaller */
+      .send-tab { padding: 6px 12px !important; font-size: 11px !important; }
+
+      /* Fund modal amounts */
+      .fund-modal-amounts { gap: 6px; }
+
+      /* Nav labels */
+      .nav-label { font-size: 9px; }
+    }
+
+    /* Mid-small screens (381px-480px) */
+    @media (max-width: 480px) {
+      /* POS wallet balance: don't overflow */
+      .pos-wallet-bal { min-width: 0; }
+      .pos-wallet-bal .pw-amount { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      /* Wallet cards: better fit */
+      .wallet-holo-card { min-width: 280px; }
+      .payment-card { min-width: 260px; }
+
+      /* Settings sections: prevent overflow */
+      .settings-section { overflow: hidden; }
+
+      /* Call history items: prevent overflow */
+      .call-history-item { overflow: hidden; }
+      .call-hist-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+
+      /* Chat list items: prevent overflow */
+      .chat-list-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      /* Activity/transaction items: prevent overflow */
+      .tx-amount { white-space: nowrap; }
+    }
+
+    /* Message thread: use dvh for mobile browser toolbar awareness */
+    @supports (height: 100dvh) {
+      #calls-tab-thread { height: calc(100dvh - 200px) !important; }
+    }
   </style>
 </head>
 <body class="landing-mode">
@@ -2744,7 +2795,7 @@
         <div class="section-link" onclick="openAddCardModal()">+ Add</div>
       </div>
       <div class="card-carousel" id="payment-cards">
-        <div style="min-width:280px;padding:30px 24px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3)" onclick="openAddCardModal()">
+        <div style="min-width:260px;padding:30px 24px;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3)" onclick="openAddCardModal()">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           <span style="font-size:13px">Add Card</span>
         </div>
@@ -2923,8 +2974,7 @@
     <div class="page" id="page-calls">
       <!-- Tabs: Keypad | Chats | History -->
       <div class="calls-tabs">
-        <button class="calls-tab active" onclick="switchCallsTab('keypad')">Keypad</button>
-        <button class="calls-tab" onclick="switchCallsTab('chats')">Chats</button>
+        <button class="calls-tab active" onclick="switchCallsTab('chats')">Chats</button>
         <button class="calls-tab" onclick="switchCallsTab('services')">Services</button>
         <button class="calls-tab" onclick="switchCallsTab('history')">History</button>
       </div>
@@ -2944,54 +2994,24 @@
         </div>
       </div>
 
-      <!-- KEYPAD TAB -->
-      <div id="calls-tab-keypad">
-        <div class="dialpad-display">
-          <div class="dialpad-number" id="dial-number">&nbsp;</div>
-          <div class="dialpad-rate" id="dial-rate"></div>
+      <!-- Quick actions (Contacts, Video Call, Invite) -->
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:8px 0;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:13px;color:var(--text2)" onclick="pickContacts()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          Contacts
         </div>
-        <div class="dialpad-grid">
-          <button class="dial-key" onclick="dialPress('1')"><span class="dial-key-num">1</span><span class="dial-key-sub">&nbsp;</span></button>
-          <button class="dial-key" onclick="dialPress('2')"><span class="dial-key-num">2</span><span class="dial-key-sub">ABC</span></button>
-          <button class="dial-key" onclick="dialPress('3')"><span class="dial-key-num">3</span><span class="dial-key-sub">DEF</span></button>
-          <button class="dial-key" onclick="dialPress('4')"><span class="dial-key-num">4</span><span class="dial-key-sub">GHI</span></button>
-          <button class="dial-key" onclick="dialPress('5')"><span class="dial-key-num">5</span><span class="dial-key-sub">JKL</span></button>
-          <button class="dial-key" onclick="dialPress('6')"><span class="dial-key-num">6</span><span class="dial-key-sub">MNO</span></button>
-          <button class="dial-key" onclick="dialPress('7')"><span class="dial-key-num">7</span><span class="dial-key-sub">PQRS</span></button>
-          <button class="dial-key" onclick="dialPress('8')"><span class="dial-key-num">8</span><span class="dial-key-sub">TUV</span></button>
-          <button class="dial-key" onclick="dialPress('9')"><span class="dial-key-num">9</span><span class="dial-key-sub">WXYZ</span></button>
-          <button class="dial-key" onclick="dialPress('*')"><span class="dial-key-num">*</span><span class="dial-key-sub">&nbsp;</span></button>
-          <button class="dial-key" onclick="dialPress('0')" oncontextmenu="event.preventDefault();dialPress('+')"><span class="dial-key-num">0</span><span class="dial-key-sub">+</span></button>
-          <button class="dial-key" onclick="dialPress('#')"><span class="dial-key-num">#</span><span class="dial-key-sub">&nbsp;</span></button>
+        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:13px;color:var(--text2)" onclick="startVideoCall()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          Video Call <span class="free-badge">Free</span>
         </div>
-        <div class="dial-actions">
-          <div style="width:48px"></div>
-          <button class="dial-call-btn" id="dial-call-btn" onclick="startCall()">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          </button>
-          <button class="dial-backspace" onclick="dialBackspace()">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
-          </button>
-        </div>
-        <!-- Quick actions under dialpad -->
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:8px 0">
-          <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="pickContacts()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-            Contacts
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="startVideoCall()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-            Video Call <span class="free-badge">Free</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:12px;color:var(--text2)" onclick="openInviteModal()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-            Invite Friends
-          </div>
+        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:13px;color:var(--text2)" onclick="openInviteModal()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Invite Friends
         </div>
       </div>
 
       <!-- CHATS TAB -->
-      <div id="calls-tab-chats" style="display:none">
+      <div id="calls-tab-chats">
         <!-- Search -->
         <div class="social-search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -3012,7 +3032,7 @@
       </div>
 
       <!-- MESSAGE THREAD (overlays chat list) -->
-      <div id="calls-tab-thread" style="display:none;position:relative;height:calc(100vh - 200px)">
+      <div id="calls-tab-thread" style="display:none;position:relative;height:calc(100dvh - 200px)">
         <div class="msg-thread-header">
           <button class="msg-thread-back" onclick="closeMessageThread()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -3292,8 +3312,10 @@
       <div style="background: rgba(124,58,237,0.1); border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(124,58,237,0.2);">
         <h4 style="margin: 0 0 12px 0; font-size: 1rem;">Your $PayTag</h4>
         <div id="settings-paytag" style="font-size: 1.3rem; font-weight: 700; color: #7c3aed; margin-bottom: 8px;">Not set</div>
-        <button onclick="document.getElementById('paytag-modal').classList.add('active')" style="padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(124,58,237,0.3); background: transparent; color: #7c3aed; cursor: pointer; font-size: 0.85rem;">Change PayTag</button>
-        <button onclick="sharePaytag()" style="padding: 8px 16px; border-radius: 8px; border: none; background: #7c3aed; color: white; cursor: pointer; font-size: 0.85rem; margin-left: 8px;">Share</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button onclick="document.getElementById('paytag-modal').classList.add('active')" style="padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(124,58,237,0.3); background: transparent; color: #7c3aed; cursor: pointer; font-size: 0.85rem;">Change PayTag</button>
+          <button onclick="sharePaytag()" style="padding: 8px 16px; border-radius: 8px; border: none; background: #7c3aed; color: white; cursor: pointer; font-size: 0.85rem;">Share</button>
+        </div>
       </div>
 
       <!-- Referral -->
@@ -3508,7 +3530,7 @@
         </div>
         <div style="margin-top:8px">
           <div style="display:flex;gap:8px;margin-bottom:10px">
-            <select id="playground-method" style="padding:8px 10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--surface);color:var(--text);font-size:13px;width:90px">
+            <select id="playground-method" style="padding:8px 10px;border-radius:8px;border:1px solid var(--glass-border);background:var(--surface);color:var(--text);font-size:12px;width:72px;flex-shrink:0">
               <option>GET</option>
               <option>POST</option>
             </select>
@@ -6011,7 +6033,7 @@ async function loadPaymentMethods() {
 
     // Add Payment Method button
     const addBtn = document.createElement('div');
-    addBtn.style.cssText = 'min-width:300px;aspect-ratio:1.586;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3);flex-shrink:0;transition:border-color 0.2s;';
+    addBtn.style.cssText = 'min-width:260px;aspect-ratio:1.586;border-radius:20px;border:1px dashed rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer;color:var(--text3);flex-shrink:0;transition:border-color 0.2s;';
     addBtn.onmouseenter = function() { this.style.borderColor = 'rgba(124,58,237,0.3)'; };
     addBtn.onmouseleave = function() { this.style.borderColor = 'rgba(255,255,255,0.1)'; };
     addBtn.onclick = openAddCardModal;
@@ -7442,7 +7464,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // CALLS / SOCIAL — International Calling, Chat, Video, AI
 // ══════════════════════════════════════════════════════════════
 
-let dialNumber = '';
 let activeCallId = null;
 let callStartTime = null;
 let callTimerInterval = null;
@@ -7459,15 +7480,15 @@ let facingMode = 'user';
 function switchCallsTab(tab) {
   document.querySelectorAll('.calls-tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.calls-tab[onclick*="${tab}"]`)?.classList.add('active');
-  ['keypad','chats','history','thread','services'].forEach(t => {
+  ['chats','history','thread','services'].forEach(t => {
     const el = document.getElementById('calls-tab-' + t);
     if (el) el.style.display = 'none';
   });
   const target = document.getElementById('calls-tab-' + tab);
   if (target) target.style.display = '';
-  // Show AI features only on keypad
+  // Show AI features only on chats tab
   const aiFeatures = document.getElementById('calls-ai-features');
-  if (aiFeatures) aiFeatures.style.display = tab === 'keypad' ? '' : 'none';
+  if (aiFeatures) aiFeatures.style.display = tab === 'chats' ? '' : 'none';
 
   if (tab === 'chats') loadConversations();
   if (tab === 'history') loadCallHistory();
@@ -7476,104 +7497,10 @@ function switchCallsTab(tab) {
 
 // ── Load page data ──
 function loadCallsPage() {
-  loadConversations();
-  loadServicesData();
+  switchCallsTab('chats');
 }
 
-// ── Dialpad ──
-function dialPress(digit) {
-  if (dialNumber.length >= 20) return;
-  dialNumber += digit;
-  document.getElementById('dial-number').textContent = formatPhoneDisplay(dialNumber);
-  // Auto-lookup rate when number looks international
-  if (dialNumber.startsWith('+') && dialNumber.length >= 5) {
-    lookupRate(dialNumber);
-  }
-}
-
-function dialBackspace() {
-  dialNumber = dialNumber.slice(0, -1);
-  document.getElementById('dial-number').textContent = dialNumber ? formatPhoneDisplay(dialNumber) : '\u00A0';
-  if (!dialNumber) document.getElementById('dial-rate').textContent = '';
-}
-
-function formatPhoneDisplay(num) {
-  if (!num) return '\u00A0';
-  // Format nicely: +234 801 234 5678
-  if (num.startsWith('+') && num.length > 4) {
-    const cc = getCountryCodeLen(num);
-    const rest = num.slice(cc);
-    return num.slice(0, cc) + ' ' + rest.replace(/(.{3})/g, '$1 ').trim();
-  }
-  return num;
-}
-
-function getCountryCodeLen(num) {
-  // Simple country code length detection
-  if (num.startsWith('+1')) return 2;
-  if (num.startsWith('+44') || num.startsWith('+91') || num.startsWith('+27')) return 3;
-  if (num.startsWith('+234') || num.startsWith('+233') || num.startsWith('+254') || num.startsWith('+255') || num.startsWith('+256')) return 4;
-  return 4; // default
-}
-
-let rateTimeout = null;
-async function lookupRate(number) {
-  clearTimeout(rateTimeout);
-  rateTimeout = setTimeout(async () => {
-    try {
-      const res = await authFetch(API_BASE + '/api/calls/rate?destination=' + encodeURIComponent(number));
-      if (res.ok) {
-        const data = await res.json();
-        const costPerMin = parseFloat(data.rate || '0');
-        const markup = 1.5; // 50% markup for retail
-        const retailRate = (costPerMin * markup).toFixed(2);
-        document.getElementById('dial-rate').innerHTML =
-          `<span style="color:var(--accent2)">$${retailRate}/min</span> · ${data.country || 'International'}`;
-      }
-    } catch (e) {}
-  }, 500);
-}
-
-// ── Start/End Call ──
-async function startCall() {
-  if (!dialNumber || dialNumber.length < 4) {
-    showToast('Enter a phone number');
-    return;
-  }
-  // Ensure it's E.164
-  let number = dialNumber;
-  if (!number.startsWith('+')) {
-    number = '+' + number;
-  }
-
-  showCallScreen(number, 'Dialing...');
-
-  try {
-    const res = await authFetch(API_BASE + '/api/calls/dial', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ destination: number })
-    });
-    const data = await res.json();
-    if (data.callControlId) {
-      activeCallId = data.callControlId;
-      updateCallStatus('Ringing...');
-      // Simulate connection after 3s (in real Telnyx, webhooks handle this)
-      setTimeout(() => {
-        if (activeCallId) {
-          updateCallStatus('Connected', true);
-          startCallTimer();
-        }
-      }, 3000);
-    } else {
-      updateCallStatus('Failed: ' + (data.error || 'Could not connect'));
-      setTimeout(hideCallScreen, 3000);
-    }
-  } catch (e) {
-    updateCallStatus('Network error');
-    setTimeout(hideCallScreen, 2000);
-  }
-}
+// ── Calls (dialpad removed — using WebRTC in future) ──
 
 async function endCall() {
   if (activeCallId) {
@@ -7685,7 +7612,7 @@ async function loadCallHistory() {
       const cost = c.charge_amount ? `$${parseFloat(c.charge_amount).toFixed(2)}` : '';
       const time = new Date(c.created_at).toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
       return `
-        <div class="call-history-item" onclick="dialNumber='${c.destination}';document.getElementById('dial-number').textContent='${c.destination}';switchCallsTab('keypad')">
+        <div class="call-history-item">
           <div class="call-hist-avatar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3"/></svg>
           </div>
@@ -7971,17 +7898,6 @@ async function flipVideoCamera() {
   }
 }
 
-// ── AI Smart Dial (Free AI Feature) ──
-function openSmartDial() {
-  navigateTo('ai');
-  setTimeout(() => {
-    const input = document.getElementById('chat-input');
-    if (input) {
-      input.value = 'Help me make an international call to ';
-      input.focus();
-    }
-  }, 200);
-}
 
 // ══════════════════════════════════════════════════════════════
 // CONTACT PICKER + INVITE FRIENDS
@@ -8055,10 +7971,8 @@ function closeContactsModal() {
 
 function dialFromContact(phone) {
   closeContactsModal();
-  navigateTo('calls');
   const cleaned = phone.replace(/[\s\-()]/g, '');
-  const display = document.getElementById('dial-number');
-  if (display) display.textContent = cleaned;
+  window.open(`tel:${cleaned}`, '_self');
 }
 
 function inviteContact(phone, name) {
