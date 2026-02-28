@@ -69,14 +69,26 @@ export class TelegramChannel extends BaseChannel {
     this.active = false;
   }
 
+  private polling = false;
+
   private async poll(): Promise<void> {
+    if (this.polling) return; // prevent overlapping polls
+    this.polling = true;
     try {
       const response = await fetch(
-        `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=1`
+        `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=10`,
+        { signal: AbortSignal.timeout(15000) }
       );
-      const data = await response.json() as { ok: boolean; result: Array<{ update_id: number; message?: { chat: { id: number }; text?: string; from?: { id: number; username?: string } } }> };
+      const data = await response.json() as {
+        ok: boolean;
+        description?: string;
+        result: Array<{ update_id: number; message?: { chat: { id: number }; text?: string; from?: { id: number; username?: string; first_name?: string } } }>;
+      };
 
-      if (!data.ok) return;
+      if (!data.ok) {
+        this.logger.warn(`Telegram poll error: ${data.description || 'unknown'}`);
+        return;
+      }
 
       for (const update of data.result) {
         this.lastUpdateId = update.update_id;
@@ -85,14 +97,23 @@ export class TelegramChannel extends BaseChannel {
             id: uuid(), channelType: 'telegram', direction: 'inbound',
             senderId: String(update.message.from?.id || update.message.chat.id),
             recipientId: 'system', content: update.message.text,
-            metadata: { username: update.message.from?.username, chatId: update.message.chat.id },
+            metadata: {
+              username: update.message.from?.username || update.message.from?.first_name,
+              chatId: update.message.chat.id,
+            },
             timestamp: new Date(),
           };
+          this.logger.info(`Telegram message from ${msg.metadata.username} (${msg.metadata.chatId}): ${msg.content.slice(0, 60)}`);
           this.emitMessage(msg);
         }
       }
-    } catch {
-      // Silent — network errors are expected during polling
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (!errMsg.includes('aborted') && !errMsg.includes('timeout')) {
+        this.logger.warn(`Telegram poll exception: ${errMsg}`);
+      }
+    } finally {
+      this.polling = false;
     }
   }
 }
