@@ -1778,18 +1778,85 @@
     .pos-receipt .rcpt-total { font-size: 22px; text-align: center; font-weight: 800; margin: 12px 0; color: #10b981; }
     .pos-receipt .rcpt-footer { text-align: center; font-size: 10px; color: #999; margin-top: 12px; }
 
-    /* ═══ Calls / Social Page ═══ */
+    /* ═══ Chat & Video — Premium Social ═══ */
+
+    /* Stories-style online ring rail (like Instagram) */
+    .stories-rail {
+      display: flex; overflow-x: auto; gap: 16px;
+      padding: 4px 0 16px; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .stories-rail::-webkit-scrollbar { display: none; }
+    .story-ring {
+      flex: 0 0 auto; text-align: center;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+    }
+    .story-ring:active { transform: scale(0.88); }
+    .story-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; font-weight: 700; color: #a78bfa;
+      border: 2.5px solid transparent; margin: 0 auto 6px;
+      position: relative;
+    }
+    .story-avatar.online {
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #10b981;
+    }
+    .story-avatar.story-new {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      border: none;
+    }
+    .story-name {
+      font-size: 11px; font-weight: 600; color: var(--text3);
+      display: block; max-width: 64px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* Tab bar */
     .calls-tabs {
-      display: flex; gap: 4px; background: rgba(255,255,255,0.04);
-      border-radius: 14px; padding: 4px; margin-bottom: 20px;
+      display: flex; gap: 0; margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .calls-tab {
-      flex: 1; padding: 10px 0; text-align: center; border-radius: 11px;
-      font-size: 13px; font-weight: 600; color: var(--text3);
+      flex: 1; padding: 12px 0; text-align: center;
+      font-size: 14px; font-weight: 700; color: var(--text3);
       cursor: pointer; transition: all 0.2s; border: none; background: none;
-      font-family: inherit;
+      font-family: inherit; position: relative;
     }
-    .calls-tab.active { background: var(--accent); color: #fff; box-shadow: 0 2px 12px rgba(124,58,237,0.3); }
+    .calls-tab.active {
+      color: #fff;
+    }
+    .calls-tab.active::after {
+      content: ''; position: absolute; bottom: -1px;
+      left: 50%; transform: translateX(-50%);
+      width: 32px; height: 3px; border-radius: 3px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      box-shadow: 0 0 10px rgba(99,102,241,0.4);
+    }
+
+    /* Empty state */
+    .chat-empty-state {
+      text-align: center; padding: 48px 16px;
+    }
+    .chat-empty-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(99,102,241,0.08); margin: 0 auto 20px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Thread header — IG style */
+    .msg-thread-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .msg-thread-status {
+      font-size: 11px; color: #10b981; font-weight: 500;
+    }
 
 
     /* Active Call Screen Overlay */
@@ -1946,22 +2013,6 @@
       color: #fff; transition: all 0.2s; flex-shrink: 0;
     }
     .msg-send-btn:active { transform: scale(0.9); }
-
-    /* AI Assistant Mini (inside social) */
-    .ai-mini-card {
-      background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.08));
-      border: 1px solid rgba(124,58,237,0.2); border-radius: 16px;
-      padding: 16px; margin-bottom: 16px; cursor: pointer; transition: all 0.2s;
-    }
-    .ai-mini-card:active { transform: scale(0.98); }
-    .ai-mini-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .ai-mini-icon {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: var(--gradient2); display: flex; align-items: center;
-      justify-content: center;
-    }
-    .ai-mini-title { font-size: 14px; font-weight: 700; color: var(--text); }
-    .ai-mini-desc { font-size: 12px; color: var(--text3); line-height: 1.5; }
 
     /* Call History Item */
     .call-history-item {
@@ -3011,52 +3062,31 @@
       </div>
     </div>
 
-    <!-- CALLS / SOCIAL -->
+    <!-- CHAT & VIDEO — Instagram/WhatsApp-class Social -->
     <div class="page" id="page-calls">
-      <!-- Tabs: Keypad | Chats | History -->
+      <!-- Stories-style online ring rail -->
+      <div class="stories-rail" id="stories-rail">
+        <!-- First item: New Video Call -->
+        <div class="story-ring" onclick="pickContactForVideo()">
+          <div class="story-avatar story-new">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <span class="story-name">Video</span>
+        </div>
+      </div>
+
+      <!-- Premium tab bar -->
       <div class="calls-tabs">
         <button class="calls-tab active" onclick="switchCallsTab('chats')">Chats</button>
-        <button class="calls-tab" onclick="switchCallsTab('services')">Services</button>
-        <button class="calls-tab" onclick="switchCallsTab('history')">History</button>
-      </div>
-
-      <!-- AI Features Cards -->
-      <div id="calls-ai-features">
-        <div class="ai-mini-card" onclick="navigateTo('ai');document.getElementById('chat-input').value='Translate this call for me';sendMessage()">
-          <div class="ai-mini-header">
-            <div class="ai-mini-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            </div>
-            <div>
-              <div class="ai-mini-title">AI Translator <span class="free-badge">Free</span></div>
-              <div class="ai-mini-desc">Real-time language translation during calls</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick actions (Contacts, Video Call, Invite) -->
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:8px 0;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:13px;color:var(--text2)" onclick="pickContacts()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-          Contacts
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:13px;color:var(--text2)" onclick="startVideoCall()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-          Video Call <span class="free-badge">Free</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:20px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);cursor:pointer;font-size:13px;color:var(--text2)" onclick="openInviteModal()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-          Invite Friends
-        </div>
+        <button class="calls-tab" onclick="switchCallsTab('history')">Activity</button>
       </div>
 
       <!-- CHATS TAB -->
       <div id="calls-tab-chats">
-        <!-- Search -->
+        <!-- Search bar -->
         <div class="social-search">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="Search chats or start new..." id="chat-search-input" oninput="searchChats(this.value)">
+          <input type="text" placeholder="Search people..." id="chat-search-input" oninput="searchChats(this.value)">
         </div>
 
         <!-- Search Results (hidden by default) -->
@@ -3064,10 +3094,22 @@
 
         <!-- Conversation List -->
         <div id="chat-conversations-list">
-          <div style="text-align:center;padding:40px 0;color:var(--text3)">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:12px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <div style="font-size:14px;font-weight:600;margin-bottom:4px">No conversations yet</div>
-            <div style="font-size:12px">Search for users to start chatting</div>
+          <div class="chat-empty-state">
+            <div class="chat-empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="url(#emptyGrad)" stroke-width="1.5"><defs><linearGradient id="emptyGrad" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div style="font-size:18px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Start a conversation</div>
+            <div style="font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.5">Message friends, make free video calls,<br>and connect with people on PromptPay</div>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+              <button onclick="pickContacts()" style="display:flex;align-items:center;gap:6px;padding:12px 20px;border-radius:24px;border:none;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 20px rgba(99,102,241,0.3)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Find People
+              </button>
+              <button onclick="openInviteModal()" style="display:flex;align-items:center;gap:6px;padding:12px 20px;border-radius:24px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                Invite Friends
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -3076,63 +3118,37 @@
       <div id="calls-tab-thread" style="display:none;position:relative;height:calc(100dvh - 200px)">
         <div class="msg-thread-header">
           <button class="msg-thread-back" onclick="closeMessageThread()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           </button>
-          <div class="msg-thread-name" id="thread-name">User</div>
+          <div class="msg-thread-avatar" id="thread-avatar"></div>
+          <div style="flex:1;min-width:0">
+            <div class="msg-thread-name" id="thread-name">User</div>
+            <div class="msg-thread-status">Active now</div>
+          </div>
           <div class="msg-thread-actions">
-            <button class="msg-thread-action" onclick="callThreadUser()" title="Call">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.83.3 1.65.52 2.44a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.79.22 1.61.39 2.44.52A2 2 0 0 1 22 16.92z"/></svg>
-            </button>
             <button class="msg-thread-action" onclick="videoCallThreadUser()" title="Video Call">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
             </button>
           </div>
         </div>
         <div class="msg-bubbles" id="msg-bubbles"></div>
         <div class="msg-compose">
-          <input class="msg-input" id="msg-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChatMessage()">
+          <input class="msg-input" id="msg-input" placeholder="Message..." onkeydown="if(event.key==='Enter')sendChatMessage()">
           <button class="msg-send-btn" onclick="sendChatMessage()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
         </div>
       </div>
 
-      <!-- HISTORY TAB -->
+      <!-- ACTIVITY/HISTORY TAB -->
       <div id="calls-tab-history" style="display:none">
         <div id="call-history-list">
           <div style="text-align:center;padding:40px 0;color:var(--text3)">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:12px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72"/></svg>
-            <div style="font-size:14px;font-weight:600;margin-bottom:4px">No call history</div>
-            <div style="font-size:12px">Your calls will appear here</div>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5" style="margin-bottom:12px"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px">No activity yet</div>
+            <div style="font-size:12px">Your calls and video chats will appear here</div>
           </div>
         </div>
-      </div>
-
-      <!-- SERVICES TAB -->
-      <div id="calls-tab-services" style="display:none">
-        <!-- Service Cards Grid -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-          <!-- AI Chat Card -->
-          <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.2s" onclick="showServicePanel('telnyxai')">
-            <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(59,130,246,0.12));display:flex;align-items:center;justify-content:center;margin-bottom:10px">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            </div>
-            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">AI Assistant <span class="free-badge">Free</span></div>
-            <div style="font-size:11px;color:var(--text3)">Llama 3.1 powered</div>
-          </div>
-
-          <!-- Invite Friends Card -->
-          <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:16px;padding:16px;cursor:pointer;transition:all 0.2s" onclick="openInviteModal()">
-            <div style="width:40px;height:40px;border-radius:12px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-            </div>
-            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px">Invite Friends</div>
-            <div style="font-size:11px;color:var(--text3)">Share PromptPay</div>
-          </div>
-        </div>
-
-        <!-- Service Panel (dynamic content) -->
-        <div id="service-panel"></div>
       </div>
     </div>
 
@@ -7521,24 +7537,96 @@ let facingMode = 'user';
 function switchCallsTab(tab) {
   document.querySelectorAll('.calls-tab').forEach(t => t.classList.remove('active'));
   document.querySelector(`.calls-tab[onclick*="${tab}"]`)?.classList.add('active');
-  ['chats','history','thread','services'].forEach(t => {
+  ['chats','history','thread'].forEach(t => {
     const el = document.getElementById('calls-tab-' + t);
     if (el) el.style.display = 'none';
   });
   const target = document.getElementById('calls-tab-' + tab);
   if (target) target.style.display = '';
-  // Show AI features only on chats tab
-  const aiFeatures = document.getElementById('calls-ai-features');
-  if (aiFeatures) aiFeatures.style.display = tab === 'chats' ? '' : 'none';
+  // Show stories rail only on chats tab
+  const rail = document.getElementById('stories-rail');
+  if (rail) rail.style.display = tab === 'chats' ? '' : 'none';
 
   if (tab === 'chats') loadConversations();
   if (tab === 'history') loadCallHistory();
-  if (tab === 'services') loadServicesData();
 }
 
 // ── Load page data ──
 function loadCallsPage() {
   switchCallsTab('chats');
+  populateStoriesRail();
+}
+
+// Populate stories rail with recent conversations
+async function populateStoriesRail() {
+  const rail = document.getElementById('stories-rail');
+  if (!rail) return;
+  // Keep the "New Video" button, clear the rest
+  const newBtn = rail.querySelector('.story-ring');
+  rail.innerHTML = '';
+  if (newBtn) rail.appendChild(newBtn);
+
+  try {
+    const res = await authFetch(API_BASE + '/api/chat/conversations');
+    if (!res.ok) return;
+    const data = await res.json();
+    const convos = (data.conversations || []).slice(0, 10);
+    convos.forEach(c => {
+      const name = c.display_name || c.email?.split('@')[0] || 'User';
+      const initial = name[0].toUpperCase();
+      const isOnline = Math.random() > 0.5; // placeholder — replace with real presence
+      const ring = document.createElement('div');
+      ring.className = 'story-ring';
+      ring.onclick = () => openMessageThread(c.user_id, name);
+      ring.innerHTML = `
+        <div class="story-avatar ${isOnline ? 'online' : ''}">${initial}</div>
+        <span class="story-name">${name.split(' ')[0]}</span>
+      `;
+      rail.appendChild(ring);
+    });
+  } catch (e) {}
+}
+
+// Pick a contact for video call — if not on PromptPay, invite them
+async function pickContactForVideo() {
+  if (!('contacts' in navigator && 'ContactsManager' in window)) {
+    // Browser doesn't support Contact Picker — use search instead
+    startVideoCall();
+    return;
+  }
+  try {
+    const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: false });
+    if (contacts && contacts.length > 0) {
+      const contact = contacts[0];
+      const name = contact.name?.[0] || 'Friend';
+      const phone = contact.tel?.[0];
+      // Search if this user is on PromptPay
+      if (phone) {
+        try {
+          const res = await authFetch(API_BASE + '/api/users/search?q=' + encodeURIComponent(phone));
+          if (res.ok) {
+            const data = await res.json();
+            if (data.users && data.users.length > 0) {
+              // User found — start video call with them
+              startVideoCall();
+              document.getElementById('video-remote-name').textContent = name;
+              return;
+            }
+          }
+        } catch (e) {}
+        // Not on PromptPay — invite them
+        const msg = 'Hey ' + name + '! Join me on PromptPay for free video calls. Download: https://upromptpay.com/join';
+        const encoded = encodeURIComponent(msg);
+        const cleaned = phone.replace(/[\s\-()]/g, '');
+        window.open('sms:' + cleaned + '?body=' + encoded, '_blank');
+        showToast('Invite sent to ' + name);
+      } else {
+        startVideoCall();
+      }
+    }
+  } catch (e) {
+    startVideoCall();
+  }
 }
 
 // ── Calls (dialpad removed — using WebRTC in future) ──
@@ -7776,6 +7864,16 @@ async function openMessageThread(userId, userName) {
   document.getElementById('thread-name').textContent = currentThreadUserName;
   document.getElementById('chat-search-input').value = '';
 
+  // Populate thread avatar with user initial
+  const avatarEl = document.getElementById('thread-avatar');
+  if (avatarEl) {
+    const initial = (currentThreadUserName || '?')[0].toUpperCase();
+    avatarEl.textContent = initial;
+    avatarEl.style.color = '#fff';
+    avatarEl.style.fontSize = '15px';
+    avatarEl.style.fontWeight = '700';
+  }
+
   await loadMessages(userId);
   // Poll for new messages
   if (chatPollInterval) clearInterval(chatPollInterval);
@@ -7859,10 +7957,6 @@ async function sendChatMessage() {
   }
 }
 
-function callThreadUser() {
-  // Placeholder — would need the user's phone number
-  showToast('Voice calling requires a phone number');
-}
 
 function videoCallThreadUser() {
   startVideoCall();
@@ -8068,99 +8162,6 @@ async function pickContactsToInvite() {
   await pickContacts();
 }
 
-// ══════════════════════════════════════════════════════════════
-// SERVICES — AI Assistant
-// ══════════════════════════════════════════════════════════════
-
-let currentServicePanel = '';
-let telnyxAiSessionId = null;
-
-function loadServicesData() {}
-
-// ── Show a service sub-panel ──
-function showServicePanel(panel) {
-  currentServicePanel = panel;
-  const container = document.getElementById('service-panel');
-
-  if (panel === 'telnyxai') {
-    container.innerHTML = `
-      <div style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="font-size:16px;font-weight:700;color:var(--text)">AI Assistant <span class="free-badge">Free</span></div>
-          <button onclick="showServicePanel('')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;font-family:inherit">&times;</button>
-        </div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Powered by Llama 3.1 70B via Telnyx. Ask anything!</div>
-
-        <!-- Quick Actions -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-          <button onclick="aiQuickAction('Translate this to French: Hello, how are you?')" style="padding:6px 12px;border-radius:20px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);color:var(--accent2);font-size:11px;cursor:pointer;font-family:inherit">Translate</button>
-          <button onclick="aiQuickAction('Summarize: international calling rates in Africa')" style="padding:6px 12px;border-radius:20px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);color:#3b82f6;font-size:11px;cursor:pointer;font-family:inherit">Summarize</button>
-          <button onclick="aiQuickAction('What is the cheapest way to call Nigeria from the US?')" style="padding:6px 12px;border-radius:20px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.15);color:#10b981;font-size:11px;cursor:pointer;font-family:inherit">Call Advice</button>
-          <button onclick="aiQuickAction('What are the best budgeting strategies for saving money?')" style="padding:6px 12px;border-radius:20px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);color:#f59e0b;font-size:11px;cursor:pointer;font-family:inherit">Budget Tips</button>
-        </div>
-
-        <!-- Chat Area -->
-        <div id="telnyx-ai-messages" style="max-height:300px;overflow-y:auto;margin-bottom:12px;padding:4px 0"></div>
-
-        <!-- Input -->
-        <div style="display:flex;gap:8px">
-          <input type="text" id="telnyx-ai-input" placeholder="Ask the AI anything..." onkeydown="if(event.key==='Enter')sendTelnyxAi()" style="flex:1;padding:12px 16px;border-radius:24px;background:var(--surface);border:1px solid var(--glass-border);color:var(--text);font-family:inherit;font-size:13px;outline:none">
-          <button onclick="sendTelnyxAi()" style="width:44px;height:44px;border-radius:50%;background:var(--gradient2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          </button>
-        </div>
-      </div>`;
-
-  } else {
-    container.innerHTML = '';
-  }
-}
-
-
-
-// ── Telnyx AI Chat ──
-function aiQuickAction(prompt) {
-  const input = document.getElementById('telnyx-ai-input');
-  if (input) { input.value = prompt; sendTelnyxAi(); }
-}
-
-async function sendTelnyxAi() {
-  const input = document.getElementById('telnyx-ai-input');
-  const message = input.value.trim();
-  if (!message) return;
-  input.value = '';
-
-  const container = document.getElementById('telnyx-ai-messages');
-  // User bubble
-  container.innerHTML += `<div style="margin-left:auto;max-width:80%;padding:10px 14px;border-radius:18px 18px 4px 18px;background:var(--accent);color:#fff;font-size:13px;margin-bottom:8px;word-break:break-word">${escapeHtml(message)}</div>`;
-  // Thinking indicator
-  container.innerHTML += `<div id="ai-thinking" style="max-width:80%;padding:10px 14px;border-radius:18px 18px 18px 4px;background:rgba(255,255,255,0.08);color:var(--text3);font-size:13px;margin-bottom:8px">Thinking...</div>`;
-  container.scrollTop = container.scrollHeight;
-
-  try {
-    const res = await authFetch(API_BASE + '/api/telnyx-ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, sessionId: telnyxAiSessionId })
-    });
-    const data = await res.json();
-    // Remove thinking indicator
-    const thinking = document.getElementById('ai-thinking');
-    if (thinking) thinking.remove();
-
-    if (data.reply) {
-      telnyxAiSessionId = data.sessionId;
-      container.innerHTML += `<div style="max-width:80%;padding:10px 14px;border-radius:18px 18px 18px 4px;background:rgba(255,255,255,0.08);color:var(--text);font-size:13px;margin-bottom:8px;line-height:1.5;word-break:break-word">${escapeHtml(data.reply)}</div>`;
-    } else {
-      container.innerHTML += `<div style="max-width:80%;padding:10px 14px;border-radius:18px;background:rgba(239,68,68,0.1);color:#ef4444;font-size:12px;margin-bottom:8px">${data.error || 'AI error'}</div>`;
-    }
-    container.scrollTop = container.scrollHeight;
-  } catch (e) {
-    const thinking = document.getElementById('ai-thinking');
-    if (thinking) thinking.remove();
-    container.innerHTML += `<div style="padding:10px;color:#ef4444;font-size:12px">Network error</div>`;
-  }
-}
 
 // ════════════════════════════════════════════════════════════
 // DEVELOPER PORTAL
