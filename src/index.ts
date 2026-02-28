@@ -30,6 +30,7 @@ import { ChannelManager } from './channels/manager.js';
 import { EmailChannel, EmailTemplates } from './channels/email.js';
 import { PushChannel } from './channels/push.js';
 import { TelegramChannel } from './channels/telegram.js';
+import type { ChannelMessage } from './core/types.js';
 
 // Import agentic agent tools (primary)
 import { shoppingTools } from './agents/shopping/index.js';
@@ -201,6 +202,40 @@ async function main(): Promise<void> {
   const telegram = new TelegramChannel(logger);
   channelManager.register(telegram);
   await telegram.start();
+
+  // ── 9b. Telegram Inbound Message Handler ──
+  telegram.on('message', async (msg: ChannelMessage) => {
+    if (msg.direction !== 'inbound') return;
+
+    const chatId = String(msg.metadata.chatId || msg.senderId);
+    const username = msg.metadata.username || 'telegram-user';
+    const userText = msg.content.trim();
+
+    if (!userText) return;
+
+    logger.info(`Telegram inbound from @${username} (${chatId}): ${userText.slice(0, 80)}`);
+
+    try {
+      // Route through the orchestrator for full agentic response
+      const task = orchestrator.createTask(
+        'custom', 'high', 'Telegram Chat',
+        userText,
+        { userInitiated: true, userId: `tg:${chatId}`, chatMode: true, channel: 'telegram', username }
+      );
+      const result = await orchestrator.executeTask(task);
+
+      const reply = result.success && result.output
+        ? result.output
+        : "I'm PromptPay, your AI fintech assistant. I couldn't process that right now — please try again shortly.";
+
+      await telegram.sendMessage(chatId, reply);
+      auditTrail.record('telegram', 'chat_reply', `tg:${chatId}`, { input: userText.slice(0, 200), taskId: task.id });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logger.error(`Telegram reply error: ${errMsg}`);
+      await telegram.sendMessage(chatId, "Sorry, I'm having trouble right now. Please try again in a moment.").catch(() => {});
+    }
+  });
 
   const daemon = new DaemonLoop({ orchestrator, db, auditTrail, hookEngine, telegram, feeEngine, logger });
 
