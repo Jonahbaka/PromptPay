@@ -3653,6 +3653,9 @@
             <div class="msg-thread-status">Active now</div>
           </div>
           <div class="msg-thread-actions">
+            <button class="msg-thread-action" onclick="showP2PTransferModal()" title="Send Money">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </button>
             <button class="msg-thread-action" onclick="videoCallThreadUser()" title="Video Call">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
             </button>
@@ -4630,6 +4633,27 @@
   </div>
 </div>
 
+<!-- P2P Transfer Modal (from chat thread) -->
+<div class="modal-overlay" id="p2p-transfer-modal">
+  <div class="modal-sheet" style="max-width:380px">
+    <div class="modal-handle"></div>
+    <h3 style="margin-bottom:4px;font-size:18px;font-weight:700">Send Money</h3>
+    <div id="p2p-recipient-info" style="font-size:13px;color:var(--text2);margin-bottom:16px">To: <b id="p2p-recipient-name">User</b></div>
+    <div id="p2p-wallet-bal" style="font-size:12px;color:var(--text3);margin-bottom:12px;text-align:center;padding:6px;border-radius:8px;background:rgba(255,255,255,0.04)">Balance: $0.00</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:24px;font-weight:700;color:var(--text2)">$</span>
+      <input type="number" id="p2p-amount" placeholder="0.00" min="0.01" step="0.01" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;font-size:20px;font-weight:700;color:var(--text);font-family:inherit" oninput="updateP2PFee()">
+    </div>
+    <input type="text" id="p2p-note" placeholder="Add a note (optional)" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;font-size:13px;color:var(--text);font-family:inherit;margin-bottom:12px">
+    <div id="p2p-fee-info" style="display:none;font-size:12px;color:var(--text3);margin-bottom:12px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.03)">
+      <div style="display:flex;justify-content:space-between"><span>Fee</span><span id="p2p-fee-val">$0.00</span></div>
+      <div style="display:flex;justify-content:space-between;font-weight:700;margin-top:4px"><span>Total</span><span id="p2p-total-val">$0.00</span></div>
+    </div>
+    <button id="p2p-send-btn" disabled onclick="executeP2PTransfer()" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">Send Money</button>
+    <button onclick="closeP2PModal()" style="width:100%;padding:10px;border:none;background:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit">Cancel</button>
+  </div>
+</div>
+
 <!-- Add Card Modal -->
 <div class="modal-overlay" id="add-card-modal">
   <div class="modal-sheet">
@@ -5321,6 +5345,61 @@ function showApp() {
   loadSettings();
   loadPaymentMethods();
   initStripeElements(); // Pre-load Stripe for card form
+  startIncomingCallCheck();
+}
+
+// Poll for incoming WebRTC video call offers
+let incomingCallPoll = null;
+function startIncomingCallCheck() {
+  if (incomingCallPoll) clearInterval(incomingCallPoll);
+  incomingCallPoll = setInterval(async () => {
+    if (!authToken || videoCallTargetId) return; // skip if already in a call
+    try {
+      const res = await authFetch(API_BASE + '/api/chat/conversations');
+      if (!res.ok) return;
+      const data = await res.json();
+      for (const conv of (data.conversations || [])) {
+        if (conv.lastMessageType === 'webrtc-signal') {
+          // Check if it's a recent offer (within 30 seconds)
+          const age = Date.now() - new Date(conv.lastMessageAt).getTime();
+          if (age < 30000) {
+            const msgRes = await authFetch(API_BASE + '/api/chat/conversation/' + conv.userId + '?limit=3');
+            if (!msgRes.ok) continue;
+            const msgData = await msgRes.json();
+            const signals = (msgData.messages || []).filter(m =>
+              m.message_type === 'webrtc-signal' && m.sender_id === conv.userId
+            );
+            for (const m of signals) {
+              try {
+                const sig = JSON.parse(m.message);
+                if (sig.type === 'offer' && !videoPeerConnection) {
+                  // Incoming call!
+                  videoCallTargetId = conv.userId;
+                  videoCallTargetName = conv.name || 'User';
+                  showToast('Incoming video call from ' + videoCallTargetName);
+                  document.getElementById('video-remote-name').textContent = videoCallTargetName;
+                  document.getElementById('video-call-status-text').textContent = 'Incoming call from ' + videoCallTargetName;
+                  document.getElementById('video-call-screen').classList.add('active');
+                  document.getElementById('video-remote-placeholder').style.display = '';
+                  document.getElementById('remote-video').style.display = 'none';
+                  // Auto-accept: get camera, setup peer, answer
+                  videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true });
+                  document.getElementById('local-video').srcObject = videoStream;
+                  await setupPeerConnection(false);
+                  await videoPeerConnection.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+                  const answer = await videoPeerConnection.createAnswer();
+                  await videoPeerConnection.setLocalDescription(answer);
+                  await sendSignal(videoCallTargetId, { type: 'answer', sdp: answer });
+                  startSignalPolling();
+                  return;
+                }
+              } catch(e) {}
+            }
+          }
+        }
+      }
+    } catch(e) {}
+  }, 5000);
 }
 
 async function handleProfilePicUpload(event) {
@@ -6490,6 +6569,10 @@ async function sendMessage() {
 
   // Hide suggestions after first message
   document.getElementById('chat-suggestions').style.display = 'none';
+
+  // Try PromptPay NLP command (Pay/Send/Balance/History)
+  const promptPayHandled = await tryPromptPayCommand(text);
+  if (promptPayHandled) { updateTokenMatrix(); return; }
 
   // Show typing indicator
   const typing = addTypingIndicator();
@@ -8449,6 +8532,14 @@ let chatPollInterval = null;
 let videoStream = null;
 let videoPeerConnection = null;
 let facingMode = 'user';
+let videoCallTargetId = null;
+let videoCallTargetName = '';
+let videoSignalPoll = null;
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' }
+];
 
 // ── Tab Switching ──
 function switchCallsTab(tab) {
@@ -8507,7 +8598,6 @@ async function populateStoriesRail() {
 // Pick a contact for video call — if not on PromptPay, invite them
 async function pickContactForVideo() {
   if (!('contacts' in navigator && 'ContactsManager' in window)) {
-    // Browser doesn't support Contact Picker — use search instead
     startVideoCall();
     return;
   }
@@ -8517,21 +8607,17 @@ async function pickContactForVideo() {
       const contact = contacts[0];
       const name = contact.name?.[0] || 'Friend';
       const phone = contact.tel?.[0];
-      // Search if this user is on PromptPay
       if (phone) {
         try {
           const res = await authFetch(API_BASE + '/api/users/search?q=' + encodeURIComponent(phone));
           if (res.ok) {
             const data = await res.json();
             if (data.users && data.users.length > 0) {
-              // User found — start video call with them
-              startVideoCall();
-              document.getElementById('video-remote-name').textContent = name;
+              startVideoCallWithUser(data.users[0].id, data.users[0].name || name);
               return;
             }
           }
         } catch (e) {}
-        // Not on PromptPay — invite them
         const msg = 'Hey ' + name + '! Join me on PromptPay for free video calls. Download: https://upromptpay.com/join';
         const encoded = encodeURIComponent(msg);
         const cleaned = phone.replace(/[\s\-()]/g, '');
@@ -8881,23 +8967,150 @@ async function sendChatMessage() {
 
 
 function videoCallThreadUser() {
-  startVideoCall();
+  if (currentThreadUserId) {
+    startVideoCallWithUser(currentThreadUserId, currentThreadUserName || 'User');
+  } else {
+    startVideoCall();
+  }
 }
 
 // ── Video Calling (WebRTC P2P — Free) ──
-async function startVideoCall() {
+
+async function sendSignal(targetId, signalData) {
+  await authFetch(API_BASE + '/api/chat/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      recipientId: targetId,
+      message: JSON.stringify(signalData),
+      messageType: 'webrtc-signal'
+    })
+  });
+}
+
+function startSignalPolling() {
+  if (videoSignalPoll) clearInterval(videoSignalPoll);
+  videoSignalPoll = setInterval(async () => {
+    if (!videoCallTargetId) return;
+    try {
+      const res = await authFetch(API_BASE + '/api/chat/conversation/' + videoCallTargetId + '?limit=10');
+      if (!res.ok) return;
+      const data = await res.json();
+      const msgs = (data.messages || []).filter(m =>
+        m.message_type === 'webrtc-signal' && m.sender_id === videoCallTargetId
+      );
+      for (const m of msgs) {
+        try {
+          const sig = JSON.parse(m.message);
+          await handleIncomingSignal(sig);
+        } catch(e) {}
+      }
+    } catch(e) {}
+  }, 2000);
+}
+
+async function handleIncomingSignal(sig) {
+  if (sig.type === 'offer' && !videoPeerConnection) {
+    // Incoming call — auto-answer
+    await setupPeerConnection(false);
+    await videoPeerConnection.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+    const answer = await videoPeerConnection.createAnswer();
+    await videoPeerConnection.setLocalDescription(answer);
+    await sendSignal(videoCallTargetId, { type: 'answer', sdp: answer });
+  } else if (sig.type === 'answer' && videoPeerConnection) {
+    await videoPeerConnection.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+  } else if (sig.type === 'ice-candidate' && videoPeerConnection) {
+    try {
+      await videoPeerConnection.addIceCandidate(new RTCIceCandidate(sig.candidate));
+    } catch(e) {}
+  } else if (sig.type === 'hangup') {
+    endVideoCall();
+  }
+}
+
+async function setupPeerConnection(isInitiator) {
+  videoPeerConnection = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+  // Add local tracks
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => {
+      videoPeerConnection.addTrack(track, videoStream);
+    });
+  }
+
+  // ICE candidates
+  videoPeerConnection.onicecandidate = (event) => {
+    if (event.candidate && videoCallTargetId) {
+      sendSignal(videoCallTargetId, { type: 'ice-candidate', candidate: event.candidate });
+    }
+  };
+
+  // Remote stream
+  videoPeerConnection.ontrack = (event) => {
+    const remoteVideo = document.getElementById('remote-video');
+    const placeholder = document.getElementById('video-remote-placeholder');
+    remoteVideo.srcObject = event.streams[0];
+    remoteVideo.style.display = '';
+    placeholder.style.display = 'none';
+    document.getElementById('video-call-status-text').textContent = 'Connected';
+  };
+
+  videoPeerConnection.oniceconnectionstatechange = () => {
+    const state = videoPeerConnection.iceConnectionState;
+    if (state === 'connected' || state === 'completed') {
+      document.getElementById('video-call-status-text').textContent = 'Connected';
+    } else if (state === 'disconnected' || state === 'failed') {
+      document.getElementById('video-call-status-text').textContent = 'Connection lost';
+    }
+  };
+}
+
+async function startVideoCallWithUser(userId, userName) {
+  videoCallTargetId = userId;
+  videoCallTargetName = userName;
   const screen = document.getElementById('video-call-screen');
   screen.classList.add('active');
+  document.getElementById('video-remote-name').textContent = userName;
+  document.getElementById('video-call-status-text').textContent = 'Calling ' + userName + '...';
+  document.getElementById('video-remote-placeholder').style.display = '';
+  document.getElementById('remote-video').style.display = 'none';
 
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: facingMode },
       audio: true
     });
-    const localVideo = document.getElementById('local-video');
-    localVideo.srcObject = videoStream;
-    document.getElementById('video-call-status-text').textContent = 'Camera ready. Share link to connect.';
-    showToast('Video call ready — share your link to connect');
+    document.getElementById('local-video').srcObject = videoStream;
+
+    // Create peer connection and send offer
+    await setupPeerConnection(true);
+    const offer = await videoPeerConnection.createOffer();
+    await videoPeerConnection.setLocalDescription(offer);
+    await sendSignal(userId, { type: 'offer', sdp: offer });
+
+    // Start polling for answer
+    startSignalPolling();
+    document.getElementById('video-call-status-text').textContent = 'Ringing ' + userName + '...';
+  } catch (e) {
+    document.getElementById('video-call-status-text').textContent = 'Camera access denied';
+    showToast('Camera access required for video calls');
+  }
+}
+
+async function startVideoCall() {
+  // No specific user — open camera, wait for connection
+  const screen = document.getElementById('video-call-screen');
+  screen.classList.add('active');
+  document.getElementById('video-remote-placeholder').style.display = '';
+  document.getElementById('remote-video').style.display = 'none';
+
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: facingMode },
+      audio: true
+    });
+    document.getElementById('local-video').srcObject = videoStream;
+    document.getElementById('video-call-status-text').textContent = 'Camera ready. Select a contact to call.';
   } catch (e) {
     document.getElementById('video-call-status-text').textContent = 'Camera access denied';
     showToast('Camera access required for video calls');
@@ -8905,6 +9118,10 @@ async function startVideoCall() {
 }
 
 function endVideoCall() {
+  if (videoCallTargetId) {
+    sendSignal(videoCallTargetId, { type: 'hangup' }).catch(() => {});
+  }
+  if (videoSignalPoll) { clearInterval(videoSignalPoll); videoSignalPoll = null; }
   if (videoStream) {
     videoStream.getTracks().forEach(t => t.stop());
     videoStream = null;
@@ -8913,6 +9130,8 @@ function endVideoCall() {
     videoPeerConnection.close();
     videoPeerConnection = null;
   }
+  videoCallTargetId = null;
+  videoCallTargetName = '';
   document.getElementById('video-call-screen').classList.remove('active');
   document.getElementById('local-video').srcObject = null;
   document.getElementById('remote-video').srcObject = null;
@@ -8949,6 +9168,14 @@ async function flipVideoCamera() {
         audio: true
       });
       document.getElementById('local-video').srcObject = videoStream;
+      // Replace tracks in peer connection
+      if (videoPeerConnection) {
+        const senders = videoPeerConnection.getSenders();
+        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+        if (videoSender) {
+          videoSender.replaceTrack(videoStream.getVideoTracks()[0]);
+        }
+      }
     } catch (e) {
       showToast('Could not switch camera');
     }
@@ -10255,6 +10482,115 @@ function sendMoneyInGame() {
 
   triggerCheer(50);
   hideSendMoneyModal();
+}
+
+// ═══════════════════════════════════════════════════════════
+// P2P WALLET TRANSFER (from chat thread)
+// ═══════════════════════════════════════════════════════════
+
+async function showP2PTransferModal() {
+  if (!currentThreadUserId) { showToast('Open a chat thread first'); return; }
+  document.getElementById('p2p-recipient-name').textContent = currentThreadUserName || 'User';
+  document.getElementById('p2p-amount').value = '';
+  document.getElementById('p2p-note').value = '';
+  document.getElementById('p2p-fee-info').style.display = 'none';
+  document.getElementById('p2p-send-btn').disabled = true;
+  document.getElementById('p2p-transfer-modal').classList.add('active');
+  try {
+    const res = await authFetch(API_BASE + '/api/wallet/balance');
+    const data = await res.json();
+    const bal = data.balance != null ? Number(data.balance) : 0;
+    document.getElementById('p2p-wallet-bal').innerHTML = 'Balance: <b>$' + bal.toFixed(2) + '</b>';
+  } catch(e) {
+    document.getElementById('p2p-wallet-bal').innerHTML = 'Balance: <b>$0.00</b>';
+  }
+}
+
+function closeP2PModal() {
+  document.getElementById('p2p-transfer-modal').classList.remove('active');
+}
+
+function updateP2PFee() {
+  const val = parseFloat(document.getElementById('p2p-amount').value);
+  const feeInfo = document.getElementById('p2p-fee-info');
+  const btn = document.getElementById('p2p-send-btn');
+  if (!val || val <= 0) { feeInfo.style.display = 'none'; btn.disabled = true; return; }
+  const isFree = val <= 50; // p2pFreeThresholdUsd
+  const fee = isFree ? 0 : Math.round(val * 0.01 * 100) / 100; // 1% p2p fee
+  const total = Math.round((val + fee) * 100) / 100;
+  document.getElementById('p2p-fee-val').textContent = isFree ? 'FREE' : '$' + fee.toFixed(2);
+  document.getElementById('p2p-total-val').textContent = '$' + total.toFixed(2);
+  feeInfo.style.display = '';
+  btn.disabled = false;
+}
+
+async function executeP2PTransfer() {
+  const amount = parseFloat(document.getElementById('p2p-amount').value);
+  if (!amount || amount <= 0 || !currentThreadUserId) return;
+  const note = document.getElementById('p2p-note').value.trim();
+  const btn = document.getElementById('p2p-send-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  try {
+    const res = await authFetch(API_BASE + '/api/wallet/transfer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipientId: currentThreadUserId,
+        amount: amount,
+        note: note
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Transfer failed');
+      return;
+    }
+    // Send a chat message about the transfer
+    await authFetch(API_BASE + '/api/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipientId: currentThreadUserId,
+        message: '\u{1F4B8} Sent you $' + amount.toFixed(2) + (note ? ' — ' + note : ''),
+        messageType: 'payment'
+      })
+    });
+    showToast('Sent $' + amount.toFixed(2) + ' to ' + (currentThreadUserName || 'User') + '! Balance: $' + data.balanceAfter.toFixed(2));
+    closeP2PModal();
+    loadMessages(currentThreadUserId);
+  } catch (e) {
+    showToast('Network error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Money';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROMPTPAY AI — Natural Language Commands in AI Chat
+// ═══════════════════════════════════════════════════════════
+
+async function tryPromptPayCommand(text) {
+  // Check if the message looks like a payment command
+  const payPatterns = /\b(pay|send|transfer|give)\s+\$?\d|check\s+(my\s+)?balance|show\s+(recent\s+)?transactions|wallet|how much/i;
+  if (!payPatterns.test(text)) return false;
+
+  try {
+    const res = await authFetch(API_BASE + '/api/promptpay/execute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: text })
+    });
+    const data = await res.json();
+    if (data.reply) {
+      addChatMessage(formatAIResponse(data.reply), 'ai');
+      if (data.success) showToast(data.reply);
+      return true;
+    }
+  } catch(e) {}
+  return false;
 }
 </script>
 

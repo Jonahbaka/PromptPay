@@ -2492,6 +2492,238 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   });
 
   // ═══════════════════════════════════════════════════════════════
+  // P2P WALLET-TO-WALLET TRANSFERS
+  // ═══════════════════════════════════════════════════════════════
+
+  router.post('/api/wallet/transfer', authenticate, (req: Request, res: Response) => {
+    try {
+      const senderId = req.auth!.userId;
+      const { recipientId, recipientPaytag, amount, note } = req.body;
+      const transferAmount = parseFloat(amount);
+
+      if (!transferAmount || transferAmount <= 0) {
+        res.status(400).json({ error: 'Invalid amount' }); return;
+      }
+      if (transferAmount > CONFIG.wallet.maxTransferUsd) {
+        res.status(400).json({ error: `Transfer limit is $${CONFIG.wallet.maxTransferUsd}` }); return;
+      }
+
+      // Resolve recipient by ID or paytag
+      let recipient: Record<string, unknown> | undefined;
+      if (recipientId) {
+        recipient = db.prepare('SELECT id, display_name, email, paytag FROM users WHERE id = ?').get(recipientId) as Record<string, unknown> | undefined;
+      } else if (recipientPaytag) {
+        recipient = db.prepare('SELECT id, display_name, email, paytag FROM users WHERE paytag = ?').get(recipientPaytag) as Record<string, unknown> | undefined;
+      }
+      if (!recipient) { res.status(404).json({ error: 'Recipient not found' }); return; }
+      if (recipient.id === senderId) { res.status(400).json({ error: 'Cannot transfer to yourself' }); return; }
+
+      // Fee calculation
+      const feePercent = CONFIG.fees.p2pPercent / 100;
+      const isFree = transferAmount <= CONFIG.fees.p2pFreeThresholdUsd;
+      const fee = isFree ? 0 : Math.round(transferAmount * feePercent * 100) / 100;
+      const totalDebit = Math.round((transferAmount + fee) * 100) / 100;
+      const now = new Date().toISOString();
+
+      // Ensure sender wallet exists
+      db.prepare(`
+        INSERT INTO user_wallets (user_id, balance, currency, total_funded, total_spent, total_earned, is_agent, agent_tier, created_at, updated_at)
+        VALUES (?, 0, 'NGN', 0, 0, 0, 0, 'starter', ?, ?)
+        ON CONFLICT(user_id) DO NOTHING
+      `).run(senderId, now, now);
+
+      const senderWallet = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(senderId) as { balance: number };
+      if (senderWallet.balance < totalDebit) {
+        res.status(400).json({ error: `Insufficient balance. Need $${totalDebit.toFixed(2)} (includes $${fee.toFixed(2)} fee)` }); return;
+      }
+
+      // Debit sender
+      db.prepare('UPDATE user_wallets SET balance = balance - ?, total_spent = total_spent + ?, updated_at = ? WHERE user_id = ?')
+        .run(totalDebit, totalDebit, now, senderId);
+
+      const senderAfter = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(senderId) as { balance: number };
+      const senderTxId = uuid();
+      const recipientName = (recipient.display_name || recipient.email || 'User') as string;
+
+      db.prepare(`
+        INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at)
+        VALUES (?, ?, 'transfer_out', ?, ?, ?, ?, ?)
+      `).run(senderTxId, senderId, totalDebit, senderAfter.balance, 'p2p-' + senderTxId,
+        `Sent $${transferAmount.toFixed(2)} to ${recipientName}${note ? ' — ' + note : ''}`, now);
+
+      // Credit recipient
+      db.prepare(`
+        INSERT INTO user_wallets (user_id, balance, currency, total_funded, total_spent, total_earned, is_agent, agent_tier, created_at, updated_at)
+        VALUES (?, 0, 'NGN', 0, 0, 0, 0, 'starter', ?, ?)
+        ON CONFLICT(user_id) DO NOTHING
+      `).run(recipient.id, now, now);
+
+      db.prepare('UPDATE user_wallets SET balance = balance + ?, total_earned = total_earned + ?, updated_at = ? WHERE user_id = ?')
+        .run(transferAmount, transferAmount, now, recipient.id);
+
+      const recipientAfter = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(recipient.id) as { balance: number };
+      const recipientTxId = uuid();
+      const senderUser = db.prepare('SELECT display_name, email FROM users WHERE id = ?').get(senderId) as Record<string, unknown>;
+      const senderName = (senderUser?.display_name || senderUser?.email || 'Someone') as string;
+
+      db.prepare(`
+        INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at)
+        VALUES (?, ?, 'transfer_in', ?, ?, ?, ?, ?)
+      `).run(recipientTxId, recipient.id, transferAmount, recipientAfter.balance, 'p2p-' + recipientTxId,
+        `Received $${transferAmount.toFixed(2)} from ${senderName}${note ? ' — ' + note : ''}`, now);
+
+      deps.logger.info(`[P2P] ${senderId} → ${recipient.id}: $${transferAmount} (fee: $${fee})`);
+
+      res.json({
+        success: true,
+        amount: transferAmount,
+        fee,
+        totalDebited: totalDebit,
+        recipientName,
+        balanceAfter: senderAfter.balance,
+        transactionId: senderTxId,
+      });
+    } catch (err: unknown) {
+      deps.logger.error(`[P2P] Transfer error: ${err}`);
+      res.status(500).json({ error: 'Transfer failed' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  // PROMPTPAY AI — Natural Language Payment Execution
+  // ═══════════════════════════════════════════════════════════════
+
+  router.post('/api/promptpay/execute', authenticate, (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const { prompt } = req.body;
+      if (!prompt || typeof prompt !== 'string') {
+        res.status(400).json({ error: 'prompt required' }); return;
+      }
+
+      const text = prompt.trim().toLowerCase();
+
+      // ── Parse intent ──
+      // Balance check
+      if (/\b(balance|how much|wallet|funds)\b/.test(text)) {
+        const wallet = db.prepare('SELECT balance, currency FROM user_wallets WHERE user_id = ?').get(userId) as { balance: number; currency: string } | undefined;
+        const bal = wallet ? wallet.balance : 0;
+        res.json({ intent: 'balance', reply: `Your wallet balance is $${bal.toFixed(2)}.`, balance: bal });
+        return;
+      }
+
+      // Transaction history
+      if (/\b(transactions|history|recent|statement)\b/.test(text)) {
+        const txns = db.prepare('SELECT type, amount, description, created_at FROM wallet_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 5')
+          .all(userId) as Array<Record<string, unknown>>;
+        const lines = txns.map((t: Record<string, unknown>) => `${t.type}: $${Number(t.amount).toFixed(2)} — ${t.description}`);
+        res.json({ intent: 'history', reply: txns.length ? 'Recent transactions:\n' + lines.join('\n') : 'No transactions yet.', transactions: txns });
+        return;
+      }
+
+      // Pay / Send / Transfer
+      const payMatch = text.match(/(?:pay|send|transfer|give)\s+(?:\$?([\d,.]+)\s+to\s+(.+)|(.+?)\s+\$?([\d,.]+))/i);
+      if (payMatch) {
+        const amount = parseFloat((payMatch[1] || payMatch[4] || '0').replace(/,/g, ''));
+        const recipientQuery = (payMatch[2] || payMatch[3] || '').trim().replace(/^@/, '');
+
+        if (!amount || amount <= 0) {
+          res.json({ intent: 'pay', reply: 'I couldn\'t understand the amount. Try: "Pay $50 to John"', error: true });
+          return;
+        }
+
+        // Search for recipient
+        const found = db.prepare(`
+          SELECT id, display_name, paytag FROM users
+          WHERE (LOWER(display_name) LIKE ? OR LOWER(paytag) LIKE ?) AND id != ?
+          LIMIT 5
+        `).all(`%${recipientQuery}%`, `%${recipientQuery}%`, userId) as Array<Record<string, unknown>>;
+
+        if (found.length === 0) {
+          res.json({ intent: 'pay', reply: `I couldn't find "${recipientQuery}" on PromptPay. Check the name or paytag and try again.`, error: true });
+          return;
+        }
+        if (found.length > 1) {
+          const names = found.map((u: Record<string, unknown>) => `${u.display_name}${u.paytag ? ' (@' + u.paytag + ')' : ''}`).join(', ');
+          res.json({ intent: 'pay', reply: `Multiple matches: ${names}. Be more specific or use a paytag.`, matches: found, error: true });
+          return;
+        }
+
+        const recipient = found[0];
+        const feePercent = CONFIG.fees.p2pPercent / 100;
+        const isFree = amount <= CONFIG.fees.p2pFreeThresholdUsd;
+        const fee = isFree ? 0 : Math.round(amount * feePercent * 100) / 100;
+        const totalDebit = Math.round((amount + fee) * 100) / 100;
+        const now = new Date().toISOString();
+
+        // Check balance
+        db.prepare(`
+          INSERT INTO user_wallets (user_id, balance, currency, total_funded, total_spent, total_earned, is_agent, agent_tier, created_at, updated_at)
+          VALUES (?, 0, 'NGN', 0, 0, 0, 0, 'starter', ?, ?)
+          ON CONFLICT(user_id) DO NOTHING
+        `).run(userId, now, now);
+
+        const wallet = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(userId) as { balance: number };
+        if (wallet.balance < totalDebit) {
+          res.json({ intent: 'pay', reply: `Insufficient balance. You need $${totalDebit.toFixed(2)} but have $${wallet.balance.toFixed(2)}.`, error: true });
+          return;
+        }
+
+        // Execute transfer
+        db.prepare('UPDATE user_wallets SET balance = balance - ?, total_spent = total_spent + ?, updated_at = ? WHERE user_id = ?')
+          .run(totalDebit, totalDebit, now, userId);
+        const senderAfter = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(userId) as { balance: number };
+        const txId = uuid();
+        const recipientName = (recipient.display_name || 'User') as string;
+
+        db.prepare(`
+          INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at)
+          VALUES (?, ?, 'transfer_out', ?, ?, ?, ?, ?)
+        `).run(txId, userId, totalDebit, senderAfter.balance, 'prompt-' + txId, `Sent $${amount.toFixed(2)} to ${recipientName}`, now);
+
+        // Credit recipient
+        db.prepare(`
+          INSERT INTO user_wallets (user_id, balance, currency, total_funded, total_spent, total_earned, is_agent, agent_tier, created_at, updated_at)
+          VALUES (?, 0, 'NGN', 0, 0, 0, 0, 'starter', ?, ?)
+          ON CONFLICT(user_id) DO NOTHING
+        `).run(recipient.id, now, now);
+
+        db.prepare('UPDATE user_wallets SET balance = balance + ?, total_earned = total_earned + ?, updated_at = ? WHERE user_id = ?')
+          .run(amount, amount, now, recipient.id);
+
+        const recipientAfter = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(recipient.id) as { balance: number };
+        const recipientTxId = uuid();
+        const senderUser = db.prepare('SELECT display_name FROM users WHERE id = ?').get(userId) as { display_name: string } | undefined;
+
+        db.prepare(`
+          INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at)
+          VALUES (?, ?, 'transfer_in', ?, ?, ?, ?, ?)
+        `).run(recipientTxId, recipient.id, amount, recipientAfter.balance, 'prompt-' + recipientTxId,
+          `Received $${amount.toFixed(2)} from ${senderUser?.display_name || 'Someone'}`, now);
+
+        deps.logger.info(`[PROMPTPAY] ${userId} → ${recipient.id}: $${amount} via prompt`);
+
+        res.json({
+          intent: 'pay',
+          reply: `Done! Sent $${amount.toFixed(2)} to ${recipientName}.${fee > 0 ? ` Fee: $${fee.toFixed(2)}.` : ''} Balance: $${senderAfter.balance.toFixed(2)}`,
+          success: true,
+          amount,
+          fee,
+          recipientName,
+          balanceAfter: senderAfter.balance,
+        });
+        return;
+      }
+
+      // Unknown intent
+      res.json({ intent: 'unknown', reply: 'I can help you: "Pay $50 to John", "Check my balance", "Show recent transactions". Try one of these!' });
+    } catch (err: unknown) {
+      deps.logger.error(`[PROMPTPAY] Execute error: ${err}`);
+      res.status(500).json({ error: 'Command failed' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
   // TELNYX SERVICES — AI Inference & Calls
   // ═══════════════════════════════════════════════════════════════
   // Virtual Numbers, SIM Cards — on hold (provider functions preserved in src/providers/telnyx.ts)
