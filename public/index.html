@@ -9542,16 +9542,16 @@ updatePlaygroundBody();
 })();
 
 // ═══ Luxe Arena — Game Engine ═══
-let laGameMode = 'chess'; // 'chess' | 'checkers'
-let laBoard = [];
-let laSelected = null; // {r,c}
-let laValidMoves = [];
-let laTurn = 'gold'; // 'gold' | 'holo'
-let laScoreGold = 0, laScoreHolo = 0;
-let laCapturedGold = [], laCapturedHolo = [];
-let laCheerLevel = 0;
-let laSelectedGift = null;
-let laMoveCount = 0;
+var laGameMode = 'chess'; // 'chess' | 'checkers'
+var laBoard = [];
+var laSelected = null; // {r,c}
+var laValidMoves = [];
+var laTurn = 'gold'; // 'gold' | 'holo'
+var laScoreGold = 0, laScoreHolo = 0;
+var laCapturedGold = [], laCapturedHolo = [];
+var laCheerLevel = 0;
+var laSelectedGift = null;
+var laMoveCount = 0;
 
 const LA_PIECE_VALUES = { P:1, N:3, B:3, R:5, Q:9, K:0, C:1, CK:3 };
 
