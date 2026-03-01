@@ -222,8 +222,9 @@ async function main(): Promise<void> {
     await telegram.start();
     logger.info('Telegram polling started (primary worker)');
 
-    // OpenClaw agent — owner-only autonomous Telegram AI
-    openclaw = new OpenClawAgent({ telegram, auditTrail, logger, db, orchestrator });
+    // OpenClaw agent — owner-only autonomous Telegram AI (agentic with tools)
+    const openclawMemory = memory.createMemoryHandle('openclaw');
+    openclaw = new OpenClawAgent({ telegram, auditTrail, logger, db, orchestrator, memoryHandle: openclawMemory });
 
     telegram.on('message', async (msg: ChannelMessage) => {
       if (msg.direction !== 'inbound') return;
