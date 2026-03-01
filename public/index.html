@@ -1852,7 +1852,56 @@
       box-shadow: 0 0 10px rgba(99,102,241,0.4);
     }
 
-    /* Empty state */
+    /* Chat page header */
+    .chat-page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px 4px;
+    }
+    .chat-page-title {
+      font-size: 24px; font-weight: 800; margin: 0;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .chat-page-actions {
+      display: flex; gap: 8px;
+    }
+    .chat-page-actions button {
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,0.06); color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .chat-page-actions button:hover {
+      background: rgba(99,102,241,0.15);
+    }
+    /* Compact empty state */
+    .chat-empty-compact {
+      text-align: center; padding: 32px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .chat-empty-compact span {
+      font-size: 14px; color: var(--text3); font-weight: 500;
+    }
+    .chat-empty-compact button {
+      margin-top: 8px; padding: 10px 24px; border-radius: 20px; border: none;
+      background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff;
+      font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+      box-shadow: 0 6px 16px rgba(99,102,241,0.3);
+    }
+    /* Floating new-chat FAB */
+    .chat-fab {
+      position: fixed; bottom: 88px; right: 20px; z-index: 90;
+      width: 56px; height: 56px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .chat-fab:hover {
+      transform: scale(1.08);
+      box-shadow: 0 12px 32px rgba(99,102,241,0.5);
+    }
+    /* Legacy empty state (keep for compat) */
     .chat-empty-state {
       text-align: center; padding: 48px 16px;
     }
@@ -3540,6 +3589,19 @@
 
     <!-- CHAT & VIDEO — Instagram/WhatsApp-class Social -->
     <div class="page" id="page-calls">
+      <!-- Page header -->
+      <div class="chat-page-header">
+        <h2 class="chat-page-title">Messages</h2>
+        <div class="chat-page-actions">
+          <button onclick="pickContacts()" title="Phone Contacts">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </button>
+          <button onclick="openNewChatSearch()" title="New Message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+        </div>
+      </div>
+
       <!-- Stories-style online ring rail -->
       <div class="stories-rail" id="stories-rail">
         <!-- First item: New Video Call -->
@@ -3551,6 +3613,12 @@
         </div>
       </div>
 
+      <!-- Search bar (above tabs, always visible) -->
+      <div class="social-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search people..." id="chat-search-input" oninput="searchChats(this.value)">
+      </div>
+
       <!-- Premium tab bar -->
       <div class="calls-tabs">
         <button class="calls-tab active" onclick="switchCallsTab('chats')">Chats</button>
@@ -3560,33 +3628,15 @@
 
       <!-- CHATS TAB -->
       <div id="calls-tab-chats">
-        <!-- Search bar -->
-        <div class="social-search">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="Search people..." id="chat-search-input" oninput="searchChats(this.value)">
-        </div>
-
         <!-- Search Results (hidden by default) -->
         <div id="chat-search-results" style="display:none"></div>
 
         <!-- Conversation List -->
         <div id="chat-conversations-list">
-          <div class="chat-empty-state">
-            <div class="chat-empty-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="url(#emptyGrad)" stroke-width="1.5"><defs><linearGradient id="emptyGrad" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </div>
-            <div style="font-size:18px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Start a conversation</div>
-            <div style="font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.5">Message friends, make free video calls,<br>and connect with people on PromptPay</div>
-            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-              <button onclick="pickContacts()" style="display:flex;align-items:center;gap:6px;padding:12px 20px;border-radius:24px;border:none;background:linear-gradient(135deg,#6366f1,#a855f7);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 20px rgba(99,102,241,0.3)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                Find People
-              </button>
-              <button onclick="openInviteModal()" style="display:flex;align-items:center;gap:6px;padding:12px 20px;border-radius:24px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                Invite Friends
-              </button>
-            </div>
+          <div class="chat-empty-compact">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#emptyGrad2)" stroke-width="1.5"><defs><linearGradient id="emptyGrad2" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>No messages yet</span>
+            <button onclick="openNewChatSearch()">Start chatting</button>
           </div>
         </div>
       </div>
@@ -3746,6 +3796,10 @@
         </div>
 
       </div>
+      <!-- Floating New Chat button -->
+      <button class="chat-fab" onclick="openNewChatSearch()" title="New Message">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
     </div>
 
     <!-- ACTIVITY (Payments tab) -->
@@ -4523,6 +4577,7 @@
 <div id="la-gift-modal" class="la-gift-modal">
   <div class="la-gift-sheet">
     <div class="la-gift-title">Send a Drink &#127879;</div>
+    <div id="la-gift-wallet-bal" style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:8px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,0.04)">Balance: <b>$0.00</b></div>
     <div class="la-gift-grid">
       <div class="la-gift-card" onclick="selectGift(0,'beer')">
         <div class="la-gift-emoji" style="font-size:42px">&#127866;</div>
@@ -8623,6 +8678,11 @@ async function loadCallHistory() {
 }
 
 // ── Chat / Messaging ──
+function openNewChatSearch() {
+  const inp = document.getElementById('chat-search-input');
+  if (inp) { inp.value = ''; inp.focus(); searchChats(''); }
+}
+
 async function loadConversations() {
   const container = document.getElementById('chat-conversations-list');
   if (!container) return;
@@ -8942,6 +9002,7 @@ async function pickContacts() {
             <div style="font-size:12px;color:var(--text2)">${phone}</div>
           </div>
           <div style="display:flex;gap:6px">
+            <button onclick="event.stopPropagation();chatFromContact('${phone.replace(/'/g,'')}','${name.replace(/'/g,'')}')" style="padding:6px 12px;border-radius:8px;border:none;background:rgba(99,102,241,0.15);color:#818cf8;font-size:11px;font-weight:600;cursor:pointer" title="Chat">Chat</button>
             <button onclick="event.stopPropagation();dialFromContact('${phone.replace(/'/g,'')}')" style="padding:6px 12px;border-radius:8px;border:none;background:rgba(16,185,129,0.15);color:#10b981;font-size:11px;font-weight:600;cursor:pointer" title="Call">Call</button>
             <button onclick="event.stopPropagation();inviteContact('${phone.replace(/'/g,'')}','${name.replace(/'/g,'')}')" style="padding:6px 12px;border-radius:8px;border:none;background:rgba(124,58,237,0.15);color:#a78bfa;font-size:11px;font-weight:600;cursor:pointer" title="Invite">Invite</button>
           </div>
@@ -8964,6 +9025,25 @@ async function pickContacts() {
 
 function closeContactsModal() {
   document.getElementById('contacts-modal').classList.remove('active');
+}
+
+async function chatFromContact(phone, name) {
+  closeContactsModal();
+  try {
+    const res = await authFetch(API_BASE + '/api/users/search?q=' + encodeURIComponent(phone));
+    const data = await res.json();
+    const users = data.users || [];
+    if (users.length > 0) {
+      navigateTo('calls');
+      switchCallsTab('chats');
+      openMessageThread(users[0].id, users[0].name || name);
+    } else {
+      showToast(name + ' is not on PromptPay yet');
+      inviteContact(phone, name);
+    }
+  } catch (e) {
+    showToast('Could not search for contact');
+  }
 }
 
 function dialFromContact(phone) {
@@ -10053,11 +10133,21 @@ function sendLoungeChat() {
   triggerCheer(10);
 }
 
-function showGiftModal() {
+async function showGiftModal() {
   laSelectedGift = null;
   document.querySelectorAll('.la-gift-card').forEach(c => c.classList.remove('selected'));
   document.getElementById('la-gift-send-btn').disabled = true;
+  document.getElementById('la-fee-breakdown').style.display = 'none';
   document.getElementById('la-gift-modal').classList.add('active');
+  // Fetch wallet balance
+  try {
+    const res = await authFetch(API_BASE + '/api/wallet');
+    const data = await res.json();
+    const bal = (data.wallet && data.wallet.balance != null) ? Number(data.wallet.balance) : 0;
+    document.getElementById('la-gift-wallet-bal').innerHTML = 'Balance: <b>$' + bal.toFixed(2) + '</b>';
+  } catch(e) {
+    document.getElementById('la-gift-wallet-bal').innerHTML = 'Balance: <b>$0.00</b>';
+  }
 }
 
 function hideGiftModal() {
@@ -10083,25 +10173,44 @@ function selectGift(idx, name) {
   document.getElementById('la-fee-total').textContent = '$' + total.toFixed(2);
 }
 
-function sendGift() {
+async function sendGift() {
   if (!laSelectedGift) return;
-  const emojis = {beer:'\u{1F37A}', wine:'\u{1F377}', cocktail:'\u{1F378}', champagne:'\u{1F37E}'};
-  const emoji = emojis[laSelectedGift] || '\u{1F37A}';
-  const userName = (currentUser && currentUser.name) ? currentUser.name.split(' ')[0] : 'You';
-  const price = LA_GIFT_PRICES[laSelectedGift] || 0;
-  const fee = Math.round(price * LA_FEE_RATE * 100) / 100;
-  const total = (price + fee).toFixed(2);
+  const btn = document.getElementById('la-gift-send-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
 
-  // Add to chat
-  const chat = document.getElementById('la-chat');
-  chat.innerHTML += `<div class="la-chat-msg system">${emoji} ${userName} sent a ${laSelectedGift}! ($${total} incl. fee)</div>`;
-  chat.scrollTop = chat.scrollHeight;
-
-  // Toast
-  if (typeof showToast === 'function') showToast(`${emoji} ${laSelectedGift} sent! $${total}`);
-
-  triggerCheer(30);
-  hideGiftModal();
+  try {
+    const res = await authFetch(API_BASE + '/api/game/gift', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipientId: null,
+        giftType: laSelectedGift
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      if (data.error && data.error.includes('Insufficient')) {
+        showToast('Insufficient balance! Fund your wallet first.');
+      } else {
+        showToast(data.error || 'Gift failed');
+      }
+      return;
+    }
+    const emojis = {beer:'\u{1F37A}', wine:'\u{1F377}', cocktail:'\u{1F378}', champagne:'\u{1F37E}'};
+    const emoji = emojis[laSelectedGift] || '\u{1F37A}';
+    const chat = document.getElementById('la-chat');
+    chat.innerHTML += `<div class="la-chat-msg system">${emoji} You sent a ${laSelectedGift}! ($${data.total})</div>`;
+    chat.scrollTop = chat.scrollHeight;
+    showToast(`${emoji} Gift sent! Balance: $${data.balanceAfter.toFixed(2)}`);
+    triggerCheer(30);
+    hideGiftModal();
+  } catch (e) {
+    showToast('Network error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Gift';
+  }
 }
 
 // Send Money modal

@@ -2391,6 +2391,107 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   });
 
   // ═══════════════════════════════════════════════════════════════
+  // GIFT A DRINK (Lounge / Games)
+  // ═══════════════════════════════════════════════════════════════
+
+  const GIFT_PRICES: Record<string, number> = { beer: 1.99, wine: 4.99, cocktail: 3.99, champagne: 9.99 };
+  const GIFT_FEE_RATE = 0.049;
+
+  router.post('/api/game/gift', authenticate, (req: Request, res: Response) => {
+    try {
+      const senderId = req.auth!.userId;
+      const { recipientId, giftType } = req.body;
+
+      if (!giftType || !(giftType in GIFT_PRICES)) {
+        res.status(400).json({ error: 'Invalid gift type' }); return;
+      }
+
+      const price = GIFT_PRICES[giftType];
+      const fee = Math.round(price * GIFT_FEE_RATE * 100) / 100;
+      const total = Math.round((price + fee) * 100) / 100;
+      const now = new Date().toISOString();
+
+      // Ensure sender wallet exists
+      db.prepare(`
+        INSERT INTO user_wallets (user_id, balance, currency, total_funded, total_spent, total_earned, is_agent, agent_tier, created_at, updated_at)
+        VALUES (?, 0, 'NGN', 0, 0, 0, 0, 'starter', ?, ?)
+        ON CONFLICT(user_id) DO NOTHING
+      `).run(senderId, now, now);
+
+      const senderWallet = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(senderId) as { balance: number };
+      if (senderWallet.balance < total) {
+        res.status(400).json({ error: 'Insufficient balance. Need $' + total.toFixed(2) }); return;
+      }
+
+      // Debit sender
+      db.prepare('UPDATE user_wallets SET balance = balance - ?, total_spent = total_spent + ?, updated_at = ? WHERE user_id = ?')
+        .run(total, total, now, senderId);
+
+      const senderAfter = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(senderId) as { balance: number };
+      const senderTxId = uuid();
+
+      // Determine recipient name for description
+      let recipientName = 'someone';
+      const hasRecipient = recipientId && recipientId !== senderId;
+
+      if (hasRecipient) {
+        const recipientUser = db.prepare('SELECT display_name FROM users WHERE id = ?').get(recipientId) as { display_name: string } | undefined;
+        if (!recipientUser) {
+          // Refund — recipient doesn't exist
+          db.prepare('UPDATE user_wallets SET balance = balance + ?, total_spent = total_spent - ?, updated_at = ? WHERE user_id = ?')
+            .run(total, total, now, senderId);
+          res.status(400).json({ error: 'Recipient not found' }); return;
+        }
+        recipientName = recipientUser.display_name || 'User';
+      }
+
+      // Record sender transaction
+      db.prepare(`
+        INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at)
+        VALUES (?, ?, 'debit', ?, ?, ?, ?, ?)
+      `).run(senderTxId, senderId, total, senderAfter.balance, 'gift-' + senderTxId,
+        hasRecipient ? `Gift: ${giftType} to ${recipientName}` : `In-game purchase: ${giftType}`, now);
+
+      // Credit recipient (gift value only, fee stays with platform)
+      if (hasRecipient) {
+        db.prepare(`
+          INSERT INTO user_wallets (user_id, balance, currency, total_funded, total_spent, total_earned, is_agent, agent_tier, created_at, updated_at)
+          VALUES (?, 0, 'NGN', 0, 0, 0, 0, 'starter', ?, ?)
+          ON CONFLICT(user_id) DO NOTHING
+        `).run(recipientId, now, now);
+
+        db.prepare('UPDATE user_wallets SET balance = balance + ?, total_earned = total_earned + ?, updated_at = ? WHERE user_id = ?')
+          .run(price, price, now, recipientId);
+
+        const recipientAfter = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(recipientId) as { balance: number };
+        const recipientTxId = uuid();
+        const senderUser = db.prepare('SELECT display_name FROM users WHERE id = ?').get(senderId) as { display_name: string } | undefined;
+        const senderName = senderUser?.display_name || 'Someone';
+
+        db.prepare(`
+          INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at)
+          VALUES (?, ?, 'bonus', ?, ?, ?, ?, ?)
+        `).run(recipientTxId, recipientId, price, recipientAfter.balance, 'gift-' + recipientTxId,
+          `Gift received: ${giftType} from ${senderName}`, now);
+      }
+
+      deps.logger.info(`[GIFT] ${senderId} sent ${giftType} ($${total})${hasRecipient ? ' to ' + recipientId : ' (solo purchase)'}`);
+
+      res.json({
+        success: true,
+        giftType,
+        price,
+        fee,
+        total,
+        balanceAfter: senderAfter.balance,
+      });
+    } catch (err: unknown) {
+      deps.logger.error(`[GIFT] Error: ${err}`);
+      res.status(500).json({ error: 'Gift failed' });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════
   // TELNYX SERVICES — AI Inference & Calls
   // ═══════════════════════════════════════════════════════════════
   // Virtual Numbers, SIM Cards — on hold (provider functions preserved in src/providers/telnyx.ts)
