@@ -77,28 +77,23 @@ export class TelegramChannel extends BaseChannel {
   async stop(): Promise<void> {
     this.running = false;
     this.active = false;
-    // Abort any in-flight long-poll request so Telegram releases the session immediately
+    // Abort any in-flight long-poll so Telegram releases the session immediately
     if (this.pollAbort) {
       this.pollAbort.abort();
       this.pollAbort = null;
     }
   }
 
-  /** Sequential long-poll loop — only one getUpdates at a time, no overlap */
+  /** Sequential long-poll loop — exactly one getUpdates at a time */
   private async pollLoop(): Promise<void> {
     while (this.running) {
       try {
         this.pollAbort = new AbortController();
-        const response = await fetch(`https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            offset: this.lastUpdateId + 1,
-            timeout: 5,
-            allowed_updates: ['message'],
-          }),
-          signal: this.pollAbort.signal,
-        });
+        // Simple GET with query params — the standard Telegram long-polling approach
+        const response = await fetch(
+          `https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates?offset=${this.lastUpdateId + 1}&timeout=30`,
+          { signal: this.pollAbort.signal }
+        );
         const data = await response.json() as {
           ok: boolean;
           description?: string;
@@ -111,10 +106,10 @@ export class TelegramChannel extends BaseChannel {
         if (!data.ok) {
           const desc = data.description || 'unknown';
           if (desc.includes('Conflict')) {
-            // 409: Another getUpdates is active — just wait for it to complete
-            // Do NOT call getUpdates here — that would create a second concurrent request
-            this.logger.warn('Telegram 409 Conflict — waiting for session release...');
-            await this.sleep(5000);
+            // 409: Another getUpdates is active (stale session from previous restart)
+            // Just wait — do NOT make additional API calls here
+            this.logger.warn('Telegram 409 Conflict — waiting 10s for old session to expire...');
+            await this.sleep(10000);
           } else {
             this.logger.warn(`Telegram poll error: ${desc}`);
             await this.sleep(3000);
