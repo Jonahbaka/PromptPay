@@ -444,6 +444,13 @@
   <div class="nav-item" data-page="health">
     <span class="nav-icon">&#128154;</span> Health
   </div>
+  <div class="nav-section">Resources</div>
+  <div class="nav-item" data-page="capabilities">
+    <span class="nav-icon">&#128640;</span> Agent Capabilities
+  </div>
+  <div class="nav-item" data-page="pitch-deck">
+    <span class="nav-icon">&#128188;</span> Pitch Deck
+  </div>
   <div class="sidebar-bottom" id="sidebar-bottom" style="display:none">
     <div class="sidebar-user" id="sidebar-user"></div>
     <button class="logout-btn" onclick="handleLogout()">
@@ -637,6 +644,21 @@
         <tbody id="breakers-body"></tbody>
       </table></div>
     </div>
+  </div>
+
+  <!-- ── AGENT CAPABILITIES ── -->
+  <div class="page" id="page-capabilities">
+    <div class="header"><h2>&#128640; Agent Capability Report</h2></div>
+    <div id="capabilities-content"></div>
+  </div>
+
+  <!-- ── PITCH DECK ── -->
+  <div class="page" id="page-pitch-deck">
+    <div class="header">
+      <h2>&#128188; PromptPay — Investor Pitch Deck</h2>
+      <button class="btn btn-sm" onclick="downloadPitchDeck()" style="margin-left:auto;background:var(--accent);color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600">&#11015; Download PDF-Ready Text</button>
+    </div>
+    <div id="pitch-deck-content"></div>
   </div>
 
   <!-- ── REVENUE ── -->
@@ -2747,6 +2769,540 @@ async function createJobListing(publishStatus) {
   loadHrJobs();
 }
 
+// ── AGENT CAPABILITIES REPORT ──
+function loadCapabilities() {
+  const el = document.getElementById('capabilities-content');
+  el.innerHTML = `
+<style>
+  .cap-section { margin-bottom: 32px; }
+  .cap-section h3 { color: var(--accent); margin: 0 0 8px; font-size: 1.15em; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .cap-section h4 { color: var(--text); margin: 16px 0 6px; font-size: 0.95em; opacity: 0.8; }
+  .cap-table { width: 100%; border-collapse: collapse; font-size: 0.88em; margin-bottom: 12px; }
+  .cap-table th { text-align: left; padding: 8px 10px; background: var(--card-bg); border-bottom: 2px solid var(--accent); font-weight: 600; }
+  .cap-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  .cap-table tr:hover td { background: rgba(99,102,241,0.05); }
+  .cap-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.78em; font-weight:600; }
+  .risk-low { background:#10b98120; color:#10b981; }
+  .risk-med { background:#f59e0b20; color:#f59e0b; }
+  .risk-high { background:#ef444420; color:#ef4444; }
+  .risk-crit { background:#dc262620; color:#dc2626; }
+  .cap-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-bottom:24px; }
+  .cap-card { background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; }
+  .cap-card .num { font-size:2em; font-weight:700; color:var(--accent); }
+  .cap-card .lbl { font-size:0.85em; color:var(--text-secondary); margin-top:4px; }
+</style>
+
+<div class="cap-summary">
+  <div class="cap-card"><div class="num">9</div><div class="lbl">AI Agents</div></div>
+  <div class="cap-card"><div class="num">~118</div><div class="lbl">Total Tools</div></div>
+  <div class="cap-card"><div class="num">13</div><div class="lbl">Daemon Jobs</div></div>
+  <div class="cap-card"><div class="num">13+</div><div class="lbl">Countries</div></div>
+  <div class="cap-card"><div class="num">8+</div><div class="lbl">Payment Rails</div></div>
+</div>
+
+<div class="card cap-section">
+<h3>&#129302; POI — The Orchestrator</h3>
+<p style="margin:0 0 8px;font-size:0.9em;color:var(--text-secondary)">Central nervous system. Routes tasks, monitors health, coordinates all agents. Ollama (free) → Claude/GPT-4o (premium escalation).</p>
+<table class="cap-table">
+<tr><td>Intelligent routing</td><td>Routes any message to correct agent within 200ms</td></tr>
+<tr><td>AI escalation</td><td>Ollama → Anthropic Claude when confidence &lt; 85%</td></tr>
+<tr><td>Self-evaluation</td><td>24h cycles: task success/failure analysis, routing optimization</td></tr>
+<tr><td>Circuit breakers</td><td>Monitors tool health, auto-routes around failures</td></tr>
+<tr><td>Multi-agent handoff</td><td>Cross-agent coordination (shopping → payment seamless)</td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#128056; OpenClaw — Owner's Autonomous Agent (Telegram)</h3>
+<p style="margin:0 0 8px;font-size:0.9em;color:var(--text-secondary)">Kimi K2.5 | Agentic tool-use loop (up to 8 iterations) | 25+ tools | Owner-only via Telegram</p>
+
+<h4>Server & Infrastructure (11)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th></tr></thead>
+<tr><td><code>health</code></td><td>CPU, RAM, disk, uptime, Node.js version</td></tr>
+<tr><td><code>status</code></td><td>Full dashboard: system, PM2, DB stats, revenue, engagement</td></tr>
+<tr><td><code>admin</code></td><td>DB queries: dashboard, users, revenue, audit, hooks, agents</td></tr>
+<tr><td><code>logs</code></td><td>PM2 logs with line count & error-only filtering</td></tr>
+<tr><td><code>github</code></td><td>Commits, diff, branch, status, issues, PRs, CI/CD actions</td></tr>
+<tr><td><code>file</code></td><td>Read server files (whitelisted, no secrets)</td></tr>
+<tr><td><code>env</code></td><td>App config with secrets masked</td></tr>
+<tr><td><code>pm2</code></td><td>Process list/status/monit (restart/stop need /confirm)</td></tr>
+<tr><td><code>shell</code></td><td>Safe shell: curl, ls, grep, npm, node, git, cat</td></tr>
+<tr><td><code>deploy</code></td><td>Trigger deployment (requires /deploy + /confirm)</td></tr>
+<tr><td><code>project</code></td><td>Switch between PromptPay & DoctaRx codebases</td></tr>
+</table>
+
+<h4>Internet & Web (5)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th></tr></thead>
+<tr><td><code>web_search</code></td><td>Search the internet via DuckDuckGo — titles, URLs, snippets</td></tr>
+<tr><td><code>web_fetch</code></td><td>Browse ANY URL — returns readable text from any website</td></tr>
+<tr><td><code>youtube</code></td><td>Analyze videos: metadata + full transcript extraction</td></tr>
+<tr><td><code>news</code></td><td>Latest headlines on any topic with date filtering</td></tr>
+<tr><td><code>rss</code></td><td>Parse RSS/Atom feeds from blogs, news, podcasts</td></tr>
+</table>
+
+<h4>Intelligence & Data (6)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th></tr></thead>
+<tr><td><code>api_call</code></td><td>Universal REST client — ANY API (GET/POST/PUT/PATCH/DELETE)</td></tr>
+<tr><td><code>currency</code></td><td>Real-time FX rates for 150+ currencies</td></tr>
+<tr><td><code>crypto</code></td><td>Live crypto prices, market cap, 24h change (CoinGecko)</td></tr>
+<tr><td><code>weather</code></td><td>Current weather + 3-day forecast for any city</td></tr>
+<tr><td><code>whois</code></td><td>Domain DNS, SSL cert, WHOIS registration</td></tr>
+<tr><td><code>ping</code></td><td>ICMP ping, HTTP timing, port check</td></tr>
+</table>
+
+<h4>Code, Compute & Memory (4)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th></tr></thead>
+<tr><td><code>code</code></td><td>Execute Node.js on server (fetch, fs, crypto, child_process)</td></tr>
+<tr><td><code>download</code></td><td>Download files from any URL (max 50MB)</td></tr>
+<tr><td><code>memory_store</code></td><td>Persist facts to SQLite — survives restarts</td></tr>
+<tr><td><code>memory_recall</code></td><td>Search stored memories by semantic query</td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#128722; Aria — Shopping Agent <span style="font-weight:400;font-size:0.8em;color:var(--text-secondary)">(8 tools)</span></h3>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th><th>Risk</th></tr></thead>
+<tr><td><code>create_shopping_list</code></td><td>Lists with items, quantities, prices</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>add_to_list</code></td><td>Smart categorization by store/notes</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>find_best_price</code></td><td>Cross-store price search</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>place_order</code></td><td>Execute purchase (requires confirm)</td><td><span class="cap-badge risk-crit">Critical</span></td></tr>
+<tr><td><code>track_order</code></td><td>Real-time delivery, tracking, ETA</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>reorder_items</code></td><td>One-tap reorder from history</td><td><span class="cap-badge risk-high">High</span></td></tr>
+<tr><td><code>compare_prices</code></td><td>Multi-store comparison with savings</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>smart_recommendations</code></td><td>AI suggestions from purchase patterns</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#128221; Otto — Life Assistant <span style="font-weight:400;font-size:0.8em;color:var(--text-secondary)">(8 tools)</span></h3>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th><th>Risk</th></tr></thead>
+<tr><td><code>manage_subscriptions</code></td><td>List, add, cancel, pause with spend tracking</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>negotiate_bill</code></td><td>AI scripts targeting 20% bill reduction</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>schedule_appointment</code></td><td>Calendar: date, time, location, duration</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>store_document</code></td><td>Receipts, warranties, contracts (10MB, auto-expiry)</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>set_price_alert</code></td><td>Monitor prices, alert when target hit</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>process_return</code></td><td>Generate return instructions + tracking</td><td><span class="cap-badge risk-med">Medium</span></td></tr>
+<tr><td><code>find_deals</code></td><td>Savings across subscriptions & bills</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>auto_pay_optimize</code></td><td>Optimize timing for cashback & fee savings</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#128179; Nexus — Wallet & Payments <span style="font-weight:400;font-size:0.8em;color:var(--text-secondary)">(21 tools)</span></h3>
+
+<h4>Card & Payment Methods (4)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th><th>Risk</th></tr></thead>
+<tr><td><code>add_payment_method</code></td><td>Tokenize cards/bank via Stripe</td><td><span class="cap-badge risk-high">High</span></td></tr>
+<tr><td><code>list_payment_methods</code></td><td>Saved methods: last 4, brand, default</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>remove_payment_method</code></td><td>Detach + delete</td><td><span class="cap-badge risk-med">Medium</span></td></tr>
+<tr><td><code>set_default_payment_method</code></td><td>Set default for auto payments</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+</table>
+
+<h4>Recurring Bills & Autopay (4)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th><th>Risk</th></tr></thead>
+<tr><td><code>create_bill_schedule</code></td><td>Autopay: rent, utilities, subscriptions</td><td><span class="cap-badge risk-high">High</span></td></tr>
+<tr><td><code>list_bill_schedules</code></td><td>View all (active/paused/cancelled)</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>cancel_bill_schedule</code></td><td>Cancel, pause, resume</td><td><span class="cap-badge risk-med">Medium</span></td></tr>
+<tr><td><code>bill_pay_now</code></td><td>Pay immediately (1.5% fee)</td><td><span class="cap-badge risk-high">High</span></td></tr>
+</table>
+
+<h4>Wallet Core (4)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th><th>Fee</th></tr></thead>
+<tr><td><code>wallet_topup</code></td><td>Add funds from saved method</td><td>1.5%</td></tr>
+<tr><td><code>wallet_transfer</code></td><td>P2P wallet transfer</td><td>Free &lt;$50, 1% above</td></tr>
+<tr><td><code>wallet_withdraw</code></td><td>Withdraw to bank/card</td><td>1% + $0.25</td></tr>
+<tr><td><code>transaction_history</code></td><td>Full history with filters</td><td>—</td></tr>
+</table>
+
+<h4>Smart Payments (3)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th></tr></thead>
+<tr><td><code>upromptpay</code></td><td>Natural language: "Pay $1500 rent to John" — AI parses, routes, executes</td></tr>
+<tr><td><code>smart_split</code></td><td>AI bill splitting: equal/percentage/custom with tip & tax</td></tr>
+<tr><td><code>pay_forward</code></td><td>Conditional rules: "When deposit arrives, save 10%"</td></tr>
+</table>
+
+<h4>Agent Network (6)</h4>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th><th>Fee</th></tr></thead>
+<tr><td><code>agent_cash_in</code></td><td>Accept cash → credit wallet</td><td>0.75% commission</td></tr>
+<tr><td><code>agent_cash_out</code></td><td>Give cash → deduct wallet</td><td>0.75% commission</td></tr>
+<tr><td><code>agent_float_check</code></td><td>Float balance & commission summary</td><td>—</td></tr>
+<tr><td><code>request_money</code></td><td>Request via email/phone/$paytag</td><td>—</td></tr>
+<tr><td><code>generate_payment_link</code></td><td>Shareable link or QR for social media</td><td>—</td></tr>
+<tr><td><code>claim_paytag</code></td><td>Claim unique $PayTag identity</td><td>—</td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#127758; Janus — US & Global Payments <span style="font-weight:400;font-size:0.8em;color:var(--text-secondary)">(16 tools)</span></h3>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th><th>Fee</th></tr></thead>
+<tr><td><code>stripe_charge</code></td><td>Payment Intent — cards, Apple Pay, Google Pay</td><td>2.5%</td></tr>
+<tr><td><code>stripe_subscription</code></td><td>Recurring billing with trials & metered</td><td>—</td></tr>
+<tr><td><code>stripe_connect_onboard</code></td><td>Marketplace merchant onboarding</td><td>—</td></tr>
+<tr><td><code>ach_transfer</code></td><td>US bank-to-bank (3-5 days)</td><td>1.0%</td></tr>
+<tr><td><code>apple_pay_session</code></td><td>Merchant session for web (Safari/iOS)</td><td>—</td></tr>
+<tr><td><code>apple_pay_complete_payment</code></td><td>Full Apple Pay: tokenize → charge → receipt</td><td>2.5%</td></tr>
+<tr><td><code>apple_pay_subscription</code></td><td>Recurring Apple Pay billing</td><td>—</td></tr>
+<tr><td><code>apple_pay_express_checkout</code></td><td>One-tap: product + shipping + pay</td><td>2.5%</td></tr>
+<tr><td><code>google_pay_token</code></td><td>Google Pay tokenization (Chrome/Android)</td><td>—</td></tr>
+<tr><td><code>google_pay_complete_payment</code></td><td>Full Google Pay flow → receipt</td><td>2.5%</td></tr>
+<tr><td><code>payment_request_api</code></td><td>Generate secure checkout links</td><td>—</td></tr>
+<tr><td><code>wallet_balance</code></td><td>Stripe balance across currencies</td><td>—</td></tr>
+<tr><td><code>wise_get_quote</code></td><td>Real-time FX at mid-market, 50+ currencies</td><td>—</td></tr>
+<tr><td><code>wise_create_transfer</code></td><td>Cross-border via Wise</td><td>3% + Wise</td></tr>
+<tr><td><code>usdc_send</code></td><td>Send USDC worldwide (Solana/ETH/Polygon)</td><td>1%</td></tr>
+<tr><td><code>usdc_receive</code></td><td>Generate USDC deposit address</td><td>Free</td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#128241; Mercury — Mobile Money (Africa + India) <span style="font-weight:400;font-size:0.8em;color:var(--text-secondary)">(12 tools)</span></h3>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Coverage</th><th>Fee</th></tr></thead>
+<tr><td><code>mpesa_stk_push</code></td><td>Kenya, Tanzania (Safaricom)</td><td>2.5%</td></tr>
+<tr><td><code>mtn_momo_request_to_pay</code></td><td>15+ African countries (Ghana, Uganda, Cameroon…)</td><td>2.5%</td></tr>
+<tr><td><code>flutterwave_charge</code></td><td>Pan-African: NG, GH, KE, UG, ZA, TZ</td><td>2.5%</td></tr>
+<tr><td><code>paystack_initialize</code></td><td>Nigeria, Ghana, SA, Kenya</td><td>2.5%</td></tr>
+<tr><td><code>razorpay_create_order</code></td><td>India — UPI, netbanking, cards, wallets</td><td>2.5%</td></tr>
+<tr><td><code>payment_status_check</code></td><td>Cross-provider status by reference</td><td>—</td></tr>
+<tr><td><code>payment_refund</code></td><td>Full/partial refund any provider</td><td>—</td></tr>
+<tr><td><code>payment_providers_status</code></td><td>Health check all payment APIs</td><td>—</td></tr>
+<tr><td><code>airtime_topup</code></td><td>NG, GH, UG, KE — wholesale</td><td>2%</td></tr>
+<tr><td><code>data_bundle_purchase</code></td><td>Mobile data, all carriers, 4 countries</td><td>2%</td></tr>
+<tr><td><code>merchant_qr_generate</code></td><td>Payment QR (replaces POS terminals)</td><td>—</td></tr>
+<tr><td><code>merchant_qr_pay</code></td><td>Pay by scanning merchant QR</td><td>2.5%</td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#127974; Plutus — Open Banking <span style="font-weight:400;font-size:0.8em;color:var(--text-secondary)">(6 tools)</span></h3>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Provider</th><th>Risk</th></tr></thead>
+<tr><td><code>mono_link_account</code></td><td>Mono — Nigeria bank OAuth linking</td><td><span class="cap-badge risk-high">High</span></td></tr>
+<tr><td><code>mono_get_account_data</code></td><td>Identity, balance, transactions, income</td><td><span class="cap-badge risk-med">Medium</span></td></tr>
+<tr><td><code>mono_initiate_debit</code></td><td>Direct debit (kobo, double confirm)</td><td><span class="cap-badge risk-crit">Critical</span></td></tr>
+<tr><td><code>stitch_link_account</code></td><td>Stitch — South Africa OAuth2 + GraphQL</td><td><span class="cap-badge risk-high">High</span></td></tr>
+<tr><td><code>stitch_get_account_data</code></td><td>Balance, transactions, account holders</td><td><span class="cap-badge risk-med">Medium</span></td></tr>
+<tr><td><code>banking_providers_status</code></td><td>Mono + Stitch health/latency check</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#128200; Atlas — Financial Ops <span style="font-weight:400;font-size:0.8em;color:var(--text-secondary)">(4 tools)</span></h3>
+<table class="cap-table">
+<thead><tr><th>Tool</th><th>Capability</th><th>Risk</th></tr></thead>
+<tr><td><code>credit_bureau_api</code></td><td>Equifax, Experian, TransUnion queries</td><td><span class="cap-badge risk-high">High</span></td></tr>
+<tr><td><code>dispute_form_filler</code></td><td>Auto-fill credit dispute forms</td><td><span class="cap-badge risk-crit">Critical</span></td></tr>
+<tr><td><code>payment_calculator</code></td><td>3-24 month plans with interest + total cost</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+<tr><td><code>insurance_checker</code></td><td>Eligibility, deductible, copay, coverage</td><td><span class="cap-badge risk-low">Low</span></td></tr>
+</table>
+</div>
+
+<div class="card cap-section">
+<h3>&#9881; Daemon Loop — 13 Automated Jobs</h3>
+<table class="cap-table">
+<thead><tr><th>Job</th><th>Frequency</th><th>Description</th></tr></thead>
+<tr><td>Health check</td><td>60 seconds</td><td>CPU, memory, disk, tools, agents</td></tr>
+<tr><td>Calendar reminders</td><td>5 minutes</td><td>Due items, upcoming events</td></tr>
+<tr><td>Payment reminders</td><td>15 minutes</td><td>Pending bills, due dates</td></tr>
+<tr><td>Price alerts</td><td>1 hour</td><td>Active price monitors</td></tr>
+<tr><td>Referral credits</td><td>4 hours</td><td>Bonus crediting via hooks</td></tr>
+<tr><td>Subscription alerts</td><td>6 hours</td><td>Renewals within 3 days</td></tr>
+<tr><td>Budget checks</td><td>24 hours</td><td>Budgets exceeding 80%</td></tr>
+<tr><td>Self-evaluation</td><td>24 hours</td><td>Task success/failure analysis</td></tr>
+<tr><td>Owner briefing</td><td>Daily</td><td>Telegram: stats, revenue, engagement</td></tr>
+<tr><td>Hook daily</td><td>Daily</td><td>Streak resets, maintenance</td></tr>
+<tr><td>Hook weekly</td><td>Sunday</td><td>Weekly aggregates</td></tr>
+<tr><td>Weekly insights</td><td>Sunday</td><td>Spending patterns, activity summary</td></tr>
+<tr><td>Agentic jobs</td><td>Continuous</td><td>Otto: renewals. Aria: prices. Nexus: autopay.</td></tr>
+</table>
+</div>
+`;
+}
+
+// ── PITCH DECK ──
+function loadPitchDeck() {
+  const el = document.getElementById('pitch-deck-content');
+  el.innerHTML = `
+<style>
+  .deck-slide { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; padding: 32px; margin-bottom: 24px; position: relative; }
+  .deck-slide::before { content: attr(data-slide); position: absolute; top: 12px; right: 16px; font-size: 0.75em; color: var(--text-secondary); font-weight: 600; }
+  .deck-slide h3 { color: var(--accent); font-size: 1.4em; margin: 0 0 16px; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
+  .deck-slide h4 { margin: 16px 0 8px; color: var(--text); }
+  .deck-slide p, .deck-slide li { font-size: 0.95em; line-height: 1.7; color: var(--text); }
+  .deck-slide ul { padding-left: 20px; }
+  .deck-highlight { background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(99,102,241,0.03)); border-left: 4px solid var(--accent); padding: 12px 16px; margin: 12px 0; border-radius: 0 8px 8px 0; }
+  .deck-metric { display: inline-block; background: var(--accent); color: #fff; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.9em; margin: 2px 4px; }
+  .deck-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+  .deck-grid > div { background: rgba(99,102,241,0.05); padding: 14px; border-radius: 10px; }
+  .deck-grid h5 { margin: 0 0 6px; color: var(--accent); font-size: 0.95em; }
+  .deck-grid p { margin: 0; font-size: 0.88em; }
+</style>
+
+<div class="deck-slide" data-slide="01 / 12">
+  <h3>PromptPay</h3>
+  <p style="font-size:1.3em;font-weight:600;margin-bottom:12px">The AI-Powered Financial Operating System for Africa</p>
+  <p>9 AI agents. ~118 tools. 13+ countries. One unified platform that makes money move as fast as information — across borders, currencies, and the gap between the unbanked and the global economy.</p>
+  <div style="margin-top:16px">
+    <span class="deck-metric">upromptpay.com</span>
+    <span class="deck-metric">Seed Stage</span>
+    <span class="deck-metric">Raising $2M</span>
+  </div>
+</div>
+
+<div class="deck-slide" data-slide="02 / 12">
+  <h3>The Problem</h3>
+  <ul>
+    <li><strong>1.4 billion people</strong> in Africa remain underserved by legacy financial systems designed for Western markets</li>
+    <li><strong>$48B</strong> in annual remittances to sub-Saharan Africa — with average fees of <strong>7.8%</strong> (World Bank, 2024)</li>
+    <li><strong>57%</strong> of adults in sub-Saharan Africa are unbanked — but <strong>46%</strong> have mobile phones</li>
+    <li>Existing fintech apps solve ONE problem (payments OR banking OR remittance). Nobody owns the full stack.</li>
+    <li>No African fintech has AI-native infrastructure — they bolt on chatbots as afterthoughts</li>
+  </ul>
+</div>
+
+<div class="deck-slide" data-slide="03 / 12">
+  <h3>The Solution</h3>
+  <p>PromptPay is not a chatbot. It is a <strong>financial operating system</strong> with AI intelligence built into every layer.</p>
+  <div class="deck-highlight">
+    <strong>One prompt does it all:</strong> "Pay my rent $1500 to John every month" — the AI parses intent, finds the recipient, selects the optimal payment method, handles currency conversion, and executes. No forms. No menus. Just language.
+  </div>
+  <div class="deck-grid">
+    <div><h5>AI-Native</h5><p>9 specialized agents with ~118 tools. Not a chatbot wrapper — intelligence is the infrastructure.</p></div>
+    <div><h5>Africa-First</h5><p>M-Pesa, MTN MoMo, Flutterwave, Paystack, Mono, Stitch. Built for African rails.</p></div>
+    <div><h5>Globally Capable</h5><p>Stripe, Apple Pay, Google Pay, ACH, Wise, USDC. One platform, worldwide reach.</p></div>
+    <div><h5>Multi-Tenant</h5><p>White-label for banks and partners. They deploy under their brand, we power the backend.</p></div>
+  </div>
+</div>
+
+<div class="deck-slide" data-slide="04 / 12">
+  <h3>How It Works — The Agent Architecture</h3>
+  <p>Every user request is handled by specialized AI agents, coordinated by a central orchestrator (POI):</p>
+  <table class="cap-table" style="margin-top:12px">
+    <thead><tr><th>Agent</th><th>Role</th><th>Tools</th></tr></thead>
+    <tr><td><strong>POI</strong></td><td>Orchestrator — routes, monitors, escalates</td><td>—</td></tr>
+    <tr><td><strong>Nexus</strong></td><td>Wallet, P2P, cards, bills, agent network</td><td>21</td></tr>
+    <tr><td><strong>Janus</strong></td><td>US/Global: Stripe, Apple Pay, ACH, Wise, USDC</td><td>16</td></tr>
+    <tr><td><strong>Mercury</strong></td><td>Africa: M-Pesa, MTN MoMo, Flutterwave, airtime</td><td>12</td></tr>
+    <tr><td><strong>Aria</strong></td><td>Shopping intelligence & price comparison</td><td>8</td></tr>
+    <tr><td><strong>Otto</strong></td><td>Life management: bills, subscriptions, docs</td><td>8</td></tr>
+    <tr><td><strong>Plutus</strong></td><td>Open banking: Mono (Nigeria), Stitch (SA)</td><td>6</td></tr>
+    <tr><td><strong>Atlas</strong></td><td>Credit bureau, disputes, payment plans</td><td>4</td></tr>
+    <tr><td><strong>OpenClaw</strong></td><td>Owner's autonomous ops agent (Telegram)</td><td>25+</td></tr>
+  </table>
+</div>
+
+<div class="deck-slide" data-slide="05 / 12">
+  <h3>Product</h3>
+  <h4>For Consumers</h4>
+  <ul>
+    <li><strong>AI Wallet</strong> — top-up, transfer, withdraw, autopay, P2P via $PayTag</li>
+    <li><strong>Natural Language Payments</strong> — "Send $50 to Sarah" → done in one sentence</li>
+    <li><strong>Smart Split</strong> — AI divides bills fairly, handles tip & tax distribution</li>
+    <li><strong>Cross-Border</strong> — Wise + USDC at 1-3% vs 7.8% industry average</li>
+    <li><strong>Airtime & Data</strong> — Wholesale purchase across Nigeria, Ghana, Uganda, Kenya</li>
+    <li><strong>Bill Negotiation</strong> — AI scripts for reducing subscriptions & recurring costs</li>
+  </ul>
+  <h4>For Merchants</h4>
+  <ul>
+    <li><strong>QR Payments</strong> — replaces POS terminals. Scan-to-pay, instant settlement.</li>
+    <li><strong>Agent Network</strong> — cash-in/cash-out (like M-Pesa agents). 0.75% commission.</li>
+    <li><strong>Payment Links</strong> — shareable checkout for social media & messaging</li>
+  </ul>
+</div>
+
+<div class="deck-slide" data-slide="06 / 12">
+  <h3>Revenue Model</h3>
+  <div class="deck-grid">
+    <div><h5>Transaction Fees (Core)</h5><p>1.0-2.5% on payments, transfers, merchant QR. Volume-based, scales with users.</p></div>
+    <div><h5>Cross-Border Markup</h5><p>1-3% on Wise/USDC transfers. Significantly below 7.8% market average.</p></div>
+    <div><h5>Airtime & Data</h5><p>2% convenience fee on wholesale purchases. High frequency, sticky revenue.</p></div>
+    <div><h5>Agent Network</h5><p>0.75% commission split on cash-in/out. Physical touchpoint monetization.</p></div>
+    <div><h5>White-Label SaaS</h5><p>Monthly + per-transaction fees for bank/partner deployments. Standard/Premium/Enterprise tiers.</p></div>
+    <div><h5>Premium AI</h5><p>Free tier on Ollama. Premium escalation to Claude/GPT-4o for complex queries. Upsell path.</p></div>
+  </div>
+</div>
+
+<div class="deck-slide" data-slide="07 / 12">
+  <h3>Market Opportunity</h3>
+  <ul>
+    <li><strong>African fintech market:</strong> $65B by 2030 (McKinsey)</li>
+    <li><strong>Mobile money transactions:</strong> $832B annually across Africa (GSMA)</li>
+    <li><strong>Remittance to Africa:</strong> $100B+ annually, $48B to sub-Saharan alone</li>
+    <li><strong>Unbanked population:</strong> 350M+ adults — but 500M+ with mobile phones</li>
+    <li><strong>India digital payments:</strong> UPI processed $2T in 2024 — Razorpay integration captures this market</li>
+  </ul>
+  <div class="deck-highlight">
+    <strong>Beachhead:</strong> Nigeria (220M people, largest fintech market) + Kenya (M-Pesa homeland) → expand to Ghana, Uganda, South Africa, India
+  </div>
+</div>
+
+<div class="deck-slide" data-slide="08 / 12">
+  <h3>Competitive Landscape</h3>
+  <table class="cap-table">
+    <thead><tr><th>Competitor</th><th>What They Do</th><th>What They Miss</th></tr></thead>
+    <tr><td>M-Pesa</td><td>Mobile money (Kenya/Tanzania)</td><td>No AI, no cross-border, limited to Safaricom</td></tr>
+    <tr><td>Chipper Cash</td><td>P2P transfers (7 countries)</td><td>No merchant tools, no AI, no open banking</td></tr>
+    <tr><td>Flutterwave</td><td>Payment processing (API)</td><td>B2B only — no consumer wallet, no AI</td></tr>
+    <tr><td>Wise</td><td>Cross-border transfers</td><td>No African mobile money, no local payments</td></tr>
+    <tr><td>Cash App</td><td>P2P + Bitcoin (US only)</td><td>Zero African presence</td></tr>
+    <tr><td>Venmo</td><td>Social P2P (US only)</td><td>No cross-border, no merchant network</td></tr>
+  </table>
+  <div class="deck-highlight">
+    <strong>Our moat:</strong> AI-native architecture + multi-rail (8+ payment rails) + white-label SaaS. Nobody else combines intelligence with Africa-specific infrastructure at this depth.
+  </div>
+</div>
+
+<div class="deck-slide" data-slide="09 / 12">
+  <h3>Technology</h3>
+  <ul>
+    <li><strong>Stack:</strong> TypeScript, Express 5, SQLite (better-sqlite3), PM2 cluster mode</li>
+    <li><strong>AI:</strong> Ollama Cloud (Kimi K2.5) for free tier → Anthropic Claude for premium. Agentic tool-use loops, not simple chatbot.</li>
+    <li><strong>Infrastructure:</strong> AWS EC2, zero-downtime deploys, GitHub Actions CI/CD</li>
+    <li><strong>Security:</strong> Scrypt password hashing, Stripe tokenization (no raw cards stored), role-based access (owner/partner/user), audit trail on every action</li>
+    <li><strong>PWA:</strong> Installable on any phone — no app store needed. Offline-capable via service worker.</li>
+    <li><strong>Multi-tenant:</strong> Partner banks get isolated tenants with custom branding, API limits, and revenue sharing</li>
+  </ul>
+</div>
+
+<div class="deck-slide" data-slide="10 / 12">
+  <h3>Go-To-Market</h3>
+  <h4>Phase 1: Nigeria + Kenya (Months 1-6)</h4>
+  <ul>
+    <li>Launch agent network in Lagos & Abuja — recruit 100 cash-in/cash-out agents</li>
+    <li>Airtime/data as acquisition hook — high frequency, immediate value</li>
+    <li>$PayTag virality: "Put your $tag in your bio" — each request_money link is a signup funnel</li>
+  </ul>
+  <h4>Phase 2: Pan-African (Months 6-12)</h4>
+  <ul>
+    <li>Ghana, Uganda, South Africa, Tanzania via existing Flutterwave + MTN MoMo rails</li>
+    <li>White-label partnerships with 2-3 regional banks</li>
+    <li>Cross-border corridor: Nigeria ↔ Kenya ↔ Ghana (highest remittance volume)</li>
+  </ul>
+  <h4>Phase 3: Global (Months 12-24)</h4>
+  <ul>
+    <li>India via Razorpay UPI — 1.4B population, digital-first payments</li>
+    <li>US/EU via Stripe + Apple Pay + Google Pay for diaspora remittance</li>
+    <li>USDC rails for instant, low-cost global settlement</li>
+  </ul>
+</div>
+
+<div class="deck-slide" data-slide="11 / 12">
+  <h3>The Ask</h3>
+  <div class="deck-highlight">
+    <strong>Raising: $2M Seed Round</strong>
+  </div>
+  <h4>Use of Funds</h4>
+  <div class="deck-grid">
+    <div><h5>Engineering (40%)</h5><p>Hire 3 senior engineers. Harden payment rails, scale infrastructure for 100K users.</p></div>
+    <div><h5>Agent Network (25%)</h5><p>Recruit and float 500 cash-in/cash-out agents across Nigeria & Kenya.</p></div>
+    <div><h5>Growth (20%)</h5><p>User acquisition: referral bonuses, airtime subsidies, $PayTag campaigns.</p></div>
+    <div><h5>Operations (15%)</h5><p>Compliance (CBN, CMA), legal, office, server costs.</p></div>
+  </div>
+  <h4>Key Milestones (12 months)</h4>
+  <ul>
+    <li>50,000 active wallets</li>
+    <li>$5M monthly transaction volume</li>
+    <li>500 agent network points</li>
+    <li>2 white-label bank partnerships</li>
+    <li>3 country launches (Nigeria, Kenya, Ghana)</li>
+  </ul>
+</div>
+
+<div class="deck-slide" data-slide="12 / 12">
+  <h3>Team & Contact</h3>
+  <p><strong>Founder:</strong> Building at the intersection of AI and African fintech. Hands-on technical founder — architected the entire 9-agent, ~118-tool platform solo.</p>
+  <div style="margin-top:16px">
+    <span class="deck-metric">info@upromptpay.com</span>
+    <span class="deck-metric">upromptpay.com</span>
+  </div>
+  <p style="margin-top:20px;font-style:italic;color:var(--text-secondary)">
+    "We are building for people who have been underserved by every financial system that came before us. The farmer in Kenya who needs to receive payment from a buyer in Lagos. The student in Accra who needs to pay tuition in London. The merchant in Kampala who needs working capital without a bank account."
+  </p>
+</div>
+`;
+}
+
+function downloadPitchDeck() {
+  const slides = document.querySelectorAll('#pitch-deck-content .deck-slide');
+  let text = 'PROMPTPAY — INVESTOR PITCH DECK\\n';
+  text += 'The AI-Powered Financial Operating System for Africa\\n';
+  text += '='.repeat(60) + '\\n\\n';
+
+  slides.forEach(slide => {
+    const num = slide.getAttribute('data-slide') || '';
+    const h3 = slide.querySelector('h3');
+    text += '━'.repeat(60) + '\\n';
+    text += 'SLIDE ' + num + '\\n';
+    if (h3) text += h3.textContent.toUpperCase() + '\\n';
+    text += '━'.repeat(60) + '\\n\\n';
+
+    // Extract text content preserving structure
+    const clone = slide.cloneNode(true);
+    // Remove h3 (already printed)
+    const h3El = clone.querySelector('h3');
+    if (h3El) h3El.remove();
+
+    // Process h4 headers
+    clone.querySelectorAll('h4').forEach(h => {
+      h.replaceWith(document.createTextNode('\\n--- ' + h.textContent + ' ---\\n'));
+    });
+    // Process h5 headers
+    clone.querySelectorAll('h5').forEach(h => {
+      h.replaceWith(document.createTextNode(h.textContent + ': '));
+    });
+    // Process list items
+    clone.querySelectorAll('li').forEach(li => {
+      li.innerHTML = '  • ' + li.innerHTML;
+    });
+    // Process table rows
+    clone.querySelectorAll('tr').forEach(tr => {
+      const cells = tr.querySelectorAll('th, td');
+      if (cells.length) {
+        const row = Array.from(cells).map(c => c.textContent.trim().padEnd(28)).join(' | ');
+        tr.replaceWith(document.createTextNode(row + '\\n'));
+      }
+    });
+    // Process highlights
+    clone.querySelectorAll('.deck-highlight').forEach(h => {
+      h.innerHTML = '>>> ' + h.innerHTML + ' <<<';
+    });
+    // Process metrics
+    clone.querySelectorAll('.deck-metric').forEach(m => {
+      m.innerHTML = '[' + m.textContent + ']';
+    });
+
+    // Get clean text
+    let content = clone.textContent || '';
+    content = content.replace(/\\n{3,}/g, '\\n\\n').trim();
+    text += content + '\\n\\n\\n';
+  });
+
+  text += '='.repeat(60) + '\\n';
+  text += 'Generated from PromptPay Admin Portal\\n';
+  text += 'https://www.upromptpay.com\\n';
+  text += new Date().toISOString().slice(0, 10) + '\\n';
+
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'PromptPay_Pitch_Deck.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function loadPage(page) {
   const loaders = {
     dashboard: loadDashboard, agents: loadAgents, tasks: loadTasks,
@@ -2758,9 +3314,11 @@ function loadPage(page) {
     'pos-revenue': loadPosRevenue, executive: loadExecutive,
     'pos-agents': loadPosAgentsMgmt, 'pos-referrals': loadPosReferrals,
     'hr-dashboard': loadHrDashboard, 'hr-jobs': loadHrJobs,
-    'strategy-bootstrap': () => {}, // Static page, no API calls needed
+    'strategy-bootstrap': () => {},
     'calendar': loadChronoDashboard, 'calendar-todos': loadTodoList, 'calendar-events': loadCalendarEvents,
     'analytics': loadAnalyticsDashboard,
+    'capabilities': loadCapabilities,
+    'pitch-deck': loadPitchDeck,
   };
   if (loaders[page]) loaders[page]();
 }
