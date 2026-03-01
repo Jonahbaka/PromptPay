@@ -157,7 +157,8 @@ Path: \`${project.path}\` | PM2: \`${project.pm2Name}\` | Stack: ${project.stack
 - You serve ONLY the owner. Be direct, no fluff.
 - Under 4000 chars for Telegram. Use markdown.
 - ALWAYS use tools instead of saying "I can't access that" — you CAN.
-- Chain tools for complex answers. Research before guessing.
+- **Be efficient with tools.** Use 1-3 tool calls max, then RESPOND with a synthesized answer. Do NOT keep calling more tools endlessly. One web_search + one web_fetch is usually enough for research. Get the data, then answer.
+- After calling tools, ALWAYS produce a final text response. Do not call more tools unless the previous results were genuinely insufficient.
 - Store important findings to memory for future reference.`;
 }
 
@@ -416,9 +417,28 @@ export class OpenClawAgent {
       return;
     }
 
-    // Max iterations reached — send whatever we have
-    await this.sendMessage(chatId, 'Reached max reasoning iterations. Please try a simpler request.');
-    this.logger.warn(`OpenClaw hit MAX_ITERATIONS (${MAX_ITERATIONS}) for: ${text.slice(0, 80)}`);
+    // Max iterations reached — force a final response WITHOUT tools
+    this.logger.warn(`OpenClaw hit MAX_ITERATIONS (${MAX_ITERATIONS}), forcing final response for: ${text.slice(0, 80)}`);
+    try {
+      messages.push({
+        role: 'user',
+        content: 'You have gathered enough information. Now synthesize everything and give me a final, concise answer. Do NOT call any more tools.',
+      });
+      const finalRes = await this.callKimiNoTools(messages);
+      const reply = finalRes || 'Could not generate a response. Try a simpler request.';
+      this.history.push({ role: 'assistant', content: reply });
+      await this.sendMessage(chatId, reply);
+
+      this.auditTrail.record('openclaw', 'agentic_conversation', `tg:${chatId}`, {
+        input: text.slice(0, 200),
+        toolsUsed,
+        iterations: MAX_ITERATIONS,
+        forced: true,
+      });
+    } catch (err) {
+      this.logger.error(`OpenClaw forced response failed: ${err instanceof Error ? err.message : err}`);
+      await this.sendMessage(chatId, 'Reached max reasoning iterations. Please try a simpler request.');
+    }
   }
 
   // ── Kimi K2.5 API call (OpenAI-compatible with tools) ──────
@@ -465,6 +485,48 @@ export class OpenClawAgent {
       finish_reason: choice.finish_reason || 'stop',
       tool_calls: choice.message?.tool_calls || undefined,
     };
+  }
+
+  // ── Kimi call WITHOUT tools (forces text response) ─────────
+
+  private async callKimiNoTools(messages: ChatMessage[]): Promise<string> {
+    // Strip tool_calls from messages to avoid confusing the model
+    const cleanMessages = messages.map(m => {
+      if (m.tool_calls) {
+        return { role: m.role, content: m.content || '(used tools)' };
+      }
+      if (m.tool_call_id) {
+        return { role: 'user' as const, content: `[Tool result]: ${m.content?.slice(0, 2000) || ''}` };
+      }
+      return { role: m.role, content: m.content };
+    });
+
+    const res = await fetch(`${CONFIG.ollama.baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CONFIG.ollama.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: CONFIG.ollama.model,
+        messages: cleanMessages,
+        max_tokens: CONFIG.ollama.maxTokens,
+        temperature: 0.4,
+        // NO tools — forces text response
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      this.logger.error(`OpenClaw Kimi (no-tools) error: ${res.status} ${errText.slice(0, 300)}`);
+      throw new Error(`AI error (${res.status})`);
+    }
+
+    const data = await res.json() as {
+      choices: Array<{ message: { content: string | null } }>;
+    };
+
+    return data.choices?.[0]?.message?.content || '';
   }
 
   // ── Tool execution router ──────────────────────────────────
