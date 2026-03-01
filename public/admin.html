@@ -451,6 +451,9 @@
   <div class="nav-item" data-page="pitch-deck">
     <span class="nav-icon">&#128188;</span> Pitch Deck
   </div>
+  <div class="nav-item" data-page="pos-research">
+    <span class="nav-icon">&#128270;</span> POS Research
+  </div>
   <div class="sidebar-bottom" id="sidebar-bottom" style="display:none">
     <div class="sidebar-user" id="sidebar-user"></div>
     <button class="logout-btn" onclick="handleLogout()">
@@ -659,6 +662,173 @@
       <button class="btn btn-sm" onclick="downloadPitchDeck()" style="margin-left:auto;background:var(--accent);color:#fff;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600">&#11015; Download PDF-Ready Text</button>
     </div>
     <div id="pitch-deck-content"></div>
+  </div>
+
+  <!-- ── POS RESEARCH ── -->
+  <div class="page" id="page-pos-research">
+    <div class="header">
+      <h2>&#128270; POS Competitive Research — API Roadmap</h2>
+      <span class="status-badge status-online" style="font-size:11px">OpenClaw Intel</span>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;border-left:3px solid #e74c3c">
+      <div class="section-title" style="color:#e74c3c">&#9888; CBN Regulatory Alert — April 2026</div>
+      <p style="font-size:13px;color:var(--text2);margin:6px 0">CBN now requires POS agents to be <b>exclusive to one provider</b> from April 2026. Agents must choose one principal (bank, MFB, or licensed super agent). This is a massive opportunity — if PromptPay becomes a licensed super agent, agents who choose us need ALL features in one app.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">&#127919; What We Have (Phase 1 — Shipped)</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Feature</th><th>Status</th><th>Provider</th><th>Revenue Model</th></tr></thead>
+        <tbody>
+          <tr><td>Airtime resale</td><td><span class="status-badge status-online">LIVE</span></td><td>Reloadly</td><td>Discount spread (3-5%)</td></tr>
+          <tr><td>Data bundle resale</td><td><span class="status-badge status-online">LIVE</span></td><td>Reloadly</td><td>Discount spread (3-5%)</td></tr>
+          <tr><td>Electricity bills (7 DISCOs)</td><td><span class="status-badge status-online">LIVE</span></td><td>Flutterwave Bills</td><td>&#8358;100 convenience fee</td></tr>
+          <tr><td>Cable TV (DSTV/GOtv/StarTimes)</td><td><span class="status-badge status-online">LIVE</span></td><td>Flutterwave Bills</td><td>&#8358;100 convenience fee</td></tr>
+          <tr><td>Betting top-ups (Bet9ja, SportyBet, etc.)</td><td><span class="status-badge status-online">LIVE</span></td><td>Flutterwave Bills</td><td>&#8358;100 convenience fee</td></tr>
+          <tr><td>Agent tiers &amp; daily limits</td><td><span class="status-badge status-online">LIVE</span></td><td>In-house</td><td>Progressive &#8358;50K-&#8358;1M</td></tr>
+          <tr><td>Sub-agent networks</td><td><span class="status-badge status-online">LIVE</span></td><td>In-house</td><td>0.15% override commission</td></tr>
+          <tr><td>Commission ledger</td><td><span class="status-badge status-online">LIVE</span></td><td>In-house</td><td>0.75% per sale</td></tr>
+          <tr><td>Instant settlement (stats fix)</td><td><span class="status-badge status-online">LIVE</span></td><td>In-house</td><td>Real-time wallet credit</td></tr>
+          <tr><td>Referral bonuses</td><td><span class="status-badge status-online">LIVE</span></td><td>In-house</td><td>&#8358;500-&#8358;5K milestones</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">&#128680; Competitor Landscape (OPay, Moniepoint, Paga, Nomba, PalmPay)</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Metric</th><th>Moniepoint</th><th>OPay</th><th>PromptPay</th></tr></thead>
+        <tbody>
+          <tr><td>Market share (POS)</td><td>42%</td><td>25%</td><td>New entrant</td></tr>
+          <tr><td>Active agents</td><td>400,000+</td><td>563,000+</td><td>Growing</td></tr>
+          <tr><td>Withdrawal fee</td><td>0.5% or &#8358;100 flat</td><td>0.5% or &#8358;100 flat</td><td>N/A yet</td></tr>
+          <tr><td>Transfer fee</td><td>&#8358;20 flat</td><td>&#8358;50 flat</td><td>N/A yet</td></tr>
+          <tr><td>Settlement</td><td>Instant</td><td>Instant</td><td>Instant (fixed)</td></tr>
+          <tr><td>Virtual accounts</td><td>Yes (MFB license)</td><td>Yes (MFB license)</td><td>No</td></tr>
+          <tr><td>Savings/Interest</td><td>Yes</td><td>OWealth 15% p.a.</td><td>No</td></tr>
+          <tr><td>Agent loans</td><td>Yes (working capital)</td><td>Yes</td><td>No</td></tr>
+          <tr><td>KYC/BVN verification</td><td>Full (mandatory)</td><td>Full (mandatory)</td><td>Collected but unverified</td></tr>
+          <tr><td>NQR (QR standard)</td><td>Yes</td><td>Yes</td><td>Custom QR only</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;border-left:3px solid #2ecc71">
+      <div class="section-title" style="color:#2ecc71">&#128640; Tier 1 APIs — Must Have (Phase 2)</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">These close the critical gap vs OPay/Moniepoint. Bank transfers + virtual accounts = 80% of POS agent revenue in Nigeria.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Feature</th><th>API Provider</th><th>URL</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><b>Cash-in/Cash-out (Bank Transfer)</b></td>
+            <td>Bloc BaaS or Monnify</td>
+            <td><a href="https://www.blochq.io" target="_blank">blochq.io</a></td>
+            <td>#1 POS feature. Agents charge &#8358;100-300 per withdrawal. We have zero transfer-to-bank capability.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><b>Virtual Account Numbers</b></td>
+            <td>Bloc API</td>
+            <td><a href="https://www.blochq.io" target="_blank">blochq.io</a></td>
+            <td>Every OPay/Moniepoint agent gets a real bank account number. NDIC-insured via Bloc.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><b>KYC / BVN Verification</b></td>
+            <td>Prembly Identitypass</td>
+            <td><a href="https://identitypass.prembly.com" target="_blank">identitypass.prembly.com</a></td>
+            <td>We collect BVN/NIN but never verify. CBN requires it. Also: YouVerify, Smile ID.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><b>VTPass (wider bill catalog)</b></td>
+            <td>VTPass API + Node.js SDK</td>
+            <td><a href="https://www.vtpass.com/documentation/" target="_blank">vtpass.com/docs</a></td>
+            <td>Widest biller catalog: all DISCOs, cable, WAEC, JAMB, internet, betting. Better commissions than Flutterwave for bills.</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;border-left:3px solid #3498db">
+      <div class="section-title" style="color:#3498db">&#11088; Tier 2 APIs — Differentiators (Phase 3)</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Feature</th><th>API Provider</th><th>URL</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>5</td>
+            <td><b>Savings / OWealth-style yield</b></td>
+            <td>Bloc BaaS or In-house</td>
+            <td><a href="https://www.blochq.io" target="_blank">blochq.io</a></td>
+            <td>OPay gives 15% p.a. Agents park float and earn. We have wallets but no yield.</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><b>Agent Loans / Credit</b></td>
+            <td>Lendsqr</td>
+            <td><a href="https://lendsqr.com" target="_blank">lendsqr.com</a></td>
+            <td>Moniepoint offers working capital loans based on history. Our agents have data but no credit.</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td><b>NQR (National QR Standard)</b></td>
+            <td>NIBSS NQR via licensed partner</td>
+            <td>-</td>
+            <td>OPay/Moniepoint support NQR. We have custom QR but not the national standard.</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td><b>Cross-border payments</b></td>
+            <td>Fincra</td>
+            <td><a href="https://fincra.com" target="_blank">fincra.com</a></td>
+            <td>Cross-border + identity verification combo.</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td><b>Insurance micro-products</b></td>
+            <td>Curacel / Hygeia HMO</td>
+            <td>-</td>
+            <td>Some competitors bundle device/health micro-insurance for agents.</td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">&#128176; Commission Rates (Industry Benchmark)</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Service</th><th>Moniepoint Commission</th><th>VTPass Commission</th><th>PromptPay Current</th></tr></thead>
+        <tbody>
+          <tr><td>MTN Airtime</td><td>3%</td><td>3%</td><td>Reloadly discount-based</td></tr>
+          <tr><td>Airtel Airtime</td><td>4%</td><td>4%</td><td>Reloadly discount-based</td></tr>
+          <tr><td>GLO Airtime</td><td>4%</td><td>4%</td><td>Reloadly discount-based</td></tr>
+          <tr><td>9Mobile Airtime</td><td>4.5%</td><td>4.5%</td><td>Reloadly discount-based</td></tr>
+          <tr><td>DSTV</td><td>2%</td><td>2%</td><td>&#8358;100 flat fee</td></tr>
+          <tr><td>GOtv</td><td>2%</td><td>2%</td><td>&#8358;100 flat fee</td></tr>
+          <tr><td>StarTimes</td><td>2%</td><td>2%</td><td>&#8358;100 flat fee</td></tr>
+          <tr><td>Cash withdrawal</td><td>0.5% / &#8358;100 flat</td><td>-</td><td>Not available yet</td></tr>
+          <tr><td>Transfer</td><td>&#8358;20</td><td>-</td><td>Not available yet</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card" style="border-left:3px solid #f39c12">
+      <div class="section-title" style="color:#f39c12">&#128218; Source Links</div>
+      <ul style="font-size:12px;color:var(--text2);list-style:none;padding:0;margin:0;line-height:2">
+        <li><a href="https://truehost.com.ng/moniepoint-vs-opay-pos-pricing/" target="_blank" style="color:var(--accent)">Moniepoint vs OPay POS Pricing</a></li>
+        <li><a href="https://www.supplysmart.co/supply-smart-vs-moniepoint-vs-opay-pos/" target="_blank" style="color:var(--accent)">Best POS in Nigeria Comparison</a></li>
+        <li><a href="https://techcabal.com/2025/10/07/cbn-bans-agents-owning-multiple-moniepoint-opay-palmpay-terminals/" target="_blank" style="color:var(--accent)">CBN Bans Multi-Agent Banking (April 2026)</a></li>
+        <li><a href="https://www.vtpass.com/documentation/" target="_blank" style="color:var(--accent)">VTPass API Documentation</a></li>
+        <li><a href="https://www.vtpass.com/commissions" target="_blank" style="color:var(--accent)">VTPass Commission Rates</a></li>
+        <li><a href="https://developer.flutterwave.com/v3.0.0/reference/get-supported-bill-categories" target="_blank" style="color:var(--accent)">Flutterwave Bills API</a></li>
+        <li><a href="https://www.blochq.io/blog/issuing-account-numbers-with-bloc-virtual-accounts" target="_blank" style="color:var(--accent)">Bloc BaaS Virtual Accounts</a></li>
+        <li><a href="https://www.transfi.com/blog/nigerias-payment-rails-how-they-work---nibss-nip-ussd-the-instant-payment-revolution" target="_blank" style="color:var(--accent)">Nigeria Payment Rails (NIBSS/NIP)</a></li>
+        <li><a href="https://onafriq.com/insights/article/selecting-the-right-bill-payment-api-in-nigeria" target="_blank" style="color:var(--accent)">Selecting Bill Payment API in Nigeria</a></li>
+        <li><a href="https://technext24.com/2025/12/09/how-pos-nigerias-real-banking-system/" target="_blank" style="color:var(--accent)">How POS Became Nigeria's Banking System</a></li>
+      </ul>
+    </div>
   </div>
 
   <!-- ── REVENUE ── -->

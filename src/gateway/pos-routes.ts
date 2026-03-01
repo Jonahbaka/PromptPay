@@ -108,6 +108,9 @@ export function createPosRoutes(deps: PosRouteDependencies): Router {
   // Add referred_by column if missing (safe alter)
   try { db.exec('ALTER TABLE pos_agents ADD COLUMN referred_by TEXT'); } catch (_) { /* already exists */ }
   try { db.exec('ALTER TABLE pos_agents ADD COLUMN referral_count INTEGER DEFAULT 0'); } catch (_) { /* already exists */ }
+  // Sub-agent hierarchy columns
+  try { db.exec("ALTER TABLE pos_agents ADD COLUMN agent_type TEXT DEFAULT 'standard'"); } catch (_) { /* already exists */ }
+  try { db.exec('ALTER TABLE pos_agents ADD COLUMN parent_agent_id TEXT'); } catch (_) { /* already exists */ }
 
   // Bonus structure (naira amounts)
   const BONUS_STRUCTURE: Record<string, { referrer: number; referred: number; condition: string }> = {
@@ -603,6 +606,152 @@ export function createPosRoutes(deps: PosRouteDependencies): Router {
       shareLink: `https://www.upromptpay.com/?ref=${agent.agent_code}`,
       bonusStructure: BONUS_STRUCTURE,
     });
+  });
+
+  // ═══════════════════════════════════════════════
+  // SUB-AGENT NETWORK
+  // ═══════════════════════════════════════════════
+
+  // ── Promote agent to super status ──
+  router.put('/api/pos/agents/:id/promote-super', authenticate, requireRole('owner'), (req: Request, res: Response) => {
+    const agentId = String(req.params.id);
+    const now = new Date().toISOString();
+
+    const agent = db.prepare('SELECT * FROM pos_agents WHERE id = ?').get(agentId) as Record<string, unknown> | undefined;
+    if (!agent) {
+      res.status(404).json({ error: 'Agent not found' });
+      return;
+    }
+
+    if (agent.agent_type === 'super') {
+      res.status(409).json({ error: 'Agent is already a super agent' });
+      return;
+    }
+
+    db.prepare("UPDATE pos_agents SET agent_type = 'super', updated_at = ? WHERE id = ?").run(now, agentId);
+    deps.auditTrail.record('pos', 'agent_promoted_super', req.auth!.userId, { agentId });
+    deps.logger.info(`[POS] Agent ${agent.agent_code} promoted to super agent`);
+
+    res.json({ success: true, agentId, agentType: 'super', message: `Agent ${agent.agent_code} is now a super agent` });
+  });
+
+  // ── Super agent registers a sub-agent ──
+  router.post('/api/pos/register-subagent', authenticate, (req: Request, res: Response) => {
+    try {
+      const superUserId = req.auth!.userId;
+      const superAgent = db.prepare("SELECT * FROM pos_agents WHERE user_id = ? AND status = 'active'").get(superUserId) as Record<string, unknown> | undefined;
+
+      if (!superAgent) {
+        res.status(404).json({ error: 'No active POS agent profile found' });
+        return;
+      }
+      if (superAgent.agent_type !== 'super') {
+        res.status(403).json({ error: 'Only super agents can register sub-agents' });
+        return;
+      }
+
+      const { userId, displayName, phone } = req.body;
+      if (!userId || !displayName || !phone) {
+        res.status(400).json({ error: 'userId, displayName, and phone are required' });
+        return;
+      }
+
+      // Check target user exists
+      const targetUser = db.prepare('SELECT id FROM users WHERE id = ?').get(userId);
+      if (!targetUser) {
+        res.status(404).json({ error: 'Target user not found' });
+        return;
+      }
+
+      // Check not already an agent
+      const existing = db.prepare('SELECT id FROM pos_agents WHERE user_id = ?').get(userId);
+      if (existing) {
+        res.status(409).json({ error: 'User is already registered as a POS agent' });
+        return;
+      }
+
+      const id = uuid();
+      const agentCode = generateAgentCode();
+      const now = new Date().toISOString();
+      const today = now.slice(0, 10);
+
+      db.prepare(`
+        INSERT INTO pos_agents (id, user_id, agent_code, display_name, phone, tier, daily_limit, daily_used, daily_reset_date,
+          agent_type, parent_agent_id, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 'starter', 50000, 0, ?, 'standard', ?, 'active', ?, ?)
+      `).run(id, userId, agentCode, displayName, phone, today, superAgent.id, now, now);
+
+      deps.auditTrail.record('pos', 'subagent_registered', superUserId, {
+        subAgentId: id, agentCode, parentAgentId: superAgent.id,
+      });
+      deps.logger.info(`[POS] Sub-agent ${agentCode} registered under super ${superAgent.agent_code}`);
+
+      res.status(201).json({
+        subAgentId: id,
+        agentCode,
+        parentAgentCode: superAgent.agent_code,
+        tier: 'starter',
+        dailyLimit: 50000,
+        status: 'active',
+        message: `Sub-agent ${agentCode} registered under ${superAgent.agent_code}`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`[POS] Sub-agent registration error: ${msg}`);
+      res.status(500).json({ error: 'Sub-agent registration failed' });
+    }
+  });
+
+  // ── Super agent's sub-agent list ──
+  router.get('/api/pos/my-subagents', authenticate, (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const agent = db.prepare("SELECT * FROM pos_agents WHERE user_id = ? AND agent_type = 'super'").get(userId) as Record<string, unknown> | undefined;
+    if (!agent) {
+      res.status(404).json({ error: 'Not a super agent' });
+      return;
+    }
+
+    const subAgents = db.prepare(`
+      SELECT id, user_id, agent_code, display_name, phone, tier, daily_limit, daily_used,
+             total_transactions, total_volume, rating, status, created_at
+      FROM pos_agents WHERE parent_agent_id = ?
+      ORDER BY created_at DESC
+    `).all(agent.id) as Array<Record<string, unknown>>;
+
+    const totals = db.prepare(`
+      SELECT COUNT(*) as count,
+             COALESCE(SUM(total_volume), 0) as volume,
+             COALESCE(SUM(total_transactions), 0) as transactions
+      FROM pos_agents WHERE parent_agent_id = ?
+    `).get(agent.id) as { count: number; volume: number; transactions: number };
+
+    res.json({ subAgents, totals });
+  });
+
+  // ── Super agent's override commission history ──
+  router.get('/api/pos/override-earnings', authenticate, (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const agent = db.prepare("SELECT * FROM pos_agents WHERE user_id = ? AND agent_type = 'super'").get(userId) as Record<string, unknown> | undefined;
+    if (!agent) {
+      res.status(404).json({ error: 'Not a super agent' });
+      return;
+    }
+
+    const limit = parseInt(String(req.query.limit || '50'));
+    const overrides = db.prepare(`
+      SELECT cl.*, pa.display_name as sub_agent_name, pa.agent_code as sub_agent_code
+      FROM commission_ledger cl
+      LEFT JOIN pos_agents pa ON pa.user_id = cl.override_from
+      WHERE cl.agent_user_id = ? AND cl.override_from IS NOT NULL
+      ORDER BY cl.created_at DESC LIMIT ?
+    `).all(userId, limit);
+
+    const totals = db.prepare(`
+      SELECT COALESCE(SUM(commission_amount), 0) as total, COUNT(*) as count
+      FROM commission_ledger WHERE agent_user_id = ? AND override_from IS NOT NULL
+    `).get(userId) as { total: number; count: number };
+
+    res.json({ overrides, totalOverrideEarned: totals.total, totalCount: totals.count });
   });
 
   // ── Admin: Referral Stats ──

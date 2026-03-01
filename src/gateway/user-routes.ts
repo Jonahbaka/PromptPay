@@ -19,6 +19,8 @@ import {
   initiateCall, getCallRate,
   aiInference, aiTranslate, getTelnyxBalance,
 } from '../providers/telnyx.js';
+import { getBillCategories, findBiller, validateBillCustomer, payBill } from '../providers/flutterwave-bills.js';
+import { recordAgentSale, checkDailyLimit } from '../services/pos-settlement.js';
 
 export interface UserRouteDependencies {
   memory: MemoryStore;
@@ -1519,6 +1521,18 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
         return;
       }
 
+      // 0. Check daily limit
+      const limitCheck = checkDailyLimit(db, userId, amount);
+      if (!limitCheck.allowed) {
+        res.status(400).json({
+          error: 'Daily limit exceeded',
+          dailyUsed: limitCheck.dailyUsed,
+          dailyLimit: limitCheck.dailyLimit,
+          dailyRemaining: limitCheck.dailyRemaining,
+        });
+        return;
+      }
+
       // 1. Check wallet balance
       const wallet = db.prepare('SELECT * FROM user_wallets WHERE user_id = ?').get(userId) as Record<string, unknown> | undefined;
       if (!wallet || (wallet.balance as number) < amount) {
@@ -1593,8 +1607,8 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
             UPDATE pos_transactions SET status = 'completed', reloadly_tx_id = ?, reloadly_operator_id = ?, completed_at = ? WHERE id = ?
           `).run(String(result.transactionId), operatorId, now, txId);
 
-          // No wallet credit — agent's profit is the cash markup they charge customers on top
-          // Platform profit = face value (debited from wallet) minus Reloadly cost (what we actually pay)
+          // Record agent stats + commission (bug fix: stats were never updated)
+          recordAgentSale(db, { agentUserId: userId, txId, sourceType: type, faceValue: amount, agentProfit });
 
           res.json({
             success: true,
@@ -1831,6 +1845,18 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
 
       const country = (countryCode || 'NG').toUpperCase();
 
+      // Check daily limit
+      const dataLimitCheck = checkDailyLimit(db, userId, amount);
+      if (!dataLimitCheck.allowed) {
+        res.status(400).json({
+          error: 'Daily limit exceeded',
+          dailyUsed: dataLimitCheck.dailyUsed,
+          dailyLimit: dataLimitCheck.dailyLimit,
+          dailyRemaining: dataLimitCheck.dailyRemaining,
+        });
+        return;
+      }
+
       // Check wallet balance (debit full face value)
       const wallet = db.prepare('SELECT * FROM user_wallets WHERE user_id = ?').get(userId) as Record<string, unknown> | undefined;
       if (!wallet || (wallet.balance as number) < amount) {
@@ -1888,6 +1914,9 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
           db.prepare(`UPDATE pos_transactions SET status = 'completed', reloadly_tx_id = ?, reloadly_operator_id = ?, completed_at = ? WHERE id = ?`)
             .run(String(result.transactionId), operatorId, now, txId);
 
+          // Record agent stats + commission (bug fix: stats were never updated)
+          recordAgentSale(db, { agentUserId: userId, txId, sourceType: 'data', faceValue: amount, agentProfit });
+
           res.json({ success: true, transactionId: txId, carrier: carrierName, phoneNumber, faceValue: amount, walletBalance: walletAfter.balance });
         } else {
           // Refund
@@ -1912,6 +1941,175 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       deps.logger.error(`POS sell-data error: ${msg}`);
       res.status(500).json({ error: msg });
     }
+  });
+
+  // ══════════════════════════════════════════════════════════
+  // BILL PAYMENTS (Flutterwave)
+  // ══════════════════════════════════════════════════════════
+
+  /** Bill categories — return available billers */
+  router.get('/api/pos/bill-categories', authenticate, (_req: Request, res: Response) => {
+    const category = _req.query.category as string | undefined;
+    const categories = getBillCategories(category);
+    res.json({ categories });
+  });
+
+  /** Validate bill customer (meter number, smartcard, etc.) */
+  router.post('/api/pos/bill/validate', authenticate, async (req: Request, res: Response) => {
+    try {
+      const { billerCode, customerId } = req.body as { billerCode: string; customerId: string };
+      if (!billerCode || !customerId) {
+        res.status(400).json({ error: 'billerCode and customerId are required' });
+        return;
+      }
+
+      const biller = findBiller(billerCode);
+      if (!biller) {
+        res.status(400).json({ error: 'Unknown biller code' });
+        return;
+      }
+
+      const result = await validateBillCustomer(biller.itemCode, billerCode, customerId);
+      if (result.valid) {
+        res.json({ valid: true, customerName: result.customerName, biller: biller.name, category: biller.category });
+      } else {
+        res.status(400).json({ valid: false, error: result.error });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  /** Pay a bill — debit wallet, call Flutterwave, record */
+  router.post('/api/pos/bill', authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = req.auth!.userId;
+      const { billerCode, customerId, customerName, amount } = req.body as {
+        billerCode: string;
+        customerId: string;
+        customerName?: string;
+        amount: number;
+      };
+
+      if (!billerCode || !customerId || !amount || amount <= 0) {
+        res.status(400).json({ error: 'billerCode, customerId, and positive amount are required' });
+        return;
+      }
+
+      const biller = findBiller(billerCode);
+      if (!biller) {
+        res.status(400).json({ error: 'Unknown biller code' });
+        return;
+      }
+
+      // Check daily limit
+      const billLimitCheck = checkDailyLimit(db, userId, amount);
+      if (!billLimitCheck.allowed) {
+        res.status(400).json({
+          error: 'Daily limit exceeded',
+          dailyUsed: billLimitCheck.dailyUsed,
+          dailyLimit: billLimitCheck.dailyLimit,
+          dailyRemaining: billLimitCheck.dailyRemaining,
+        });
+        return;
+      }
+
+      // Read convenience fee
+      const feeRow = db.prepare("SELECT value FROM platform_settings WHERE key = 'bill_convenience_fee'").get() as { value: string } | undefined;
+      const convenienceFee = parseFloat(feeRow?.value || '100');
+      const totalDebit = amount + convenienceFee;
+
+      // Check wallet balance
+      const wallet = db.prepare('SELECT * FROM user_wallets WHERE user_id = ?').get(userId) as Record<string, unknown> | undefined;
+      if (!wallet || (wallet.balance as number) < totalDebit) {
+        res.status(400).json({
+          error: 'Insufficient wallet balance',
+          balance: wallet?.balance || 0,
+          required: totalDebit,
+          breakdown: { amount, convenienceFee },
+        });
+        return;
+      }
+
+      const billId = uuid();
+      const reference = `BILL-${Date.now().toString(36).toUpperCase()}`;
+      const now = new Date().toISOString();
+
+      // Debit wallet
+      db.prepare(`UPDATE user_wallets SET balance = balance - ?, total_spent = total_spent + ?, updated_at = ? WHERE user_id = ?`)
+        .run(totalDebit, totalDebit, now, userId);
+      const walletAfter = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(userId) as { balance: number };
+
+      db.prepare(`INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at) VALUES (?, ?, 'debit', ?, ?, ?, ?, ?)`)
+        .run(uuid(), userId, totalDebit, walletAfter.balance, billId, `Bill: ${biller.name} ₦${amount} (fee ₦${convenienceFee})`, now);
+
+      // Record bill payment (pending)
+      db.prepare(`
+        INSERT INTO bill_payments (id, user_id, biller_code, biller_name, category, customer_id, customer_name, amount, fee, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+      `).run(billId, userId, billerCode, biller.name, biller.category, customerId, customerName || null, amount, convenienceFee, now);
+
+      // Call Flutterwave
+      const result = await payBill(biller.itemCode, billerCode, customerId, amount, reference);
+
+      if (result.success) {
+        db.prepare(`UPDATE bill_payments SET status = 'completed', flw_ref = ?, flw_tx_ref = ?, completed_at = ? WHERE id = ?`)
+          .run(result.flwRef || '', result.txRef || '', now, billId);
+
+        // Record agent stats + commission
+        recordAgentSale(db, { agentUserId: userId, txId: billId, sourceType: 'bill', faceValue: amount, agentProfit: convenienceFee });
+
+        res.json({
+          success: true,
+          billId,
+          biller: biller.name,
+          category: biller.category,
+          customerId,
+          amount,
+          convenienceFee,
+          walletBalance: walletAfter.balance,
+          flwRef: result.flwRef,
+        });
+      } else {
+        // Refund
+        db.prepare(`UPDATE bill_payments SET status = 'failed', error_message = ? WHERE id = ?`).run(result.error || 'Payment failed', billId);
+        db.prepare(`UPDATE user_wallets SET balance = balance + ?, total_spent = total_spent - ?, updated_at = ? WHERE user_id = ?`)
+          .run(totalDebit, totalDebit, now, userId);
+        const refundWallet = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(userId) as { balance: number };
+        db.prepare(`INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at) VALUES (?, ?, 'refund', ?, ?, ?, ?, ?)`)
+          .run(uuid(), userId, totalDebit, refundWallet.balance, billId, `Refund: failed bill ${biller.name}`, now);
+
+        res.status(400).json({ success: false, error: result.error, walletBalance: refundWallet.balance, refunded: true });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Bill payment error: ${msg}`);
+      res.status(500).json({ error: msg });
+    }
+  });
+
+  /** Bill payment history for current user */
+  router.get('/api/pos/bill-history', authenticate, (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const limit = parseInt(String(req.query.limit || '50'));
+    const bills = db.prepare('SELECT * FROM bill_payments WHERE user_id = ? ORDER BY created_at DESC LIMIT ?').all(userId, limit);
+    res.json({ bills });
+  });
+
+  /** Commission ledger for current agent */
+  router.get('/api/pos/commissions', authenticate, (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+    const limit = parseInt(String(req.query.limit || '50'));
+    const commissions = db.prepare('SELECT * FROM commission_ledger WHERE agent_user_id = ? ORDER BY created_at DESC LIMIT ?').all(userId, limit);
+
+    const totals = db.prepare(`
+      SELECT COALESCE(SUM(commission_amount), 0) as total,
+             COUNT(*) as count
+      FROM commission_ledger WHERE agent_user_id = ?
+    `).get(userId) as { total: number; count: number };
+
+    res.json({ commissions, totalEarned: totals.total, totalCount: totals.count });
   });
 
   // ══════════════════════════════════════════════════════════

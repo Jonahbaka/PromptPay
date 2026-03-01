@@ -2567,6 +2567,78 @@
       font-size:13px; cursor:pointer;
     }
 
+    /* ── Lounge Music Player ── */
+    .la-music-player {
+      background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+      border-radius:16px; padding:16px; margin-bottom:6px;
+      border:1px solid rgba(201,168,76,.25);
+      box-shadow:0 4px 20px rgba(0,0,0,.4);
+    }
+    .la-music-header {
+      display:flex; align-items:center; gap:8px; margin-bottom:12px;
+    }
+    .la-music-icon { font-size:22px; }
+    .la-music-label { font-size:14px; font-weight:700; color:#c9a84c; letter-spacing:.5px; }
+    .la-music-now {
+      font-size:11px; color:#999; margin-left:auto; max-width:120px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .la-music-tracks {
+      display:flex; gap:8px; margin-bottom:12px;
+    }
+    .la-track-btn {
+      flex:1; padding:10px 8px; border-radius:10px; border:2px solid rgba(201,168,76,.2);
+      background:rgba(255,255,255,.04); color:#f0e6d3; cursor:pointer;
+      text-align:center; transition:all .2s; font-size:12px; font-weight:600;
+    }
+    .la-track-btn:hover { border-color:rgba(201,168,76,.5); background:rgba(201,168,76,.08); }
+    .la-track-btn.active { border-color:#c9a84c; background:rgba(201,168,76,.15); box-shadow:0 0 12px rgba(201,168,76,.25); }
+    .la-track-name { margin-top:2px; font-size:10px; color:#999; font-weight:400; }
+    .la-music-controls {
+      display:flex; align-items:center; gap:10px; justify-content:center;
+    }
+    .la-ctrl-btn {
+      width:40px; height:40px; border-radius:50%; border:1px solid rgba(201,168,76,.3);
+      background:rgba(255,255,255,.05); color:#c9a84c; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .2s; font-size:16px;
+    }
+    .la-ctrl-btn:hover { background:rgba(201,168,76,.15); border-color:#c9a84c; }
+    .la-ctrl-btn.playing { background:rgba(201,168,76,.2); border-color:#c9a84c; box-shadow:0 0 10px rgba(201,168,76,.3); }
+    .la-ctrl-btn.play-main { width:48px; height:48px; font-size:20px; }
+    .la-volume-wrap {
+      display:flex; align-items:center; gap:6px; margin-left:4px;
+    }
+    .la-volume-icon { font-size:14px; color:#c9a84c; cursor:pointer; }
+    .la-volume-slider {
+      -webkit-appearance:none; appearance:none; width:70px; height:4px;
+      border-radius:2px; background:rgba(255,255,255,.15); outline:none;
+      cursor:pointer;
+    }
+    .la-volume-slider::-webkit-slider-thumb {
+      -webkit-appearance:none; appearance:none; width:14px; height:14px;
+      border-radius:50%; background:#c9a84c; cursor:pointer;
+      box-shadow:0 0 6px rgba(201,168,76,.4);
+    }
+    .la-volume-slider::-moz-range-thumb {
+      width:14px; height:14px; border-radius:50%; background:#c9a84c;
+      cursor:pointer; border:none;
+    }
+
+    /* ── Gift a Drink Banner (Lounge Lobby) ── */
+    .la-gift-banner {
+      background:linear-gradient(135deg,rgba(201,168,76,.12) 0%,rgba(231,76,60,.08) 100%);
+      border:2px solid rgba(201,168,76,.35); border-radius:14px;
+      padding:14px 16px; display:flex; align-items:center; gap:12px;
+      cursor:pointer; transition:all .2s;
+    }
+    .la-gift-banner:hover { border-color:#c9a84c; box-shadow:0 0 20px rgba(201,168,76,.2); transform:translateY(-1px); }
+    .la-gift-banner-emoji { font-size:32px; flex-shrink:0; }
+    .la-gift-banner-text { flex:1; }
+    .la-gift-banner-title { font-size:15px; font-weight:700; color:#c9a84c; }
+    .la-gift-banner-desc { font-size:12px; color:#999; margin-top:2px; }
+    .la-gift-banner-arrow { font-size:20px; color:#c9a84c; flex-shrink:0; }
+
     /* Lobby cards */
     .la-lobby { padding:16px; display:flex; flex-direction:column; gap:14px; }
     .la-lobby-card {
@@ -3492,6 +3564,45 @@
       <!-- LOUNGE TAB -->
       <div id="calls-tab-lounge" style="display:none">
         <div class="la-lobby">
+
+          <!-- Music Player -->
+          <div class="la-music-player">
+            <div class="la-music-header">
+              <span class="la-music-icon">&#127925;</span>
+              <span class="la-music-label">Lounge Radio</span>
+              <span class="la-music-now" id="la-music-now">Select a track</span>
+            </div>
+            <div class="la-music-tracks">
+              <div class="la-track-btn" id="la-track-0" onclick="selectLoungeTrack(0)">
+                &#9818; Royale
+                <div class="la-track-name">MI6 Vibe</div>
+              </div>
+              <div class="la-track-btn" id="la-track-1" onclick="selectLoungeTrack(1)">
+                &#127775; Wizard of Oz
+                <div class="la-track-name">Emerald Vibe</div>
+              </div>
+            </div>
+            <div class="la-music-controls">
+              <button class="la-ctrl-btn" onclick="loungeMusicPlayPause()" id="la-btn-play" title="Play / Pause">&#9654;</button>
+              <button class="la-ctrl-btn" onclick="loungeMusicStop()" title="Stop">&#9632;</button>
+              <div class="la-volume-wrap">
+                <span class="la-volume-icon" onclick="loungeMusicToggleMute()" id="la-vol-icon">&#128266;</span>
+                <input type="range" class="la-volume-slider" id="la-volume" min="0" max="100" value="50" oninput="loungeMusicSetVolume(this.value)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Gift a Drink Banner -->
+          <div class="la-gift-banner" onclick="showGiftModal()">
+            <span class="la-gift-banner-emoji">&#127870;&#127866;</span>
+            <div class="la-gift-banner-text">
+              <div class="la-gift-banner-title">Gift a Drink</div>
+              <div class="la-gift-banner-desc">Send a beer, wine, cocktail or champagne to your opponent during games</div>
+            </div>
+            <span class="la-gift-banner-arrow">&#8250;</span>
+          </div>
+
+          <!-- Game Cards -->
           <div class="la-lobby-card mi6" onclick="startLuxeGame('chess')">
             <div class="la-lobby-card-icon">&#9818;</div>
             <div class="la-lobby-card-title">MI6 Royale</div>
@@ -3502,6 +3613,11 @@
             <div class="la-lobby-card-title">Emerald Quest</div>
             <div class="la-lobby-card-desc">Checkers — jump, king, conquer. Enchanted emerald arena.</div>
           </div>
+        </div>
+
+        <!-- Hidden YouTube player for audio extraction -->
+        <div id="la-yt-container" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none">
+          <div id="la-yt-player"></div>
         </div>
       </div>
     </div>
@@ -4253,8 +4369,8 @@
         <!-- Compose -->
         <div class="la-compose">
           <input type="text" placeholder="Say something..." id="la-chat-input" onkeydown="if(event.key==='Enter')sendLoungeChat()">
-          <button onclick="showGiftModal()" title="Gift">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+          <button onclick="showGiftModal()" title="Gift a Drink" style="background:linear-gradient(135deg,#c9a84c,#f5d98e);border-radius:50%;width:34px;height:34px;min-width:34px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(201,168,76,.4);border:none;cursor:pointer;padding:0">
+            <span style="font-size:18px;line-height:1">&#127870;</span>
           </button>
           <button onclick="sendLoungeChat()" title="Send">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -9609,6 +9725,116 @@ function leaveLuxeGame() {
   // Clear PiP
   document.getElementById('la-pip-self').srcObject = null;
   document.getElementById('la-pip-remote').srcObject = null;
+}
+
+// ═══ LOUNGE MUSIC PLAYER (YouTube IFrame API — audio only) ═══
+const LOUNGE_TRACKS = [
+  { id: 'igqmGtVF3VQ', name: 'Royale', label: 'MI6 Vibe' },
+  { id: '5iee40dSbs4', name: 'Wizard of Oz', label: 'Emerald Vibe' },
+];
+let loungeYTPlayer = null;
+let loungeCurrentTrack = -1;
+let loungeIsPlaying = false;
+let loungeYTReady = false;
+let loungeVolume = 50;
+
+// Load YouTube IFrame API once
+(function loadYTAPI() {
+  if (window.YT && window.YT.Player) { loungeInitYT(); return; }
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+})();
+
+function onYouTubeIframeAPIReady() {
+  loungeInitYT();
+}
+
+function loungeInitYT() {
+  if (loungeYTPlayer) return;
+  loungeYTPlayer = new YT.Player('la-yt-player', {
+    height: '1', width: '1',
+    playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, rel: 0, playsinline: 1 },
+    events: {
+      onReady: function() { loungeYTReady = true; loungeYTPlayer.setVolume(loungeVolume); },
+      onStateChange: function(e) {
+        if (e.data === YT.PlayerState.ENDED) {
+          // Loop current track
+          loungeYTPlayer.seekTo(0);
+          loungeYTPlayer.playVideo();
+        }
+        if (e.data === YT.PlayerState.PLAYING) {
+          loungeIsPlaying = true;
+          document.getElementById('la-btn-play').innerHTML = '&#10074;&#10074;';
+          document.getElementById('la-btn-play').classList.add('playing');
+        }
+        if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+          loungeIsPlaying = false;
+          document.getElementById('la-btn-play').innerHTML = '&#9654;';
+          document.getElementById('la-btn-play').classList.remove('playing');
+        }
+      },
+    },
+  });
+}
+
+function selectLoungeTrack(idx) {
+  if (idx < 0 || idx >= LOUNGE_TRACKS.length) return;
+  // Update UI
+  LOUNGE_TRACKS.forEach(function(_, i) {
+    const el = document.getElementById('la-track-' + i);
+    if (el) el.classList.toggle('active', i === idx);
+  });
+  loungeCurrentTrack = idx;
+  const track = LOUNGE_TRACKS[idx];
+  document.getElementById('la-music-now').textContent = track.name;
+
+  if (loungeYTReady && loungeYTPlayer) {
+    loungeYTPlayer.loadVideoById(track.id);
+    loungeYTPlayer.setVolume(loungeVolume);
+    loungeIsPlaying = true;
+  }
+}
+
+function loungeMusicPlayPause() {
+  if (!loungeYTReady || !loungeYTPlayer) return;
+  if (loungeCurrentTrack < 0) { selectLoungeTrack(0); return; }
+  if (loungeIsPlaying) {
+    loungeYTPlayer.pauseVideo();
+  } else {
+    loungeYTPlayer.playVideo();
+  }
+}
+
+function loungeMusicStop() {
+  if (!loungeYTReady || !loungeYTPlayer) return;
+  loungeYTPlayer.stopVideo();
+  loungeIsPlaying = false;
+  document.getElementById('la-btn-play').innerHTML = '&#9654;';
+  document.getElementById('la-btn-play').classList.remove('playing');
+  document.getElementById('la-music-now').textContent = 'Stopped';
+}
+
+function loungeMusicSetVolume(val) {
+  loungeVolume = parseInt(val);
+  if (loungeYTReady && loungeYTPlayer) loungeYTPlayer.setVolume(loungeVolume);
+  var icon = document.getElementById('la-vol-icon');
+  if (loungeVolume === 0) icon.innerHTML = '&#128263;';
+  else if (loungeVolume < 40) icon.innerHTML = '&#128265;';
+  else icon.innerHTML = '&#128266;';
+}
+
+function loungeMusicToggleMute() {
+  if (!loungeYTReady || !loungeYTPlayer) return;
+  if (loungeYTPlayer.isMuted()) {
+    loungeYTPlayer.unMute();
+    document.getElementById('la-volume').value = loungeVolume || 50;
+    loungeMusicSetVolume(loungeVolume || 50);
+  } else {
+    loungeYTPlayer.mute();
+    document.getElementById('la-volume').value = 0;
+    document.getElementById('la-vol-icon').innerHTML = '&#128263;';
+  }
 }
 
 function openLuxeLobby() {

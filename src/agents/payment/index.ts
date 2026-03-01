@@ -8,6 +8,7 @@
 import { z } from 'zod';
 import { ToolDefinition } from '../../core/types.js';
 import { CONFIG } from '../../core/config.js';
+import { getBillCategories, findBiller, validateBillCustomer, payBill } from '../../providers/flutterwave-bills.js';
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -985,6 +986,8 @@ export const paymentTools: ToolDefinition[] = [
   },
 
   // ─── 12. Merchant QR Pay (Scan & Pay) ─────────────────────
+  // (Note: bill payment schemas follow after QR tools)
+
   {
     name: 'merchant_qr_pay',
     description: 'Pay a merchant by scanning their QR code. Deducts from wallet, replaces POS terminal. 2.5% merchant fee applies.',
@@ -1057,6 +1060,200 @@ export const paymentTools: ToolDefinition[] = [
       } catch (err) {
         return { success: false, data: null, error: `QR payment failed: ${err}` };
       }
+    },
+  },
+
+  // ─── 13. Pay Electricity Bill ───────────────────────────────
+  {
+    name: 'pay_electricity_bill',
+    description: 'Pay electricity bill for Nigerian DISCOs (IKEDC, EKEDC, AEDC, PHEDC, IBEDC, KEDCO, BEDC). Requires meter number and amount. Validates customer before payment.',
+    category: 'bills',
+    inputSchema: z.object({
+      billerCode: z.string().describe('Biller code from catalog (e.g. BIL099 for IKEDC)'),
+      meterNumber: z.string().describe('Customer meter number'),
+      amount: z.number().positive().describe('Amount in NGN'),
+      userId: z.string().describe('User ID for wallet debit'),
+    }),
+    requiresApproval: true,
+    riskLevel: 'high',
+    execute: async (input, ctx) => {
+      const params = z.object({
+        billerCode: z.string(),
+        meterNumber: z.string(),
+        amount: z.number().positive(),
+        userId: z.string(),
+      }).parse(input);
+
+      ctx.logger.info(`[Mercury] Electricity bill: ${params.billerCode} meter ${params.meterNumber} ₦${params.amount}`);
+
+      const biller = findBiller(params.billerCode);
+      if (!biller || biller.category !== 'electricity') {
+        const discos = getBillCategories('electricity')[0]?.billers || [];
+        return {
+          success: false, data: { availableDiscos: discos },
+          error: 'Invalid electricity biller code. See availableDiscos for valid options.',
+        };
+      }
+
+      // Validate customer
+      const validation = await validateBillCustomer(biller.itemCode, params.billerCode, params.meterNumber);
+      if (!validation.valid) {
+        return { success: false, data: null, error: `Invalid meter number: ${validation.error}` };
+      }
+
+      // Pay
+      const ref = `ELEC-${Date.now().toString(36).toUpperCase()}`;
+      const result = await payBill(biller.itemCode, params.billerCode, params.meterNumber, params.amount, ref);
+
+      if (result.success) {
+        await ctx.memory.store({
+          agentId: ctx.agentId, type: 'episodic', namespace: 'bills',
+          content: JSON.stringify({ ref, type: 'electricity', biller: biller.name, meter: params.meterNumber, amount: params.amount, customer: validation.customerName, status: 'completed' }),
+          importance: 0.7, metadata: { category: 'electricity' },
+        });
+
+        return {
+          success: true,
+          data: {
+            transactionId: ref,
+            biller: biller.name,
+            meterNumber: params.meterNumber,
+            customerName: validation.customerName,
+            amount: params.amount,
+            flwRef: result.flwRef,
+            status: 'completed',
+            message: `Electricity bill paid: ₦${params.amount} to ${biller.name} (Meter: ${params.meterNumber}, Customer: ${validation.customerName})`,
+          },
+        };
+      }
+
+      return { success: false, data: null, error: `Electricity payment failed: ${result.error}` };
+    },
+  },
+
+  // ─── 14. Pay Cable TV ──────────────────────────────────────
+  {
+    name: 'pay_cable_tv',
+    description: 'Pay cable TV subscription (DSTV, GOtv, StarTimes). Requires smartcard number and amount. Validates customer before payment.',
+    category: 'bills',
+    inputSchema: z.object({
+      billerCode: z.string().describe('Biller code (BIL121=DSTV, BIL122=GOtv, BIL123=StarTimes)'),
+      smartcardNumber: z.string().describe('Customer smartcard/IUC number'),
+      amount: z.number().positive().describe('Subscription amount in NGN'),
+      userId: z.string().describe('User ID for wallet debit'),
+    }),
+    requiresApproval: true,
+    riskLevel: 'high',
+    execute: async (input, ctx) => {
+      const params = z.object({
+        billerCode: z.string(),
+        smartcardNumber: z.string(),
+        amount: z.number().positive(),
+        userId: z.string(),
+      }).parse(input);
+
+      ctx.logger.info(`[Mercury] Cable TV: ${params.billerCode} card ${params.smartcardNumber} ₦${params.amount}`);
+
+      const biller = findBiller(params.billerCode);
+      if (!biller || biller.category !== 'cable') {
+        const providers = getBillCategories('cable')[0]?.billers || [];
+        return {
+          success: false, data: { availableProviders: providers },
+          error: 'Invalid cable TV biller code. See availableProviders for valid options.',
+        };
+      }
+
+      const validation = await validateBillCustomer(biller.itemCode, params.billerCode, params.smartcardNumber);
+      if (!validation.valid) {
+        return { success: false, data: null, error: `Invalid smartcard number: ${validation.error}` };
+      }
+
+      const ref = `CABLE-${Date.now().toString(36).toUpperCase()}`;
+      const result = await payBill(biller.itemCode, params.billerCode, params.smartcardNumber, params.amount, ref);
+
+      if (result.success) {
+        await ctx.memory.store({
+          agentId: ctx.agentId, type: 'episodic', namespace: 'bills',
+          content: JSON.stringify({ ref, type: 'cable', biller: biller.name, smartcard: params.smartcardNumber, amount: params.amount, customer: validation.customerName, status: 'completed' }),
+          importance: 0.7, metadata: { category: 'cable' },
+        });
+
+        return {
+          success: true,
+          data: {
+            transactionId: ref,
+            biller: biller.name,
+            smartcardNumber: params.smartcardNumber,
+            customerName: validation.customerName,
+            amount: params.amount,
+            flwRef: result.flwRef,
+            status: 'completed',
+            message: `Cable TV paid: ₦${params.amount} to ${biller.name} (Card: ${params.smartcardNumber}, Customer: ${validation.customerName})`,
+          },
+        };
+      }
+
+      return { success: false, data: null, error: `Cable TV payment failed: ${result.error}` };
+    },
+  },
+
+  // ─── 15. Fund Betting Wallet ───────────────────────────────
+  {
+    name: 'pay_betting_wallet',
+    description: 'Fund betting wallet (Bet9ja, SportyBet, 1xBet, BetKing). Requires betting account ID and amount.',
+    category: 'bills',
+    inputSchema: z.object({
+      billerCode: z.string().describe('Biller code (BIL130=Bet9ja, BIL131=SportyBet, BIL132=1xBet, BIL133=BetKing)'),
+      accountId: z.string().describe('Betting account/user ID'),
+      amount: z.number().positive().describe('Amount to fund in NGN'),
+      userId: z.string().describe('User ID for wallet debit'),
+    }),
+    requiresApproval: true,
+    riskLevel: 'high',
+    execute: async (input, ctx) => {
+      const params = z.object({
+        billerCode: z.string(),
+        accountId: z.string(),
+        amount: z.number().positive(),
+        userId: z.string(),
+      }).parse(input);
+
+      ctx.logger.info(`[Mercury] Betting: ${params.billerCode} account ${params.accountId} ₦${params.amount}`);
+
+      const biller = findBiller(params.billerCode);
+      if (!biller || biller.category !== 'betting') {
+        const platforms = getBillCategories('betting')[0]?.billers || [];
+        return {
+          success: false, data: { availablePlatforms: platforms },
+          error: 'Invalid betting platform code. See availablePlatforms for valid options.',
+        };
+      }
+
+      const ref = `BET-${Date.now().toString(36).toUpperCase()}`;
+      const result = await payBill(biller.itemCode, params.billerCode, params.accountId, params.amount, ref);
+
+      if (result.success) {
+        await ctx.memory.store({
+          agentId: ctx.agentId, type: 'episodic', namespace: 'bills',
+          content: JSON.stringify({ ref, type: 'betting', biller: biller.name, account: params.accountId, amount: params.amount, status: 'completed' }),
+          importance: 0.7, metadata: { category: 'betting' },
+        });
+
+        return {
+          success: true,
+          data: {
+            transactionId: ref,
+            biller: biller.name,
+            accountId: params.accountId,
+            amount: params.amount,
+            flwRef: result.flwRef,
+            status: 'completed',
+            message: `Betting wallet funded: ₦${params.amount} to ${biller.name} (Account: ${params.accountId})`,
+          },
+        };
+      }
+
+      return { success: false, data: null, error: `Betting top-up failed: ${result.error}` };
     },
   },
 ];

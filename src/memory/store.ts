@@ -991,6 +991,46 @@ export class MemoryStore extends EventEmitter {
 
       -- Default platform fee: 1%
       INSERT OR IGNORE INTO platform_settings (key, value, updated_at) VALUES ('pos_platform_fee_pct', '1', datetime('now'));
+      INSERT OR IGNORE INTO platform_settings (key, value, updated_at) VALUES ('bill_convenience_fee', '100', datetime('now'));
+      INSERT OR IGNORE INTO platform_settings (key, value, updated_at) VALUES ('super_agent_override_pct', '0.15', datetime('now'));
+      INSERT OR IGNORE INTO platform_settings (key, value, updated_at) VALUES ('agent_commission_pct', '0.75', datetime('now'));
+
+      -- ═══ BILL PAYMENTS ═══
+      CREATE TABLE IF NOT EXISTS bill_payments (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        biller_code TEXT NOT NULL,
+        biller_name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        customer_id TEXT NOT NULL,
+        customer_name TEXT,
+        amount REAL NOT NULL,
+        fee REAL DEFAULT 0,
+        currency TEXT DEFAULT 'NGN',
+        flw_ref TEXT,
+        flw_tx_ref TEXT,
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'completed', 'failed', 'refunded')),
+        error_message TEXT,
+        created_at TEXT NOT NULL,
+        completed_at TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_bill_user ON bill_payments(user_id);
+
+      -- ═══ COMMISSION LEDGER ═══
+      CREATE TABLE IF NOT EXISTS commission_ledger (
+        id TEXT PRIMARY KEY,
+        agent_user_id TEXT NOT NULL,
+        source_tx_id TEXT NOT NULL,
+        source_type TEXT NOT NULL,
+        gross_amount REAL NOT NULL,
+        commission_rate REAL NOT NULL,
+        commission_amount REAL NOT NULL,
+        override_from TEXT,
+        override_rate REAL,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_comm_agent ON commission_ledger(agent_user_id);
+      CREATE INDEX IF NOT EXISTS idx_comm_source ON commission_ledger(source_tx_id);
 
       -- ═══ CALL LOG (International Calling) ═══
       CREATE TABLE IF NOT EXISTS call_log (
