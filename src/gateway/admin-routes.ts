@@ -67,17 +67,22 @@ function gatherPlatformContext(deps: AdminDependencies) {
   };
 }
 
-async function callDeepSeek(systemPrompt: string, messages: Array<{ role: string; content: string }>): Promise<{ text: string; usage: { input: number; output: number } }> {
-  const res = await fetch(`${CONFIG.deepseek.baseUrl}/chat/completions`, {
+async function callAdminAI(systemPrompt: string, messages: Array<{ role: string; content: string }>): Promise<{ text: string; usage: { input: number; output: number } }> {
+  // Use Ollama (default) or Anthropic for admin AI chat
+  const baseUrl = CONFIG.ollama.baseUrl;
+  const apiKey = CONFIG.ollama.apiKey;
+  const model = CONFIG.ollama.model;
+
+  const res = await fetch(`${baseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${CONFIG.deepseek.apiKey}`,
+      ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
     },
     body: JSON.stringify({
-      model: CONFIG.deepseek.model,
-      max_tokens: CONFIG.deepseek.maxTokens,
-      temperature: CONFIG.deepseek.temperature,
+      model,
+      max_tokens: CONFIG.ollama.maxTokens,
+      temperature: CONFIG.ollama.temperature,
       messages: [
         { role: 'system', content: systemPrompt },
         ...messages,
@@ -87,7 +92,7 @@ async function callDeepSeek(systemPrompt: string, messages: Array<{ role: string
 
   if (!res.ok) {
     const errBody = await res.text();
-    throw new Error(`DeepSeek API error ${res.status}: ${errBody}`);
+    throw new Error(`Admin AI error ${res.status}: ${errBody}`);
   }
 
   const data = await res.json() as {
@@ -547,8 +552,8 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
         res.status(400).json({ error: 'message is required' });
         return;
       }
-      if (!CONFIG.deepseek.apiKey) {
-        res.status(503).json({ error: 'DeepSeek API key not configured. Set DEEPSEEK_API_KEY in .env' });
+      if (!CONFIG.ollama.baseUrl && !CONFIG.anthropic.apiKey) {
+        res.status(503).json({ error: 'No AI provider configured. Set OLLAMA_BASE_URL or ANTHROPIC_API_KEY in .env' });
         return;
       }
 
@@ -578,7 +583,7 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
       }
       msgs.push({ role: 'user', content: message });
 
-      const result = await callDeepSeek(systemPrompt, msgs);
+      const result = await callAdminAI(systemPrompt, msgs);
 
       deps.auditTrail.record('admin', 'executive_chat', persona, { messageLength: message.length });
       deps.logger.info(`[Executive] ${personaName} consulted, ${result.usage.input + result.usage.output} tokens`);

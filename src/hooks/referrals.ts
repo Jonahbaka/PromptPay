@@ -7,7 +7,6 @@ import { randomBytes } from 'crypto';
 import Database from 'better-sqlite3';
 import { v4 as uuid } from 'uuid';
 import type { LoggerHandle } from '../core/types.js';
-import { CONFIG } from '../core/config.js';
 
 export class ReferralEngine {
   private db: Database.Database;
@@ -33,7 +32,7 @@ export class ReferralEngine {
     this.db.prepare(`
       INSERT INTO referral_codes (code, owner_user_id, uses_count, max_uses, bonus_usd, enabled, created_at)
       VALUES (?, ?, 0, 0, ?, 1, ?)
-    `).run(code, userId, CONFIG.hooks.referralBonusUsd, now);
+    `).run(code, userId, 5.00, now); // $5 referral bonus
 
     this.logger.info(`[Referral] Code generated for ${userId}: ${code}`);
     return code;
@@ -77,7 +76,8 @@ export class ReferralEngine {
 
     // Tier 2: If the referrer was themselves referred, credit the "grandparent"
     let tier2Bonus = 0;
-    if (CONFIG.hooks.referralTiers >= 2) {
+    const referralTiers = 2; // Support 2-tier referrals
+    if (referralTiers >= 2) {
       const referrerReferral = this.db.prepare(
         'SELECT referrer_user_id FROM referral_events WHERE referred_user_id = ? AND tier = 1'
       ).get(codeRecord.owner_user_id) as { referrer_user_id: string } | undefined;

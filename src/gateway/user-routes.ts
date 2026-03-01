@@ -19,7 +19,7 @@ import {
   initiateCall, getCallRate,
   aiInference, aiTranslate, getTelnyxBalance,
 } from '../providers/telnyx.js';
-import { getBillCategories, findBiller, validateBillCustomer, payBill } from '../providers/flutterwave-bills.js';
+// Removed: flutterwave-bills import (no API key)
 import { recordAgentSale, checkDailyLimit } from '../services/pos-settlement.js';
 
 export interface UserRouteDependencies {
@@ -394,12 +394,8 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
 
   // ── VAPID Public Key ──
   router.get('/api/push/vapid-key', (_req: Request, res: Response) => {
-    const key = CONFIG.push.vapidPublicKey;
-    if (!key) {
-      res.status(503).json({ error: 'Push not configured' });
-      return;
-    }
-    res.json({ publicKey: key });
+    // Push notifications not yet configured
+    res.status(503).json({ error: 'Push not configured' });
   });
 
   // ══════════════════════════════════════════════════════════
@@ -996,233 +992,17 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   });
 
   // ══════════════════════════════════════════════════════════
-  // DOMESTIC TRANSFERS
+  // DOMESTIC TRANSFERS (Nigeria expansion — awaiting Paystack/Flutterwave keys)
   // ══════════════════════════════════════════════════════════
 
-  // Initiate bank transfer (via Flutterwave)
-  router.post('/api/transfers/bank', authenticate, async (req: Request, res: Response) => {
-    try {
-      const userId = req.auth!.userId;
-      const { bank_code, account_number, account_name, amount, currency, narration, country } = req.body;
-
-      if (!bank_code || !account_number || !amount || !currency) {
-        res.status(400).json({ error: 'bank_code, account_number, amount, and currency are required' });
-        return;
-      }
-
-      // Check KYC tier
-      const user = db.prepare('SELECT kyc_tier, kyc_status, country FROM users WHERE id = ?').get(userId) as Record<string, unknown> | undefined;
-      if (!user || (user.kyc_tier as number) < 1) {
-        res.status(403).json({ error: 'KYC verification required before making transfers', requiresKyc: true });
-        return;
-      }
-
-      // Check daily limit
-      const userCountry = (country || user.country || '') as string;
-      const countryConf = (CONFIG as Record<string, unknown>).countryConfig as Record<string, Record<string, unknown>> | undefined;
-      const cc = countryConf?.[userCountry];
-      if (cc) {
-        const limits = (cc.tierLimits as Record<number, { dailySend: number }>)?.[user.kyc_tier as number];
-        if (limits && amount > limits.dailySend) {
-          res.status(403).json({ error: `Amount exceeds your Tier ${user.kyc_tier} daily limit of ${cc.currencySymbol}${limits.dailySend.toLocaleString()}. Upgrade KYC to increase.` });
-          return;
-        }
-      }
-
-      // Attempt Flutterwave transfer
-      if (!CONFIG.flutterwave.secretKey) {
-        // Simulate for development
-        const transferId = uuid();
-        const now = new Date().toISOString();
-        db.prepare(`
-          INSERT INTO domestic_transfers (id, user_id, country, type, provider, provider_ref, recipient_account, recipient_name, amount, currency, fee, status, narration, created_at)
-          VALUES (?, ?, ?, 'bank', 'simulated', ?, ?, ?, ?, ?, ?, 'completed', ?, ?)
-        `).run(transferId, userId, userCountry, 'SIM-' + transferId.slice(0, 8), account_number, account_name || null,
-          amount, currency, amount * 0.01, narration || null, now);
-
-        res.json({
-          success: true,
-          transfer: { id: transferId, status: 'completed', provider: 'simulated', amount, currency, fee: amount * 0.01 },
-        });
-        return;
-      }
-
-      // Real Flutterwave transfer
-      const flwRes = await fetch('https://api.flutterwave.com/v3/transfers', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${CONFIG.flutterwave.secretKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          account_bank: bank_code,
-          account_number,
-          amount,
-          currency,
-          narration: narration || `PromptPay transfer`,
-          reference: `PP-${uuid().slice(0, 12)}`,
-          debit_currency: currency,
-        }),
-      });
-
-      const flwData = await flwRes.json() as Record<string, unknown>;
-
-      const transferId = uuid();
-      const now = new Date().toISOString();
-      const fee = amount * (CONFIG.fees.p2pPercent / 100);
-
-      db.prepare(`
-        INSERT INTO domestic_transfers (id, user_id, country, type, provider, provider_ref, recipient_account, recipient_name, amount, currency, fee, status, narration, created_at)
-        VALUES (?, ?, ?, 'bank', 'flutterwave', ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(transferId, userId, userCountry,
-        (flwData.data as Record<string, unknown>)?.id?.toString() || null,
-        account_number, account_name || null,
-        amount, currency, fee,
-        flwData.status === 'success' ? 'pending' : 'failed',
-        narration || null, now);
-
-      if (flwData.status !== 'success') {
-        res.status(400).json({ error: (flwData.message as string) || 'Transfer failed', details: flwData });
-        return;
-      }
-
-      deps.logger.info(`Bank transfer initiated: ${transferId} ${currency} ${amount} to ${account_number}`);
-      res.json({
-        success: true,
-        transfer: {
-          id: transferId,
-          status: 'pending',
-          provider: 'flutterwave',
-          provider_ref: (flwData.data as Record<string, unknown>)?.id,
-          amount,
-          currency,
-          fee,
-        },
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      deps.logger.error(`Bank transfer error: ${msg}`);
-      res.status(500).json({ error: 'Failed to initiate transfer' });
-    }
+  // Bank transfer — Paystack (Nigeria) — awaiting API key activation
+  router.post('/api/transfers/bank', authenticate, async (_req: Request, res: Response) => {
+    res.status(503).json({ error: 'Bank transfers coming soon. Paystack integration pending activation.' });
   });
 
-  // Initiate mobile money transfer
-  router.post('/api/transfers/mobile-money', authenticate, async (req: Request, res: Response) => {
-    try {
-      const userId = req.auth!.userId;
-      const { provider, phone_number, amount, currency, narration, country } = req.body;
-
-      if (!provider || !phone_number || !amount || !currency) {
-        res.status(400).json({ error: 'provider, phone_number, amount, and currency are required' });
-        return;
-      }
-
-      // Check KYC
-      const user = db.prepare('SELECT kyc_tier, kyc_status, country FROM users WHERE id = ?').get(userId) as Record<string, unknown> | undefined;
-      if (!user || (user.kyc_tier as number) < 1) {
-        res.status(403).json({ error: 'KYC verification required before making transfers', requiresKyc: true });
-        return;
-      }
-
-      const userCountry = (country || user.country || '') as string;
-      const transferId = uuid();
-      const now = new Date().toISOString();
-      const fee = amount * (CONFIG.fees.p2pPercent / 100);
-
-      // Route to appropriate provider
-      let providerRef = '';
-      let status = 'pending';
-
-      if (provider === 'mpesa' && CONFIG.mpesa.consumerKey) {
-        // M-Pesa STK Push
-        const tokenRes = await fetch(
-          `https://${CONFIG.mpesa.environment === 'production' ? 'api' : 'sandbox'}.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials`,
-          { headers: { 'Authorization': 'Basic ' + Buffer.from(`${CONFIG.mpesa.consumerKey}:${CONFIG.mpesa.consumerSecret}`).toString('base64') } }
-        );
-        const tokenData = await tokenRes.json() as Record<string, string>;
-        const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, '').slice(0, 14);
-        const password = Buffer.from(`${CONFIG.mpesa.shortcode}${CONFIG.mpesa.passkey}${timestamp}`).toString('base64');
-
-        const stkRes = await fetch(
-          `https://${CONFIG.mpesa.environment === 'production' ? 'api' : 'sandbox'}.safaricom.co.ke/mpesa/stkpush/v1/processrequest`,
-          {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              BusinessShortCode: CONFIG.mpesa.shortcode,
-              Password: password,
-              Timestamp: timestamp,
-              TransactionType: 'CustomerPayBillOnline',
-              Amount: Math.ceil(amount),
-              PartyA: phone_number.replace('+', ''),
-              PartyB: CONFIG.mpesa.shortcode,
-              PhoneNumber: phone_number.replace('+', ''),
-              CallBackURL: `${CONFIG.platform.domainUrl}/webhooks/mpesa`,
-              AccountReference: `PP${transferId.slice(0, 8)}`,
-              TransactionDesc: narration || 'PromptPay Transfer',
-            }),
-          }
-        );
-        const stkData = await stkRes.json() as Record<string, string>;
-        providerRef = stkData.CheckoutRequestID || '';
-        status = stkData.ResponseCode === '0' ? 'pending' : 'failed';
-
-      } else if ((provider === 'mtn' || provider === 'mtn_momo') && CONFIG.mtnMomo.subscriptionKey) {
-        // MTN MoMo Request to Pay
-        const tokenRes = await fetch('https://momodeveloper.mtn.com/collection/token/', {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Basic ' + Buffer.from(`${CONFIG.mtnMomo.apiUser}:${CONFIG.mtnMomo.apiKey}`).toString('base64'),
-            'Ocp-Apim-Subscription-Key': CONFIG.mtnMomo.subscriptionKey,
-          },
-        });
-        const tokenData = await tokenRes.json() as Record<string, string>;
-        const refId = uuid();
-
-        const momoRes = await fetch('https://momodeveloper.mtn.com/collection/v1_0/requesttopay', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${tokenData.access_token}`,
-            'X-Reference-Id': refId,
-            'X-Target-Environment': CONFIG.mtnMomo.environment,
-            'Ocp-Apim-Subscription-Key': CONFIG.mtnMomo.subscriptionKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            amount: amount.toString(),
-            currency,
-            externalId: transferId,
-            payer: { partyIdType: 'MSISDN', partyId: phone_number.replace('+', '') },
-            payerMessage: narration || 'PromptPay Transfer',
-            payeeNote: 'PromptPay',
-          }),
-        });
-
-        providerRef = refId;
-        status = momoRes.ok ? 'pending' : 'failed';
-
-      } else {
-        // Simulated
-        providerRef = 'SIM-' + transferId.slice(0, 8);
-        status = 'completed';
-      }
-
-      db.prepare(`
-        INSERT INTO domestic_transfers (id, user_id, country, type, provider, provider_ref, recipient_account, recipient_name, amount, currency, fee, status, narration, created_at)
-        VALUES (?, ?, ?, 'mobile_money', ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)
-      `).run(transferId, userId, userCountry, provider, providerRef, phone_number,
-        amount, currency, fee, status, narration || null, now);
-
-      deps.logger.info(`Mobile money transfer: ${transferId} ${provider} ${currency} ${amount} to ${phone_number} status=${status}`);
-      res.json({
-        success: true,
-        transfer: { id: transferId, status, provider, provider_ref: providerRef, amount, currency, fee },
-      });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      deps.logger.error(`Mobile money transfer error: ${msg}`);
-      res.status(500).json({ error: 'Failed to initiate transfer' });
-    }
+  // Mobile money — not available in Nigeria market
+  router.post('/api/transfers/mobile-money', authenticate, async (_req: Request, res: Response) => {
+    res.status(503).json({ error: 'Mobile money transfers not yet available in your region.' });
   });
 
   // Get transfer history
@@ -1944,149 +1724,19 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   });
 
   // ══════════════════════════════════════════════════════════
-  // BILL PAYMENTS (Flutterwave)
+  // BILL PAYMENTS (Coming soon — Paystack integration pending)
   // ══════════════════════════════════════════════════════════
 
-  /** Bill categories — return available billers */
   router.get('/api/pos/bill-categories', authenticate, (_req: Request, res: Response) => {
-    const category = _req.query.category as string | undefined;
-    const categories = getBillCategories(category);
-    res.json({ categories });
+    res.status(503).json({ error: 'Bill payments coming soon. Provider integration pending.' });
   });
 
-  /** Validate bill customer (meter number, smartcard, etc.) */
-  router.post('/api/pos/bill/validate', authenticate, async (req: Request, res: Response) => {
-    try {
-      const { billerCode, customerId } = req.body as { billerCode: string; customerId: string };
-      if (!billerCode || !customerId) {
-        res.status(400).json({ error: 'billerCode and customerId are required' });
-        return;
-      }
-
-      const biller = findBiller(billerCode);
-      if (!biller) {
-        res.status(400).json({ error: 'Unknown biller code' });
-        return;
-      }
-
-      const result = await validateBillCustomer(biller.itemCode, billerCode, customerId);
-      if (result.valid) {
-        res.json({ valid: true, customerName: result.customerName, biller: biller.name, category: biller.category });
-      } else {
-        res.status(400).json({ valid: false, error: result.error });
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      res.status(500).json({ error: msg });
-    }
+  router.post('/api/pos/bill/validate', authenticate, async (_req: Request, res: Response) => {
+    res.status(503).json({ error: 'Bill payments coming soon. Provider integration pending.' });
   });
 
-  /** Pay a bill — debit wallet, call Flutterwave, record */
-  router.post('/api/pos/bill', authenticate, async (req: Request, res: Response) => {
-    try {
-      const userId = req.auth!.userId;
-      const { billerCode, customerId, customerName, amount } = req.body as {
-        billerCode: string;
-        customerId: string;
-        customerName?: string;
-        amount: number;
-      };
-
-      if (!billerCode || !customerId || !amount || amount <= 0) {
-        res.status(400).json({ error: 'billerCode, customerId, and positive amount are required' });
-        return;
-      }
-
-      const biller = findBiller(billerCode);
-      if (!biller) {
-        res.status(400).json({ error: 'Unknown biller code' });
-        return;
-      }
-
-      // Check daily limit
-      const billLimitCheck = checkDailyLimit(db, userId, amount);
-      if (!billLimitCheck.allowed) {
-        res.status(400).json({
-          error: 'Daily limit exceeded',
-          dailyUsed: billLimitCheck.dailyUsed,
-          dailyLimit: billLimitCheck.dailyLimit,
-          dailyRemaining: billLimitCheck.dailyRemaining,
-        });
-        return;
-      }
-
-      // Read convenience fee
-      const feeRow = db.prepare("SELECT value FROM platform_settings WHERE key = 'bill_convenience_fee'").get() as { value: string } | undefined;
-      const convenienceFee = parseFloat(feeRow?.value || '100');
-      const totalDebit = amount + convenienceFee;
-
-      // Check wallet balance
-      const wallet = db.prepare('SELECT * FROM user_wallets WHERE user_id = ?').get(userId) as Record<string, unknown> | undefined;
-      if (!wallet || (wallet.balance as number) < totalDebit) {
-        res.status(400).json({
-          error: 'Insufficient wallet balance',
-          balance: wallet?.balance || 0,
-          required: totalDebit,
-          breakdown: { amount, convenienceFee },
-        });
-        return;
-      }
-
-      const billId = uuid();
-      const reference = `BILL-${Date.now().toString(36).toUpperCase()}`;
-      const now = new Date().toISOString();
-
-      // Debit wallet
-      db.prepare(`UPDATE user_wallets SET balance = balance - ?, total_spent = total_spent + ?, updated_at = ? WHERE user_id = ?`)
-        .run(totalDebit, totalDebit, now, userId);
-      const walletAfter = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(userId) as { balance: number };
-
-      db.prepare(`INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at) VALUES (?, ?, 'debit', ?, ?, ?, ?, ?)`)
-        .run(uuid(), userId, totalDebit, walletAfter.balance, billId, `Bill: ${biller.name} ₦${amount} (fee ₦${convenienceFee})`, now);
-
-      // Record bill payment (pending)
-      db.prepare(`
-        INSERT INTO bill_payments (id, user_id, biller_code, biller_name, category, customer_id, customer_name, amount, fee, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
-      `).run(billId, userId, billerCode, biller.name, biller.category, customerId, customerName || null, amount, convenienceFee, now);
-
-      // Call Flutterwave
-      const result = await payBill(biller.itemCode, billerCode, customerId, amount, reference);
-
-      if (result.success) {
-        db.prepare(`UPDATE bill_payments SET status = 'completed', flw_ref = ?, flw_tx_ref = ?, completed_at = ? WHERE id = ?`)
-          .run(result.flwRef || '', result.txRef || '', now, billId);
-
-        // Record agent stats + commission
-        recordAgentSale(db, { agentUserId: userId, txId: billId, sourceType: 'bill', faceValue: amount, agentProfit: convenienceFee });
-
-        res.json({
-          success: true,
-          billId,
-          biller: biller.name,
-          category: biller.category,
-          customerId,
-          amount,
-          convenienceFee,
-          walletBalance: walletAfter.balance,
-          flwRef: result.flwRef,
-        });
-      } else {
-        // Refund
-        db.prepare(`UPDATE bill_payments SET status = 'failed', error_message = ? WHERE id = ?`).run(result.error || 'Payment failed', billId);
-        db.prepare(`UPDATE user_wallets SET balance = balance + ?, total_spent = total_spent - ?, updated_at = ? WHERE user_id = ?`)
-          .run(totalDebit, totalDebit, now, userId);
-        const refundWallet = db.prepare('SELECT balance FROM user_wallets WHERE user_id = ?').get(userId) as { balance: number };
-        db.prepare(`INSERT INTO wallet_transactions (id, user_id, type, amount, balance_after, reference, description, created_at) VALUES (?, ?, 'refund', ?, ?, ?, ?, ?)`)
-          .run(uuid(), userId, totalDebit, refundWallet.balance, billId, `Refund: failed bill ${biller.name}`, now);
-
-        res.status(400).json({ success: false, error: result.error, walletBalance: refundWallet.balance, refunded: true });
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      deps.logger.error(`Bill payment error: ${msg}`);
-      res.status(500).json({ error: msg });
-    }
+  router.post('/api/pos/bill', authenticate, async (_req: Request, res: Response) => {
+    res.status(503).json({ error: 'Bill payments coming soon. Provider integration pending.' });
   });
 
   /** Bill payment history for current user */

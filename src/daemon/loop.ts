@@ -50,7 +50,8 @@ export class DaemonLoop {
     this.addJob('hook_daily', 'Hook Engine Daily Jobs', 3600000, async () => {
       const now = new Date();
       // Only run at the configured streak reset hour
-      if (now.getUTCHours() === CONFIG.hooks.streakResetHour) {
+      const streakResetHour = 0; // Midnight UTC
+      if (now.getUTCHours() === streakResetHour) {
         const results = this.deps.hookEngine.runDailyJobs();
         this.deps.auditTrail.record('daemon', 'hook_daily_jobs', 'hook_engine', results);
         this.deps.logger.info(`[Daemon] Daily hooks: ${JSON.stringify(results)}`);

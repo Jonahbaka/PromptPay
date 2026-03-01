@@ -7,7 +7,6 @@
 import Database from 'better-sqlite3';
 import { v4 as uuid } from 'uuid';
 import type { LoggerHandle } from '../core/types.js';
-import { CONFIG } from '../core/config.js';
 
 export class RemindersEngine {
   private db: Database.Database;
@@ -20,7 +19,8 @@ export class RemindersEngine {
 
   /** Check for upcoming bills and create reminders. Returns count of new reminders. */
   generateReminders(): number {
-    const leadMs = CONFIG.hooks.reminderLeadTimeHours * 3600000;
+    const reminderLeadTimeHours = 24; // 24h lead time
+    const leadMs = reminderLeadTimeHours * 3600000;
     const now = new Date();
     const horizon = new Date(now.getTime() + leadMs);
 

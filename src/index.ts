@@ -37,11 +37,8 @@ import type { ChannelMessage } from './core/types.js';
 import { shoppingTools } from './agents/shopping/index.js';
 import { assistantTools } from './agents/assistant/index.js';
 
-// Import payment infrastructure agent tools
+// Import payment infrastructure agent tools (cleaned — only working agents)
 import { walletTools } from './agents/wallet/index.js';
-import { usPaymentTools } from './agents/us-payment/index.js';
-import { paymentTools } from './agents/payment/index.js';
-import { bankingTools } from './agents/banking/index.js';
 import { financialTools } from './agents/financial/index.js';
 
 async function main(): Promise<void> {
@@ -60,8 +57,7 @@ async function main(): Promise<void> {
   const db = memory.getDb();
   logger.info('Memory store initialized');
 
-  // Seed data (safe to run on all workers — idempotent)
-  memory.seedAchievements();
+  // Seed data removed (engagement hooks were vaporware with 0 activity)
   memory.seedDefaultCashbackRules();
   memory.seedOwnerAccount(hashPassword);
   memory.seedRoles();
@@ -100,14 +96,9 @@ async function main(): Promise<void> {
   orchestrator.registerTools(walletTools);
   logger.info(`Nexus (wallet): ${walletTools.length} tools`);
 
-  orchestrator.registerTools(usPaymentTools);
-  logger.info(`Janus (us-payment): ${usPaymentTools.length} tools`);
-
-  orchestrator.registerTools(paymentTools);
-  logger.info(`Mercury (payment): ${paymentTools.length} tools`);
-
-  orchestrator.registerTools(bankingTools);
-  logger.info(`Plutus (banking): ${bankingTools.length} tools`);
+  // Removed: usPaymentTools (Wise/Circle — no API keys)
+  // Removed: paymentTools (M-Pesa/MTN/Flutterwave/Razorpay — no API keys)
+  // Removed: bankingTools (Mono/Stitch — no API keys)
 
   orchestrator.registerTools(financialTools);
   logger.info(`Atlas (financial): ${financialTools.length} tools`);

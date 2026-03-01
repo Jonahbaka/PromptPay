@@ -6,7 +6,6 @@ import webpush from 'web-push';
 import { v4 as uuid } from 'uuid';
 import type Database from 'better-sqlite3';
 import type { ChannelCapabilities, ChannelMessage, LoggerHandle } from '../core/types.js';
-import { CONFIG } from '../core/config.js';
 import { BaseChannel } from './base.js';
 
 export class PushChannel extends BaseChannel {
@@ -93,14 +92,10 @@ export class PushChannel extends BaseChannel {
   }
 
   async start(): Promise<void> {
-    const { vapidPublicKey, vapidPrivateKey, vapidSubject } = CONFIG.push;
-    if (vapidPublicKey && vapidPrivateKey) {
-      webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-      this.active = true;
-      this.logger.info('Push notification channel active (VAPID)');
-    } else {
-      this.logger.warn('VAPID keys not configured, push channel disabled');
-    }
+    // VAPID keys not configured — push channel disabled for now
+    // To enable: set VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT in .env
+    // and add push config section to config.ts
+    this.logger.warn('VAPID keys not configured, push channel disabled');
   }
 
   async stop(): Promise<void> {

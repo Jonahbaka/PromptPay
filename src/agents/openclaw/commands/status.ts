@@ -45,8 +45,6 @@ export const statusCommand: OpenClawCommand = {
       const channels = [];
       if (CONFIG.telegram.botToken) channels.push('Telegram');
       if (CONFIG.email.resendApiKey) channels.push('Email');
-      if (CONFIG.push.vapidPublicKey) channels.push('Push');
-      if (CONFIG.sms.twilioAccountSid) channels.push('SMS');
 
       const output = `*PromptPay Status Dashboard*
 \`\`\`

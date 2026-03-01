@@ -63,7 +63,8 @@ export class FeeEngine {
 
     // Apply loyalty discount
     let loyaltyDiscount = 0;
-    if (CONFIG.fees.loyaltyDiscountEnabled) {
+    const loyaltyDiscountEnabled = false; // Disabled until loyalty system is fully tested
+    if (loyaltyDiscountEnabled) {
       const tier = this.getUserLoyaltyTier(userId);
       const discountRate = LOYALTY_DISCOUNTS[tier] || 0;
       if (discountRate > 0) {
