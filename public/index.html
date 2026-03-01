@@ -62,6 +62,8 @@
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <script src="https://js.stripe.com/v3/"></script>
   <script src="https://js.paystack.co/v2/inline.js"></script>
+  <script src="/lounge-music.js"></script>
+  <script src="/lounge-ai.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -2660,6 +2662,71 @@
     .la-lobby-card.emerald .la-lobby-card-title { color:#2ecc71; }
     .la-lobby-card-desc { font-size:13px; color:#999; }
 
+    /* Section dividers in lobby */
+    .la-lobby-section { margin-top:4px; }
+    .la-lobby-section-title {
+      font-size:13px; font-weight:700; color:#888; text-transform:uppercase;
+      letter-spacing:1px; margin-bottom:10px; padding-left:2px;
+    }
+
+    /* Play vs AI / Lesson cards */
+    .la-ai-row { display:flex; gap:10px; }
+    .la-ai-card {
+      flex:1; border-radius:14px; padding:14px 12px; cursor:pointer;
+      border:1.5px solid rgba(255,255,255,.1); transition:all .2s;
+      text-align:center; position:relative; overflow:hidden;
+    }
+    .la-ai-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.3); }
+    .la-ai-card.mi6-ai { background:linear-gradient(135deg,#1a1a1a,#2a1f1a); border-color:rgba(201,168,76,.4); }
+    .la-ai-card.emerald-ai { background:linear-gradient(135deg,#0b1a12,#132a1c); border-color:rgba(46,204,113,.4); }
+    .la-ai-card-icon { font-size:24px; margin-bottom:6px; }
+    .la-ai-card-title { font-size:14px; font-weight:700; margin-bottom:4px; }
+    .la-ai-card.mi6-ai .la-ai-card-title { color:#c9a84c; }
+    .la-ai-card.emerald-ai .la-ai-card-title { color:#2ecc71; }
+    .la-ai-card-sub { font-size:11px; color:#888; }
+
+    /* Difficulty selector */
+    .la-diff-select {
+      display:none; flex-direction:column; gap:6px; margin-top:8px;
+      background:rgba(0,0,0,.3); border-radius:10px; padding:10px;
+    }
+    .la-diff-select.active { display:flex; }
+    .la-diff-btn {
+      background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+      color:#ddd; padding:8px 12px; border-radius:8px; cursor:pointer;
+      font-size:12px; font-weight:600; transition:all .2s; text-align:left;
+    }
+    .la-diff-btn:hover { background:rgba(255,255,255,.15); transform:scale(1.02); }
+    .la-diff-btn .diff-label { display:block; font-size:13px; }
+    .la-diff-btn .diff-desc { display:block; font-size:10px; color:#888; margin-top:2px; }
+
+    /* Lesson cards */
+    .la-lesson-row { display:flex; gap:10px; flex-wrap:wrap; }
+    .la-lesson-card {
+      flex:1; min-width:calc(50% - 5px); border-radius:14px; padding:14px 12px;
+      cursor:pointer; border:1.5px solid rgba(255,255,255,.1); transition:all .2s;
+      background:linear-gradient(135deg,#1a1520,#1f1a28); text-align:center;
+    }
+    .la-lesson-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.3); border-color:rgba(200,160,255,.4); }
+    .la-lesson-card-icon { font-size:22px; margin-bottom:4px; }
+    .la-lesson-card-title { font-size:13px; font-weight:700; color:#c8a0ff; }
+    .la-lesson-card-sub { font-size:10px; color:#888; margin-top:2px; }
+
+    /* In-game lesson bar */
+    .la-lesson-bar {
+      display:none; background:rgba(200,160,255,.1); border:1px solid rgba(200,160,255,.3);
+      border-radius:10px; padding:10px 14px; margin-bottom:8px;
+      align-items:center; gap:10px;
+    }
+    .la-lesson-bar.active { display:flex; }
+    .la-lesson-hint { flex:1; font-size:12px; color:#c8a0ff; }
+    .la-lesson-next-btn {
+      background:rgba(200,160,255,.2); border:1px solid rgba(200,160,255,.4);
+      color:#c8a0ff; padding:6px 12px; border-radius:8px; cursor:pointer;
+      font-size:11px; font-weight:600; white-space:nowrap;
+    }
+    .la-lesson-next-btn:hover { background:rgba(200,160,255,.3); }
+
     /* Scanline overlay for chess */
     .la-scanline-overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
@@ -3613,6 +3680,69 @@
             <div class="la-lobby-card-title">Emerald Quest</div>
             <div class="la-lobby-card-desc">Checkers — jump, king, conquer. Enchanted emerald arena.</div>
           </div>
+
+          <!-- Play vs AI -->
+          <div class="la-lobby-section">
+            <div class="la-lobby-section-title">Play vs AI</div>
+            <div class="la-ai-row">
+              <div class="la-ai-card mi6-ai" onclick="toggleDiffSelect('chess-diff')">
+                <div class="la-ai-card-icon">&#129302;</div>
+                <div class="la-ai-card-title">Chess vs AI</div>
+                <div class="la-ai-card-sub">Test your strategy</div>
+                <div class="la-diff-select" id="chess-diff">
+                  <button class="la-diff-btn" onclick="event.stopPropagation();startAIGame('chess','easy')">
+                    <span class="diff-label">Easy</span>
+                    <span class="diff-desc">Random moves, good for beginners</span>
+                  </button>
+                  <button class="la-diff-btn" onclick="event.stopPropagation();startAIGame('chess','medium')">
+                    <span class="diff-label">Medium</span>
+                    <span class="diff-desc">Greedy captures, some strategy</span>
+                  </button>
+                  <button class="la-diff-btn" onclick="event.stopPropagation();startAIGame('chess','hard')">
+                    <span class="diff-label">Hard</span>
+                    <span class="diff-desc">Full minimax — bring your A-game</span>
+                  </button>
+                </div>
+              </div>
+              <div class="la-ai-card emerald-ai" onclick="toggleDiffSelect('checkers-diff')">
+                <div class="la-ai-card-icon">&#129302;</div>
+                <div class="la-ai-card-title">Checkers vs AI</div>
+                <div class="la-ai-card-sub">Practice your jumps</div>
+                <div class="la-diff-select" id="checkers-diff">
+                  <button class="la-diff-btn" onclick="event.stopPropagation();startAIGame('checkers','easy')">
+                    <span class="diff-label">Easy</span>
+                    <span class="diff-desc">Random moves, good for beginners</span>
+                  </button>
+                  <button class="la-diff-btn" onclick="event.stopPropagation();startAIGame('checkers','medium')">
+                    <span class="diff-label">Medium</span>
+                    <span class="diff-desc">Greedy captures, some strategy</span>
+                  </button>
+                  <button class="la-diff-btn" onclick="event.stopPropagation();startAIGame('checkers','hard')">
+                    <span class="diff-label">Hard</span>
+                    <span class="diff-desc">Deep search — good luck!</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lessons -->
+          <div class="la-lobby-section">
+            <div class="la-lobby-section-title">Learn to Play</div>
+            <div class="la-lesson-row">
+              <div class="la-lesson-card" onclick="startLesson('chess', 0)">
+                <div class="la-lesson-card-icon">&#9818;</div>
+                <div class="la-lesson-card-title">Learn Chess</div>
+                <div class="la-lesson-card-sub">5 interactive lessons</div>
+              </div>
+              <div class="la-lesson-card" onclick="startLesson('checkers', 0)">
+                <div class="la-lesson-card-icon">&#11044;</div>
+                <div class="la-lesson-card-title">Learn Checkers</div>
+                <div class="la-lesson-card-sub">4 interactive lessons</div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -4334,6 +4464,14 @@
       <!-- Game board -->
       <div class="la-board-wrap">
         <div class="la-board" id="la-board"></div>
+      </div>
+
+      <!-- Lesson Bar (shown during lessons) -->
+      <div class="la-lesson-bar" id="la-lesson-bar">
+        <div class="la-lesson-hint" id="la-lesson-hint">Hint will appear here</div>
+        <button class="la-lesson-next-btn" onclick="nextLessonHint()">Next Hint</button>
+        <button class="la-lesson-next-btn" onclick="nextLesson()">Next Lesson</button>
+        <button class="la-lesson-next-btn" onclick="prevLesson()">Prev Lesson</button>
       </div>
 
       <!-- AI Insight -->
@@ -9689,6 +9827,10 @@ function switchGameMode(mode) {
 }
 
 function startLuxeGame(mode) {
+  laAIEnabled = false;
+  laLessonActive = false;
+  var lessonBar = document.getElementById('la-lesson-bar');
+  if (lessonBar) lessonBar.classList.remove('active');
   const arena = document.getElementById('luxe-arena');
   arena.style.display = '';
   switchGameMode(mode);
@@ -9721,146 +9863,177 @@ function leaveLuxeGame() {
   // Clear PiP
   document.getElementById('la-pip-self').srcObject = null;
   document.getElementById('la-pip-remote').srcObject = null;
+  // Reset AI/lesson state
+  laAIEnabled = false;
+  laLessonActive = false;
+  var lessonBar = document.getElementById('la-lesson-bar');
+  if (lessonBar) lessonBar.classList.remove('active');
 }
 
-// ═══ LOUNGE MUSIC PLAYER (YouTube IFrame API — audio only) ═══
-var LOUNGE_TRACKS = [
-  { id: 'igqmGtVF3VQ', name: 'Royale', label: 'MI6 Vibe' },
-  { id: '5iee40dSbs4', name: 'Wizard of Oz', label: 'Emerald Vibe' },
-];
-var loungeYTPlayer = null;
-var loungeCurrentTrack = -1;
-var loungeIsPlaying = false;
-var loungeYTReady = false;
-var loungeVolume = 50;
-var loungeYTAPILoaded = false;
-var loungePendingTrack = -1;
+// ═══ LOUNGE MUSIC — Web Audio API (no YouTube dependency) ═══
+function selectLoungeTrack(idx) { LoungeMusic.selectTrack(idx); }
+function loungeMusicPlayPause() { LoungeMusic.playPause(); }
+function loungeMusicStop() { LoungeMusic.stop(); }
+function loungeMusicSetVolume(val) { LoungeMusic.setVolume(parseInt(val)); }
+function loungeMusicToggleMute() { LoungeMusic.toggleMute(); }
 
-// Lazy-load YouTube API only when user interacts with music controls
-function loungeEnsureYTAPI(cb) {
-  if (loungeYTReady && loungeYTPlayer) { if (cb) cb(); return; }
-  if (window.YT && window.YT.Player && !loungeYTPlayer) {
-    loungeCreatePlayer(cb);
+// ═══ AI OPPONENT + LESSONS ═══
+var laAIEnabled = false;
+var laAIDifficulty = 'medium';
+var laAIColor = 'holo';
+var laLessonActive = false;
+
+function startAIGame(mode, difficulty) {
+  LoungeLessons.clear();
+  startLuxeGame(mode); // this resets laAIEnabled to false
+  // Now enable AI after startLuxeGame reset
+  laAIEnabled = true;
+  laAIDifficulty = difficulty || 'medium';
+  laAIColor = 'holo';
+  laLessonActive = false;
+  // Update title
+  var diffLabel = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
+  document.getElementById('la-title').textContent =
+    (mode === 'chess' ? 'MI6 Royale' : 'Emerald Quest') + ' vs AI (' + (diffLabel[difficulty] || 'Medium') + ')';
+  document.getElementById('la-chat').innerHTML =
+    '<div class="la-chat-msg system">Playing vs AI (' + (diffLabel[difficulty] || 'Medium') + '). You are Gold. Good luck!</div>';
+}
+
+var laCurrentLessonMode = 'chess';
+var laCurrentLessonIdx = 0;
+
+function startLesson(mode, idx) {
+  laAIEnabled = false;
+  laLessonActive = true;
+  laCurrentLessonMode = mode;
+  laCurrentLessonIdx = idx || 0;
+  var arena = document.getElementById('luxe-arena');
+  arena.style.display = '';
+  arena.classList.remove('luxe-theme-mi6', 'luxe-theme-emerald');
+  arena.classList.add(mode === 'chess' ? 'luxe-theme-mi6' : 'luxe-theme-emerald');
+  document.getElementById('la-scanline').style.display = mode === 'chess' ? '' : 'none';
+  laGameMode = mode;
+  // Don't reset board with initGameBoard — lessons set up their own
+  laBoard = Array.from({length:8}, function() { return Array(8).fill(null); });
+  laSelected = null; laValidMoves = []; laTurn = 'gold';
+  LoungeLessons.startLesson(mode, laCurrentLessonIdx);
+  var info = LoungeLessons.getLessonInfo();
+  if (!info) return;
+  document.getElementById('la-title').textContent =
+    'Lesson ' + (info.index + 1) + '/' + info.total + ': ' + info.lesson.title;
+  document.getElementById('la-insight').textContent = info.hint;
+  document.getElementById('la-chat').innerHTML =
+    '<div class="la-chat-msg system">' + info.lesson.desc + '</div>';
+  // Show lesson bar
+  var bar = document.getElementById('la-lesson-bar');
+  if (bar) { bar.classList.add('active'); }
+  document.getElementById('la-lesson-hint').textContent = info.hint;
+  renderGameBoard();
+}
+
+function nextLessonHint() {
+  var hint = LoungeLessons.nextHint();
+  document.getElementById('la-lesson-hint').textContent = hint;
+  document.getElementById('la-insight').textContent = hint;
+}
+
+function nextLesson() {
+  var info = LoungeLessons.getLessonInfo();
+  if (!info) return;
+  if (laCurrentLessonIdx < info.total - 1) {
+    startLesson(laCurrentLessonMode, laCurrentLessonIdx + 1);
+  } else {
+    // Wrap to first
+    startLesson(laCurrentLessonMode, 0);
+  }
+}
+
+function prevLesson() {
+  if (laCurrentLessonIdx > 0) {
+    startLesson(laCurrentLessonMode, laCurrentLessonIdx - 1);
+  }
+}
+
+// Override handleTileClick to support AI turns
+(function() {
+  var _origHandleTileClick = handleTileClick;
+  handleTileClick = function(r, c) {
+    // Block clicks during AI turn
+    if (laAIEnabled && laTurn === laAIColor) return;
+    // Block clicks during lessons (view only)
+    // Actually let them interact in lessons for exploration
+    _origHandleTileClick(r, c);
+    // After player moves, trigger AI turn
+    if (laAIEnabled && laTurn === laAIColor) {
+      setTimeout(function() {
+        executeAITurn();
+      }, 400);
+    }
+  };
+})();
+
+function executeAITurn() {
+  if (!laAIEnabled || laTurn !== laAIColor) return;
+  var move = LoungeAI.getMove(laBoard, laGameMode, laAIColor, laAIDifficulty);
+  if (!move) {
+    // No valid moves — player wins
+    var chat = document.getElementById('la-chat');
+    chat.innerHTML += '<div class="la-chat-msg system">AI has no valid moves. You win!</div>';
+    chat.scrollTop = chat.scrollHeight;
+    laAIEnabled = false;
+    triggerCheer(100);
     return;
   }
-  if (!loungeYTAPILoaded) {
-    loungeYTAPILoaded = true;
-    window.onYouTubeIframeAPIReady = function() {
-      loungeCreatePlayer(cb);
-    };
-    var tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
+  // Execute the AI's move via the original click sequence
+  laSelected = { r: move.from.r, c: move.from.c };
+  laValidMoves = getValidMoves(move.from.r, move.from.c);
+  // Find matching valid move for the target
+  var vm = laValidMoves.find(function(m) { return m.r === move.to.r && m.c === move.to.c; });
+  if (vm) {
+    var src = laSelected;
+    var moving = laBoard[src.r][src.c];
+    var captured = laBoard[move.to.r][move.to.c];
+    // Handle jump capture for checkers
+    if (vm.jump) {
+      var jumped = laBoard[vm.jump.r][vm.jump.c];
+      if (jumped) {
+        var pts = LA_PIECE_VALUES[jumped.type] || 1;
+        if (laTurn === 'gold') { laScoreGold += pts; laCapturedGold.push(jumped.type); }
+        else { laScoreHolo += pts; laCapturedHolo.push(jumped.type); }
+      }
+      laBoard[vm.jump.r][vm.jump.c] = null;
+    } else if (captured) {
+      var pts2 = LA_PIECE_VALUES[captured.type] || 1;
+      if (laTurn === 'gold') { laScoreGold += pts2; laCapturedGold.push(captured.type); }
+      else { laScoreHolo += pts2; laCapturedHolo.push(captured.type); }
+    }
+    laBoard[move.to.r][move.to.c] = moving;
+    laBoard[src.r][src.c] = null;
+    // Promotion
+    if (laGameMode === 'chess' && moving.type === 'P') {
+      if ((moving.color === 'gold' && move.to.r === 0) || (moving.color === 'holo' && move.to.r === 7))
+        moving.type = 'Q';
+    }
+    if (laGameMode === 'checkers' && moving.type === 'C') {
+      if ((moving.color === 'gold' && move.to.r === 0) || (moving.color === 'holo' && move.to.r === 7))
+        moving.type = 'CK';
+    }
+    laTurn = laTurn === 'gold' ? 'holo' : 'gold';
+    laMoveCount++;
+    updateAiInsight('move', move.to);
   }
+  laSelected = null;
+  laValidMoves = [];
+  renderGameBoard();
 }
 
-function loungeCreatePlayer(cb) {
-  if (loungeYTPlayer) { if (cb) cb(); return; }
-  var container = document.getElementById('la-yt-player');
-  if (!container) { console.warn('[Lounge] la-yt-player not found'); return; }
-  loungeYTPlayer = new YT.Player('la-yt-player', {
-    height: '180', width: '320',
-    playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, rel: 0, playsinline: 1, origin: location.origin },
-    events: {
-      onReady: function() {
-        loungeYTReady = true;
-        loungeYTPlayer.setVolume(loungeVolume);
-        console.log('[Lounge] YT player ready');
-        if (cb) cb();
-        if (loungePendingTrack >= 0) {
-          var t = loungePendingTrack;
-          loungePendingTrack = -1;
-          selectLoungeTrack(t);
-        }
-      },
-      onStateChange: function(e) {
-        var btn = document.getElementById('la-btn-play');
-        if (e.data === YT.PlayerState.ENDED) {
-          loungeYTPlayer.seekTo(0);
-          loungeYTPlayer.playVideo();
-        }
-        if (e.data === YT.PlayerState.PLAYING) {
-          loungeIsPlaying = true;
-          if (btn) { btn.innerHTML = '&#10074;&#10074;'; btn.classList.add('playing'); }
-        }
-        if (e.data === YT.PlayerState.PAUSED) {
-          loungeIsPlaying = false;
-          if (btn) { btn.innerHTML = '&#9654;'; btn.classList.remove('playing'); }
-        }
-      },
-      onError: function(e) {
-        console.warn('[Lounge] YT error code:', e.data);
-      },
-    },
-  });
-}
-
-function selectLoungeTrack(idx) {
-  if (idx < 0 || idx >= LOUNGE_TRACKS.length) return;
-  LOUNGE_TRACKS.forEach(function(_, i) {
-    var el = document.getElementById('la-track-' + i);
-    if (el) el.classList.toggle('active', i === idx);
-  });
-  loungeCurrentTrack = idx;
-  var track = LOUNGE_TRACKS[idx];
-  var nowEl = document.getElementById('la-music-now');
-  if (nowEl) nowEl.textContent = track.name;
-
-  if (loungeYTReady && loungeYTPlayer) {
-    loungeYTPlayer.loadVideoById({ videoId: track.id, startSeconds: 0 });
-    loungeYTPlayer.setVolume(loungeVolume);
-  } else {
-    loungePendingTrack = idx;
-    loungeEnsureYTAPI();
-  }
-}
-
-function loungeMusicPlayPause() {
-  if (loungeCurrentTrack < 0) { selectLoungeTrack(0); return; }
-  if (!loungeYTReady || !loungeYTPlayer) {
-    loungePendingTrack = loungeCurrentTrack >= 0 ? loungeCurrentTrack : 0;
-    loungeEnsureYTAPI();
-    return;
-  }
-  if (loungeIsPlaying) {
-    loungeYTPlayer.pauseVideo();
-  } else {
-    loungeYTPlayer.playVideo();
-  }
-}
-
-function loungeMusicStop() {
-  if (!loungeYTReady || !loungeYTPlayer) return;
-  loungeYTPlayer.stopVideo();
-  loungeIsPlaying = false;
-  var btn = document.getElementById('la-btn-play');
-  if (btn) { btn.innerHTML = '&#9654;'; btn.classList.remove('playing'); }
-  var nowEl = document.getElementById('la-music-now');
-  if (nowEl) nowEl.textContent = 'Stopped';
-}
-
-function loungeMusicSetVolume(val) {
-  loungeVolume = parseInt(val);
-  if (loungeYTReady && loungeYTPlayer) loungeYTPlayer.setVolume(loungeVolume);
-  var icon = document.getElementById('la-vol-icon');
-  if (!icon) return;
-  if (loungeVolume === 0) icon.innerHTML = '&#128263;';
-  else if (loungeVolume < 40) icon.innerHTML = '&#128265;';
-  else icon.innerHTML = '&#128266;';
-}
-
-function loungeMusicToggleMute() {
-  if (!loungeYTReady || !loungeYTPlayer) return;
-  if (loungeYTPlayer.isMuted()) {
-    loungeYTPlayer.unMute();
-    document.getElementById('la-volume').value = loungeVolume || 50;
-    loungeMusicSetVolume(loungeVolume || 50);
-  } else {
-    loungeYTPlayer.mute();
-    document.getElementById('la-volume').value = 0;
-    var icon = document.getElementById('la-vol-icon');
-    if (icon) icon.innerHTML = '&#128263;';
-  }
+function toggleDiffSelect(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var isActive = el.classList.contains('active');
+  // Close all first
+  document.querySelectorAll('.la-diff-select').forEach(function(d) { d.classList.remove('active'); });
+  if (!isActive) el.classList.add('active');
 }
 
 function openLuxeLobby() {
@@ -9976,9 +10149,5 @@ function sendMoneyInGame() {
 }
 </script>
 
-<!-- YouTube player for lounge music (must be outside display:none containers) -->
-<div id="la-yt-container" style="position:fixed;left:-9999px;top:-9999px;width:320px;height:180px;pointer-events:none;z-index:-1">
-  <div id="la-yt-player"></div>
-</div>
 </body>
 </html>
