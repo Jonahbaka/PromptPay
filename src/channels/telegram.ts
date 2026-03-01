@@ -57,32 +57,15 @@ export class TelegramChannel extends BaseChannel {
       return;
     }
 
-    // Clear webhooks and claim the polling session
+    // Clear any webhooks (polling and webhooks are mutually exclusive)
     try {
       await fetch(`https://api.telegram.org/bot${CONFIG.telegram.botToken}/deleteWebhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ drop_pending_updates: false }),
       });
-      // Force-claim: a POST getUpdates with allowed_updates + timeout=0 kicks old sessions
-      const claimRes = await fetch(`https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          offset: -1,
-          timeout: 0,
-          allowed_updates: ['message'],
-        }),
-      });
-      const claimData = await claimRes.json() as { ok: boolean; result: Array<{ update_id: number }> };
-      if (claimData.ok && claimData.result.length > 0) {
-        this.lastUpdateId = claimData.result[claimData.result.length - 1].update_id;
-      }
-      this.logger.info('Telegram session claimed (old polls terminated)');
-      // Wait for Telegram to fully release any stale sessions
-      await this.sleep(1000);
     } catch (err) {
-      this.logger.warn(`Telegram session claim failed: ${err}`);
+      this.logger.warn(`Telegram deleteWebhook failed: ${err}`);
     }
 
     this.active = true;
@@ -128,20 +111,10 @@ export class TelegramChannel extends BaseChannel {
         if (!data.ok) {
           const desc = data.description || 'unknown';
           if (desc.includes('Conflict')) {
-            // 409: Another getUpdates is active — force-claim and retry
-            this.logger.warn('Telegram 409 Conflict — force-claiming session...');
-            try {
-              const claimRes = await fetch(`https://api.telegram.org/bot${CONFIG.telegram.botToken}/getUpdates`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ offset: -1, timeout: 0, allowed_updates: ['message'] }),
-              });
-              const claimData = await claimRes.json() as { ok: boolean; result: Array<{ update_id: number }> };
-              if (claimData.ok && claimData.result.length > 0) {
-                this.lastUpdateId = claimData.result[claimData.result.length - 1].update_id;
-              }
-            } catch { /* ignore claim errors */ }
-            await this.sleep(3000);
+            // 409: Another getUpdates is active — just wait for it to complete
+            // Do NOT call getUpdates here — that would create a second concurrent request
+            this.logger.warn('Telegram 409 Conflict — waiting for session release...');
+            await this.sleep(5000);
           } else {
             this.logger.warn(`Telegram poll error: ${desc}`);
             await this.sleep(3000);
