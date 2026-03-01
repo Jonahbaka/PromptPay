@@ -38,7 +38,7 @@
     "name": "PromptPay",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Web",
-    "description": "AI-powered digital payments platform. Send money, pay bills, and manage finances using natural language commands.",
+    "description": "AI-powered digital payments platform. Send money, buy airtime, and manage finances using natural language commands.",
     "url": "https://www.upromptpay.com",
     "offers": {
       "@type": "Offer",
@@ -491,57 +491,6 @@
       overflow: hidden; margin-top: 8px;
     }
     .goal-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
-
-    /* ── Stats/Streak Card ── */
-    .streak-card {
-      background: var(--surface); border: 1px solid var(--glass-border);
-      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
-      display: flex; align-items: center; gap: 16px;
-    }
-    .streak-fire { font-size: 36px; line-height: 1; }
-    .streak-count { font-size: 28px; font-weight: 800; }
-    .streak-label { font-size: 12px; color: var(--text2); }
-    .streak-multiplier {
-      margin-left: auto; padding: 6px 14px; border-radius: 20px;
-      background: rgba(245,158,11,0.12); color: var(--yellow);
-      font-size: 14px; font-weight: 700;
-    }
-
-    /* ── Loyalty Tier ── */
-    .tier-card {
-      background: var(--surface); border: 1px solid var(--glass-border);
-      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
-      position: relative; overflow: hidden;
-    }
-    .tier-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    }
-    .tier-bronze::before { background: linear-gradient(to right, #b87333, #d4a76a); }
-    .tier-silver::before { background: linear-gradient(to right, #94a3b8, #cbd5e1); }
-    .tier-gold::before { background: linear-gradient(to right, #f59e0b, #fbbf24); }
-    .tier-platinum::before { background: linear-gradient(to right, #7c3aed, #a78bfa); }
-    .tier-info { display: flex; justify-content: space-between; align-items: center; }
-    .tier-name { font-size: 18px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-    .tier-points { font-size: 13px; color: var(--text2); }
-    .tier-progress { margin-top: 14px; }
-    .tier-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
-    .tier-fill { height: 100%; border-radius: 2px; }
-    .tier-next { font-size: 11px; color: var(--text3); margin-top: 6px; text-align: right; }
-
-    /* ── Achievement Badges ── */
-    .achievements-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-    }
-    .achievement {
-      background: var(--surface); border: 1px solid var(--glass-border);
-      border-radius: var(--radius-sm); padding: 16px; text-align: center;
-      transition: transform 0.2s;
-    }
-    .achievement:active { transform: scale(0.95); }
-    .achievement.locked { opacity: 0.4; }
-    .ach-icon { font-size: 28px; margin-bottom: 8px; }
-    .ach-name { font-size: 11px; font-weight: 600; }
-    .ach-pts { font-size: 10px; color: var(--accent2); margin-top: 4px; }
 
     /* ── PWA Install Banner ── */
     .pwa-install-banner {
@@ -2284,10 +2233,6 @@
       .quick-label { font-size: 10px; }
 
       /* Achievements: 2 columns instead of 3 */
-      .achievements-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .achievement { padding: 12px; }
-      .ach-icon { font-size: 24px; margin-bottom: 4px; }
-
       /* POS stats: shrink font, prevent overflow */
       .pos-stat-card .ps-val { font-size: 16px; }
       .pos-stat-card { padding: 10px 8px; }
@@ -2321,9 +2266,6 @@
 
       /* Page padding tighter */
       .page { padding-left: 12px; padding-right: 12px; }
-
-      /* Profile page */
-      .streak-card { padding: 14px; }
 
       /* Developer page */
       .settings-section { padding: 14px; }
@@ -2854,7 +2796,7 @@
     <div class="lp-hero-grid">
       <div>
         <h1>Just say it.<br><span class="lp-holo-text">We'll handle it.</span></h1>
-        <p class="lp-hero-desc">Pay bills, send money, and manage your finances — all through simple prompts. Your AI-powered financial assistant that actually gets things done.</p>
+        <p class="lp-hero-desc">Send money, buy airtime, and manage your finances — all through simple prompts. Your AI-powered financial assistant that actually gets things done.</p>
         <div class="lp-hero-btns">
           <button class="lp-btn-primary" onclick="showAuthGate('register')">
             Start for free
@@ -2941,13 +2883,13 @@
         </div>
         <div class="lp-feature-card">
           <span class="lp-feature-emoji">&#128241;</span>
-          <div class="lp-feature-title">Pay Bills Easily</div>
-          <div class="lp-feature-desc">Utilities, airtime, subscriptions — pay any bill with a simple prompt.</div>
+          <div class="lp-feature-title">Buy Airtime Instantly</div>
+          <div class="lp-feature-desc">Top up airtime and data for any carrier across Africa.</div>
         </div>
         <div class="lp-feature-card">
           <span class="lp-feature-emoji">&#127760;</span>
-          <div class="lp-feature-title">Global Coverage</div>
-          <div class="lp-feature-desc">Send money across borders. Support for 50+ countries and growing.</div>
+          <div class="lp-feature-title">Nigeria First</div>
+          <div class="lp-feature-desc">Built for Nigeria with Paystack. More African countries coming soon.</div>
         </div>
       </div>
     </div>
@@ -3088,29 +3030,11 @@
             <option value="ZA">South Africa</option>
             <option value="TZ">Tanzania</option>
             <option value="CM">Cameroon</option>
-            <option value="CI">Ivory Coast</option>
             <option value="SN">Senegal</option>
             <option value="ET">Ethiopia</option>
           </optgroup>
           <optgroup label="Americas">
             <option value="US">United States</option>
-            <option value="CA">Canada</option>
-            <option value="MX">Mexico</option>
-            <option value="BR">Brazil</option>
-          </optgroup>
-          <optgroup label="Europe">
-            <option value="GB">United Kingdom</option>
-            <option value="DE">Germany</option>
-            <option value="FR">France</option>
-            <option value="IT">Italy</option>
-            <option value="ES">Spain</option>
-            <option value="NL">Netherlands</option>
-          </optgroup>
-          <optgroup label="Asia & Pacific">
-            <option value="IN">India</option>
-            <option value="PH">Philippines</option>
-            <option value="AU">Australia</option>
-            <option value="JP">Japan</option>
           </optgroup>
         </select>
       </div>
@@ -3299,12 +3223,6 @@
           </div>
           <div class="quick-label">Airtime</div>
         </div>
-        <div class="quick-item" id="bills-quick-btn" onclick="sendSuggestion({dataset:{text:'Pay my bills'}})">
-          <div class="quick-icon qi-red" style="background:rgba(239,68,68,0.12)">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          </div>
-          <div class="quick-label">Bills</div>
-        </div>
         <div class="quick-item" onclick="pickContacts()">
           <div class="quick-icon" style="background:rgba(59,130,246,0.15)">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
@@ -3365,7 +3283,7 @@
 
         <div class="chat-messages" id="chat-messages">
           <div class="msg msg-ai">
-            Hey! I'm your PromptPay AI assistant. I can help you send money, make calls, video chat, track subscriptions, pay bills, and more. Just tell me what you need.
+            Hey! I'm your PromptPay AI assistant. I can help you send money, buy airtime, make calls, video chat, track subscriptions, and more. Just tell me what you need.
           </div>
         </div>
 
@@ -3373,7 +3291,6 @@
           <div class="chat-suggestions" id="chat-suggestions">
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Send money to a friend">Send Money</div>
             <div class="chat-suggestion" onclick="navigateTo('calls')">Calls</div>
-            <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Pay my bills">Pay Bills</div>
             <div class="chat-suggestion" onclick="sendSuggestion(this)" data-text="Show my subscriptions">Subscriptions</div>
           </div>
           <div class="chat-input-wrap">
@@ -3429,17 +3346,6 @@
         </div>
       </div>
 
-      <!-- Mobile Money Section -->
-      <div id="momo-section">
-        <div class="section-header">
-          <div class="section-title">Mobile Money</div>
-          <div class="section-link" onclick="openMomoModal()">+ Link</div>
-        </div>
-        <div id="momo-wallets-list" style="margin-bottom:16px">
-          <div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">No mobile wallets linked</div>
-        </div>
-      </div>
-
       <div class="section-header">
         <div class="section-title">Savings Goals</div>
         <div class="section-link" onclick="navigateTo('ai');document.getElementById('chat-input').value='Create a savings goal';sendMessage()">+ New Goal</div>
@@ -3452,28 +3358,28 @@
 
       <!-- Token Matrix -->
       <div class="section-header" style="margin-top:24px">
-        <div class="section-title">Account Summary</div>
+        <div class="section-title">AI Usage</div>
         <div class="section-link" style="color:var(--emerald)">Active</div>
       </div>
       <div class="token-matrix" id="token-matrix">
         <div class="token-row">
-          <span class="token-label">Total Funded</span>
-          <span class="token-value" id="tm-used">&#8358;0</span>
+          <span class="token-label">AI Queries</span>
+          <span class="token-value" id="tm-used">0</span>
         </div>
         <div class="token-row">
-          <span class="token-label">Total Spent</span>
-          <span class="token-value" id="tm-cached">&#8358;0</span>
+          <span class="token-label">Cached Responses</span>
+          <span class="token-value" id="tm-cached">0</span>
         </div>
         <div class="token-row">
-          <span class="token-label">Rewards Earned</span>
-          <span class="token-value token-saved" id="tm-saved">&#8358;0</span>
+          <span class="token-label">Tokens Saved</span>
+          <span class="token-value token-saved" id="tm-saved">0</span>
         </div>
         <div class="token-row">
-          <span class="token-label">Loyalty Tier</span>
-          <span class="token-value" id="tm-efficiency" style="color:var(--accent2)">Bronze</span>
+          <span class="token-label">Efficiency</span>
+          <span class="token-value" id="tm-efficiency" style="color:var(--accent2)">—</span>
         </div>
         <div class="token-row">
-          <span class="token-label">Referral Bonus</span>
+          <span class="token-label">Cost Savings</span>
           <span class="token-value token-saved" id="tm-cost">$0.00</span>
         </div>
       </div>
@@ -3852,69 +3758,6 @@
         <div style="font-size:13px;color:var(--text2)" id="profile-email-display"></div>
       </div>
 
-      <!-- Streak -->
-      <div class="streak-card">
-        <div class="streak-fire">&#128293;</div>
-        <div>
-          <div class="streak-count" id="user-streak">0</div>
-          <div class="streak-label">Day Streak</div>
-        </div>
-        <div class="streak-multiplier" id="streak-mult">1.0x</div>
-      </div>
-
-      <!-- Loyalty Tier -->
-      <div class="tier-card tier-bronze" id="tier-card">
-        <div class="tier-info">
-          <div>
-            <div class="tier-name" id="tier-name">Bronze</div>
-            <div class="tier-points" id="tier-points">0 points</div>
-          </div>
-          <div style="font-size:32px">&#11088;</div>
-        </div>
-        <div class="tier-progress">
-          <div class="tier-bar"><div class="tier-fill" id="tier-fill" style="width:0%;background:linear-gradient(90deg,#b87333,#d4a76a)"></div></div>
-          <div class="tier-next" id="tier-next">5,000 pts to Silver</div>
-        </div>
-      </div>
-
-      <!-- Achievements -->
-      <div class="section-header">
-        <div class="section-title">Achievements</div>
-        <div class="section-link" id="ach-count">0/15</div>
-      </div>
-      <div class="achievements-grid" id="achievements-grid">
-        <div class="achievement locked">
-          <div class="ach-icon">&#128176;</div>
-          <div class="ach-name">First Payment</div>
-          <div class="ach-pts">100 pts</div>
-        </div>
-        <div class="achievement locked">
-          <div class="ach-icon">&#128293;</div>
-          <div class="ach-name">7-Day Streak</div>
-          <div class="ach-pts">250 pts</div>
-        </div>
-        <div class="achievement locked">
-          <div class="ach-icon">&#128279;</div>
-          <div class="ach-name">First Referral</div>
-          <div class="ach-pts">500 pts</div>
-        </div>
-        <div class="achievement locked">
-          <div class="ach-icon">&#127968;</div>
-          <div class="ach-name">Savings $100</div>
-          <div class="ach-pts">200 pts</div>
-        </div>
-        <div class="achievement locked">
-          <div class="ach-icon">&#127942;</div>
-          <div class="ach-name">30-Day Streak</div>
-          <div class="ach-pts">1,500 pts</div>
-        </div>
-        <div class="achievement locked">
-          <div class="ach-icon">&#128142;</div>
-          <div class="ach-name">$10K Volume</div>
-          <div class="ach-pts">10,000 pts</div>
-        </div>
-      </div>
-
       <!-- Country/Region Setting -->
       <div class="section-header" style="margin-top:24px">
         <div class="section-title">Your Region</div>
@@ -3936,16 +3779,6 @@
           </optgroup>
           <optgroup label="Americas">
             <option value="US">United States</option>
-            <option value="CA">Canada</option>
-          </optgroup>
-          <optgroup label="Europe">
-            <option value="GB">United Kingdom</option>
-            <option value="DE">Germany</option>
-            <option value="FR">France</option>
-          </optgroup>
-          <optgroup label="Asia & Pacific">
-            <option value="IN">India</option>
-            <option value="AU">Australia</option>
           </optgroup>
         </select>
         <div style="font-size:11px;color:var(--text3);margin-top:8px">This determines available features like airtime top-up (Africa only).</div>
@@ -3987,10 +3820,6 @@
           Notifications
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <div class="channel-toggle active" data-channel="push" onclick="toggleChannel(this)">
-            <span class="channel-label">Push Notifications</span>
-            <div class="toggle-switch on"></div>
-          </div>
           <div class="channel-toggle active" data-channel="email" onclick="toggleChannel(this)">
             <span class="channel-label">Email Alerts</span>
             <div class="toggle-switch on"></div>
@@ -4009,12 +3838,7 @@
           <div style="display:flex;justify-content:space-between"><span>P2P Transfer (over $50)</span><span>1.0%</span></div>
           <div style="display:flex;justify-content:space-between"><span>Wallet Top-up</span><span>1.5%</span></div>
           <div style="display:flex;justify-content:space-between"><span>Withdrawal</span><span>1.0% + $0.25</span></div>
-          <div style="display:flex;justify-content:space-between"><span>Bill Payment</span><span>1.5%</span></div>
           <div style="display:flex;justify-content:space-between"><span>Merchant Payment</span><span>2.5%</span></div>
-          <div style="display:flex;justify-content:space-between"><span>Cross-border</span><span>3.0%</span></div>
-          <div style="margin-top:6px;padding:10px 14px;background:rgba(124,58,237,0.08);border-radius:10px;color:var(--text)">
-            Loyalty members save up to 20% on fees! Your tier discount is applied automatically.
-          </div>
         </div>
       </div>
 
@@ -4072,16 +3896,6 @@
             </optgroup>
             <optgroup label="Americas">
               <option value="US">United States</option>
-              <option value="CA">Canada</option>
-            </optgroup>
-            <optgroup label="Europe">
-              <option value="GB">United Kingdom</option>
-              <option value="DE">Germany</option>
-              <option value="FR">France</option>
-            </optgroup>
-            <optgroup label="Asia & Pacific">
-              <option value="IN">India</option>
-              <option value="AU">Australia</option>
             </optgroup>
           </select>
         </div>
@@ -4674,39 +4488,14 @@
     <h3 style="margin-bottom:4px;font-size:20px;font-weight:700">Send Money</h3>
     <p id="send-currency-label" style="font-size:13px;color:var(--text2);margin-bottom:12px"></p>
 
-    <!-- Domestic / International toggle -->
-    <div id="send-scope-tabs" style="display:flex;gap:0;margin-bottom:14px;background:var(--surface);border-radius:12px;padding:3px;border:1px solid var(--glass-border)">
-      <button class="send-scope-tab active" data-scope="domestic" onclick="switchSendScope('domestic')" style="flex:1;padding:10px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--gradient2);color:white;transition:all 0.2s">Domestic</button>
-      <button class="send-scope-tab" data-scope="international" onclick="switchSendScope('international')" style="flex:1;padding:10px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--text2);transition:all 0.2s">International</button>
-    </div>
-
     <!-- Transfer type tabs -->
     <div id="send-type-tabs" style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none">
       <button class="send-tab active" data-type="bank" onclick="switchSendType('bank')" style="padding:8px 16px;border-radius:20px;border:1px solid var(--glass-border);background:var(--gradient2);color:white;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;font-family:inherit">Bank Transfer</button>
-      <button class="send-tab" data-type="mobile_money" onclick="switchSendType('mobile_money')" style="padding:8px 16px;border-radius:20px;border:1px solid var(--glass-border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;font-family:inherit">Mobile Money</button>
       <button class="send-tab" data-type="wallet" onclick="switchSendType('wallet')" style="padding:8px 16px;border-radius:20px;border:1px solid var(--glass-border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer;font-family:inherit">PromptPay</button>
     </div>
 
     <!-- Bank Transfer Fields -->
     <div id="send-bank-fields">
-      <!-- Country selector for international -->
-      <div id="send-intl-country-wrap" style="margin-bottom:14px;display:none">
-        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Destination Country</label>
-        <select id="send-intl-country" onchange="updateIntlFields()" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
-          <option value="">Select country</option>
-          <option value="US">United States</option>
-          <option value="GB">United Kingdom</option>
-          <option value="NG">Nigeria</option>
-          <option value="GH">Ghana</option>
-          <option value="KE">Kenya</option>
-          <option value="UG">Uganda</option>
-          <option value="IN">India</option>
-          <option value="AU">Australia</option>
-          <option value="CA">Canada</option>
-          <option value="DE">Germany</option>
-          <option value="FR">France</option>
-        </select>
-      </div>
       <div style="margin-bottom:14px">
         <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Bank</label>
         <select id="send-bank" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
@@ -4723,26 +4512,7 @@
         <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Account Number</label>
         <input id="send-account" placeholder="0000000000" inputmode="numeric" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
       </div>
-      <!-- SWIFT/BIC for international -->
-      <div id="send-swift-wrap" style="margin-bottom:14px;display:none">
-        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">SWIFT / BIC Code</label>
-        <input id="send-swift" placeholder="ABCDUS33XXX" maxlength="11" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;text-transform:uppercase">
-      </div>
       <div id="send-recipient-name" style="padding:10px 16px;background:rgba(16,185,129,0.1);border-radius:10px;margin-bottom:14px;font-size:13px;color:var(--emerald);display:none"></div>
-    </div>
-
-    <!-- Mobile Money Fields -->
-    <div id="send-momo-fields" style="display:none">
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Provider</label>
-        <select id="send-momo-provider" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
-          <option value="">Select provider</option>
-        </select>
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Phone Number</label>
-        <input id="send-momo-phone" placeholder="+234..." type="tel" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
-      </div>
     </div>
 
     <!-- Wallet (PromptPay) Fields -->
@@ -5060,28 +4830,6 @@
   </div>
 </div>
 
-<!-- Link Mobile Money Modal -->
-<div class="modal-overlay" id="momo-modal">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <h3 style="margin-bottom:8px;font-size:20px;font-weight:700">Link Mobile Money</h3>
-    <p style="font-size:13px;color:var(--text2);margin-bottom:20px">Add your mobile money wallet</p>
-    <div style="margin-bottom:14px">
-      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Provider</label>
-      <select id="momo-provider" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;-webkit-appearance:none">
-        <option value="">Select provider</option>
-      </select>
-    </div>
-    <div style="margin-bottom:14px">
-      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:6px">Phone Number</label>
-      <input id="momo-phone" placeholder="+233..." type="tel" style="width:100%;padding:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);font-size:14px;font-family:inherit;outline:none">
-    </div>
-    <button onclick="submitMobileWallet()" style="width:100%;padding:16px;background:var(--gradient2);border:none;border-radius:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit">Link Wallet</button>
-    <button onclick="closeModals()" style="width:100%;padding:14px;background:none;border:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px;font-family:inherit">Cancel</button>
-    <div id="momo-error" style="color:var(--red);font-size:13px;margin-top:12px;text-align:center"></div>
-  </div>
-</div>
-
 <!-- Fund Wallet Modal -->
 <div class="modal-overlay" id="fund-wallet-modal" onclick="if(event.target===this)closeFundModal()">
   <div class="modal-sheet">
@@ -5125,8 +4873,7 @@
     <div class="premium-popup-icon" id="premium-popup-icon"></div>
     <h3 id="premium-popup-title">Unlock Premium</h3>
     <p>Unlock AI Shopping, Trading, Budgets & more with PromptPay Premium.</p>
-    <div class="price">$19.99/month</div>
-    <button class="btn-subscribe" onclick="subscribePremium()">Subscribe Now</button>
+    <button class="btn-subscribe" disabled style="opacity:0.6;cursor:not-allowed">Coming Soon</button>
     <button class="btn-later" onclick="closePremiumPopup()">Maybe Later</button>
   </div>
 </div>
@@ -5144,7 +4891,6 @@ let currentUser = null;
 let userKyc = null;
 let countryConfig = null;
 let userBankAccounts = [];
-let userMobileWallets = [];
 let currentSendType = 'bank';
 
 // ── Token Expiry Check (client-side) ──
@@ -5466,14 +5212,10 @@ function compressImage(file, maxSize, quality) {
 function applyAirtimeGeoGate() {
   const country = getUserCountry();
   const airtimeBtn = document.getElementById('airtime-quick-btn');
-  const billsBtn = document.getElementById('bills-quick-btn');
   const isAfrican = ['NG','GH','KE','UG','ZA','TZ','CM','SN','ET'].includes(country);
   const owner = isOwner();
   if (airtimeBtn) {
     airtimeBtn.style.display = (owner || (isAfrican && !NON_AIRTIME_COUNTRIES.includes(country))) ? '' : 'none';
-  }
-  if (billsBtn) {
-    billsBtn.style.display = (owner || isAfrican) ? '' : 'none';
   }
 }
 
@@ -5822,39 +5564,6 @@ if ('serviceWorker' in navigator) {
       }
     });
 
-    // Subscribe to push notifications if logged in
-    const token = localStorage.getItem('promptpay_token') || localStorage.getItem('token');
-    if (token && 'PushManager' in window) {
-      try {
-        const vapidRes = await fetch('/api/push/vapid-key');
-        if (!vapidRes.ok) return;
-        const { publicKey } = await vapidRes.json();
-        if (!publicKey) return;
-
-        let subscription = await registration.pushManager.getSubscription();
-        if (!subscription) {
-          const urlBase64ToUint8Array = (base64String) => {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-            const rawData = atob(base64);
-            return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-          };
-          subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
-          });
-        }
-
-        await fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ subscription }),
-        });
-        console.log('Push subscription registered');
-      } catch (err) {
-        console.log('Push subscription skipped:', err.message || err);
-      }
-    }
   }).catch((err) => {
     console.log('SW registration failed:', err);
   });
@@ -6001,7 +5710,6 @@ async function loadData() {
   loadKycStatus();
   loadTransferHistory();
   loadBankAccounts();
-  loadMobileWallets();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -6263,103 +5971,12 @@ async function removeBankAccount(id) {
 }
 
 // ══════════════════════════════════════════════════════════
-// MOBILE MONEY MANAGEMENT
-// ══════════════════════════════════════════════════════════
-
-async function loadMobileWallets() {
-  try {
-    const res = await authFetch(API_BASE + '/api/mobile-wallets');
-    if (!res.ok) return;
-    const data = await res.json();
-    userMobileWallets = data.wallets || [];
-    renderMobileWallets();
-  } catch (e) {}
-}
-
-function renderMobileWallets() {
-  const list = document.getElementById('momo-wallets-list');
-  const section = document.getElementById('momo-section');
-  if (!list) return;
-  const country = getUserCountry();
-  const momoCountries = ['GH', 'UG', 'KE', 'TZ', 'CM', 'SN', 'ET'];
-  if (!isOwner() && !momoCountries.includes(country)) { if (section) section.style.display = 'none'; return; }
-  if (section) section.style.display = 'block';
-
-  if (userMobileWallets.length === 0) {
-    list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">No mobile wallets linked</div>';
-    return;
-  }
-  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money', orange: 'Orange Money', wave: 'Wave', telebirr: 'Telebirr', vodacom: 'Vodacom M-Pesa', tigo: 'Tigo Pesa' };
-  list.innerHTML = userMobileWallets.map(w => `
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border-radius:14px;margin-bottom:8px">
-      <div style="width:40px;height:40px;border-radius:10px;background:rgba(251,191,36,0.12);display:flex;align-items:center;justify-content:center;font-size:18px">\ud83d\udcf1</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:600">${providerNames[w.provider] || w.provider}</div>
-        <div style="font-size:12px;color:var(--text3)">${w.phone_number} ${w.is_default ? '\u2022 Default' : ''}</div>
-      </div>
-      <button onclick="removeMobileWallet('${w.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;font-size:18px">\u00d7</button>
-    </div>
-  `).join('');
-}
-
-function openMomoModal() {
-  const country = getUserCountry();
-  const providers = { GH: ['mtn','vodafone','airteltigo'], UG: ['mtn','airtel'], KE: ['mpesa'], TZ: ['mpesa','vodacom','tigo','airtel'], CM: ['mtn','orange'], SN: ['orange','wave'], ET: ['telebirr'] };
-  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money', vodacom: 'Vodacom M-Pesa', orange: 'Orange Money', wave: 'Wave', telebirr: 'Telebirr', tigo: 'Tigo Pesa' };
-  const select = document.getElementById('momo-provider');
-  // Owner sees all providers for testing
-  const allProviders = ['mtn','vodafone','airteltigo','mpesa','airtel','vodacom','orange','wave','telebirr','tigo'];
-  const opts = isOwner() ? allProviders : (providers[country] || []);
-  select.innerHTML = '<option value="">Select provider</option>' + opts.map(p => `<option value="${p}">${providerNames[p] || p}</option>`).join('');
-  const phonePh = { GH: '+233...', UG: '+256...', KE: '+254...', TZ: '+255...', CM: '+237...', SN: '+221...', ET: '+251...' };
-  document.getElementById('momo-phone').placeholder = phonePh[country] || '+...';
-  document.getElementById('momo-modal').classList.add('active');
-}
-
-async function submitMobileWallet() {
-  const country = getUserCountry();
-  const provider = document.getElementById('momo-provider').value;
-  const phone = document.getElementById('momo-phone').value.trim();
-  const errEl = document.getElementById('momo-error');
-  errEl.textContent = '';
-  if (!provider) { errEl.textContent = 'Select a provider'; return; }
-  if (!phone || phone.length < 8) { errEl.textContent = 'Enter a valid phone number'; return; }
-
-  const currencies = { GH: 'GHS', UG: 'UGX', KE: 'KES', TZ: 'TZS', CM: 'XAF', SN: 'XOF', ET: 'ETB', ZA: 'ZAR' };
-  try {
-    const res = await authFetch(API_BASE + '/api/mobile-wallets', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ country, provider, phone_number: phone, currency: currencies[country] || 'USD' }),
-    });
-    const data = await res.json();
-    if (!res.ok) { errEl.textContent = data.error || 'Failed'; return; }
-    closeModals();
-    loadMobileWallets();
-    const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money' };
-    const toast = document.getElementById('settings-toast');
-    toast.textContent = `${providerNames[provider] || provider} linked`;
-    toast.classList.add('active');
-    setTimeout(() => toast.classList.remove('active'), 3000);
-  } catch (e) { errEl.textContent = 'Connection error'; }
-}
-
-async function removeMobileWallet(id) {
-  if (!confirm('Remove this mobile wallet?')) return;
-  try {
-    await authFetch(API_BASE + '/api/mobile-wallets/' + id, { method: 'DELETE' });
-    loadMobileWallets();
-  } catch (e) {}
-}
-
-// ══════════════════════════════════════════════════════════
 // COUNTRY-AWARE SEND MONEY FLOW
 // ══════════════════════════════════════════════════════════
 
 function updateSendModal() {
   const country = getUserCountry();
-  const momoCountries = ['GH', 'UG', 'KE', 'TZ', 'CM', 'SN', 'ET'];
-  const bankCountries = ['NG', 'GH', 'UG', 'US', 'ZA', 'TZ', 'CM', 'SN', 'ET'];
+  const bankCountries = ['NG', 'US'];
   const syms = { NG: '\u20a6', GH: 'GH\u20b5', KE: 'KSh', UG: 'USh', US: '$', ZA: 'R', TZ: 'TSh', CM: 'FCFA', SN: 'CFA', ET: 'Br' };
   const sym = countryConfig?.currencySymbol || syms[country] || '$';
 
@@ -6371,26 +5988,19 @@ function updateSendModal() {
   const tabs = document.getElementById('send-type-tabs');
   if (tabs) {
     const bankTab = tabs.querySelector('[data-type="bank"]');
-    const momoTab = tabs.querySelector('[data-type="mobile_money"]');
     const owner = isOwner();
     if (bankTab) bankTab.style.display = (owner || bankCountries.includes(country)) ? '' : 'none';
-    if (momoTab) momoTab.style.display = (owner || momoCountries.includes(country)) ? '' : 'none';
 
     // Default to best tab for country
-    if (country === 'KE') switchSendType('mobile_money');
-    else if (bankCountries.includes(country)) switchSendType('bank');
+    if (bankCountries.includes(country)) switchSendType('bank');
     else switchSendType('wallet');
   }
-
-  // Reset scope to domestic
-  switchSendScope('domestic');
 
   // Update routing field for user's country
   updateRoutingField(country);
 
   // Populate bank list in send modal
   loadSendBanks(country);
-  loadSendMomoProviders(country);
 }
 
 async function loadSendBanks(country) {
@@ -6402,50 +6012,6 @@ async function loadSendBanks(country) {
   } catch (e) {}
 }
 
-function loadSendMomoProviders(country) {
-  const providers = { GH: ['mtn','vodafone','airteltigo'], UG: ['mtn','airtel'], KE: ['mpesa'], TZ: ['mpesa'] };
-  const providerNames = { mtn: 'MTN MoMo', vodafone: 'Vodafone Cash', airteltigo: 'AirtelTigo', mpesa: 'M-Pesa', airtel: 'Airtel Money' };
-  const select = document.getElementById('send-momo-provider');
-  const opts = providers[country] || [];
-  if (select) select.innerHTML = '<option value="">Select provider</option>' + opts.map(p => `<option value="${p}">${providerNames[p] || p}</option>`).join('');
-}
-
-let currentSendScope = 'domestic';
-
-function switchSendScope(scope) {
-  currentSendScope = scope;
-  // Update scope tab styles
-  document.querySelectorAll('#send-scope-tabs .send-scope-tab').forEach(t => {
-    if (t.dataset.scope === scope) {
-      t.style.background = 'var(--gradient2)';
-      t.style.color = 'white';
-    } else {
-      t.style.background = 'transparent';
-      t.style.color = 'var(--text2)';
-    }
-  });
-
-  const intlCountryWrap = document.getElementById('send-intl-country-wrap');
-  const swiftWrap = document.getElementById('send-swift-wrap');
-  const routingWrap = document.getElementById('send-routing-wrap');
-
-  if (scope === 'international') {
-    if (intlCountryWrap) intlCountryWrap.style.display = '';
-    if (swiftWrap) swiftWrap.style.display = '';
-    updateIntlFields();
-  } else {
-    if (intlCountryWrap) intlCountryWrap.style.display = 'none';
-    if (swiftWrap) swiftWrap.style.display = 'none';
-    // Show routing field based on user's own country
-    updateRoutingField(getUserCountry());
-  }
-}
-
-function updateIntlFields() {
-  const destCountry = document.getElementById('send-intl-country')?.value || '';
-  updateRoutingField(destCountry || getUserCountry());
-}
-
 function updateRoutingField(country) {
   const label = document.getElementById('send-routing-label');
   const input = document.getElementById('send-routing');
@@ -6454,12 +6020,6 @@ function updateRoutingField(country) {
 
   const routingConfig = {
     US: { label: 'Routing Number', placeholder: '000000000', hint: '9-digit ABA routing number', maxlength: '9' },
-    GB: { label: 'Sort Code', placeholder: '00-00-00', hint: '6-digit sort code', maxlength: '8' },
-    AU: { label: 'BSB Number', placeholder: '000-000', hint: '6-digit BSB number', maxlength: '7' },
-    IN: { label: 'IFSC Code', placeholder: 'SBIN0001234', hint: '11-character IFSC code', maxlength: '11' },
-    CA: { label: 'Transit + Institution', placeholder: '00000-000', hint: '5-digit transit + 3-digit institution', maxlength: '9' },
-    DE: { label: 'BLZ (Bankleitzahl)', placeholder: '00000000', hint: '8-digit bank code', maxlength: '8' },
-    FR: { label: 'Code Banque', placeholder: '00000', hint: '5-digit bank code', maxlength: '5' },
   };
 
   const cfg = routingConfig[country];
@@ -6477,7 +6037,6 @@ function updateRoutingField(country) {
 function switchSendType(type) {
   currentSendType = type;
   document.getElementById('send-bank-fields').style.display = type === 'bank' ? '' : 'none';
-  document.getElementById('send-momo-fields').style.display = type === 'mobile_money' ? '' : 'none';
   document.getElementById('send-wallet-fields').style.display = type === 'wallet' ? '' : 'none';
 
   // Update tab styles
@@ -6504,7 +6063,6 @@ function updateSendFee() {
   const sym = countryConfig?.currencySymbol || '$';
   let feeText = '';
   if (currentSendType === 'bank') feeText = `Fee: ${sym}${(amount * 0.01).toFixed(2)} (1%)`;
-  else if (currentSendType === 'mobile_money') feeText = `Fee: ${sym}${(amount * 0.01).toFixed(2)} (1%)`;
   else feeText = amount <= 50 ? 'Free (under $50)' : `Fee: ${sym}${(amount * 0.01).toFixed(2)} (1%)`;
   feeEl.textContent = feeText;
 }
@@ -6714,7 +6272,7 @@ function getSmartFallback(text) {
     tx_history: `Your balance is ${document.getElementById('balance-display')?.textContent || '$0.00'}. Need transaction details?`,
     payment_initiate: "On it. What would you like to pay for?",
     payment_method_manage: "You can manage your cards in the Wallet tab. Need help with something specific?",
-    custom: "I can help you make calls, manage subscriptions, send money, pay bills, and more. What do you need?"
+    custom: "I can help you make calls, manage subscriptions, send money, buy airtime, and more. What do you need?"
   };
   return responses[type] || responses.custom;
 }
@@ -7862,13 +7420,10 @@ async function executeSend() {
       const bankName = bankSelect?.selectedOptions[0]?.dataset?.name || bankSelect?.selectedOptions[0]?.textContent || '';
       const accountNumber = document.getElementById('send-account')?.value?.trim();
       const routingNumber = document.getElementById('send-routing')?.value?.trim() || '';
-      const swiftCode = document.getElementById('send-swift')?.value?.trim() || '';
       if (!bankCode || !accountNumber) { if (errEl) errEl.textContent = 'Select bank and enter account number'; return; }
 
       const transferBody = { bank_code: bankCode, account_number: accountNumber, account_name: bankName, amount, currency, narration: note, country };
       if (routingNumber) transferBody.routing_number = routingNumber;
-      if (swiftCode) transferBody.swift_code = swiftCode;
-      if (currentSendScope === 'international') transferBody.transfer_scope = 'international';
 
       const res = await authFetch(API_BASE + '/api/transfers/bank', {
         method: 'POST',
@@ -7883,25 +7438,6 @@ async function executeSend() {
       }
       closeModals();
       showTransferSuccess(data.transfer, bankName, accountNumber);
-
-    } else if (currentSendType === 'mobile_money') {
-      const provider = document.getElementById('send-momo-provider')?.value;
-      const phone = document.getElementById('send-momo-phone')?.value?.trim();
-      if (!provider || !phone) { if (errEl) errEl.textContent = 'Select provider and enter phone number'; return; }
-
-      const res = await authFetch(API_BASE + '/api/transfers/mobile-money', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, phone_number: phone, amount, currency, narration: note, country }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.requiresKyc) { closeModals(); openKycModal(); return; }
-        if (errEl) errEl.textContent = data.error || 'Transfer failed';
-        return;
-      }
-      closeModals();
-      showTransferSuccess(data.transfer, provider, phone);
 
     } else {
       // Wallet / PromptPay transfer - route through AI
@@ -8330,7 +7866,7 @@ async function autoDetectCountry() {
   try {
     const res = await fetch('https://ipapi.co/json/', { signal: AbortSignal.timeout(5000) });
     const data = await res.json();
-    const supported = ['NG','GH','KE','UG','ZA','TZ','CM','SN','ET','US','CA','GB','DE','FR','IN','AU'];
+    const supported = ['NG','GH','KE','UG','ZA','TZ','CM','SN','ET','US'];
     if (data.country_code && supported.includes(data.country_code)) {
       localStorage.setItem('promptpay_country', data.country_code);
       // Pre-fill registration country
@@ -9310,7 +8846,7 @@ function copyInviteLink() {
 
 function shareInvite(method) {
   const link = document.getElementById('invite-link-text').textContent;
-  const msg = `Join me on PromptPay! Free international calls, AI assistant, send money & pay bills. ${link}`;
+  const msg = `Join me on PromptPay! Free international calls, AI assistant, send money & buy airtime. ${link}`;
   const encoded = encodeURIComponent(msg);
 
   if (method === 'whatsapp') {
