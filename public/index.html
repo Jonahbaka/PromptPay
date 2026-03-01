@@ -3615,10 +3615,6 @@
           </div>
         </div>
 
-        <!-- Hidden YouTube player for audio extraction -->
-        <div id="la-yt-container" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none">
-          <div id="la-yt-player"></div>
-        </div>
       </div>
     </div>
 
@@ -9728,51 +9724,72 @@ function leaveLuxeGame() {
 }
 
 // ═══ LOUNGE MUSIC PLAYER (YouTube IFrame API — audio only) ═══
-const LOUNGE_TRACKS = [
+var LOUNGE_TRACKS = [
   { id: 'igqmGtVF3VQ', name: 'Royale', label: 'MI6 Vibe' },
   { id: '5iee40dSbs4', name: 'Wizard of Oz', label: 'Emerald Vibe' },
 ];
-let loungeYTPlayer = null;
-let loungeCurrentTrack = -1;
-let loungeIsPlaying = false;
-let loungeYTReady = false;
-let loungeVolume = 50;
+var loungeYTPlayer = null;
+var loungeCurrentTrack = -1;
+var loungeIsPlaying = false;
+var loungeYTReady = false;
+var loungeVolume = 50;
+var loungeYTAPILoaded = false;
+var loungePendingTrack = -1;
 
-// Load YouTube IFrame API once
-(function loadYTAPI() {
-  if (window.YT && window.YT.Player) { loungeInitYT(); return; }
-  const tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(tag);
-})();
-
-function onYouTubeIframeAPIReady() {
-  loungeInitYT();
+// Lazy-load YouTube API only when user interacts with music controls
+function loungeEnsureYTAPI(cb) {
+  if (loungeYTReady && loungeYTPlayer) { if (cb) cb(); return; }
+  if (window.YT && window.YT.Player && !loungeYTPlayer) {
+    loungeCreatePlayer(cb);
+    return;
+  }
+  if (!loungeYTAPILoaded) {
+    loungeYTAPILoaded = true;
+    window.onYouTubeIframeAPIReady = function() {
+      loungeCreatePlayer(cb);
+    };
+    var tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+  }
 }
 
-function loungeInitYT() {
-  if (loungeYTPlayer) return;
+function loungeCreatePlayer(cb) {
+  if (loungeYTPlayer) { if (cb) cb(); return; }
+  var container = document.getElementById('la-yt-player');
+  if (!container) { console.warn('[Lounge] la-yt-player not found'); return; }
   loungeYTPlayer = new YT.Player('la-yt-player', {
-    height: '1', width: '1',
-    playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, rel: 0, playsinline: 1 },
+    height: '180', width: '320',
+    playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, rel: 0, playsinline: 1, origin: location.origin },
     events: {
-      onReady: function() { loungeYTReady = true; loungeYTPlayer.setVolume(loungeVolume); },
+      onReady: function() {
+        loungeYTReady = true;
+        loungeYTPlayer.setVolume(loungeVolume);
+        console.log('[Lounge] YT player ready');
+        if (cb) cb();
+        if (loungePendingTrack >= 0) {
+          var t = loungePendingTrack;
+          loungePendingTrack = -1;
+          selectLoungeTrack(t);
+        }
+      },
       onStateChange: function(e) {
+        var btn = document.getElementById('la-btn-play');
         if (e.data === YT.PlayerState.ENDED) {
-          // Loop current track
           loungeYTPlayer.seekTo(0);
           loungeYTPlayer.playVideo();
         }
         if (e.data === YT.PlayerState.PLAYING) {
           loungeIsPlaying = true;
-          document.getElementById('la-btn-play').innerHTML = '&#10074;&#10074;';
-          document.getElementById('la-btn-play').classList.add('playing');
+          if (btn) { btn.innerHTML = '&#10074;&#10074;'; btn.classList.add('playing'); }
         }
-        if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+        if (e.data === YT.PlayerState.PAUSED) {
           loungeIsPlaying = false;
-          document.getElementById('la-btn-play').innerHTML = '&#9654;';
-          document.getElementById('la-btn-play').classList.remove('playing');
+          if (btn) { btn.innerHTML = '&#9654;'; btn.classList.remove('playing'); }
         }
+      },
+      onError: function(e) {
+        console.warn('[Lounge] YT error code:', e.data);
       },
     },
   });
@@ -9780,25 +9797,31 @@ function loungeInitYT() {
 
 function selectLoungeTrack(idx) {
   if (idx < 0 || idx >= LOUNGE_TRACKS.length) return;
-  // Update UI
   LOUNGE_TRACKS.forEach(function(_, i) {
-    const el = document.getElementById('la-track-' + i);
+    var el = document.getElementById('la-track-' + i);
     if (el) el.classList.toggle('active', i === idx);
   });
   loungeCurrentTrack = idx;
-  const track = LOUNGE_TRACKS[idx];
-  document.getElementById('la-music-now').textContent = track.name;
+  var track = LOUNGE_TRACKS[idx];
+  var nowEl = document.getElementById('la-music-now');
+  if (nowEl) nowEl.textContent = track.name;
 
   if (loungeYTReady && loungeYTPlayer) {
-    loungeYTPlayer.loadVideoById(track.id);
+    loungeYTPlayer.loadVideoById({ videoId: track.id, startSeconds: 0 });
     loungeYTPlayer.setVolume(loungeVolume);
-    loungeIsPlaying = true;
+  } else {
+    loungePendingTrack = idx;
+    loungeEnsureYTAPI();
   }
 }
 
 function loungeMusicPlayPause() {
-  if (!loungeYTReady || !loungeYTPlayer) return;
   if (loungeCurrentTrack < 0) { selectLoungeTrack(0); return; }
+  if (!loungeYTReady || !loungeYTPlayer) {
+    loungePendingTrack = loungeCurrentTrack >= 0 ? loungeCurrentTrack : 0;
+    loungeEnsureYTAPI();
+    return;
+  }
   if (loungeIsPlaying) {
     loungeYTPlayer.pauseVideo();
   } else {
@@ -9810,15 +9833,17 @@ function loungeMusicStop() {
   if (!loungeYTReady || !loungeYTPlayer) return;
   loungeYTPlayer.stopVideo();
   loungeIsPlaying = false;
-  document.getElementById('la-btn-play').innerHTML = '&#9654;';
-  document.getElementById('la-btn-play').classList.remove('playing');
-  document.getElementById('la-music-now').textContent = 'Stopped';
+  var btn = document.getElementById('la-btn-play');
+  if (btn) { btn.innerHTML = '&#9654;'; btn.classList.remove('playing'); }
+  var nowEl = document.getElementById('la-music-now');
+  if (nowEl) nowEl.textContent = 'Stopped';
 }
 
 function loungeMusicSetVolume(val) {
   loungeVolume = parseInt(val);
   if (loungeYTReady && loungeYTPlayer) loungeYTPlayer.setVolume(loungeVolume);
   var icon = document.getElementById('la-vol-icon');
+  if (!icon) return;
   if (loungeVolume === 0) icon.innerHTML = '&#128263;';
   else if (loungeVolume < 40) icon.innerHTML = '&#128265;';
   else icon.innerHTML = '&#128266;';
@@ -9833,7 +9858,8 @@ function loungeMusicToggleMute() {
   } else {
     loungeYTPlayer.mute();
     document.getElementById('la-volume').value = 0;
-    document.getElementById('la-vol-icon').innerHTML = '&#128263;';
+    var icon = document.getElementById('la-vol-icon');
+    if (icon) icon.innerHTML = '&#128263;';
   }
 }
 
@@ -9950,5 +9976,9 @@ function sendMoneyInGame() {
 }
 </script>
 
+<!-- YouTube player for lounge music (must be outside display:none containers) -->
+<div id="la-yt-container" style="position:fixed;left:-9999px;top:-9999px;width:320px;height:180px;pointer-events:none;z-index:-1">
+  <div id="la-yt-player"></div>
+</div>
 </body>
 </html>
