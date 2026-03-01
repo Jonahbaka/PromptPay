@@ -51,6 +51,13 @@ export class TelegramChannel extends BaseChannel {
     }
   }
 
+  async sendChatAction(chatId: string, action: string = 'typing'): Promise<void> {
+    if (!CONFIG.telegram.botToken) return;
+    try {
+      await this.postTelegram('sendChatAction', { chat_id: chatId, action });
+    } catch {}
+  }
+
   async start(): Promise<void> {
     if (!CONFIG.telegram.botToken) {
       this.logger.warn('Telegram bot token not configured, channel disabled');

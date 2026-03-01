@@ -276,6 +276,7 @@ export class OpenClawAgent {
     }
 
     // Execute safe command directly
+    await this.telegram.sendChatAction(chatId, 'typing');
     const ctx = this.createContext(chatId);
     const result = await command.execute(args, ctx);
 
@@ -352,6 +353,9 @@ export class OpenClawAgent {
     this.history.push({ role: 'user', content: text });
     if (this.history.length > 40) this.history.splice(0, this.history.length - 40);
 
+    // Show "typing..." indicator immediately
+    await this.telegram.sendChatAction(chatId, 'typing');
+
     const messages: ChatMessage[] = [
       { role: 'system', content: buildSystemPrompt(this.activeProject) },
       ...this.history,
@@ -399,6 +403,8 @@ export class OpenClawAgent {
         }
 
         this.logger.info(`OpenClaw iteration ${i + 1}/${MAX_ITERATIONS} — ${response.tool_calls.length} tool(s) called`);
+        // Refresh typing indicator before next Kimi call
+        await this.telegram.sendChatAction(chatId, 'typing');
         continue; // Loop back to Kimi with tool results
       }
 
