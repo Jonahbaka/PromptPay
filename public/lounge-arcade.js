@@ -217,11 +217,194 @@
     } else if (piece.type === 'Q') {
       addLinear([[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [-1, 1], [1, -1], [1, 1]]);
     }
-    return moves;
+    if (window.laGameMode === 'checkers') {
+      var forced = getForcedCaptureMoves(piece.color);
+      if (forced.length > 0) {
+        return moves.filter(function(move) {
+          return !!move.jump && forced.some(function(forcedMove) {
+            return forcedMove.from.r === r && forcedMove.from.c === c && forcedMove.to.r === move.r && forcedMove.to.c === move.c;
+          });
+        });
+      }
+      return moves;
+    }
+    return moves.filter(function(move) { return isLegalChessMove(r, c, move, piece.color); });
+  }
+
+  function cloneBoard(board) {
+    return board.map(function(row) {
+      return row.map(function(cell) {
+        return cell ? { type: cell.type, color: cell.color } : null;
+      });
+    });
+  }
+
+  function applyMoveOnBoard(board, from, move) {
+    var copy = cloneBoard(board);
+    var moving = copy[from.r][from.c];
+    if (!moving) return copy;
+    if (move.jump) copy[move.jump.r][move.jump.c] = null;
+    copy[move.r][move.c] = moving;
+    copy[from.r][from.c] = null;
+    if (moving.type === 'P' && ((moving.color === 'gold' && move.r === 0) || (moving.color === 'holo' && move.r === 7))) moving.type = 'Q';
+    if (moving.type === 'C' && ((moving.color === 'gold' && move.r === 0) || (moving.color === 'holo' && move.r === 7))) moving.type = 'CK';
+    return copy;
+  }
+
+  function findKing(board, color) {
+    for (var r = 0; r < 8; r += 1) {
+      for (var c = 0; c < 8; c += 1) {
+        if (board[r][c] && board[r][c].type === 'K' && board[r][c].color === color) return { r: r, c: c };
+      }
+    }
+    return null;
+  }
+
+  function attacksSquare(board, fromR, fromC, targetR, targetC) {
+    var piece = board[fromR][fromC];
+    if (!piece) return false;
+    var dr = targetR - fromR;
+    var dc = targetC - fromC;
+    if (piece.type === 'P') {
+      var dir = piece.color === 'gold' ? -1 : 1;
+      return dr === dir && Math.abs(dc) === 1;
+    }
+    if (piece.type === 'N') {
+      return (Math.abs(dr) === 2 && Math.abs(dc) === 1) || (Math.abs(dr) === 1 && Math.abs(dc) === 2);
+    }
+    if (piece.type === 'K') {
+      return Math.max(Math.abs(dr), Math.abs(dc)) === 1;
+    }
+    function clearPath(stepR, stepC) {
+      var r = fromR + stepR;
+      var c = fromC + stepC;
+      while (r !== targetR || c !== targetC) {
+        if (board[r][c]) return false;
+        r += stepR;
+        c += stepC;
+      }
+      return true;
+    }
+    if (piece.type === 'R' || piece.type === 'Q') {
+      if (dr === 0 && dc !== 0) return clearPath(0, dc > 0 ? 1 : -1);
+      if (dc === 0 && dr !== 0) return clearPath(dr > 0 ? 1 : -1, 0);
+    }
+    if (piece.type === 'B' || piece.type === 'Q') {
+      if (Math.abs(dr) === Math.abs(dc) && dr !== 0) return clearPath(dr > 0 ? 1 : -1, dc > 0 ? 1 : -1);
+    }
+    return false;
+  }
+
+  function isKingInCheck(board, color) {
+    var king = findKing(board, color);
+    if (!king) return true;
+    var enemy = color === 'gold' ? 'holo' : 'gold';
+    for (var r = 0; r < 8; r += 1) {
+      for (var c = 0; c < 8; c += 1) {
+        if (board[r][c] && board[r][c].color === enemy && attacksSquare(board, r, c, king.r, king.c)) return true;
+      }
+    }
+    return false;
+  }
+
+  function isLegalChessMove(fromR, fromC, move, color) {
+    return !isKingInCheck(applyMoveOnBoard(window.laBoard, { r: fromR, c: fromC }, move), color);
+  }
+
+  function getForcedCaptureMoves(color) {
+    var forced = [];
+    for (var r = 0; r < 8; r += 1) {
+      for (var c = 0; c < 8; c += 1) {
+        var piece = window.laBoard[r][c];
+        if (!piece || piece.color !== color) continue;
+        var dirs = piece.type === 'CK' ? [-1, 1] : (piece.color === 'gold' ? [-1] : [1]);
+        for (var i = 0; i < dirs.length; i += 1) {
+          for (var dc = -1; dc <= 1; dc += 2) {
+            var nr = r + dirs[i];
+            var nc = c + dc;
+            var jr = nr + dirs[i];
+            var jc = nc + dc;
+            if (jr < 0 || jr > 7 || jc < 0 || jc > 7 || nr < 0 || nr > 7 || nc < 0 || nc > 7) continue;
+            if (window.laBoard[nr][nc] && window.laBoard[nr][nc].color !== color && !window.laBoard[jr][jc]) {
+              forced.push({ from: { r: r, c: c }, to: { r: jr, c: jc, jump: { r: nr, c: nc } } });
+            }
+          }
+        }
+      }
+    }
+    return forced;
+  }
+
+  function hasAnyLegalMove(color) {
+    for (var r = 0; r < 8; r += 1) {
+      for (var c = 0; c < 8; c += 1) {
+        if (window.laBoard[r][c] && window.laBoard[r][c].color === color && getValidMoves(r, c).length > 0) return true;
+      }
+    }
+    return false;
+  }
+
+  function evaluateGameState() {
+    if (window.laGameMode === 'checkers') {
+      var nextColor = window.laTurn;
+      if (!hasAnyLegalMove(nextColor)) {
+        var winner = nextColor === 'gold' ? 'Nova' : 'You';
+        setInsight(winner + ' wins. No legal checkers moves remain.');
+        pushChat(winner + ' wins by locking the board.', true);
+        window.laAIEnabled = false;
+      }
+      return;
+    }
+
+    var side = window.laTurn;
+    var inCheck = isKingInCheck(window.laBoard, side);
+    var canMove = hasAnyLegalMove(side);
+    if (!canMove && inCheck) {
+      var winnerName = side === 'gold' ? 'Nova' : 'You';
+      setInsight('Checkmate. ' + winnerName + ' closes the board.');
+      pushChat('Checkmate. ' + winnerName + ' wins the chess table.', true);
+      window.laAIEnabled = false;
+      return;
+    }
+    if (!canMove) {
+      setInsight('Stalemate. No legal move remains for ' + (side === 'gold' ? 'you' : 'Nova') + '.');
+      pushChat('Stalemate. The chess table ends drawn.', true);
+      window.laAIEnabled = false;
+      return;
+    }
+    if (inCheck) {
+      setInsight((side === 'gold' ? 'You are' : 'Nova is') + ' in check. Resolve the threat first.');
+      pushChat((side === 'gold' ? 'You are' : 'Nova is') + ' in check.', true);
+    }
+  }
+
+  function getContinuationJump(from, color) {
+    if (window.laGameMode !== 'checkers') return null;
+    var chainMoves = getValidMoves(from.r, from.c).filter(function(move) { return !!move.jump; });
+    if (chainMoves.length === 0) return null;
+    window.laSelected = { r: from.r, c: from.c };
+    window.laValidMoves = chainMoves;
+    window.laTurn = color;
+    return chainMoves;
+  }
+
+  function advanceAfterMove(target, movedColor, actorName) {
+    var continuation = getContinuationJump(target, movedColor);
+    if (continuation) {
+      setInsight(actorName + ' must continue the capture chain before ending the turn.');
+      pushChat(actorName + ' continues the jump sequence.', true);
+      return false;
+    }
+    window.laTurn = movedColor === 'gold' ? 'holo' : 'gold';
+    window.laSelected = null;
+    window.laValidMoves = [];
+    evaluateGameState();
+    return true;
   }
 
   function applyMove(from, move) {
     var moving = window.laBoard[from.r][from.c];
+    var movingColor = moving ? moving.color : window.laTurn;
     var captured = window.laBoard[move.r][move.c];
     if (move.jump) {
       captured = window.laBoard[move.jump.r][move.jump.c];
@@ -240,10 +423,8 @@
     window.laBoard[from.r][from.c] = null;
     if (window.laGameMode === 'chess' && moving.type === 'P' && ((moving.color === 'gold' && move.r === 0) || (moving.color === 'holo' && move.r === 7))) moving.type = 'Q';
     if (window.laGameMode === 'checkers' && moving.type === 'C' && ((moving.color === 'gold' && move.r === 0) || (moving.color === 'holo' && move.r === 7))) moving.type = 'CK';
-    window.laTurn = window.laTurn === 'gold' ? 'holo' : 'gold';
     window.laMoveCount += 1;
-    window.laSelected = null;
-    window.laValidMoves = [];
+    return advanceAfterMove({ r: move.r, c: move.c }, movingColor, movingColor === 'gold' ? 'You' : 'Nova');
   }
 
   function renderSquare(r, c) {
@@ -398,13 +579,15 @@
     var piece = window.laBoard[r] && window.laBoard[r][c];
     var valid = window.laValidMoves.find(function(move) { return move.r === r && move.c === c; });
     if (window.laSelected && valid) {
-      applyMove(window.laSelected, valid);
+      var turnAdvanced = applyMove(window.laSelected, valid);
       renderArcade();
-      setInsight(window.laGameMode === 'chess'
-        ? 'Move complete. Keep your king covered while you pressure files and diagonals.'
-        : 'Clean diagonal. Watch for the return jump before you overextend.');
       pushChat('Move played to ' + String.fromCharCode(97 + c) + (8 - r) + '.', false);
-      queueAITurn(650);
+      if (turnAdvanced) {
+        setInsight(window.laGameMode === 'chess'
+          ? 'Move complete. Keep your king covered while you pressure files and diagonals.'
+          : 'Clean diagonal. Watch for the return jump before you overextend.');
+        queueAITurn(650);
+      }
       return;
     }
     if (piece && piece.color === window.laTurn) {
@@ -447,10 +630,17 @@
       applyMove(move.from, legal);
       window.laAITone = (window.laCapturedHolo.length > window.laCapturedGold.length) ? 'pleased' : 'thinking';
       renderArcade();
+      pushChat('Nova played ' + String.fromCharCode(97 + legal.c) + (8 - legal.r) + '.', true);
+      if (window.laTurn === window.laAIColor) {
+        window.laAITone = 'bluffing';
+        renderArcade();
+        setInsight('Nova has another forced capture and keeps the sequence alive.');
+        queueAITurn(420);
+        return;
+      }
       setInsight(window.laGameMode === 'chess'
         ? 'Nova answered. Reassess the center before you commit another piece.'
         : 'Nova answered on the diagonal. Look for a forcing jump or king lane.');
-      pushChat('Nova played ' + String.fromCharCode(97 + legal.c) + (8 - legal.r) + '.', true);
     } catch (error) {
       window.laAIEnabled = false;
       window.laAITone = 'annoyed';
