@@ -2719,6 +2719,12 @@
     }
     .la-lesson-next-btn:hover { background:rgba(200,160,255,.3); }
 
+    @media (max-width:720px) {
+      .la-ai-row { flex-direction:column; }
+      .la-ai-card, .la-lesson-card { min-width:100%; }
+      .la-lobby { padding-bottom:96px; }
+    }
+
     /* Scanline overlay for chess */
     .la-scanline-overlay {
       position:absolute; inset:0; z-index:1; pointer-events:none;
@@ -3630,14 +3636,14 @@
 
           <!-- Game Cards -->
           <div class="la-lobby-card mi6" onclick="startLuxeGame('chess')">
-            <div class="la-lobby-card-icon">&#9818;</div>
+            <div class="la-lobby-card-icon">&#127919;</div>
             <div class="la-lobby-card-title">MI6 Royale</div>
-            <div class="la-lobby-card-desc">Chess — infiltrate, strategize, checkmate. Black &amp; gold espionage.</div>
+            <div class="la-lobby-card-desc">Chess — infiltrate, strategize, checkmate. A 007-style black and gold spy table.</div>
           </div>
           <div class="la-lobby-card emerald" onclick="startLuxeGame('checkers')">
-            <div class="la-lobby-card-icon">&#11044;</div>
+            <div class="la-lobby-card-icon">&#128142;</div>
             <div class="la-lobby-card-title">Emerald Quest</div>
-            <div class="la-lobby-card-desc">Checkers — jump, king, conquer. Enchanted emerald arena.</div>
+            <div class="la-lobby-card-desc">Checkers — jump, king, conquer. Emerald City energy with a yellow-brick-road feel.</div>
           </div>
 
           <!-- Play vs AI -->
@@ -4394,6 +4400,7 @@
 <div id="la-gift-modal" class="la-gift-modal">
   <div class="la-gift-sheet">
     <div class="la-gift-title">Send a Drink &#127879;</div>
+    <div style="text-align:center;font-size:11px;color:var(--la-text2);margin:-4px 0 10px">Paid from your PromptPay wallet. Add or fund cards through Stripe-backed wallet funding.</div>
     <div id="la-gift-wallet-bal" style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:8px;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,0.04)">Balance: <b>$0.00</b></div>
     <div class="la-gift-grid">
       <div class="la-gift-card" onclick="selectGift(0,'beer')">
@@ -10005,9 +10012,18 @@ async function sendGift() {
     }
     const emojis = {beer:'\u{1F37A}', wine:'\u{1F377}', cocktail:'\u{1F378}', champagne:'\u{1F37E}'};
     const emoji = emojis[laSelectedGift] || '\u{1F37A}';
-    const chat = document.getElementById('la-chat');
-    chat.innerHTML += `<div class="la-chat-msg system">${emoji} You sent a ${laSelectedGift}! ($${data.total})</div>`;
-    chat.scrollTop = chat.scrollHeight;
+    const legacyChat = document.getElementById('la-chat');
+    const arcadeChat = document.getElementById('pp-arcade-chat');
+    if (arcadeChat) {
+      const item = document.createElement('div');
+      item.className = 'pp-chat-msg system';
+      item.textContent = `${emoji} You sent a ${laSelectedGift}! ($${data.total})`;
+      arcadeChat.appendChild(item);
+      arcadeChat.scrollTop = arcadeChat.scrollHeight;
+    } else if (legacyChat) {
+      legacyChat.innerHTML += `<div class="la-chat-msg system">${emoji} You sent a ${laSelectedGift}! ($${data.total})</div>`;
+      legacyChat.scrollTop = legacyChat.scrollHeight;
+    }
     showToast(`${emoji} Gift sent! Balance: $${data.balanceAfter.toFixed(2)}`);
     triggerCheer(30);
     hideGiftModal();

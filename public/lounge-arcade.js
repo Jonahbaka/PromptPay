@@ -66,6 +66,10 @@
       '#luxe-arena.pp-arcade .pp-panel{padding:14px 16px;border-radius:22px;background:rgba(2,6,23,.72);border:1px solid rgba(148,163,184,.14)}',
       '#luxe-arena.pp-arcade .pp-panel-title{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8fb6d9;margin-bottom:8px}',
       '#luxe-arena.pp-arcade .pp-insight{font-size:13px;line-height:1.55;color:#dbe7f5;min-height:60px}',
+      '#luxe-arena.pp-arcade .pp-start-strip{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;position:relative;z-index:3;margin:54px 0 8px}',
+      '#luxe-arena.pp-arcade .pp-start-tab{border:none;border-radius:999px;padding:10px 14px;background:rgba(7,13,24,.82);color:#f8fbff;font-size:12px;font-weight:800;letter-spacing:.04em;border:1px solid rgba(255,255,255,.1);cursor:pointer}',
+      '#luxe-arena.pp-arcade .pp-start-tab.primary{background:linear-gradient(135deg,#0ea5e9,#2563eb);border:none}',
+      '#luxe-arena.pp-arcade .pp-start-tab.accent{background:linear-gradient(135deg,#f59e0b,#ec4899);border:none}',
       '#luxe-arena.pp-arcade .pp-action-stack{display:flex;flex-direction:column;gap:10px}',
       '#luxe-arena.pp-arcade .pp-action-wide{width:100%;justify-content:center;display:flex;align-items:center;gap:8px}',
       '#luxe-arena.pp-arcade .pp-chat{flex:1;min-height:140px;max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:8px}',
@@ -79,7 +83,7 @@
       '#luxe-arena.pp-arcade .pp-chip.gold{background:linear-gradient(180deg,#fde68a,#b45309)}',
       '#luxe-arena.pp-arcade .pp-chip.blue{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}',
       '#luxe-arena.pp-arcade .pp-chip.red{background:linear-gradient(180deg,#fb7185,#be123c)}',
-      '#luxe-arena.pp-arcade .pp-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px;position:relative;z-index:2;padding-bottom:env(safe-area-inset-bottom,0px)}',
+      '#luxe-arena.pp-arcade .pp-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px;position:sticky;bottom:0;z-index:6;padding:12px 0 calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,rgba(5,8,14,0),rgba(5,8,14,.88) 36%,rgba(5,8,14,.98));backdrop-filter:blur(8px)}',
       '#luxe-arena.pp-arcade .pp-control{border:none;border-radius:16px;padding:10px 14px;background:rgba(15,23,42,.7);color:#e5eef8;font-weight:700;cursor:pointer;border:1px solid rgba(148,163,184,.14)}',
       '#luxe-arena.pp-arcade .pp-control.primary{background:linear-gradient(135deg,#0ea5e9,#2563eb);border:none}',
       '#luxe-arena.pp-arcade .pp-lesson-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:14;padding:24px;background:rgba(2,6,23,.16)}',
@@ -92,12 +96,14 @@
       '#luxe-arena.pp-arcade .pp-mode-note{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:2;padding:10px 14px;border-radius:16px;background:rgba(15,23,42,.76);border:1px solid rgba(148,163,184,.14);font-size:12px;color:#dce7f6;max-width:min(520px,calc(100vw - 72px));text-align:center}',
       '#luxe-arena.pp-arcade .pp-floating-gift{position:fixed;right:max(16px,env(safe-area-inset-right,0px) + 12px);bottom:max(18px,env(safe-area-inset-bottom,0px) + 12px);z-index:10001;border:none;border-radius:999px;padding:14px 18px;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;font-weight:800;box-shadow:0 18px 36px rgba(0,0,0,.32);cursor:pointer}',
       '@media (max-width:1024px){#luxe-arena.pp-arcade .pp-arcade-main{grid-template-columns:1fr}#luxe-arena.pp-arcade .pp-scene{min-height:640px}#luxe-arena.pp-arcade .pp-sidepanel{order:2}}',
-      '@media (max-width:720px){#luxe-arena.pp-arcade .pp-arcade-topbar{padding-left:12px;padding-right:12px}#luxe-arena.pp-arcade .pp-arcade-main{padding:12px;gap:12px}#luxe-arena.pp-arcade .pp-scene{padding:14px;min-height:580px;border-radius:24px}#luxe-arena.pp-arcade .pp-avatar{width:86px;height:86px}#luxe-arena.pp-arcade .pp-player-card{min-width:0;width:min(100%,220px);padding:12px}#luxe-arena.pp-arcade .pp-board-zone{padding:62px 8px 20px}#luxe-arena.pp-arcade .pp-board-shell{width:min(100%,420px);max-width:calc(100vw - 44px)}#luxe-arena.pp-arcade .pp-mode-note{bottom:88px;max-width:calc(100vw - 32px)}#luxe-arena.pp-arcade .pp-vegas-wall{width:26px;top:64px;bottom:120px}#luxe-arena.pp-arcade .pp-chat-compose{flex-wrap:wrap}#luxe-arena.pp-arcade .pp-chat-compose button{min-height:42px}#luxe-arena.pp-arcade .pp-controls{justify-content:stretch}#luxe-arena.pp-arcade .pp-control{flex:1 1 140px}#luxe-arena.pp-arcade .pp-neon-badge{top:16px;font-size:10px;letter-spacing:.12em}}'
+      '@media (max-width:720px){#luxe-arena.pp-arcade .pp-arcade-topbar{padding-left:12px;padding-right:12px}#luxe-arena.pp-arcade .pp-arcade-main{padding:12px;gap:12px}#luxe-arena.pp-arcade .pp-scene{padding:14px 14px 124px;min-height:580px;border-radius:24px}#luxe-arena.pp-arcade .pp-avatar{width:86px;height:86px}#luxe-arena.pp-arcade .pp-player-card{min-width:0;width:min(100%,220px);padding:12px}#luxe-arena.pp-arcade .pp-board-zone{padding:62px 8px 20px}#luxe-arena.pp-arcade .pp-board-shell{width:min(100%,420px);max-width:calc(100vw - 44px)}#luxe-arena.pp-arcade .pp-mode-note{bottom:150px;max-width:calc(100vw - 32px)}#luxe-arena.pp-arcade .pp-vegas-wall{width:26px;top:64px;bottom:160px}#luxe-arena.pp-arcade .pp-chat-compose{flex-wrap:wrap}#luxe-arena.pp-arcade .pp-chat-compose button{min-height:42px}#luxe-arena.pp-arcade .pp-controls{justify-content:stretch;padding-top:10px}#luxe-arena.pp-arcade .pp-control{flex:1 1 140px}#luxe-arena.pp-arcade .pp-neon-badge{top:16px;font-size:10px;letter-spacing:.12em}#luxe-arena.pp-arcade .pp-start-strip{margin-top:44px}#luxe-arena.pp-arcade .pp-floating-gift{bottom:max(92px,env(safe-area-inset-bottom,0px) + 86px)}}'
     ].join('');
     document.head.appendChild(style);
   }
 
   function baseState() {
+    if (window.laAIMoveTimer) clearTimeout(window.laAIMoveTimer);
+    if (window.laDemoTimer) clearTimeout(window.laDemoTimer);
     window.laBoard = window.laBoard || [];
     window.laSelected = null;
     window.laValidMoves = [];
@@ -116,6 +122,9 @@
     window.laCurrentLessonIdx = 0;
     window.laHumanOpponentName = 'Ruby Seat';
     window.laAIMoveTimer = null;
+    window.laDemoTimer = null;
+    window.laDemoMode = false;
+    window.laDemoDifficulty = 'medium';
   }
 
   function pieceSvg(type, color) {
@@ -362,6 +371,7 @@
         setInsight(winner + ' wins. No legal checkers moves remain.');
         pushChat(winner + ' wins by locking the board.', true);
         window.laAIEnabled = false;
+        stopAutomation();
       }
       return;
     }
@@ -374,12 +384,14 @@
       setInsight('Checkmate. ' + winnerName + ' closes the board.');
       pushChat('Checkmate. ' + winnerName + ' wins the chess table.', true);
       window.laAIEnabled = false;
+      stopAutomation();
       return;
     }
     if (!canMove) {
       setInsight('Stalemate. No legal move remains for ' + (side === 'gold' ? 'you' : 'Nova') + '.');
       pushChat('Stalemate. The chess table ends drawn.', true);
       window.laAIEnabled = false;
+      stopAutomation();
       return;
     }
     if (inCheck) {
@@ -462,6 +474,29 @@
     return html;
   }
 
+  function getThemeMeta(mode) {
+    if (mode === 'checkers') {
+      return {
+        title: '&#128142; Emerald Quest',
+        badge: 'Emerald City Social Table',
+        subtitle: window.laLessonActive
+          ? 'Guided lesson mode. Tap the glass card when you are ready to continue.'
+          : (window.laAIEnabled
+            ? 'Wizard-of-Oz inspired checkers against a live AI rival.'
+            : 'A yellow-brick social table for friendly checkers and demos.')
+      };
+    }
+    return {
+      title: '&#127919; MI6 Royale',
+      badge: '007 Social Strategy Table',
+      subtitle: window.laLessonActive
+        ? 'Guided lesson mode. Tap the glass card when you are ready to continue.'
+        : (window.laAIEnabled
+          ? '007-inspired chess against a live AI rival.'
+          : 'A spy-lounge table for social chess, demos, and lessons.')
+    };
+  }
+
   function setInsight(text) {
     var el = document.getElementById('pp-arcade-insight');
     if (el) el.textContent = text;
@@ -475,6 +510,14 @@
     item.textContent = text;
     chat.appendChild(item);
     chat.scrollTop = chat.scrollHeight;
+  }
+
+  function stopAutomation() {
+    if (window.laAIMoveTimer) clearTimeout(window.laAIMoveTimer);
+    if (window.laDemoTimer) clearTimeout(window.laDemoTimer);
+    window.laAIMoveTimer = null;
+    window.laDemoTimer = null;
+    window.laDemoMode = false;
   }
 
   function ensureShell(mode) {
@@ -500,8 +543,14 @@
         '    <div class="pp-scene">',
         '      <div class="pp-vegas-wall left"></div>',
         '      <div class="pp-vegas-wall right"></div>',
-        '      <div class="pp-neon-badge">PromptPay Vegas Social Lounge</div>',
+        '      <div class="pp-neon-badge" id="pp-neon-badge">PromptPay Vegas Social Lounge</div>',
         '      <div class="pp-stage">',
+        '        <div class="pp-start-strip">',
+        '          <button class="pp-start-tab" onclick="startLuxeGame(laGameMode || \'chess\')">Start Table</button>',
+        '          <button class="pp-start-tab primary" onclick="startAIGame(laGameMode || \'chess\', laAIDifficulty || \'medium\')">Play Nova</button>',
+        '          <button class="pp-start-tab accent" onclick="startDemoGame(laGameMode || \'chess\')">Demo Moves</button>',
+        '          <button class="pp-start-tab" onclick="startLesson(laGameMode || \'chess\', 0)">Lessons</button>',
+        '        </div>',
         '        <div class="pp-seat-row"><div class="pp-player" id="pp-opponent"></div></div>',
         '        <div class="pp-board-zone">',
         '          <div class="pp-platform" id="pp-platform"></div>',
@@ -583,22 +632,32 @@
       '<div class="pp-player-card"><div class="pp-player-name">You</div><div class="pp-player-meta">Human player</div><div class="pp-player-score">Captured: ' + window.laCapturedGold.length + ' | Score: ' + window.laScoreGold + '</div><div class="pp-chiprail">' + chipRail(window.laScoreGold) + '</div></div>'
     ].join('');
 
-    document.getElementById('pp-arcade-title').textContent = window.laGameMode === 'chess' ? 'MI6 Royale' : 'Emerald Quest';
-    document.getElementById('pp-arcade-sub').textContent = window.laLessonActive
-      ? 'Guided lesson mode. Tap the glass card when you are ready to continue.'
-      : (window.laAIEnabled ? 'Unity-style social board play against a live AI rival.' : 'Pass-and-play strategy board with cinematic lounge styling.');
+    var theme = getThemeMeta(window.laGameMode);
+    document.getElementById('pp-arcade-title').innerHTML = theme.title;
+    document.getElementById('pp-arcade-sub').textContent = theme.subtitle;
+    document.getElementById('pp-neon-badge').textContent = theme.badge;
   }
 
   function queueAITurn(delayMs) {
     if (window.laAIMoveTimer) clearTimeout(window.laAIMoveTimer);
-    if (!window.laAIEnabled || window.laTurn !== window.laAIColor) return;
+    if (!window.laAIEnabled || window.laDemoMode || window.laTurn !== window.laAIColor) return;
     window.laAIMoveTimer = setTimeout(function() {
       window.laAIMoveTimer = null;
       executeAITurn();
     }, delayMs || 550);
   }
 
+  function queueDemoTurn(delayMs) {
+    if (window.laDemoTimer) clearTimeout(window.laDemoTimer);
+    if (!window.laDemoMode) return;
+    window.laDemoTimer = setTimeout(function() {
+      window.laDemoTimer = null;
+      executeDemoTurn();
+    }, delayMs || 700);
+  }
+
   function handleTileClick(r, c) {
+    if (window.laDemoMode) return;
     if (window.laAIEnabled && window.laTurn === window.laAIColor) return;
     var piece = window.laBoard[r] && window.laBoard[r][c];
     var valid = window.laValidMoves.find(function(move) { return move.r === r && move.c === c; });
@@ -628,33 +687,46 @@
     renderArcade();
   }
 
+  function executeBotTurn(botColor, difficulty, botName) {
+    var move = LoungeAI.getMove(window.laBoard, window.laGameMode, botColor, difficulty || 'medium');
+    if (!move) {
+      setInsight(botName + ' is out of legal moves.');
+      pushChat(botName + ' has no legal move left.', true);
+      stopAutomation();
+      window.laAIEnabled = false;
+      return false;
+    }
+
+    var legal = getValidMoves(move.from.r, move.from.c).find(function(entry) {
+      return entry.r === move.to.r && entry.c === move.to.c;
+    });
+    if (!legal) {
+      setInsight(botName + ' attempted an illegal move and automation stopped.');
+      pushChat(botName + ' failed move validation.', true);
+      stopAutomation();
+      window.laAIEnabled = false;
+      return false;
+    }
+
+    applyMove(move.from, legal);
+    if (botColor === 'holo') {
+      window.laAITone = (window.laCapturedHolo.length > window.laCapturedGold.length) ? 'pleased' : 'thinking';
+    }
+    renderArcade();
+    pushChat(botName + ' played ' + String.fromCharCode(97 + legal.c) + (8 - legal.r) + '.', true);
+    return true;
+  }
+
   function executeAITurn() {
     if (!window.laAIEnabled || window.laTurn !== window.laAIColor) return;
     try {
       window.laAITone = 'thinking';
       renderArcade();
-      var move = LoungeAI.getMove(window.laBoard, window.laGameMode, window.laAIColor, window.laAIDifficulty);
-      if (!move) {
-        window.laAIEnabled = false;
+      if (!executeBotTurn(window.laAIColor, window.laAIDifficulty, 'Nova')) {
         window.laAITone = 'annoyed';
         renderArcade();
-        setInsight('The AI is out of legal moves. You closed the position cleanly.');
-        pushChat('Nova has no legal move left. You win the session.', true);
         return;
       }
-      var legal = getValidMoves(move.from.r, move.from.c).find(function(entry) { return entry.r === move.to.r && entry.c === move.to.c; });
-      if (!legal) {
-        window.laAIEnabled = false;
-        window.laAITone = 'annoyed';
-        renderArcade();
-        setInsight('The AI tried an illegal line and the table shut it down. Restarting is recommended.');
-        pushChat('AI move validation failed. Restart the match.', true);
-        return;
-      }
-      applyMove(move.from, legal);
-      window.laAITone = (window.laCapturedHolo.length > window.laCapturedGold.length) ? 'pleased' : 'thinking';
-      renderArcade();
-      pushChat('Nova played ' + String.fromCharCode(97 + legal.c) + (8 - legal.r) + '.', true);
       if (window.laTurn === window.laAIColor) {
         window.laAITone = 'bluffing';
         renderArcade();
@@ -671,6 +743,23 @@
       renderArcade();
       setInsight('The AI routine hit an error and has been disabled for safety.');
       pushChat('AI move failed. Restart the match.', true);
+    }
+  }
+
+  function executeDemoTurn() {
+    if (!window.laDemoMode) return;
+    try {
+      var color = window.laTurn;
+      var name = color === 'gold' ? 'Atlas' : 'Nova';
+      if (!executeBotTurn(color, window.laDemoDifficulty, name)) return;
+      setInsight(name + ' is showing a demo line. Tap Play Nova when you want control.');
+      if (window.laDemoMode && hasAnyLegalMove(window.laTurn)) {
+        queueDemoTurn(window.laTurn === color ? 360 : 820);
+      }
+    } catch (error) {
+      stopAutomation();
+      setInsight('Demo mode stopped after an automation error.');
+      pushChat('Demo mode halted. Start a fresh table to continue.', true);
     }
   }
 
@@ -700,6 +789,7 @@
   function startLuxeGame(mode) {
     baseState();
     window.laGameMode = mode;
+    stopAutomation();
     ensureShell(mode);
     initGameBoard(mode);
     document.getElementById('pp-arcade-chat').textContent = '';
@@ -711,6 +801,7 @@
     baseState();
     window.laGameMode = mode;
     window.laAIEnabled = true;
+    window.laDemoMode = false;
     window.laAIDifficulty = difficulty || 'medium';
     window.laAIColor = 'holo';
     window.laAITone = 'thinking';
@@ -721,6 +812,22 @@
       ? 'Nova is online. Expect measured development on easy and sharper tactical pressure on hard.'
       : 'Nova is online. Watch for capture ladders and king races.');
     pushChat('Playing ' + mode + ' vs AI on ' + (difficulty || 'medium') + '.', true);
+  }
+
+  function startDemoGame(mode) {
+    baseState();
+    window.laGameMode = mode;
+    window.laAIEnabled = false;
+    window.laDemoMode = true;
+    window.laDemoDifficulty = 'medium';
+    ensureShell(mode);
+    initGameBoard(mode);
+    document.getElementById('pp-arcade-chat').textContent = '';
+    setInsight(mode === 'chess'
+      ? 'Demo mode is live. Atlas and Nova will trade spy-table moves for you.'
+      : 'Demo mode is live. Atlas and Nova will trade emerald-table moves for you.');
+    pushChat('Demo mode started. Sit back and watch a few sample moves.', true);
+    queueDemoTurn(700);
   }
 
   function startLesson(mode, idx) {
@@ -755,7 +862,7 @@
   }
 
   function leaveLuxeGame() {
-    if (window.laAIMoveTimer) clearTimeout(window.laAIMoveTimer);
+    stopAutomation();
     var arena = document.getElementById('luxe-arena');
     if (arena) arena.style.display = 'none';
     baseState();
@@ -778,6 +885,7 @@
   window.executeAITurn = executeAITurn;
   window.startLuxeGame = startLuxeGame;
   window.startAIGame = startAIGame;
+  window.startDemoGame = startDemoGame;
   window.startLesson = startLesson;
   window.nextLessonHint = nextLessonHint;
   window.nextLesson = nextLesson;
