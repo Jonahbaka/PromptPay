@@ -35,6 +35,7 @@ export class HoldemService {
   private readonly tables = new Map<string, HoldemTableState>();
   private readonly timelines = new Map<string, { eventType: string; ts: number; payload: Record<string, unknown> }>();
   private readonly botTimers = new Map<string, NodeJS.Timeout>();
+  private readonly restartTimers = new Map<string, NodeJS.Timeout>();
 
   constructor(memory: MemoryStore, logger: LoggerHandle) {
     this.db = memory.getDb();
@@ -60,27 +61,36 @@ export class HoldemService {
   handleMessage(clientId: string, message: Record<string, unknown>): boolean {
     const session = this.clients.get(clientId);
     if (!session) return false;
-    switch (message.type) {
-      case 'auth':
-        this.authenticate(session, String(message.token || ''));
-        return true;
-      case 'poker:join_table':
-        this.joinQuickTable(session);
-        return true;
-      case 'poker:state':
-        this.sendCurrentState(session);
-        return true;
-      case 'poker:action':
-        this.performAction(session, {
-          type: String(message.action || 'check') as HoldemActionCommand['type'],
-          amount: message.amount == null ? undefined : Number(message.amount),
-        });
-        return true;
-      case 'poker:reconnect':
-        this.reconnect(session, String(message.tableId || ''));
-        return true;
-      default:
-        return false;
+    try {
+      switch (message.type) {
+        case 'auth':
+          this.authenticate(session, String(message.token || ''));
+          return true;
+        case 'poker:join_table':
+          this.joinQuickTable(session);
+          return true;
+        case 'poker:state':
+          this.sendCurrentState(session);
+          return true;
+        case 'poker:action':
+          this.performAction(session, {
+            type: String(message.action || 'check') as HoldemActionCommand['type'],
+            amount: message.amount == null ? undefined : Number(message.amount),
+          });
+          return true;
+        case 'poker:reconnect':
+          this.reconnect(session, String(message.tableId || ''));
+          return true;
+        default:
+          return false;
+      }
+    } catch (error) {
+      const details = error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : { value: String(error) };
+      this.logger.error('Holdem service message handler failed', details);
+      session.send({ type: 'poker:error', message: 'Poker table failed to process that request' });
+      return true;
     }
   }
 
@@ -155,7 +165,19 @@ export class HoldemService {
       session.send({ type: 'poker:error', message: 'Authenticate first' });
       return;
     }
-    let table = [...this.tables.values()].find((entry) => entry.phase === 'waiting');
+    let table = [...this.tables.values()].find((entry) => entry.seats.some((seat) => seat?.userId === session.userId));
+    if (table) {
+      const seat = table.seats.find((entry) => entry?.userId === session.userId) ?? null;
+      if (seat) {
+        seat.connected = true;
+        seat.displayName = session.displayName || seat.displayName;
+        session.tableId = table.id;
+        this.pushState(table);
+        return;
+      }
+    }
+
+    table = [...this.tables.values()].find((entry) => entry.phase === 'waiting');
     if (!table) table = this.createTable('Nova Holdem');
 
     let seat = table.seats.find((entry) => entry?.userId === session.userId) ?? null;
@@ -243,6 +265,8 @@ export class HoldemService {
   }
 
   private startHand(table: HoldemTableState): void {
+    this.clearRestartTimer(table.id);
+    this.clearBotTimer(table.id);
     const activeSeats = table.seats.filter((entry): entry is HoldemSeatState => !!entry && entry.stack > 0);
     if (activeSeats.length < 2) return;
 
@@ -462,6 +486,7 @@ export class HoldemService {
   }
 
   private completeHand(table: HoldemTableState): void {
+    this.clearBotTimer(table.id);
     table.phase = 'complete';
     table.actingSeatIndex = null;
     this.db.prepare('UPDATE poker_hands SET phase = ?, board = ?, winners = ?, ended_at = ? WHERE id = ?').run(
@@ -472,29 +497,45 @@ export class HoldemService {
       table.handId,
     );
     this.pushState(table);
-    setTimeout(() => {
+    const restartTimer = setTimeout(() => {
       table.phase = 'waiting';
       this.pushState(table);
       this.startHand(table);
     }, 3000);
+    this.restartTimers.set(table.id, restartTimer);
   }
 
   private queueBot(table: HoldemTableState): void {
+    this.clearBotTimer(table.id);
     const actingSeat = table.actingSeatIndex == null ? null : table.seats[table.actingSeatIndex];
     if (!actingSeat?.isBot || table.phase === 'complete' || table.phase === 'waiting') return;
-    const previous = this.botTimers.get(table.id);
-    if (previous) clearTimeout(previous);
     actingSeat.avatarMood = 'thinking';
     this.pushState(table);
     const timer = setTimeout(() => {
       const decision = decideBotAction(table, actingSeat);
       actingSeat.avatarMood = decision.mood;
       this.emitTimeline(table, 'AVATAR_CUE', { seatIndex: actingSeat.seatIndex, mood: decision.mood, voiceLine: decision.voiceLine });
-      this.applyAction(table, actingSeat, decision.action);
+      const error = this.applyAction(table, actingSeat, decision.action);
+      if (error) {
+        this.logger.warn(`Holdem bot action rejected: ${error}`);
+        actingSeat.avatarMood = 'thinking';
+      }
       this.pushState(table);
       this.queueBot(table);
     }, 900 + Math.floor(Math.random() * 900));
     this.botTimers.set(table.id, timer);
+  }
+
+  private clearBotTimer(tableId: string): void {
+    const timer = this.botTimers.get(tableId);
+    if (timer) clearTimeout(timer);
+    this.botTimers.delete(tableId);
+  }
+
+  private clearRestartTimer(tableId: string): void {
+    const timer = this.restartTimers.get(tableId);
+    if (timer) clearTimeout(timer);
+    this.restartTimers.delete(tableId);
   }
 
   private sendCurrentState(session: PokerClientSession): void {
