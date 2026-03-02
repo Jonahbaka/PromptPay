@@ -16,11 +16,13 @@ import { TaskSchema } from '../core/types.js';
 import { authenticate } from '../auth/middleware.js';
 import type { MemoryStore } from '../memory/store.js';
 import { getServerFallback } from '../chat/fallback.js';
+import type { HoldemService } from '../lounge/holdem-service.js';
 
 export interface GatewayDependencies {
   orchestrator: Orchestrator;
   memory: MemoryStore;
   logger: LoggerHandle;
+  poker: HoldemService;
 }
 
 export function createGateway(deps: GatewayDependencies): { app: express.Application; server: Server; wss: WebSocketServer } {
@@ -60,11 +62,11 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
     res.redirect(301, '/secure/partners');
   });
 
-  // Serve careers page
+  // Public careers landing page is intentionally disabled until it reflects real openings.
   app.get('/careers', (_req: Request, res: Response) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.set('Pragma', 'no-cache');
-    res.sendFile(path.join(publicDir, 'careers.html'));
+    res.status(404).send('PromptPay is not currently publishing a public careers page.');
   });
 
   // Serve index.html with no-cache as well
@@ -471,12 +473,19 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
   wss.on('connection', (ws: WebSocket) => {
     const clientId = uuid();
     deps.logger.info(`WS client connected: ${clientId}`);
+    deps.poker.registerClient(clientId, ws, (payload) => {
+      ws.send(JSON.stringify(payload));
+    });
 
     ws.send(JSON.stringify({ type: 'connected', clientId, platform: CONFIG.platform.name }));
 
     ws.on('message', async (data: Buffer) => {
       try {
         const message = JSON.parse(data.toString());
+        if (message.type === 'auth' || String(message.type || '').startsWith('poker:')) {
+          const handled = deps.poker.handleMessage(clientId, message as Record<string, unknown>);
+          if (handled) return;
+        }
         if (message.type === 'task') {
           const parsed = TaskSchema.safeParse(message.payload);
           if (parsed.success) {
@@ -495,6 +504,7 @@ Africa (Kenya, Tanzania, Nigeria, Ghana, Uganda, Cameroon, South Africa, Ethiopi
 
     ws.on('close', () => {
       deps.logger.info(`WS client disconnected: ${clientId}`);
+      deps.poker.unregisterClient(clientId);
     });
   });
 

@@ -1,0 +1,7 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "medium"
+developer_instructions = """
+Own the smallest defensible PromptPay fix once the failing path is understood.
+Preserve environment-driven behavior and existing route contracts unless the task requires a contract change.
+Run only the validation commands that match the changed path, and keep unrelated files untouched.
+"""

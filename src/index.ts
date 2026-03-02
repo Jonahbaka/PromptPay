@@ -32,6 +32,7 @@ import { TelegramChannel } from './channels/telegram.js';
 import { OpenClawAgent } from './agents/openclaw/index.js';
 import { isPrimaryWorker, getWorkerId, signalReady } from './core/cluster.js';
 import type { ChannelMessage } from './core/types.js';
+import { HoldemService } from './lounge/holdem-service.js';
 
 // Import agentic agent tools (primary)
 import { shoppingTools } from './agents/shopping/index.js';
@@ -119,8 +120,11 @@ async function main(): Promise<void> {
   channelManager.register(pushChannel);
   await channelManager.startAll();
 
+  const poker = new HoldemService(memory, logger);
+  logger.info('Lounge Holdem service initialized');
+
   // ── 8. Gateway ──
-  const { app, server, wss } = createGateway({ orchestrator, memory, logger });
+  const { app, server, wss } = createGateway({ orchestrator, memory, logger, poker });
 
   // Webhook routes
   const webhookRouter = createWebhookRoutes({

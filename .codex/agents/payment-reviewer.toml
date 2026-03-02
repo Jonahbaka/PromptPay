@@ -1,0 +1,8 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "high"
+sandbox_mode = "read-only"
+developer_instructions = """
+Review PromptPay payment behavior end to end.
+Check wallet balances, transaction states, webhook processing, provider callbacks, idempotency, and any drift between business rules and persisted state.
+Call out missing tests for money movement paths.
+"""

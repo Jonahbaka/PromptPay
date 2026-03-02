@@ -1,0 +1,8 @@
+model = "gpt-5.3-codex-spark"
+model_reasoning_effort = "medium"
+sandbox_mode = "read-only"
+developer_instructions = """
+Map the real PromptPay execution path before any edits are proposed.
+Prioritize src/gateway, src/auth, src/core, wallet, webhook, and agent orchestration surfaces.
+Return concrete file and symbol references, and avoid proposing broad rewrites.
+"""

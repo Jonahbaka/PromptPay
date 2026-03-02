@@ -64,6 +64,7 @@
   <script src="https://js.paystack.co/v2/inline.js"></script>
   <script src="/lounge-music.js"></script>
   <script src="/lounge-ai.js"></script>
+  <script src="/lounge-poker.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -2959,7 +2960,6 @@
           <a href="#">Privacy</a>
           <a href="#">Security</a>
           <a href="#">Terms</a>
-          <a href="/careers">Careers</a>
           <a href="/partners">Partners</a>
           <a href="#">Status</a>
         </div>
@@ -4887,6 +4887,7 @@ let tokenStats = { used: 0, cached: 0, saved: 0 };
 let chatHistory = [];
 let animatedBalance = 0;
 let authToken = localStorage.getItem('promptpay_token') || null;
+window.authToken = authToken;
 let currentUser = null;
 let userKyc = null;
 let countryConfig = null;
@@ -4909,6 +4910,7 @@ function isTokenExpired(token) {
 if (authToken && isTokenExpired(authToken)) {
   localStorage.removeItem('promptpay_token');
   authToken = null;
+  window.authToken = null;
 }
 
 // ── Auth Helpers ──
@@ -4923,6 +4925,8 @@ async function authFetch(url, options = {}) {
   if (authToken && isTokenExpired(authToken)) {
     localStorage.removeItem('promptpay_token');
     authToken = null;
+    window.authToken = null;
+    window.authToken = null;
     currentUser = null;
     showAuthGate('login');
     document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
@@ -4933,6 +4937,7 @@ async function authFetch(url, options = {}) {
   if (res.status === 401) {
     localStorage.removeItem('promptpay_token');
     authToken = null;
+    window.authToken = null;
     currentUser = null;
     showAuthGate('login');
     document.getElementById('login-error').textContent = 'Your session has expired. Please sign in again.';
@@ -4987,6 +4992,7 @@ async function handleLogin(e) {
       return;
     }
     authToken = data.token;
+    window.authToken = authToken;
     currentUser = data.user;
     localStorage.setItem('promptpay_token', authToken);
     showApp();
@@ -5023,6 +5029,7 @@ async function handleRegister(e) {
       return;
     }
     authToken = data.token;
+    window.authToken = authToken;
     currentUser = data.user;
     localStorage.setItem('promptpay_token', authToken);
     showApp();
@@ -5036,6 +5043,7 @@ async function handleRegister(e) {
 
 function handleLogout() {
   authToken = null;
+  window.authToken = null;
   currentUser = null;
   localStorage.removeItem('promptpay_token');
   localStorage.removeItem('promptpay_user');
@@ -5245,6 +5253,7 @@ async function validateToken() {
     localStorage.removeItem('promptpay_token');
     localStorage.removeItem('promptpay_user');
     authToken = null;
+    window.authToken = null;
     return false;
   } catch (e) {
     // Server might be down; keep token and cached user
@@ -6072,16 +6081,28 @@ function connectWebSocket() {
   try {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     ws = new WebSocket(`${proto}//${location.host}/ws`);
-    ws.onopen = () => console.log('WS connected');
+    window.ws = ws;
+    ws.onopen = () => {
+      console.log('WS connected');
+      if (window.PromptPayPoker && typeof window.PromptPayPoker.onSocketOpen === 'function') {
+        window.PromptPayPoker.onSocketOpen();
+      }
+    };
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
         if (msg.type === 'task:result') {
           handleTaskResult(msg);
         }
+        if (window.PromptPayPoker && typeof window.PromptPayPoker.onSocketMessage === 'function') {
+          window.PromptPayPoker.onSocketMessage(msg);
+        }
       } catch(err) {}
     };
-    ws.onclose = () => setTimeout(connectWebSocket, 3000);
+    ws.onclose = () => {
+      window.ws = null;
+      setTimeout(connectWebSocket, 3000);
+    };
   } catch(e) {
     setTimeout(connectWebSocket, 5000);
   }
@@ -9604,6 +9625,7 @@ function handleTileClick(r, c) {
     laSelected = null;
     laValidMoves = [];
     renderGameBoard();
+    queueAITurn(400);
     return;
   }
 
@@ -9671,6 +9693,10 @@ function switchGameMode(mode) {
 
 function startLuxeGame(mode) {
   laAIEnabled = false;
+  if (laAIMoveTimer) {
+    clearTimeout(laAIMoveTimer);
+    laAIMoveTimer = null;
+  }
   laLessonActive = false;
   var lessonBar = document.getElementById('la-lesson-bar');
   if (lessonBar) lessonBar.classList.remove('active');
@@ -9725,6 +9751,19 @@ var laAIEnabled = false;
 var laAIDifficulty = 'medium';
 var laAIColor = 'holo';
 var laLessonActive = false;
+var laAIMoveTimer = null;
+
+function queueAITurn(delayMs) {
+  if (laAIMoveTimer) {
+    clearTimeout(laAIMoveTimer);
+    laAIMoveTimer = null;
+  }
+  if (!laAIEnabled || laTurn !== laAIColor) return;
+  laAIMoveTimer = setTimeout(function() {
+    laAIMoveTimer = null;
+    executeAITurn();
+  }, delayMs || 400);
+}
 
 function startAIGame(mode, difficulty) {
   LoungeLessons.clear();
@@ -9806,17 +9845,12 @@ function prevLesson() {
     // Block clicks during lessons (view only)
     // Actually let them interact in lessons for exploration
     _origHandleTileClick(r, c);
-    // After player moves, trigger AI turn
-    if (laAIEnabled && laTurn === laAIColor) {
-      setTimeout(function() {
-        executeAITurn();
-      }, 400);
-    }
   };
 })();
 
 function executeAITurn() {
   if (!laAIEnabled || laTurn !== laAIColor) return;
+  try {
   var move = LoungeAI.getMove(laBoard, laGameMode, laAIColor, laAIDifficulty);
   if (!move) {
     // No valid moves — player wins
@@ -9868,6 +9902,15 @@ function executeAITurn() {
   laSelected = null;
   laValidMoves = [];
   renderGameBoard();
+  } catch (e) {
+    laAIEnabled = false;
+    var chatErr = document.getElementById('la-chat');
+    if (chatErr) {
+      chatErr.innerHTML += '<div class="la-chat-msg system">AI move failed. Restart the match.</div>';
+      chatErr.scrollTop = chatErr.scrollHeight;
+    }
+    if (typeof showToast === 'function') showToast('AI move failed');
+  }
 }
 
 function toggleDiffSelect(id) {
@@ -9979,6 +10022,10 @@ async function sendGift() {
 // Send Money modal
 function showSendMoneyModal() {
   hideGiftModal();
+  if (!currentThreadUserId) {
+    showToast('Open a chat thread with a real user to send money during a game');
+    return;
+  }
   document.getElementById('la-money-amount').value = '';
   document.getElementById('la-money-fee').style.display = 'none';
   document.getElementById('la-money-send-btn').disabled = true;
@@ -9994,30 +10041,67 @@ function updateMoneyFee() {
   const bd = document.getElementById('la-money-fee');
   const btn = document.getElementById('la-money-send-btn');
   if (!val || val <= 0) { bd.style.display = 'none'; btn.disabled = true; return; }
-  const fee = Math.round(val * LA_FEE_RATE * 100) / 100;
+  const isFree = val <= 50;
+  const fee = isFree ? 0 : Math.round(val * 0.01 * 100) / 100;
   const total = Math.round((val + fee) * 100) / 100;
   document.getElementById('la-mfee-amount').textContent = '$' + val.toFixed(2);
-  document.getElementById('la-mfee-service').textContent = '$' + fee.toFixed(2);
+  document.getElementById('la-mfee-service').textContent = isFree ? 'FREE' : '$' + fee.toFixed(2);
   document.getElementById('la-mfee-total').textContent = '$' + total.toFixed(2);
   bd.style.display = '';
   btn.disabled = false;
 }
 
-function sendMoneyInGame() {
+async function sendMoneyInGame() {
   const val = parseFloat(document.getElementById('la-money-amount').value);
-  if (!val || val <= 0) return;
-  const fee = Math.round(val * LA_FEE_RATE * 100) / 100;
-  const total = (val + fee).toFixed(2);
+  if (!val || val <= 0 || !currentThreadUserId) {
+    if (!currentThreadUserId) showToast('Open a chat thread with a real user first');
+    return;
+  }
   const userName = (currentUser && currentUser.name) ? currentUser.name.split(' ')[0] : 'You';
+  const btn = document.getElementById('la-money-send-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
 
-  const chat = document.getElementById('la-chat');
-  chat.innerHTML += `<div class="la-chat-msg system">\u{1F4B0} ${userName} sent $${val.toFixed(2)} (fee: $${fee.toFixed(2)})</div>`;
-  chat.scrollTop = chat.scrollHeight;
+  try {
+    const res = await authFetch(API_BASE + '/api/wallet/transfer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipientId: currentThreadUserId,
+        amount: val,
+        note: 'Lounge game transfer'
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Transfer failed');
+      return;
+    }
 
-  if (typeof showToast === 'function') showToast(`\u{1F4B0} $${val.toFixed(2)} sent! (Total charged: $${total})`);
+    await authFetch(API_BASE + '/api/chat/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recipientId: currentThreadUserId,
+        message: '\u{1F4B0} Sent you $' + val.toFixed(2) + ' during the Lounge game',
+        messageType: 'payment'
+      })
+    });
 
-  triggerCheer(50);
-  hideSendMoneyModal();
+    const totalDebited = Number(data.totalDebited || val).toFixed(2);
+    const chat = document.getElementById('la-chat');
+    chat.innerHTML += `<div class="la-chat-msg system">\u{1F4B0} ${userName} sent $${val.toFixed(2)}. Wallet charged: $${totalDebited}. Remaining balance: $${Number(data.balanceAfter || 0).toFixed(2)}</div>`;
+    chat.scrollTop = chat.scrollHeight;
+
+    if (typeof showToast === 'function') showToast(`\u{1F4B0} $${val.toFixed(2)} sent. Balance: $${Number(data.balanceAfter || 0).toFixed(2)}`);
+    triggerCheer(50);
+    hideSendMoneyModal();
+  } catch (e) {
+    showToast('Network error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Send Money';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -1,0 +1,23 @@
+[agents]
+max_threads = 6
+max_depth = 1
+
+[agents.explorer]
+description = "Read-only codepath explorer for PromptPay routes, agents, payments, and auth flows."
+config_file = "agents/explorer.toml"
+
+[agents.worker]
+description = "Implementation-focused PromptPay engineer for minimal, production-defensible fixes."
+config_file = "agents/worker.toml"
+
+[agents.security_reviewer]
+description = "Security reviewer for PromptPay auth, admin, wallet, webhook, and payment integrity risks."
+config_file = "agents/security-reviewer.toml"
+
+[agents.payment_reviewer]
+description = "Payments reviewer for transaction flow, ledger consistency, webhook handling, and platform funding logic."
+config_file = "agents/payment-reviewer.toml"
+
+[agents.performance_reviewer]
+description = "Performance reviewer for PromptPay gateway throughput, websocket behavior, database hotspots, and background processing latency."
+config_file = "agents/performance-reviewer.toml"
