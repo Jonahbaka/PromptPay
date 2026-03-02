@@ -6,15 +6,22 @@
     injected = true;
     var style = document.createElement('style');
     style.textContent = [
-      '#luxe-arena.pp-arcade{background:radial-gradient(circle at 20% 0%,rgba(59,130,246,.18),transparent 26%),radial-gradient(circle at 80% 0%,rgba(16,185,129,.16),transparent 30%),linear-gradient(180deg,#05070d,#09131f 46%,#05070d 100%);color:#e5eef8}',
+      '#luxe-arena.pp-arcade{background:radial-gradient(circle at 20% 0%,rgba(59,130,246,.18),transparent 26%),radial-gradient(circle at 80% 0%,rgba(16,185,129,.16),transparent 30%),linear-gradient(180deg,#05070d,#09131f 46%,#05070d 100%);color:#e5eef8;overflow:auto}',
+      '#luxe-arena.pp-arcade *{box-sizing:border-box}',
       '#luxe-arena.pp-arcade .pp-arcade-shell{min-height:100%;display:flex;flex-direction:column}',
-      '#luxe-arena.pp-arcade .pp-arcade-topbar{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid rgba(148,163,184,.14);background:rgba(6,10,18,.72);backdrop-filter:blur(10px)}',
+      '#luxe-arena.pp-arcade .pp-arcade-topbar{display:flex;align-items:center;gap:10px;padding:14px 18px calc(14px + env(safe-area-inset-top,0px)) 18px;border-bottom:1px solid rgba(148,163,184,.14);background:rgba(6,10,18,.72);backdrop-filter:blur(10px)}',
+      '#luxe-arena.pp-arcade .pp-topbar-actions{display:flex;align-items:center;gap:10px;margin-left:auto}',
       '#luxe-arena.pp-arcade .pp-arcade-title{flex:1;font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}',
       '#luxe-arena.pp-arcade .pp-arcade-sub{font-size:11px;color:#93a4b8;margin-top:3px}',
       '#luxe-arena.pp-arcade .pp-arcade-btn{width:42px;height:42px;border-radius:50%;border:1px solid rgba(148,163,184,.18);background:rgba(15,23,42,.7);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}',
-      '#luxe-arena.pp-arcade .pp-arcade-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;padding:18px;flex:1;min-height:0}',
+      '#luxe-arena.pp-arcade .pp-arcade-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;padding:18px;flex:1;min-height:0;max-width:100%;overflow:hidden}',
       '#luxe-arena.pp-arcade .pp-scene{position:relative;min-height:720px;border-radius:30px;padding:22px;background:linear-gradient(180deg,rgba(15,23,42,.58),rgba(2,6,23,.84));border:1px solid rgba(148,163,184,.14);overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.42)}',
       '#luxe-arena.pp-arcade .pp-scene:before{content:"";position:absolute;inset:-10% 8% auto;height:40%;background:radial-gradient(circle,rgba(255,255,255,.08),transparent 68%);filter:blur(28px);pointer-events:none}',
+      '#luxe-arena.pp-arcade .pp-scene:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(190,24,93,.08),transparent 16%,transparent 84%,rgba(14,165,233,.08));pointer-events:none}',
+      '#luxe-arena.pp-arcade .pp-vegas-wall{position:absolute;top:18px;bottom:18px;width:70px;border-radius:28px;background:linear-gradient(180deg,rgba(91,33,182,.1),rgba(30,41,59,.42));border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 0 26px rgba(251,191,36,.06),0 14px 40px rgba(0,0,0,.22);pointer-events:none}',
+      '#luxe-arena.pp-arcade .pp-vegas-wall.left{left:14px}',
+      '#luxe-arena.pp-arcade .pp-vegas-wall.right{right:14px}',
+      '#luxe-arena.pp-arcade .pp-neon-badge{position:absolute;top:26px;left:50%;transform:translateX(-50%);z-index:3;padding:8px 16px;border-radius:999px;background:rgba(7,13,24,.78);border:1px solid rgba(251,191,36,.32);box-shadow:0 0 24px rgba(251,191,36,.12);font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#f8d991}',
       '#luxe-arena.pp-arcade .pp-stage{position:relative;height:100%;display:flex;flex-direction:column;justify-content:space-between}',
       '#luxe-arena.pp-arcade .pp-seat-row{display:flex;justify-content:center;z-index:2}',
       '#luxe-arena.pp-arcade .pp-player{display:flex;flex-direction:column;align-items:center;gap:12px}',
@@ -37,10 +44,10 @@
       '#luxe-arena.pp-arcade .pp-player-name{font-size:15px;font-weight:800;color:#fff}',
       '#luxe-arena.pp-arcade .pp-player-meta{font-size:12px;color:#8fb6d9;margin-top:4px}',
       '#luxe-arena.pp-arcade .pp-player-score{font-size:13px;color:#cbd5e1;margin-top:6px}',
-      '#luxe-arena.pp-arcade .pp-board-zone{position:relative;display:flex;justify-content:center;align-items:center;padding:28px 0 12px}',
+      '#luxe-arena.pp-arcade .pp-board-zone{position:relative;display:flex;justify-content:center;align-items:center;padding:56px 24px 18px}',
       '#luxe-arena.pp-arcade .pp-platform{position:absolute;inset:30px 7% 14px;border-radius:50%/30%;transform:rotateX(64deg);background:radial-gradient(circle at 50% 50%,rgba(20,83,45,.92) 0,rgba(7,55,45,.98) 52%,rgba(43,29,11,.98) 67%,rgba(11,11,13,1) 79%);box-shadow:0 36px 84px rgba(0,0,0,.58),inset 0 0 40px rgba(255,255,255,.07)}',
       '#luxe-arena.pp-arcade .pp-platform.checkers{background:radial-gradient(circle at 50% 50%,rgba(6,95,70,.92) 0,rgba(6,78,59,.98) 50%,rgba(28,25,23,.98) 68%,rgba(10,10,10,1) 80%)}',
-      '#luxe-arena.pp-arcade .pp-board-shell{position:relative;z-index:2;width:min(78vw,520px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 42px rgba(0,0,0,.36)}',
+      '#luxe-arena.pp-arcade .pp-board-shell{position:relative;z-index:2;width:min(78vw,520px);max-width:calc(100vw - 110px);aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);border-radius:24px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow:0 18px 42px rgba(0,0,0,.36)}',
       '#luxe-arena.pp-arcade .pp-square{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .14s ease,background .2s ease}',
       '#luxe-arena.pp-arcade .pp-square.light{background:linear-gradient(135deg,#d7d2c8,#b7b0a5)}',
       '#luxe-arena.pp-arcade .pp-square.dark{background:linear-gradient(135deg,#2b313a,#161d26)}',
@@ -55,22 +62,24 @@
       '#luxe-arena.pp-arcade .pp-checker.crimson{background:linear-gradient(180deg,#fb7185,#be123c)}',
       '#luxe-arena.pp-arcade .pp-checker.king:after{content:"K";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;color:#0f172a}',
       '#luxe-arena.pp-arcade .pp-piece svg{width:100%;height:100%;filter:drop-shadow(0 6px 12px rgba(0,0,0,.34))}',
-      '#luxe-arena.pp-arcade .pp-sidepanel{display:flex;flex-direction:column;gap:14px;min-height:0}',
+      '#luxe-arena.pp-arcade .pp-sidepanel{display:flex;flex-direction:column;gap:14px;min-height:0;min-width:0}',
       '#luxe-arena.pp-arcade .pp-panel{padding:14px 16px;border-radius:22px;background:rgba(2,6,23,.72);border:1px solid rgba(148,163,184,.14)}',
       '#luxe-arena.pp-arcade .pp-panel-title{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8fb6d9;margin-bottom:8px}',
       '#luxe-arena.pp-arcade .pp-insight{font-size:13px;line-height:1.55;color:#dbe7f5;min-height:60px}',
+      '#luxe-arena.pp-arcade .pp-action-stack{display:flex;flex-direction:column;gap:10px}',
+      '#luxe-arena.pp-arcade .pp-action-wide{width:100%;justify-content:center;display:flex;align-items:center;gap:8px}',
       '#luxe-arena.pp-arcade .pp-chat{flex:1;min-height:140px;max-height:240px;overflow:auto;display:flex;flex-direction:column;gap:8px}',
-      '#luxe-arena.pp-arcade .pp-chat-msg{padding:10px 12px;border-radius:14px;background:rgba(15,23,42,.64);font-size:12px;color:#d7e4f3}',
+      '#luxe-arena.pp-arcade .pp-chat-msg{padding:10px 12px;border-radius:14px;background:rgba(15,23,42,.64);font-size:12px;color:#d7e4f3;word-break:break-word}',
       '#luxe-arena.pp-arcade .pp-chat-msg.system{color:#93a4b8;font-style:italic}',
-      '#luxe-arena.pp-arcade .pp-chat-compose{display:flex;gap:8px;margin-top:10px}',
-      '#luxe-arena.pp-arcade .pp-chat-compose input{flex:1;border:none;border-radius:16px;padding:12px 14px;background:rgba(15,23,42,.74);color:#fff;outline:none}',
-      '#luxe-arena.pp-arcade .pp-chat-compose button{border:none;border-radius:16px;padding:0 14px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:700;cursor:pointer}',
+      '#luxe-arena.pp-arcade .pp-chat-compose{display:flex;gap:8px;margin-top:10px;max-width:100%}',
+      '#luxe-arena.pp-arcade .pp-chat-compose input{flex:1;min-width:0;border:none;border-radius:16px;padding:12px 14px;background:rgba(15,23,42,.74);color:#fff;outline:none}',
+      '#luxe-arena.pp-arcade .pp-chat-compose button{border:none;border-radius:16px;padding:0 14px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:700;cursor:pointer;flex:0 0 auto}',
       '#luxe-arena.pp-arcade .pp-chiprail{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:8px}',
       '#luxe-arena.pp-arcade .pp-chip{width:26px;height:10px;border-radius:999px;border:1px solid rgba(255,255,255,.24);box-shadow:0 4px 8px rgba(0,0,0,.24)}',
       '#luxe-arena.pp-arcade .pp-chip.gold{background:linear-gradient(180deg,#fde68a,#b45309)}',
       '#luxe-arena.pp-arcade .pp-chip.blue{background:linear-gradient(180deg,#60a5fa,#1d4ed8)}',
       '#luxe-arena.pp-arcade .pp-chip.red{background:linear-gradient(180deg,#fb7185,#be123c)}',
-      '#luxe-arena.pp-arcade .pp-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px;position:relative;z-index:2}',
+      '#luxe-arena.pp-arcade .pp-controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px;position:relative;z-index:2;padding-bottom:env(safe-area-inset-bottom,0px)}',
       '#luxe-arena.pp-arcade .pp-control{border:none;border-radius:16px;padding:10px 14px;background:rgba(15,23,42,.7);color:#e5eef8;font-weight:700;cursor:pointer;border:1px solid rgba(148,163,184,.14)}',
       '#luxe-arena.pp-arcade .pp-control.primary{background:linear-gradient(135deg,#0ea5e9,#2563eb);border:none}',
       '#luxe-arena.pp-arcade .pp-lesson-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:14;padding:24px;background:rgba(2,6,23,.16)}',
@@ -80,9 +89,10 @@
       '#luxe-arena.pp-arcade .pp-lesson-card p{font-size:13px;line-height:1.65;color:#dbe7f5;margin:0 0 12px}',
       '#luxe-arena.pp-arcade .pp-lesson-card small{display:block;color:#93a4b8;letter-spacing:.08em;text-transform:uppercase}',
       '#luxe-arena.pp-arcade .pp-lesson-card.dissolve{opacity:0;transform:scale(.94);filter:blur(14px)}',
-      '#luxe-arena.pp-arcade .pp-mode-note{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:2;padding:10px 14px;border-radius:16px;background:rgba(15,23,42,.76);border:1px solid rgba(148,163,184,.14);font-size:12px;color:#dce7f6}',
+      '#luxe-arena.pp-arcade .pp-mode-note{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:2;padding:10px 14px;border-radius:16px;background:rgba(15,23,42,.76);border:1px solid rgba(148,163,184,.14);font-size:12px;color:#dce7f6;max-width:min(520px,calc(100vw - 72px));text-align:center}',
+      '#luxe-arena.pp-arcade .pp-floating-gift{position:fixed;right:max(16px,env(safe-area-inset-right,0px) + 12px);bottom:max(18px,env(safe-area-inset-bottom,0px) + 12px);z-index:10001;border:none;border-radius:999px;padding:14px 18px;background:linear-gradient(135deg,#f59e0b,#ec4899);color:#fff;font-weight:800;box-shadow:0 18px 36px rgba(0,0,0,.32);cursor:pointer}',
       '@media (max-width:1024px){#luxe-arena.pp-arcade .pp-arcade-main{grid-template-columns:1fr}#luxe-arena.pp-arcade .pp-scene{min-height:640px}#luxe-arena.pp-arcade .pp-sidepanel{order:2}}',
-      '@media (max-width:720px){#luxe-arena.pp-arcade .pp-arcade-main{padding:12px;gap:12px}#luxe-arena.pp-arcade .pp-scene{padding:16px;min-height:600px}#luxe-arena.pp-arcade .pp-avatar{width:86px;height:86px}#luxe-arena.pp-arcade .pp-player-card{min-width:170px;padding:12px}#luxe-arena.pp-arcade .pp-board-shell{width:min(92vw,420px)}}'
+      '@media (max-width:720px){#luxe-arena.pp-arcade .pp-arcade-topbar{padding-left:12px;padding-right:12px}#luxe-arena.pp-arcade .pp-arcade-main{padding:12px;gap:12px}#luxe-arena.pp-arcade .pp-scene{padding:14px;min-height:580px;border-radius:24px}#luxe-arena.pp-arcade .pp-avatar{width:86px;height:86px}#luxe-arena.pp-arcade .pp-player-card{min-width:0;width:min(100%,220px);padding:12px}#luxe-arena.pp-arcade .pp-board-zone{padding:62px 8px 20px}#luxe-arena.pp-arcade .pp-board-shell{width:min(100%,420px);max-width:calc(100vw - 44px)}#luxe-arena.pp-arcade .pp-mode-note{bottom:88px;max-width:calc(100vw - 32px)}#luxe-arena.pp-arcade .pp-vegas-wall{width:26px;top:64px;bottom:120px}#luxe-arena.pp-arcade .pp-chat-compose{flex-wrap:wrap}#luxe-arena.pp-arcade .pp-chat-compose button{min-height:42px}#luxe-arena.pp-arcade .pp-controls{justify-content:stretch}#luxe-arena.pp-arcade .pp-control{flex:1 1 140px}#luxe-arena.pp-arcade .pp-neon-badge{top:16px;font-size:10px;letter-spacing:.12em}}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -481,10 +491,16 @@
         '      <div class="pp-arcade-title" id="pp-arcade-title">Strategy Lounge</div>',
         '      <div class="pp-arcade-sub" id="pp-arcade-sub">Cinematic board play with human and AI avatars.</div>',
         '    </div>',
-        '    <button class="pp-arcade-btn" onclick="leaveLuxeGame()" title="Leave">&#10005;</button>',
+        '    <div class="pp-topbar-actions">',
+        '      <button class="pp-arcade-btn" onclick="showGiftModal()" title="Gift a Drink">&#127870;</button>',
+        '      <button class="pp-arcade-btn" onclick="leaveLuxeGame()" title="Leave">&#10005;</button>',
+        '    </div>',
         '  </div>',
         '  <div class="pp-arcade-main">',
         '    <div class="pp-scene">',
+        '      <div class="pp-vegas-wall left"></div>',
+        '      <div class="pp-vegas-wall right"></div>',
+        '      <div class="pp-neon-badge">PromptPay Vegas Social Lounge</div>',
         '      <div class="pp-stage">',
         '        <div class="pp-seat-row"><div class="pp-player" id="pp-opponent"></div></div>',
         '        <div class="pp-board-zone">',
@@ -512,6 +528,13 @@
         '      <div class="pp-panel">',
         '        <div class="pp-panel-title">Table Brief</div>',
         '        <div class="pp-insight" id="pp-arcade-insight">Opening the lounge…</div>',
+      '      </div>',
+        '      <div class="pp-panel">',
+        '        <div class="pp-panel-title">Table Service</div>',
+        '        <div class="pp-action-stack">',
+        '          <button class="pp-control pp-action-wide" onclick="showGiftModal()">&#127870; Gift a Drink</button>',
+        '          <button class="pp-control pp-action-wide" onclick="showSendMoneyModal()">&#128176; Send Money</button>',
+        '        </div>',
         '      </div>',
         '      <div class="pp-panel">',
         '        <div class="pp-panel-title">Table Talk</div>',
@@ -523,7 +546,8 @@
         '      </div>',
         '    </div>',
         '  </div>',
-        '</div>'
+        '</div>',
+        '<button class="pp-floating-gift" onclick="showGiftModal()">Gift a Drink</button>'
       ].join('');
       arena.dataset.ppArcadeMounted = '1';
     }
@@ -678,6 +702,8 @@
     window.laGameMode = mode;
     ensureShell(mode);
     initGameBoard(mode);
+    document.getElementById('pp-arcade-chat').textContent = '';
+    setInsight('Join the table to start a social play session. Invite a friend or restart against Nova at any time.');
     pushChat((mode === 'chess' ? 'Chess' : 'Checkers') + ' table is ready. Invite a friend or switch to AI anytime.', true);
   }
 
@@ -690,6 +716,7 @@
     window.laAITone = 'thinking';
     ensureShell(mode);
     initGameBoard(mode);
+    document.getElementById('pp-arcade-chat').textContent = '';
     setInsight(mode === 'chess'
       ? 'Nova is online. Expect measured development on easy and sharper tactical pressure on hard.'
       : 'Nova is online. Watch for capture ladders and king races.');
