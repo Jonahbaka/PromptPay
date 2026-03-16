@@ -1,16 +1,16 @@
 {
   "name": "PromptPay",
   "short_name": "PromptPay",
-  "description": "AI-Powered Payments Platform — Send money, pay bills, and manage finances using natural language commands.",
-  "start_url": "/?source=pwa",
+  "description": "PromptPay is the operating system for payment agent networks. Manage onboarding, commissions, observability, and licensed rail integrations.",
+  "start_url": "/",
   "id": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
-  "orientation": "portrait",
-  "background_color": "#06060a",
-  "theme_color": "#06060a",
+  "orientation": "portrait-primary",
+  "background_color": "#07111a",
+  "theme_color": "#09121b",
   "scope": "/",
-  "categories": ["finance", "utilities"],
+  "categories": ["business", "finance", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -31,12 +31,16 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
+  "shortcuts": [
     {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "name": "Docs",
+      "short_name": "Docs",
+      "url": "/api/v1/docs"
+    },
+    {
+      "name": "Sign In",
+      "short_name": "Sign In",
+      "url": "/#access"
     }
   ],
   "prefer_related_applications": false,

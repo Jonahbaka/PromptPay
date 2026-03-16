@@ -2,111 +2,113 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0d1117">
-  <title>PromptPay — Offline</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#09121b">
+  <title>PromptPay | Offline</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      color-scheme: dark;
+      --surface: rgba(12, 22, 32, 0.96);
+      --border: rgba(140, 170, 194, 0.16);
+      --text: #f2f7fb;
+      --muted: #91a4b7;
+      --accent: #17bf80;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1.5rem;
+      font-family: "Aptos", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(23, 191, 128, 0.14), transparent 34%),
+        linear-gradient(180deg, #07111a 0%, #040d15 100%);
+      color: var(--text);
+    }
+
+    .card {
+      width: min(100%, 28rem);
+      padding: 2rem;
+      border-radius: 1.6rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 60px rgba(3, 8, 14, 0.42);
+    }
+
+    .eyebrow {
+      margin: 0 0 0.65rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 2.8rem);
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+    }
+
+    p {
+      margin: 1rem 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .actions {
       display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    button,
+    a {
+      min-height: 2.9rem;
+      padding: 0 1.1rem;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      text-align: center;
-      padding: 24px;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
     }
-    .container { max-width: 400px; }
-    .icon {
-      width: 80px; height: 80px; margin: 0 auto 24px;
-      background: linear-gradient(135deg, #7c3aed, #6d28d9);
-      border-radius: 20px; display: flex; align-items: center; justify-content: center;
+
+    button {
+      background: linear-gradient(135deg, #17bf80, #12d39a);
+      color: #02130d;
     }
-    .icon svg { width: 40px; height: 40px; }
-    h1 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
-    p { color: #8b949e; font-size: 15px; line-height: 1.5; margin-bottom: 24px; }
-    .retry-btn {
-      display: inline-block; padding: 14px 32px;
-      background: linear-gradient(135deg, #7c3aed, #6d28d9);
-      color: #fff; border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 600; cursor: pointer;
-      transition: transform 0.15s, opacity 0.15s;
+
+    a {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(140, 170, 194, 0.16);
+      color: var(--text);
     }
-    .retry-btn:hover { transform: scale(1.03); }
-    .retry-btn:active { transform: scale(0.97); opacity: 0.9; }
-    .retry-btn.loading { opacity: 0.6; pointer-events: none; }
-    .status { margin-top: 20px; font-size: 13px; color: #484f58; }
-    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f85149; margin-right: 6px; vertical-align: middle; }
-    .dot.online { background: #3fb950; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="1" y1="1" x2="23" y2="23"/>
-        <path d="M16.72 11.06A10.94 10.94 0 0119 12.55"/>
-        <path d="M5 12.55a10.94 10.94 0 015.17-2.39"/>
-        <path d="M10.71 5.05A16 16 0 0122.56 9"/>
-        <path d="M1.42 9a15.91 15.91 0 014.7-2.88"/>
-        <path d="M8.53 16.11a6 6 0 016.95 0"/>
-        <line x1="12" y1="20" x2="12.01" y2="20"/>
-      </svg>
-    </div>
-    <h1>You're offline</h1>
-    <p>Can't reach PromptPay right now. Check your internet connection and try again.</p>
-    <button class="retry-btn" id="retryBtn" onclick="retryConnection()">Retry</button>
-    <div class="status">
-      <span class="dot" id="statusDot"></span>
-      <span id="statusText">No connection</span>
+  <div class="card">
+    <p class="eyebrow">PromptPay status</p>
+    <h1>You are offline</h1>
+    <p>
+      PromptPay's operator surface, docs, and network views will resume when connectivity returns.
+      Your browser can retry automatically as soon as the network is back.
+    </p>
+    <div class="actions">
+      <button type="button" onclick="window.location.reload()">Retry</button>
+      <a href="mailto:info@upromptpay.com">Contact PromptPay</a>
     </div>
   </div>
-  <script>
-    // Auto-retry when connection comes back
-    window.addEventListener('online', () => { window.location.reload(); });
-
-    // Check connection status
-    function updateStatus() {
-      const dot = document.getElementById('statusDot');
-      const text = document.getElementById('statusText');
-      if (navigator.onLine) {
-        dot.classList.add('online');
-        text.textContent = 'Connection restored — reloading...';
-        setTimeout(() => window.location.reload(), 500);
-      } else {
-        dot.classList.remove('online');
-        text.textContent = 'No connection';
-      }
-    }
-
-    function retryConnection() {
-      const btn = document.getElementById('retryBtn');
-      btn.textContent = 'Retrying...';
-      btn.classList.add('loading');
-      // Try to actually fetch the page
-      fetch('/', { cache: 'no-store' })
-        .then(res => {
-          if (res.ok) window.location.reload();
-          else throw new Error('Server error');
-        })
-        .catch(() => {
-          btn.textContent = 'Retry';
-          btn.classList.remove('loading');
-          updateStatus();
-        });
-    }
-
-    updateStatus();
-    // Periodic auto-retry every 5 seconds
-    setInterval(() => {
-      if (navigator.onLine) {
-        fetch('/health', { cache: 'no-store' })
-          .then(res => { if (res.ok) window.location.reload(); })
-          .catch(() => {});
-      }
-    }, 5000);
-  </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /secure/
 Disallow: /cpanel-*
 Disallow: /webhooks/
 
