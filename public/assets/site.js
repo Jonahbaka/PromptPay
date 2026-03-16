@@ -12,6 +12,7 @@ const authPanels = [...document.querySelectorAll("[data-auth-panel]")];
 
 const STORAGE_TOKEN = "promptpay_token";
 const STORAGE_USER = "promptpay_user";
+const OPERATOR_ROLES = new Set(["owner", "partner_admin"]);
 
 function setStatus(message, isError = false) {
   authStatus.textContent = message;
@@ -58,13 +59,14 @@ function bindAuthTriggers(scope = document) {
 }
 
 function getConsoleHref(user) {
+  if (!user || !user.role) return "/";
   if (user.role === "owner") return "/secure/admin";
   if (user.role === "partner_admin") return "/secure/partners";
   return "/api/v1/docs";
 }
 
 function shouldRedirectAfterAuth(user) {
-  return user.role === "owner" || user.role === "partner_admin";
+  return Boolean(user?.role && OPERATOR_ROLES.has(user.role));
 }
 
 function renderLoggedOut() {
@@ -116,9 +118,10 @@ function persistSession(user, token) {
   localStorage.setItem(STORAGE_USER, JSON.stringify(user));
   if (shouldRedirectAfterAuth(user)) {
     window.location.assign(getConsoleHref(user));
-    return;
+    return true;
   }
   renderLoggedIn(user);
+  return false;
 }
 
 async function handleSignIn() {
@@ -140,7 +143,8 @@ async function handleSignIn() {
       method: "POST",
       body: JSON.stringify({ email, password })
     });
-    persistSession(payload.user, payload.token);
+    const redirected = persistSession(payload.user, payload.token);
+    if (redirected) return;
     hideAuth();
     document.getElementById("access").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
@@ -172,7 +176,8 @@ async function handleRegister() {
       method: "POST",
       body: JSON.stringify({ displayName, email, password, country })
     });
-    persistSession(payload.user, payload.token);
+    const redirected = persistSession(payload.user, payload.token);
+    if (redirected) return;
     hideAuth();
     document.getElementById("access").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
