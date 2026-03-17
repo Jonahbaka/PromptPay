@@ -562,23 +562,44 @@
     <section class="content-section content-section-alt" id="access">
       <div class="section-shell access-shell">
         <div class="section-intro">
-          <p class="eyebrow">Operator access</p>
-          <h2>Sign in to an existing console or start a new network</h2>
+          <p class="eyebrow">Access</p>
+          <h2>Open the user app or enter an operator portal</h2>
           <p>
-            Existing admin and partner accounts continue to work. New teams can create starter access and move into onboarding with PromptPay.
+            PromptPay now has separate surfaces: the mobile-first user app for wallet and airtime,
+            plus dedicated partner and admin portals for network operations.
           </p>
         </div>
         <aside class="surface-card session-card" id="session-card" aria-live="polite">
           <p class="session-kicker">Workspace access</p>
-          <h3 id="session-title">Use your operator credentials</h3>
+          <h3 id="session-title">Choose your PromptPay workspace</h3>
           <p id="session-copy">
-            Sign in to existing admin or partner environments, or create access to start a new network rollout.
+            Open the user app for wallet and airtime, or sign in to partner and admin portals for network operations.
           </p>
           <div class="session-actions" id="session-actions">
             <button class="button button-primary" type="button" data-open-auth="signin">Sign In</button>
             <button class="button button-secondary" type="button" data-open-auth="register">Start Network</button>
           </div>
         </aside>
+        <div class="access-grid" aria-label="Portal directory">
+          <article class="access-option">
+            <p class="access-label">PromptPay App</p>
+            <h3>User wallet and airtime</h3>
+            <p>Fast native-style app for wallet balance, airtime, data, transactions, and PWA install.</p>
+            <a class="button button-secondary" href="/app">Open App</a>
+          </article>
+          <article class="access-option">
+            <p class="access-label">Partner Portal</p>
+            <h3>Agent network operations</h3>
+            <p>Use the partner workspace for rollout, revenue visibility, API usage, and partner controls.</p>
+            <a class="button button-secondary" href="/secure/partners">Open Partner Portal</a>
+          </article>
+          <article class="access-option">
+            <p class="access-label">Admin Portal</p>
+            <h3>Platform control plane</h3>
+            <p>Use the owner console for provider health, governance, analytics, and network-wide oversight.</p>
+            <a class="button button-secondary" href="/secure/admin">Open Admin Portal</a>
+          </article>
+        </div>
       </div>
     </section>
     <section class="final-cta" id="demo">
@@ -635,9 +656,9 @@
     <form class="auth-shell" method="dialog">
       <button class="dialog-close" type="button" aria-label="Close" data-close-auth>Close</button>
       <div class="auth-copy">
-        <p class="eyebrow">Operator access</p>
-        <h2 id="auth-title">Secure access for network teams</h2>
-        <p>Sign in to an existing workspace or create starter access for a new network rollout.</p>
+        <p class="eyebrow">PromptPay access</p>
+        <h2 id="auth-title">Secure access for users and network teams</h2>
+        <p>Sign in to the user app, partner portal, or admin workspace, or create starter access for a new network rollout.</p>
       </div>
       <div class="auth-tabs" role="tablist" aria-label="Authentication modes">
         <button class="auth-tab auth-tab-active" type="button" role="tab" aria-selected="true" data-auth-tab="signin">Sign In</button>

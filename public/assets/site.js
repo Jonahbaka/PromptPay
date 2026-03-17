@@ -13,6 +13,7 @@ const authPanels = [...document.querySelectorAll("[data-auth-panel]")];
 const STORAGE_TOKEN = "promptpay_token";
 const STORAGE_USER = "promptpay_user";
 const OPERATOR_ROLES = new Set(["owner", "partner_admin"]);
+const USER_ROLE = "user";
 const TEST_ACCESS_LABELS = {
   user: "Test User",
   owner: "Test Admin",
@@ -77,17 +78,17 @@ function getConsoleHref(user) {
   if (!user || !user.role) return "/";
   if (user.role === "owner") return "/secure/admin";
   if (user.role === "partner_admin") return "/secure/partners";
-  return "/api/v1/docs";
+  return "/app";
 }
 
 function shouldRedirectAfterAuth(user) {
-  return Boolean(user?.role && OPERATOR_ROLES.has(user.role));
+  return Boolean(user?.role && (OPERATOR_ROLES.has(user.role) || user.role === USER_ROLE));
 }
 
 function renderLoggedOut() {
-  sessionTitle.textContent = "Use your operator credentials";
+  sessionTitle.textContent = "Choose your PromptPay workspace";
   sessionCopy.textContent =
-    "Sign in to existing admin or partner environments, use the seeded test accounts, or create access to start a new network rollout.";
+    "Open the user app for wallet and airtime, or sign in to partner and admin portals for network operations.";
   sessionActions.innerHTML = `
     <button class="button button-primary" type="button" data-open-auth="signin">Sign In</button>
     <button class="button button-secondary" type="button" data-open-auth="register">Start Network</button>
@@ -101,12 +102,13 @@ function renderLoggedOut() {
 
 function renderLoggedIn(user) {
   sessionTitle.textContent = `Welcome back, ${user.displayName || user.email}`;
-  sessionCopy.textContent =
-    user.role === "user"
-      ? "Starter access is active. Open the docs, review integration flows, and continue onboarding with PromptPay."
-      : "Your operator console is ready. Open the workspace to manage network operations and access controls.";
+  const isUser = user.role === USER_ROLE;
+  const primaryLabel = isUser ? "Open App" : "Open Portal";
+  sessionCopy.textContent = isUser
+    ? "Your PromptPay app is ready for wallet balance, airtime, data, transactions, and installable mobile access."
+    : "Your operator portal is ready for network operations, partner controls, and administrative workflows.";
   sessionActions.innerHTML = `
-    <a class="button button-primary" href="${getConsoleHref(user)}">Open Console</a>
+    <a class="button button-primary" href="${getConsoleHref(user)}">${primaryLabel}</a>
     <button class="button button-secondary" type="button" id="logout-button">Log Out</button>
   `;
   document.getElementById("logout-button").addEventListener("click", () => {

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050914">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PromptPay">
+  <title>PromptPay App</title>
+  <meta
+    name="description"
+    content="PromptPay user app for wallet balance, airtime, data, transactions, and installable mobile access."
+  >
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="app-root">
+    <section class="auth-view" id="auth-view">
+      <div class="auth-card">
+        <div class="brand-row">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <p class="eyebrow">PromptPay App</p>
+            <h1>Wallet, airtime, and transactions in one fast mobile shell.</h1>
+          </div>
+        </div>
+        <p class="auth-copy">
+          Sign in to your user account to manage wallet balance, buy airtime or data, review transactions,
+          and install PromptPay as a PWA.
+        </p>
+        <form id="login-form" class="auth-form" novalidate>
+          <label class="field">
+            <span>Email</span>
+            <input id="login-email" type="email" autocomplete="username" required>
+          </label>
+          <label class="field">
+            <span>Password</span>
+            <input id="login-password" type="password" autocomplete="current-password" required>
+          </label>
+          <div class="status" id="auth-status" aria-live="polite"></div>
+          <div class="auth-actions">
+            <button class="button button-primary" id="login-submit" type="submit">Sign In</button>
+            <button class="button button-secondary" id="test-user-access" type="button">Use Test User</button>
+            <a class="button button-secondary" href="/">Back to site</a>
+          </div>
+        </form>
+        <div class="auth-links">
+          <a href="/secure/partners">Partner Portal</a>
+          <a href="/secure/admin">Admin Portal</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="app-shell hidden" id="app-shell">
+      <header class="app-header">
+        <div class="header-copy">
+          <div class="avatar" id="header-avatar">PP</div>
+          <div>
+            <p class="eyebrow">PromptPay App</p>
+            <h2 id="header-name">PromptPay user</h2>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-button" id="install-button" type="button" hidden>Install</button>
+          <button class="icon-button" id="refresh-button" type="button">Refresh</button>
+        </div>
+      </header>
+
+      <main class="app-pages">
+        <section class="app-page active" data-page="home">
+          <article class="balance-card">
+            <div class="balance-copy">
+              <p class="balance-label">Wallet balance</p>
+              <strong class="balance-amount" id="balance-amount">N0.00</strong>
+              <p class="balance-subtext" id="balance-subtext">Ready for airtime, data, and wallet activity.</p>
+            </div>
+            <div class="balance-actions">
+              <button class="button button-primary" id="fund-wallet-button" type="button">Add Funds</button>
+              <button class="button button-secondary" id="home-airtime-button" type="button">Buy Airtime</button>
+            </div>
+          </article>
+
+          <section class="quick-grid" aria-label="Quick actions">
+            <button class="quick-card" type="button" data-nav-target="airtime">
+              <strong>Airtime</strong>
+              <span>Top up any number fast.</span>
+            </button>
+            <button class="quick-card" type="button" data-nav-target="airtime" data-product-target="data">
+              <strong>Data</strong>
+              <span>Browse available bundles.</span>
+            </button>
+            <button class="quick-card" type="button" data-nav-target="activity">
+              <strong>Transactions</strong>
+              <span>Review wallet history and recent sales.</span>
+            </button>
+            <button class="quick-card" type="button" data-nav-target="profile">
+              <strong>Profile</strong>
+              <span>Update country, picture, and install settings.</span>
+            </button>
+          </section>
+
+          <section class="panel-grid">
+            <article class="panel-card">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-label">Wallet snapshot</p>
+                  <h3>Funding and usage</h3>
+                </div>
+              </div>
+              <div class="stat-list">
+                <div class="stat-row"><span>Total funded</span><strong id="stat-funded">N0.00</strong></div>
+                <div class="stat-row"><span>Total spent</span><strong id="stat-spent">N0.00</strong></div>
+                <div class="stat-row"><span>Total earned</span><strong id="stat-earned">N0.00</strong></div>
+              </div>
+            </article>
+            <article class="panel-card">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-label">Today</p>
+                  <h3>Agent sales</h3>
+                </div>
+              </div>
+              <div class="stat-list">
+                <div class="stat-row"><span>Sales count</span><strong id="today-sales-count">0</strong></div>
+                <div class="stat-row"><span>Total sales</span><strong id="today-sales-amount">N0.00</strong></div>
+                <div class="stat-row"><span>Total profit</span><strong id="today-profit-amount">N0.00</strong></div>
+              </div>
+            </article>
+          </section>
+
+          <article class="panel-card">
+            <div class="panel-head">
+              <div>
+                <p class="panel-label">Recent wallet activity</p>
+                <h3>Latest transactions</h3>
+              </div>
+              <button class="text-button" type="button" data-nav-target="activity">View all</button>
+            </div>
+            <div class="list-shell" id="recent-transactions">
+              <div class="empty-state">Loading recent transactions.</div>
+            </div>
+          </article>
+        </section>
+
+        <section class="app-page" data-page="airtime">
+          <article class="panel-card">
+            <div class="panel-head">
+              <div>
+                <p class="panel-label">Airtime and data</p>
+                <h3>Buy directly from your PromptPay wallet</h3>
+              </div>
+            </div>
+            <div class="segmented" role="tablist" aria-label="Product type">
+              <button class="segment active" id="segment-airtime" type="button" data-product="airtime">Airtime</button>
+              <button class="segment" id="segment-data" type="button" data-product="data">Data</button>
+            </div>
+            <form id="airtime-form" class="stack-form" novalidate>
+              <label class="field">
+                <span>Country</span>
+                <select id="country-select">
+                  <option value="NG">Nigeria</option>
+                  <option value="GH">Ghana</option>
+                  <option value="KE">Kenya</option>
+                  <option value="UG">Uganda</option>
+                  <option value="ZA">South Africa</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Phone number</span>
+                <input id="phone-input" type="tel" inputmode="tel" placeholder="08012345678" required>
+              </label>
+              <div class="form-row">
+                <label class="field">
+                  <span>Carrier</span>
+                  <input id="carrier-input" type="text" placeholder="Detect after phone input" readonly>
+                </label>
+                <label class="field">
+                  <span>Amount (NGN)</span>
+                  <input id="amount-input" type="number" min="50" step="50" placeholder="500" required>
+                </label>
+              </div>
+              <button class="button button-secondary" id="detect-button" type="button">Detect Carrier</button>
+              <div class="bundle-list hidden" id="bundle-list"></div>
+              <div class="status" id="airtime-status" aria-live="polite"></div>
+              <button class="button button-primary" id="purchase-button" type="submit">Buy Airtime</button>
+            </form>
+          </article>
+        </section>
+
+        <section class="app-page" data-page="activity">
+          <article class="panel-card">
+            <div class="panel-head">
+              <div>
+                <p class="panel-label">Wallet transactions</p>
+                <h3>Account activity</h3>
+              </div>
+            </div>
+            <div class="list-shell" id="transaction-list">
+              <div class="empty-state">Loading transactions.</div>
+            </div>
+          </article>
+          <article class="panel-card">
+            <div class="panel-head">
+              <div>
+                <p class="panel-label">Recent POS sales</p>
+                <h3>Airtime and data history</h3>
+              </div>
+            </div>
+            <div class="list-shell" id="sales-list">
+              <div class="empty-state">Loading sales history.</div>
+            </div>
+          </article>
+        </section>
+
+        <section class="app-page" data-page="profile">
+          <article class="panel-card profile-card">
+            <div class="profile-top">
+              <label class="profile-avatar" for="profile-picture-input">
+                <span id="profile-avatar-text">PP</span>
+                <img id="profile-avatar-image" alt="Profile picture" hidden>
+              </label>
+              <input id="profile-picture-input" type="file" accept="image/*" hidden>
+              <div>
+                <h3 id="profile-name">PromptPay user</h3>
+                <p id="profile-email">user@promptpay.com</p>
+              </div>
+            </div>
+            <div class="field">
+              <span>Country</span>
+              <select id="profile-country">
+                <option value="">Select country</option>
+                <option value="NG">Nigeria</option>
+                <option value="GH">Ghana</option>
+                <option value="KE">Kenya</option>
+                <option value="UG">Uganda</option>
+                <option value="ZA">South Africa</option>
+              </select>
+            </div>
+            <div class="status" id="profile-status" aria-live="polite"></div>
+          </article>
+
+          <article class="panel-card">
+            <div class="panel-head">
+              <div>
+                <p class="panel-label">Install PromptPay</p>
+                <h3>Add it to your phone</h3>
+              </div>
+            </div>
+            <p class="install-copy">
+              Install the PromptPay app for a faster, native-feeling launch experience on mobile.
+            </p>
+            <div class="auth-actions">
+              <button class="button button-primary" id="install-cta" type="button">Install App</button>
+              <a class="button button-secondary" href="/">Homepage</a>
+            </div>
+          </article>
+
+          <article class="panel-card">
+            <div class="panel-head">
+              <div>
+                <p class="panel-label">Session</p>
+                <h3>Account controls</h3>
+              </div>
+            </div>
+            <div class="auth-actions">
+              <button class="button button-secondary" id="logout-button" type="button">Log Out</button>
+              <a class="button button-secondary" href="/secure/partners">Partner Portal</a>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="App navigation">
+        <button class="nav-item active" type="button" data-page="home">Home</button>
+        <button class="nav-item" type="button" data-page="airtime">Airtime</button>
+        <button class="nav-item" type="button" data-page="activity">Activity</button>
+        <button class="nav-item" type="button" data-page="profile">Profile</button>
+      </nav>
+    </div>
+
+    <div class="modal hidden" id="fund-modal" aria-hidden="true">
+      <div class="modal-backdrop" data-close-fund></div>
+      <div class="modal-card">
+        <div class="panel-head">
+          <div>
+            <p class="panel-label">Add funds</p>
+            <h3>Fund your wallet</h3>
+          </div>
+          <button class="icon-button" type="button" data-close-fund>Close</button>
+        </div>
+        <label class="field">
+          <span>Amount (NGN)</span>
+          <input id="fund-amount-input" type="number" min="100" step="100" placeholder="1000">
+        </label>
+        <div class="status" id="fund-status" aria-live="polite"></div>
+        <div class="auth-actions">
+          <button class="button button-primary" id="fund-submit" type="button">Continue to Paystack</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" aria-live="polite"></div>
+  </div>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>

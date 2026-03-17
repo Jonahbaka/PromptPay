@@ -766,6 +766,46 @@ main {
   align-items: center;
 }
 
+.access-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.access-option {
+  padding: 1.2rem;
+  background:
+    linear-gradient(180deg, rgba(14, 20, 34, 0.9), rgba(9, 13, 24, 0.96)),
+    radial-gradient(circle at top right, rgba(105, 164, 255, 0.06), transparent 34%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 40px rgba(0, 0, 0, 0.18);
+}
+
+.access-label {
+  margin: 0 0 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.access-option h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.14rem;
+  letter-spacing: -0.04em;
+}
+
+.access-option p {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
 .final-cta-shell {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -998,6 +1038,10 @@ main {
   .developer-shell,
   .access-shell,
   .final-cta-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .access-grid {
     grid-template-columns: 1fr;
   }
 

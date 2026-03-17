@@ -1,9 +1,9 @@
 {
   "name": "PromptPay",
   "short_name": "PromptPay",
-  "description": "PromptPay is the operating system for payment agent networks. Manage onboarding, commissions, observability, and licensed rail integrations.",
-  "start_url": "/",
-  "id": "/",
+  "description": "PromptPay gives users a fast mobile app for wallet balance, airtime, data, and transactions while operators run payment networks on licensed rails.",
+  "start_url": "/app",
+  "id": "/app",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
@@ -33,14 +33,19 @@
   ],
   "shortcuts": [
     {
-      "name": "Docs",
-      "short_name": "Docs",
-      "url": "/api/v1/docs"
+      "name": "Open App",
+      "short_name": "App",
+      "url": "/app"
     },
     {
-      "name": "Sign In",
-      "short_name": "Sign In",
-      "url": "/#access"
+      "name": "Partner Portal",
+      "short_name": "Partner",
+      "url": "/secure/partners"
+    },
+    {
+      "name": "Admin Portal",
+      "short_name": "Admin",
+      "url": "/secure/admin"
     }
   ],
   "prefer_related_applications": false,

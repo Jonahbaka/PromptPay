@@ -39,6 +39,7 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   // Block direct access to .html files
   app.get('/admin.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/partner.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
+  app.get('/app.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/careers.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
 
   // Serve admin dashboard at clean URL (keep legacy secret path too)
@@ -60,6 +61,12 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   });
   app.get('/partners', (_req: Request, res: Response) => {
     res.redirect(301, '/secure/partners');
+  });
+
+  // Serve user app shell
+  app.get('/app', (_req: Request, res: Response) => {
+    res.set(noCache);
+    res.sendFile(path.join(publicDir, 'app.html'));
   });
 
   // Public careers landing page is intentionally disabled until it reflects real openings.
