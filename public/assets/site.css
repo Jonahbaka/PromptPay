@@ -1403,7 +1403,8 @@ body.classic-home {
 }
 
 body.classic-home main {
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 body.classic-home .header-shell,
