@@ -76,10 +76,24 @@
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
-  <header class="site-header" data-header>
-    <div class="header-shell">
-      <a class="brand" href="#top" aria-label="PromptPay home">
-        <span class="brand-mark" aria-hidden="true"></span>
+  <header class="site-header lp-nav" data-header>
+    <div class="header-shell lp-nav-inner">
+      <a class="brand lp-logo" href="#top" aria-label="PromptPay home">
+        <span class="brand-mark lp-logo-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+            <rect x="4" y="4" width="10" height="10" rx="2" fill="#0a0a14"></rect>
+            <rect x="6" y="6" width="6" height="6" rx="1" fill="white"></rect>
+            <rect x="7.5" y="7.5" width="3" height="3" fill="#0a0a14"></rect>
+            <rect x="26" y="4" width="10" height="10" rx="2" fill="#0a0a14"></rect>
+            <rect x="28" y="28" width="6" height="6" rx="1" fill="white"></rect>
+            <rect x="29.5" y="29.5" width="3" height="3" fill="#0a0a14"></rect>
+            <rect x="4" y="26" width="10" height="10" rx="2" fill="#0a0a14"></rect>
+            <rect x="6" y="28" width="6" height="6" rx="1" fill="white"></rect>
+            <rect x="7.5" y="29.5" width="3" height="3" fill="#0a0a14"></rect>
+            <path d="M2 20 L10 20 L13 12 L17 28 L21 16 L24 24 L27 20 L38 20" stroke="#0a0a14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            <circle cx="20" cy="20" r="2.5" fill="#0a0a14"></circle>
+          </svg>
+        </span>
         <span class="brand-copy">
           <strong>PromptPay</strong>
           <span>AgentOS for payment networks</span>
@@ -95,7 +109,7 @@
         <span></span>
         <span></span>
       </button>
-      <nav class="site-nav" id="site-nav" aria-label="Primary navigation" data-nav>
+      <nav class="site-nav lp-nav-links" id="site-nav" aria-label="Primary navigation" data-nav>
         <a href="#product">Product</a>
         <a href="#solutions">Solutions</a>
         <a href="#agent-networks">Agent Networks</a>
@@ -103,19 +117,20 @@
         <a href="#pricing">Pricing</a>
         <a href="/api/v1/docs">Docs</a>
       </nav>
-      <div class="header-actions">
-        <button class="button button-ghost" type="button" data-open-auth="signin">Sign In</button>
-        <a class="button button-primary" href="mailto:support@upromptpay.com?subject=PromptPay%20Demo">Book Demo</a>
+      <div class="header-actions lp-nav-actions">
+        <button class="button button-ghost lp-btn-signin" type="button" data-open-auth="signin">Sign In</button>
+        <a class="button button-primary lp-btn-primary" href="mailto:support@upromptpay.com?subject=PromptPay%20Demo">Book Demo</a>
       </div>
     </div>
   </header>
   <main id="main-content">
-    <section class="hero-section" id="top">
-      <div class="hero-shell">
+    <section class="hero-section lp-hero" id="top">
+      <div class="lp-hero-glow"></div>
+      <div class="hero-shell lp-hero-grid">
         <div class="hero-copy">
           <p class="eyebrow">AgentOS for payment networks</p>
           <h1>The Operating System for <span class="gradient-text">Payment Agent Networks</span></h1>
-          <p class="hero-text">
+          <p class="hero-text lp-hero-desc">
             PromptPay helps super agents, fintechs, and payment operators manage agents,
             commissions, transactions, and growth on licensed infrastructure.
           </p>
@@ -124,9 +139,9 @@
             <span>Commission intelligence</span>
             <span>API-first controls</span>
           </div>
-          <div class="hero-actions-row">
-            <a class="button button-primary" href="mailto:support@upromptpay.com?subject=PromptPay%20Demo">Book Demo</a>
-            <a class="button button-secondary" href="#platform">View Platform</a>
+          <div class="hero-actions-row lp-hero-btns">
+            <a class="button button-primary lp-btn-primary" href="mailto:support@upromptpay.com?subject=PromptPay%20Demo">Book Demo</a>
+            <a class="button button-secondary lp-btn-secondary" href="#platform">View Platform</a>
           </div>
           <ul class="hero-stat-grid" aria-label="Platform highlights">
             <li>
@@ -147,12 +162,16 @@
             </li>
           </ul>
         </div>
-        <div class="hero-visual" aria-hidden="true">
-          <div class="visual-frame">
+        <div class="hero-visual lp-terminal" aria-hidden="true">
+          <div class="visual-frame lp-terminal-inner">
             <div class="visual-header">
-              <div>
-                <p class="visual-label">Network overview</p>
-                <strong>PromptPay Control Plane</strong>
+              <div class="lp-terminal-header-left">
+                <div class="lp-terminal-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span class="lp-terminal-title">promptpay.network / operator-runtime</span>
               </div>
               <span class="status-pill">Operational</span>
             </div>
@@ -183,7 +202,7 @@
                   <li>
                     <span class="event-badge event-badge-success">Settled</span>
                     <div>
-                      <strong>Lagos Mainland</strong>
+                      <strong>Metro Core</strong>
                       <p>Agent POS payout confirmed on provider webhook</p>
                     </div>
                     <span>12s</span>
@@ -191,7 +210,7 @@
                   <li>
                     <span class="event-badge">Queued</span>
                     <div>
-                      <strong>Abuja North</strong>
+                      <strong>North Corridor</strong>
                       <p>Commission batch ready for review and export</p>
                     </div>
                     <span>41s</span>
@@ -199,7 +218,7 @@
                   <li>
                     <span class="event-badge event-badge-warning">Review</span>
                     <div>
-                      <strong>Port Harcourt South</strong>
+                      <strong>South Gateway</strong>
                       <p>Float threshold reached on two high-volume territories</p>
                     </div>
                     <span>57s</span>
@@ -420,10 +439,10 @@
               <span>Performance rank</span>
             </div>
             <ul class="leaderboard-list">
-              <li><strong>Lagos West Cluster</strong><span>98.4%</span></li>
-              <li><strong>Abuja North Cluster</strong><span>96.7%</span></li>
-              <li><strong>Ibadan Trade Hub</strong><span>95.9%</span></li>
-              <li><strong>Port Harcourt South</strong><span>94.8%</span></li>
+              <li><strong>West Corridor Cluster</strong><span>98.4%</span></li>
+              <li><strong>North Gateway Cluster</strong><span>96.7%</span></li>
+              <li><strong>Trade Network Delta</strong><span>95.9%</span></li>
+              <li><strong>South Gateway</strong><span>94.8%</span></li>
             </ul>
           </section>
           <section class="surface-card analytics-card">
@@ -432,9 +451,9 @@
               <span>Coverage score</span>
             </div>
             <div class="bar-chart">
-              <div><span>Nigeria South West</span><strong style="width: 88%"></strong></div>
-              <div><span>Nigeria South South</span><strong style="width: 71%"></strong></div>
-              <div><span>Nigeria North Central</span><strong style="width: 64%"></strong></div>
+              <div><span>West territory</span><strong style="width: 88%"></strong></div>
+              <div><span>South territory</span><strong style="width: 71%"></strong></div>
+              <div><span>North territory</span><strong style="width: 64%"></strong></div>
               <div><span>Expansion pipeline</span><strong style="width: 53%"></strong></div>
             </div>
           </section>
@@ -618,34 +637,41 @@
       </div>
     </section>
   </main>
-  <footer class="site-footer">
-    <div class="footer-shell">
-      <div class="footer-top">
-        <div class="footer-brand">
-          <span class="brand-mark" aria-hidden="true"></span>
-          <div class="footer-brand-copy">
+  <footer class="site-footer lp-footer">
+    <div class="footer-shell lp-footer-inner">
+      <div class="footer-top lp-footer-top">
+        <div class="footer-brand lp-footer-brand">
+          <div class="lp-footer-brand-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0d1117" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+            </svg>
+          </div>
+          <div class="footer-brand-copy lp-footer-brand-text">
             <strong>PromptPay</strong>
-            <p>AgentOS for licensed payment network operations</p>
+            <p>Built with precision for payment infrastructure</p>
           </div>
         </div>
-        <div class="footer-links">
+        <div class="footer-links lp-footer-links">
           <a href="#product">Product</a>
           <a href="#solutions">Solutions</a>
-          <a href="#developers">Developers</a>
+          <a href="/app">App</a>
+          <a href="/secure/partners">Partners</a>
           <a href="/api/v1/docs">Docs</a>
-          <a href="#pricing">Pricing</a>
           <a href="mailto:support@upromptpay.com">Contact</a>
         </div>
       </div>
-      <div class="footer-bottom">
-        <span class="footer-copy">&copy; 2026 PromptPay. Payment orchestration and agent network infrastructure.</span>
-        <div class="footer-meta">
+      <div class="footer-bottom lp-footer-bottom">
+        <span class="footer-copy lp-footer-copy">&copy; 2026 PromptPay. Payment orchestration and agent network infrastructure.</span>
+        <div class="footer-meta lp-footer-social">
           <span class="footer-pill">Agent operations</span>
           <span class="footer-pill">Provider observability</span>
           <span class="footer-pill">Developer infrastructure</span>
-          <p class="footer-note">PromptPay does not hold customer funds.</p>
         </div>
       </div>
+      <p class="footer-note">PromptPay does not hold customer funds.</p>
     </div>
   </footer>
   <div class="mobile-actionbar" aria-hidden="false">

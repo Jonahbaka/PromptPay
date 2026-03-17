@@ -806,6 +806,238 @@ main {
   line-height: 1.6;
 }
 
+.site-header.lp-nav {
+  padding-top: calc(1.25rem + var(--safe-top));
+}
+
+.site-header.lp-nav::after {
+  inset: 0.55rem 1rem auto;
+  height: calc(100% - 0.55rem);
+  background: rgba(13, 17, 23, 0.88);
+  border-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+}
+
+.lp-nav-inner {
+  gap: 1.4rem;
+}
+
+.lp-logo {
+  gap: 0.8rem;
+}
+
+.lp-logo-mark {
+  width: 2.9rem;
+  height: 2.9rem;
+  padding: 0.48rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #ffffff, #d8deec);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  filter: none;
+}
+
+.lp-logo-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lp-nav .brand-copy strong {
+  font-size: 1.08rem;
+}
+
+.lp-nav .brand-copy span {
+  color: rgba(255, 255, 255, 0.56);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+}
+
+.lp-nav-links {
+  gap: 1.75rem;
+}
+
+.lp-nav-links a {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lp-nav-links a:hover,
+.lp-btn-signin:hover {
+  color: #ffffff;
+}
+
+.lp-nav-actions {
+  gap: 0.9rem;
+}
+
+.lp-btn-signin {
+  background: transparent;
+  border-color: transparent;
+  color: rgba(255, 255, 255, 0.68);
+  box-shadow: none;
+}
+
+.lp-btn-primary {
+  background: linear-gradient(135deg, #4facfe 0%, #58a6ff 50%, #7c3aed 100%);
+  box-shadow: 0 10px 30px rgba(79, 172, 254, 0.24);
+}
+
+.lp-btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.hero-section.lp-hero {
+  padding-top: 7rem;
+  padding-bottom: 4.4rem;
+}
+
+.lp-hero-glow {
+  position: absolute;
+  inset: 7rem 0 auto;
+  width: 46rem;
+  height: 46rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(88, 166, 255, 0.1), rgba(124, 58, 237, 0.08) 36%, rgba(0, 0, 0, 0) 72%);
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.lp-hero-grid {
+  align-items: center;
+  gap: 3.4rem;
+}
+
+.lp-hero .hero-copy h1 {
+  max-width: 11ch;
+  font-size: clamp(3.6rem, 6vw, 5.9rem);
+  line-height: 0.94;
+}
+
+.lp-hero-desc {
+  max-width: 33rem;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 1.08rem;
+}
+
+.lp-hero-btns .button {
+  min-height: 3.2rem;
+  border-radius: 0.95rem;
+  padding-inline: 1.45rem;
+}
+
+.lp-terminal {
+  position: relative;
+}
+
+.lp-terminal-inner {
+  border-radius: 1.6rem;
+  background:
+    linear-gradient(180deg, rgba(15, 19, 26, 0.98), rgba(7, 10, 17, 0.98)),
+    radial-gradient(circle at top right, rgba(88, 166, 255, 0.12), transparent 40%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.46);
+}
+
+.lp-terminal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.lp-terminal-dots {
+  display: flex;
+  gap: 0.38rem;
+}
+
+.lp-terminal-dots span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.lp-terminal-title {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.78rem;
+  font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", "JetBrains Mono", monospace;
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.lp-footer {
+  padding-top: 1.6rem;
+}
+
+.lp-footer-inner {
+  gap: 1.3rem;
+  padding-top: 2.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lp-footer-top {
+  align-items: center;
+}
+
+.lp-footer-brand {
+  gap: 0.85rem;
+}
+
+.lp-footer-brand-icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 0.9rem;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ffffff, #d8deec);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+}
+
+.lp-footer-brand-text strong {
+  font-size: 1rem;
+}
+
+.lp-footer-brand-text p {
+  color: rgba(255, 255, 255, 0.52);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+}
+
+.lp-footer-links {
+  gap: 1rem;
+}
+
+.lp-footer-links a {
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.lp-footer-links a:hover {
+  color: #58a6ff;
+}
+
+.lp-footer-bottom {
+  padding-top: 0.2rem;
+}
+
+.lp-footer-copy {
+  color: #6f7787;
+  font-size: 0.78rem;
+}
+
+.lp-footer .footer-meta {
+  gap: 0.7rem;
+}
+
+.lp-footer .footer-note {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.44);
+  font-size: 0.86rem;
+}
+
 .final-cta-shell {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
