@@ -29,6 +29,7 @@ const contextTitle = document.getElementById("admin-context-title");
 const contextCopy = document.getElementById("admin-context-copy");
 const runtimeLabel = document.getElementById("admin-runtime-status");
 const runtimeTime = document.getElementById("admin-runtime-time");
+const overviewRefreshButton = document.getElementById("admin-rail-refresh");
 
 let sessionToken = null;
 let currentUserSearch = "";
@@ -88,6 +89,97 @@ function alertTone(value) {
   if (["success", "active"].includes(normalized)) return "alert-active";
   if (["warning", "pending"].includes(normalized)) return "alert-warning";
   return "alert-danger";
+}
+
+function nodeTone(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (["active", "completed", "enabled"].includes(normalized)) return "active";
+  if (["pending", "processing", "warning"].includes(normalized)) return "warning";
+  return "danger";
+}
+
+function ensureStageCanvas(container) {
+  if (!container) return null;
+  let canvas = container.querySelector(".ops-stage-canvas");
+  if (!canvas) {
+    canvas = document.createElement("div");
+    canvas.className = "ops-stage-canvas";
+    container.appendChild(canvas);
+  }
+  return canvas;
+}
+
+function renderOpsStream(containerId, items, emptyCopy = "No platform activity stream yet.") {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-state">${escapeHtml(emptyCopy)}</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map((item) => `
+    <article class="ops-stream-item">
+      <div class="ops-stream-main">
+        <div class="ops-stream-pulse ${alertTone(item.type)}"></div>
+        <div class="ops-stream-copy">
+          <div class="ops-stream-head">
+            <strong class="ops-stream-tag">${escapeHtml(item.tag)}</strong>
+            <span class="ops-stream-meta">${escapeHtml(item.meta)}</span>
+          </div>
+          <p>${escapeHtml(item.detail)}</p>
+        </div>
+      </div>
+      <time class="ops-stream-time">${escapeHtml(item.time)}</time>
+    </article>
+  `).join("");
+}
+
+function buildAdminStream(metrics, activity, flags) {
+  const items = [];
+  const queueCount = Number(metrics.partners.pending || 0) + Number(metrics.partners.suspended || 0) + Number(metrics.users.suspended || 0) + Number(metrics.users.deactivated || 0);
+  const disabledFlags = flags.filter((flag) => Number(flag.enabled || 0) !== 1);
+
+  if (queueCount > 0) {
+    items.push({
+      type: "warning",
+      tag: "QUEUE",
+      detail: `${formatNumber(queueCount)} platform control item${queueCount === 1 ? "" : "s"} need owner review.`,
+      meta: "Users / partners",
+      time: "Now"
+    });
+  }
+
+  activity.slice(-4).reverse().forEach((entry) => {
+    items.push({
+      type: "active",
+      tag: String(entry.action || "audit").replaceAll("_", " ").toUpperCase(),
+      detail: `${entry.actor || "system"} / ${entry.target || "platform"}`,
+      meta: entry.details?.status ? `Status ${entry.details.status}` : "Audit trail",
+      time: entry.timestamp ? formatDate(entry.timestamp) : "Live"
+    });
+  });
+
+  if (disabledFlags.length > 0) {
+    items.push({
+      type: "warning",
+      tag: "FLAGS",
+      detail: `${formatNumber(disabledFlags.length)} stored feature flag${disabledFlags.length === 1 ? "" : "s"} are disabled.`,
+      meta: "Feature state",
+      time: "Live"
+    });
+  }
+
+  if (Number(metrics.api.activeKeys || 0) === 0) {
+    items.push({
+      type: "danger",
+      tag: "API",
+      detail: "No active developer keys are connected to the platform.",
+      meta: "Integration required",
+      time: "Live"
+    });
+  }
+
+  return items.slice(0, 6);
 }
 
 function startRuntimeClock() {
@@ -205,6 +297,74 @@ function renderHealthGrid(metrics, activity, flags) {
       <small>${escapeHtml(item.copy)}</small>
     </article>
   `).join("");
+}
+
+function renderOverviewStage(metrics, flags) {
+  const stage = document.getElementById("admin-stage");
+  const badge = document.getElementById("admin-stage-badge");
+  const usersNode = document.getElementById("admin-stage-users");
+  const queueNode = document.getElementById("admin-stage-queue");
+  const flagsNode = document.getElementById("admin-stage-flags");
+  if (!stage || !badge || !usersNode || !queueNode || !flagsNode) return;
+
+  const queueCount = Number(metrics.partners.pending || 0) + Number(metrics.partners.suspended || 0) + Number(metrics.users.suspended || 0) + Number(metrics.users.deactivated || 0);
+  const enabledFlags = flags.filter((flag) => Number(flag.enabled || 0) === 1).length;
+  const totalFlags = flags.length;
+
+  badge.textContent = queueCount > 0 ? "Review" : "Stable";
+  usersNode.textContent = formatNumber(metrics.users.total || 0);
+  queueNode.textContent = formatNumber(queueCount);
+  flagsNode.textContent = `${formatNumber(enabledFlags)} / ${formatNumber(totalFlags)}`;
+
+  const canvas = ensureStageCanvas(stage);
+  if (!canvas) return;
+  const positions = [
+    { x: 24, y: 28, tone: nodeTone((metrics.users.active || 0) > 0 ? "active" : "warning"), note: `USERS / ${formatNumber(metrics.users.active || 0)} ACTIVE` },
+    { x: 74, y: 28, tone: nodeTone((metrics.partners.active || 0) > 0 ? "active" : "warning"), note: `PARTNERS / ${formatNumber(metrics.partners.active || 0)} ACTIVE` },
+    { x: 72, y: 74, tone: queueCount > 0 ? "warning" : "active", note: `QUEUE / ${formatNumber(queueCount)} ITEMS` },
+    { x: 24, y: 74, tone: enabledFlags === totalFlags ? "active" : "warning", note: `FLAGS / ${formatNumber(enabledFlags)} OF ${formatNumber(totalFlags)}` }
+  ];
+  const links = [
+    [positions[0], positions[1]],
+    [positions[1], positions[2]],
+    [positions[2], positions[3]],
+    [positions[3], positions[0]]
+  ].map(([from, to]) => {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    return `<span class="ops-stage-link" style="left:${from.x}%;top:${from.y}%;width:${distance}%;transform:rotate(${angle}deg);"></span>`;
+  }).join("");
+
+  canvas.innerHTML = `${links}${positions.map((item) => `
+    <div class="ops-stage-node ${item.tone}" style="left:${item.x}%;top:${item.y}%;">
+      <span class="ops-stage-node-glow"></span>
+      <span class="ops-stage-node-dot"></span>
+      <span class="ops-stage-node-note">${escapeHtml(item.note)}</span>
+    </div>
+  `).join("")}`;
+}
+
+function renderOverviewStats(metrics, flags) {
+  const primaryBadge = document.getElementById("admin-primary-badge");
+  const primaryValue = document.getElementById("admin-primary-value");
+  const primaryCopy = document.getElementById("admin-primary-copy");
+  const secondaryValue = document.getElementById("admin-secondary-value");
+  const secondaryCopy = document.getElementById("admin-secondary-copy");
+  if (!primaryBadge || !primaryValue || !primaryCopy || !secondaryValue || !secondaryCopy) return;
+
+  const completedTransactions = Number(metrics.transactions.completed || 0);
+  const enabledFlags = flags.filter((flag) => Number(flag.enabled || 0) === 1).length;
+
+  primaryBadge.textContent = completedTransactions > 0 ? `${formatNumber(completedTransactions)} txs` : "Live";
+  primaryValue.textContent = formatCurrency(metrics.transactions.volume || 0, "NGN");
+  primaryCopy.textContent = completedTransactions > 0
+    ? `${formatNumber(completedTransactions)} completed POS transaction${completedTransactions === 1 ? "" : "s"} contribute to this volume.`
+    : "Completed platform volume will appear here as real POS records close.";
+
+  secondaryValue.textContent = `${formatNumber(enabledFlags)} enabled`;
+  secondaryCopy.textContent = `${formatNumber(enabledFlags)} of ${formatNumber(flags.length)} stored feature flags are currently enabled.`;
 }
 
 function renderQueue(metrics) {
@@ -423,6 +583,9 @@ function renderOverviewSurface(summary, activity, flags) {
   renderActivity(activity.entries || []);
   renderHero(summary.metrics, activity.entries || [], flags.flags || []);
   renderAlertFeed(buildAlerts(summary.metrics, activity.entries || [], flags.flags || []));
+  renderOverviewStage(summary.metrics, flags.flags || []);
+  renderOverviewStats(summary.metrics, flags.flags || []);
+  renderOpsStream("admin-stream", buildAdminStream(summary.metrics, activity.entries || [], flags.flags || []));
   renderHealthGrid(summary.metrics, activity.entries || [], flags.flags || []);
 }
 
@@ -596,6 +759,17 @@ refreshButton.addEventListener("click", async () => {
     if (currentPage === "users") await loadUsers(true);
     if (currentPage === "partners") await loadPartners(true);
     if (currentPage === "flags") await loadFlags(true);
+  } catch (error) {
+    setStatus(loadStatus, error.message || "Unable to refresh admin portal.", true);
+  }
+});
+
+overviewRefreshButton?.addEventListener("click", async () => {
+  try {
+    state.summary = null;
+    state.activity = null;
+    state.flags = null;
+    await loadOverview(true);
   } catch (error) {
     setStatus(loadStatus, error.message || "Unable to refresh admin portal.", true);
   }

@@ -90,7 +90,7 @@
     </header>
 
     <main class="portal-main">
-      <section class="hero-strip hero-strip-command layer-2">
+      <section class="hero-strip hero-strip-command layer-2 hidden">
         <div class="hero-command-copy">
           <p class="eyebrow">Platform control layer</p>
           <h2>Users, partners, logs, and feature controls in one immersive command surface.</h2>
@@ -124,7 +124,7 @@
         </div>
       </section>
 
-      <div class="alert-feed" id="admin-alert-feed" aria-live="polite">
+      <div class="alert-feed hidden" id="admin-alert-feed-legacy" aria-live="polite">
         <article class="alert-card skeleton-card">
           <strong>Loading control guidance</strong>
           <p>Checking partner queue, restricted accounts, audit activity, and feature state.</p>
@@ -153,6 +153,134 @@
       </nav>
 
       <section class="tab-panel active" data-page="overview">
+        <section class="ops-overview">
+          <div class="ops-rail">
+            <div class="ops-rail-copy">
+              <span class="ops-rail-kicker">Operational insights</span>
+              <strong>Live platform control state</strong>
+            </div>
+            <button class="ops-rail-action" id="admin-rail-refresh" type="button">Refresh</button>
+          </div>
+
+          <div class="alert-feed ops-alert-stack" id="admin-alert-feed" aria-live="polite">
+            <article class="alert-card skeleton-card">
+              <strong>Loading control guidance</strong>
+              <p>Checking partner queue, restricted accounts, audit activity, and feature state.</p>
+            </article>
+          </div>
+
+          <div class="ops-grid">
+            <article class="ops-card ops-card-square" id="admin-stage-card">
+              <div class="ops-card-header">
+                <div class="ops-card-title">
+                  <div class="ops-icon-box" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <rect x="4" y="4" width="7" height="7" rx="2"></rect>
+                      <rect x="13" y="4" width="7" height="7" rx="2"></rect>
+                      <rect x="4" y="13" width="7" height="7" rx="2"></rect>
+                      <rect x="13" y="13" width="7" height="7" rx="2"></rect>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="ops-card-kicker">Platform matrix</span>
+                    <h3>Control grid</h3>
+                  </div>
+                </div>
+                <span class="ops-badge" id="admin-stage-badge">Live</span>
+              </div>
+
+              <div class="ops-stage ops-stage-generic" id="admin-stage">
+                <div class="ops-stage-grid" aria-hidden="true">
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d="M0 20 Q 25 25 50 20 T 100 25" stroke="white" fill="none" stroke-width="0.12"></path>
+                    <path d="M0 50 Q 25 45 50 50 T 100 45" stroke="white" fill="none" stroke-width="0.12"></path>
+                    <path d="M0 80 Q 25 85 50 80 T 100 85" stroke="white" fill="none" stroke-width="0.12"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <div class="ops-stage-footer">
+                <div class="ops-stage-stat">
+                  <span>Users</span>
+                  <strong id="admin-stage-users">0</strong>
+                </div>
+                <div class="ops-stage-stat">
+                  <span>Queue</span>
+                  <strong id="admin-stage-queue">0</strong>
+                </div>
+                <div class="ops-stage-stat">
+                  <span>Flags</span>
+                  <strong id="admin-stage-flags">0 / 0</strong>
+                </div>
+              </div>
+            </article>
+
+            <div class="ops-pair-grid">
+              <article class="ops-card ops-stat-card">
+                <div class="ops-stat-head">
+                  <div class="ops-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M3 12h4l3-8 4 16 3-8h4"></path>
+                    </svg>
+                  </div>
+                  <span class="ops-badge" id="admin-primary-badge">Live</span>
+                </div>
+                <div class="ops-stat-body">
+                  <span class="ops-stat-kicker">POS volume</span>
+                  <strong id="admin-primary-value">NGN 0</strong>
+                  <small id="admin-primary-copy">Completed platform volume from real POS records.</small>
+                </div>
+              </article>
+
+              <article class="ops-card ops-stat-card ops-stat-card-accent">
+                <div class="ops-stat-head">
+                  <div class="ops-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M4 21v-7"></path>
+                      <path d="M4 10V3"></path>
+                      <path d="M12 21v-9"></path>
+                      <path d="M12 8V3"></path>
+                      <path d="M20 21v-5"></path>
+                      <path d="M20 12V3"></path>
+                      <path d="M1 14h6"></path>
+                      <path d="M9 8h6"></path>
+                      <path d="M17 16h6"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="ops-stat-body">
+                  <span class="ops-stat-kicker">Feature state</span>
+                  <strong id="admin-secondary-value">0 enabled</strong>
+                  <small id="admin-secondary-copy">Stored feature_flags state only.</small>
+                </div>
+              </article>
+            </div>
+
+            <article class="ops-card ops-stream-card">
+              <div class="ops-card-header">
+                <div class="ops-card-title">
+                  <div class="ops-icon-box" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M4 17V7"></path>
+                      <path d="M10 17V11"></path>
+                      <path d="M16 17V5"></path>
+                      <path d="M22 17V9"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="ops-card-kicker">Operational stream</span>
+                    <h3>Latest activity</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="ops-stream-list" id="admin-stream">
+                <div class="empty-state">No platform activity stream yet.</div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="overview-legacy hidden">
         <article class="panel-card intent-card layer-3">
           <div class="section-heading">
             <div>
@@ -248,6 +376,7 @@
               </table>
             </div>
           </article>
+        </div>
         </div>
       </section>
 

@@ -35,6 +35,9 @@ const contextTitle = document.getElementById("partner-context-title");
 const contextCopy = document.getElementById("partner-context-copy");
 const runtimeLabel = document.getElementById("partner-runtime-status");
 const runtimeTime = document.getElementById("partner-runtime-time");
+const overviewRefreshButton = document.getElementById("partner-rail-refresh");
+const overviewZoomInButton = document.getElementById("partner-stage-zoom-in");
+const overviewZoomOutButton = document.getElementById("partner-stage-zoom-out");
 const overviewCards = {
   summary: document.getElementById("partner-summary-card"),
   command: document.getElementById("partner-command-card"),
@@ -45,6 +48,7 @@ const overviewCards = {
 let sessionToken = null;
 let currentPage = "overview";
 let clockTimer = null;
+let overviewScale = 1;
 const state = { dashboard: null, stats: null, revenue: null, transactions: [], apiUsage: null, agents: null };
 
 function setStatus(node, message, isError = false) {
@@ -128,6 +132,220 @@ function topAgents(agents, limit = 6) {
       return Number(right.total_transactions || 0) - Number(left.total_transactions || 0);
     })
     .slice(0, limit);
+}
+
+function nodeTone(status) {
+  const normalized = String(status || "").toLowerCase();
+  if (["active", "completed", "connected"].includes(normalized)) return "active";
+  if (["pending", "review", "processing"].includes(normalized)) return "warning";
+  return "danger";
+}
+
+function buildGrowthBadge(rows) {
+  const daily = [...(rows || [])]
+    .sort((left, right) => String(left.date).localeCompare(String(right.date)))
+    .map((row) => Number(row.volume || 0))
+    .filter((value) => Number.isFinite(value));
+
+  if (daily.length < 2) {
+    return { label: "Live", copy: "Waiting for two recorded days before day-over-day movement is available." };
+  }
+
+  const previous = daily.at(-2) || 0;
+  const latest = daily.at(-1) || 0;
+  if (previous <= 0) {
+    return { label: "Live", copy: latest > 0 ? "Recent volume is now recorded for this tenant." : "Recent days still have no completed volume." };
+  }
+
+  const change = ((latest - previous) / previous) * 100;
+  const prefix = change > 0 ? "+" : "";
+  return {
+    label: `${prefix}${Math.round(change)}%`,
+    copy: `Compared with the previous recorded day in the ${state.revenue?.period || "active"} window.`
+  };
+}
+
+function ensureStageCanvas(container) {
+  if (!container) return null;
+  let canvas = container.querySelector(".ops-stage-canvas");
+  const anchor = container.querySelector(".ops-stage-legend") || container.querySelector(".ops-stage-controls");
+  if (!canvas) {
+    canvas = document.createElement("div");
+    canvas.className = "ops-stage-canvas";
+    if (anchor) {
+      container.insertBefore(canvas, anchor);
+    } else {
+      container.appendChild(canvas);
+    }
+  }
+  return canvas;
+}
+
+function renderOpsStream(containerId, items, emptyCopy = "No activity stream available yet.") {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-state">${escapeHtml(emptyCopy)}</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map((item) => `
+    <article class="ops-stream-item">
+      <div class="ops-stream-main">
+        <div class="ops-stream-pulse ${alertTone(item.type)}"></div>
+        <div class="ops-stream-copy">
+          <div class="ops-stream-head">
+            <strong class="ops-stream-tag">${escapeHtml(item.tag)}</strong>
+            <span class="ops-stream-meta">${escapeHtml(item.meta)}</span>
+          </div>
+          <p>${escapeHtml(item.detail)}</p>
+        </div>
+      </div>
+      <time class="ops-stream-time">${escapeHtml(item.time)}</time>
+    </article>
+  `).join("");
+}
+
+function buildStreamItems(stats, apiUsage, transactions, agents) {
+  const stream = [];
+  const health = summarizeAgents(agents);
+
+  if ((stats.pendingTransactions || 0) > 0) {
+    stream.push({
+      type: "warning",
+      tag: "QUEUE",
+      detail: `${formatNumber(stats.pendingTransactions)} partner transaction${stats.pendingTransactions === 1 ? "" : "s"} still pending completion.`,
+      meta: "Partner review",
+      time: stats.lastTransactionAt ? relativeTime(stats.lastTransactionAt) : "Live"
+    });
+  }
+
+  if (apiUsage.lastRequestAt) {
+    stream.push({
+      type: (apiUsage.activeKeys || 0) > 0 ? "active" : "warning",
+      tag: "API",
+      detail: `${formatNumber(apiUsage.totalCalls || 0)} logged request${(apiUsage.totalCalls || 0) === 1 ? "" : "s"} for this tenant.`,
+      meta: `${formatNumber(apiUsage.activeKeys || 0)} active key${(apiUsage.activeKeys || 0) === 1 ? "" : "s"}`,
+      time: relativeTime(apiUsage.lastRequestAt)
+    });
+  }
+
+  if (health.nearLimit > 0) {
+    stream.push({
+      type: "warning",
+      tag: "LIMIT",
+      detail: `${formatNumber(health.nearLimit)} agent${health.nearLimit === 1 ? "" : "s"} are above 80% of daily limit.`,
+      meta: "Utilization",
+      time: "Now"
+    });
+  }
+
+  transactions.slice(0, 6).forEach((item) => {
+    const type = String(item.status || "").toLowerCase() === "completed"
+      ? "active"
+      : String(item.status || "").toLowerCase() === "pending"
+        ? "warning"
+        : "danger";
+    stream.push({
+      type,
+      tag: String(item.product_type || "transaction").toUpperCase(),
+      detail: `${item.agent_name || item.agent_email || "Agent"} / ${formatCurrency(item.face_value || 0, "NGN")} / ${item.customer_phone || "-"}`,
+      meta: item.carrier || "POS",
+      time: relativeTime(item.created_at)
+    });
+  });
+
+  return stream.slice(0, 6);
+}
+
+function renderOverviewStage(stats, agents) {
+  const topology = document.getElementById("partner-overview-topology");
+  const coverageNode = document.getElementById("partner-stage-coverage");
+  const volumeNode = document.getElementById("partner-stage-volume");
+  const activeNode = document.getElementById("partner-stage-active");
+  if (!topology || !coverageNode || !volumeNode || !activeNode) return;
+
+  const health = summarizeAgents(agents);
+  const totalAgents = Number(stats.agentCount || health.total || 0);
+  const activeAgents = Number(stats.activeAgents || health.byStatus.active || 0);
+  const coverage = totalAgents > 0 ? Math.round((activeAgents / totalAgents) * 100) : 0;
+  const averageVolume = Number(stats.transactionCount || 0) > 0
+    ? Number(stats.transactionVolume || 0) / Number(stats.transactionCount || 1)
+    : 0;
+
+  coverageNode.textContent = `${coverage}%`;
+  volumeNode.textContent = formatCurrency(averageVolume, "NGN");
+  activeNode.textContent = `${formatNumber(activeAgents)}/${formatNumber(totalAgents)}`;
+
+  const canvas = ensureStageCanvas(topology);
+  if (!canvas) return;
+
+  const positions = [
+    { x: 18, y: 28 },
+    { x: 50, y: 18 },
+    { x: 82, y: 30 },
+    { x: 74, y: 72 },
+    { x: 44, y: 80 },
+    { x: 16, y: 66 }
+  ];
+  const ranked = topAgents(agents, positions.length);
+
+  if (!ranked.length) {
+    canvas.style.transform = `scale(${overviewScale})`;
+    canvas.innerHTML = `<div class="empty-state" style="position:absolute;inset:0;display:grid;place-items:center;">No live partner agents yet.</div>`;
+    return;
+  }
+
+  const links = ranked.slice(0, Math.max(ranked.length - 1, 0)).map((_, index) => {
+    const current = positions[index];
+    const next = positions[(index + 1) % ranked.length];
+    const dx = next.x - current.x;
+    const dy = next.y - current.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    return `<span class="ops-stage-link" style="left:${current.x}%;top:${current.y}%;width:${distance}%;transform:rotate(${angle}deg);"></span>`;
+  }).join("");
+
+  const nodes = ranked.map((agent, index) => {
+    const position = positions[index];
+    const tone = nodeTone(agent.status);
+    return `
+      <div class="ops-stage-node ${tone}" style="left:${position.x}%;top:${position.y}%;">
+        <span class="ops-stage-node-glow"></span>
+        <span class="ops-stage-node-dot"></span>
+        <span class="ops-stage-node-note">${escapeHtml(agent.display_name || agent.email || "Agent")} / ${escapeHtml(formatNumber(agent.total_transactions || 0))} txs</span>
+      </div>
+    `;
+  }).join("");
+
+  canvas.style.transform = `scale(${overviewScale})`;
+  canvas.innerHTML = `${links}${nodes}`;
+}
+
+function renderOverviewStats(stats, agents) {
+  const velocityBadge = document.getElementById("partner-velocity-badge");
+  const velocityValue = document.getElementById("partner-velocity-value");
+  const velocityCopy = document.getElementById("partner-velocity-copy");
+  const fleetValue = document.getElementById("partner-fleet-value");
+  const fleetStrip = document.getElementById("partner-fleet-strip");
+  const fleetCopy = document.getElementById("partner-fleet-copy");
+  if (!velocityBadge || !velocityValue || !velocityCopy || !fleetValue || !fleetStrip || !fleetCopy) return;
+
+  const health = summarizeAgents(agents);
+  const growth = buildGrowthBadge(state.revenue?.daily || []);
+  const ranked = topAgents(agents, 4);
+
+  velocityBadge.textContent = growth.label;
+  velocityValue.textContent = formatCurrency(stats.transactionVolume || 0, "NGN");
+  velocityCopy.textContent = growth.copy;
+
+  fleetValue.textContent = formatNumber(stats.activeAgents || health.byStatus.active || 0);
+  fleetStrip.innerHTML = ranked.length
+    ? ranked.map((agent) => `<span class="ops-avatar-dot ${nodeTone(agent.status)}" title="${escapeHtml(agent.display_name || agent.email || "Agent")}"></span>`).join("")
+    : `<span class="ops-avatar-dot" title="No active fleet"></span>`;
+  fleetCopy.textContent = health.nearLimit > 0
+    ? `${formatNumber(health.nearLimit)} agent${health.nearLimit === 1 ? "" : "s"} are close to their daily limit.`
+    : "Real partner agents currently available for operations.";
 }
 
 function startRuntimeClock() {
@@ -289,6 +507,9 @@ function renderOverview() {
   renderAlertFeed(buildAlerts(partner, stats, apiUsage, agents));
   renderContext(partner, stats, apiUsage, agents);
   renderHealthGrid(stats, apiUsage, agents);
+  renderOverviewStage(stats, agents);
+  renderOverviewStats(stats, agents);
+  renderOpsStream("partner-overview-stream", buildStreamItems(stats, apiUsage, transactions, agents), "No partner activity has been recorded yet.");
 
   document.getElementById("metric-status").textContent = String(partner.status || "-");
   document.getElementById("metric-agents").textContent = formatNumber(stats.agentCount || state.dashboard.network.totalAgents || 0);
@@ -459,38 +680,11 @@ function renderNetwork() {
       `).join("")
     : `<div class="empty-state">No agent performance data yet.</div>`;
 
-  const streamItems = [
-    ...(apiUsage.lastRequestAt ? [{
-      type: "active",
-      tag: "API",
-      detail: `${formatNumber(apiUsage.totalCalls || 0)} total call${(apiUsage.totalCalls || 0) === 1 ? "" : "s"} recorded for this partner.`,
-      meta: `${formatNumber(apiUsage.activeKeys || 0)} active key${(apiUsage.activeKeys || 0) === 1 ? "" : "s"}`,
-      time: relativeTime(apiUsage.lastRequestAt)
-    }] : []),
-    ...state.transactions.slice(0, 6).map((item) => ({
-      type: item.status === "completed" ? "success" : item.status === "pending" ? "warning" : "danger",
-      tag: String(item.product_type || "transaction").toUpperCase(),
-      detail: `${item.agent_name || item.agent_email || "Agent"} / ${formatCurrency(item.face_value || 0, "NGN")} / ${item.customer_phone || "-"}`,
-      meta: item.carrier || "POS",
-      time: relativeTime(item.created_at)
-    }))
-  ];
-
-  document.getElementById("partner-stream").innerHTML = streamItems.length
-    ? streamItems.map((item) => `
-        <article class="stream-item">
-          <div class="stream-pulse ${alertTone(item.type)}"></div>
-          <div class="stream-copy">
-            <div class="stream-copy-head">
-              <strong>${escapeHtml(item.tag)}</strong>
-              <span>${escapeHtml(item.meta)}</span>
-            </div>
-            <p>${escapeHtml(item.detail)}</p>
-          </div>
-          <time>${escapeHtml(item.time)}</time>
-        </article>
-      `).join("")
-    : `<div class="empty-state">No activity stream available yet.</div>`;
+  renderOpsStream(
+    "partner-stream",
+    buildStreamItems(stats, apiUsage, state.transactions, agents),
+    "No activity stream available yet."
+  );
 
   document.getElementById("partner-agent-highlights").innerHTML = [
     { label: "Total agents", value: formatNumber(stats.agentCount || agents.length), copy: "Registered partner agents." },
@@ -699,6 +893,30 @@ refreshButton.addEventListener("click", async () => {
   } catch (error) {
     setStatus(loadStatus, error.message || "Unable to refresh portal.", true);
   }
+});
+
+overviewRefreshButton?.addEventListener("click", async () => {
+  try {
+    state.dashboard = null;
+    state.stats = null;
+    state.revenue = null;
+    state.apiUsage = null;
+    state.transactions = [];
+    state.agents = null;
+    await loadOverview(true);
+  } catch (error) {
+    setStatus(loadStatus, error.message || "Unable to refresh portal.", true);
+  }
+});
+
+overviewZoomInButton?.addEventListener("click", () => {
+  overviewScale = Math.min(1.45, Number((overviewScale + 0.1).toFixed(2)));
+  if (state.stats && state.agents) renderOverviewStage(state.stats, state.agents);
+});
+
+overviewZoomOutButton?.addEventListener("click", () => {
+  overviewScale = Math.max(0.85, Number((overviewScale - 0.1).toFixed(2)));
+  if (state.stats && state.agents) renderOverviewStage(state.stats, state.agents);
 });
 
 logoutButton.addEventListener("click", () => {

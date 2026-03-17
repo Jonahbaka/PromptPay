@@ -33,6 +33,7 @@ const contextTitle = document.getElementById("dashboard-context-title");
 const contextCopy = document.getElementById("dashboard-context-copy");
 const runtimeLabel = document.getElementById("dashboard-runtime-status");
 const runtimeTime = document.getElementById("dashboard-runtime-time");
+const overviewRefreshButton = document.getElementById("dashboard-rail-refresh");
 const overviewCards = {
   command: document.getElementById("dashboard-command-card"),
   profile: document.getElementById("profile-card"),
@@ -112,6 +113,116 @@ function lastActivityTimestamp(account, transactions, notifications) {
     transactions[0]?.createdAt,
     notifications[0]?.createdAt
   ].filter(Boolean).sort((left, right) => String(right).localeCompare(String(left)))[0] || null;
+}
+
+function nodeTone(status) {
+  const normalized = String(status || "").toLowerCase();
+  if (["active", "completed", "connected", "read", "recorded", "verified"].includes(normalized)) return "active";
+  if (["pending", "review", "processing", "none"].includes(normalized)) return "warning";
+  return "danger";
+}
+
+function ensureStageCanvas(container) {
+  if (!container) return null;
+  let canvas = container.querySelector(".ops-stage-canvas");
+  if (!canvas) {
+    canvas = document.createElement("div");
+    canvas.className = "ops-stage-canvas";
+    container.appendChild(canvas);
+  }
+  return canvas;
+}
+
+function renderOpsStream(containerId, items, emptyCopy = "No activity stream available yet.") {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!items.length) {
+    container.innerHTML = `<div class="empty-state">${escapeHtml(emptyCopy)}</div>`;
+    return;
+  }
+
+  container.innerHTML = items.map((item) => `
+    <article class="ops-stream-item">
+      <div class="ops-stream-main">
+        <div class="ops-stream-pulse ${alertTone(item.type)}"></div>
+        <div class="ops-stream-copy">
+          <div class="ops-stream-head">
+            <strong class="ops-stream-tag">${escapeHtml(item.tag)}</strong>
+            <span class="ops-stream-meta">${escapeHtml(item.meta)}</span>
+          </div>
+          <p>${escapeHtml(item.detail)}</p>
+        </div>
+      </div>
+      <time class="ops-stream-time">${escapeHtml(item.time)}</time>
+    </article>
+  `).join("");
+}
+
+function buildDashboardStream(profile, account, transactions, notifications, settings, featureFlags) {
+  const unreadCount = notifications.filter((item) => item.status !== "read").length;
+  const stream = [];
+
+  if (unreadCount > 0) {
+    stream.push({
+      type: "warning",
+      tag: "NOTICE",
+      detail: `${formatNumber(unreadCount)} unread notification${unreadCount === 1 ? "" : "s"} need review.`,
+      meta: "Account inbox",
+      time: notifications[0]?.createdAt ? relativeTime(notifications[0].createdAt) : "Now"
+    });
+  }
+
+  transactions.slice(0, 4).forEach((item) => {
+    stream.push({
+      type: String(item.status || "").toLowerCase() === "completed" || String(item.status || "").toLowerCase() === "recorded" ? "active" : "warning",
+      tag: String(item.type || item.source || "activity").toUpperCase(),
+      detail: item.description || `${item.source || "account"} activity`,
+      meta: item.currency ? formatCurrency(item.amount || 0, item.currency) : `${formatNumber(item.amount || 0)} units`,
+      time: relativeTime(item.createdAt)
+    });
+  });
+
+  if (String(account.kycStatus || "").toLowerCase() !== "verified") {
+    stream.push({
+      type: "warning",
+      tag: "KYC",
+      detail: `Current KYC status is ${String(account.kycStatus || "none").toLowerCase()}.`,
+      meta: `Tier ${account.kycTier ?? 0}`,
+      time: account.createdAt ? relativeTime(account.createdAt) : "Live"
+    });
+  }
+
+  if (featureFlags["dashboard.services"] === false) {
+    stream.push({
+      type: "warning",
+      tag: "FLAG",
+      detail: "Services are disabled by current platform feature flags.",
+      meta: "Integration required",
+      time: "Live"
+    });
+  }
+
+  if (!stream.length && account.lastLoginAt) {
+    stream.push({
+      type: "active",
+      tag: "LOGIN",
+      detail: `${profile.displayName || profile.email} last accessed this workspace successfully.`,
+      meta: String(account.status || "active"),
+      time: relativeTime(account.lastLoginAt)
+    });
+  }
+
+  if (!stream.length && settings.notificationEnabled === false) {
+    stream.push({
+      type: "warning",
+      tag: "SETTINGS",
+      detail: "Notifications are muted in account preferences.",
+      meta: settings.timezone || "UTC",
+      time: "Live"
+    });
+  }
+
+  return stream.slice(0, 6);
 }
 
 function startRuntimeClock() {
@@ -245,6 +356,80 @@ function renderHealthGrid(profile, account, transactions, notifications, setting
       <small>${escapeHtml(item.copy)}</small>
     </article>
   `).join("");
+}
+
+function renderOverviewStage(profile, account, transactions, notifications, featureFlags) {
+  const stage = document.getElementById("dashboard-stage");
+  const badge = document.getElementById("dashboard-stage-badge");
+  const profileNode = document.getElementById("dashboard-stage-profile");
+  const modulesNode = document.getElementById("dashboard-stage-modules");
+  const lastNode = document.getElementById("dashboard-stage-last");
+  if (!stage || !badge || !profileNode || !modulesNode || !lastNode) return;
+
+  const unreadCount = notifications.filter((item) => item.status !== "read").length;
+  const profileFields = profileFieldCount(profile);
+  const enabledModules = [
+    featureFlags["dashboard.services"] !== false,
+    featureFlags["dashboard.notifications"] !== false,
+    featureFlags["dashboard.settings"] !== false
+  ].filter(Boolean).length;
+  const lastActivity = lastActivityTimestamp(account, transactions, notifications);
+  const completeProfile = isProfileComplete(profile);
+
+  badge.textContent = completeProfile && String(account.status || "").toLowerCase() === "active" ? "Ready" : "Review";
+  profileNode.textContent = `${formatNumber(profileFields)} / 4`;
+  modulesNode.textContent = `${formatNumber(enabledModules)} / 3`;
+  lastNode.textContent = lastActivity ? relativeTime(lastActivity) : "No activity";
+
+  const canvas = ensureStageCanvas(stage);
+  if (!canvas) return;
+  const positions = [
+    { x: 24, y: 28, tone: completeProfile ? "active" : "warning", note: `PROFILE / ${profileFields} OF 4` },
+    { x: 74, y: 28, tone: nodeTone(account.status), note: `ACCOUNT / ${String(account.status || "unknown").toUpperCase()}` },
+    { x: 72, y: 74, tone: unreadCount > 0 ? "warning" : "active", note: `NOTICES / ${formatNumber(unreadCount)} UNREAD` },
+    { x: 24, y: 74, tone: enabledModules > 0 ? "active" : "danger", note: `MODULES / ${enabledModules} LIVE` }
+  ];
+  const links = [
+    [positions[0], positions[1]],
+    [positions[1], positions[2]],
+    [positions[2], positions[3]],
+    [positions[3], positions[0]]
+  ].map(([from, to]) => {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    return `<span class="ops-stage-link" style="left:${from.x}%;top:${from.y}%;width:${distance}%;transform:rotate(${angle}deg);"></span>`;
+  }).join("");
+
+  canvas.innerHTML = `${links}${positions.map((item) => `
+    <div class="ops-stage-node ${item.tone}" style="left:${item.x}%;top:${item.y}%;">
+      <span class="ops-stage-node-glow"></span>
+      <span class="ops-stage-node-dot"></span>
+      <span class="ops-stage-node-note">${escapeHtml(item.note)}</span>
+    </div>
+  `).join("")}`;
+}
+
+function renderOverviewStats(account, transactions, notifications) {
+  const unreadCount = notifications.filter((item) => item.status !== "read").length;
+  const primaryBadge = document.getElementById("dashboard-primary-badge");
+  const primaryValue = document.getElementById("dashboard-primary-value");
+  const primaryCopy = document.getElementById("dashboard-primary-copy");
+  const secondaryValue = document.getElementById("dashboard-secondary-value");
+  const secondaryCopy = document.getElementById("dashboard-secondary-copy");
+  if (!primaryBadge || !primaryValue || !primaryCopy || !secondaryValue || !secondaryCopy) return;
+
+  primaryBadge.textContent = unreadCount > 0 ? `${formatNumber(unreadCount)} New` : "Clear";
+  primaryValue.textContent = formatNumber(unreadCount);
+  primaryCopy.textContent = unreadCount > 0
+    ? "Unread notices are pulled directly from your user_notifications records."
+    : "No unread notification records are waiting in this account.";
+
+  secondaryValue.textContent = transactions.length > 0 ? `${formatNumber(transactions.length)} records` : "No data";
+  secondaryCopy.textContent = transactions.length > 0
+    ? `Latest recorded activity ${relativeTime(transactions[0].createdAt)}. Account status is ${String(account.status || "unknown").toLowerCase()}.`
+    : "Transactions and services stay explicit until live data exists.";
 }
 
 function renderProfile(profile) {
@@ -476,6 +661,13 @@ async function loadDashboard() {
   renderProfile(data.profile);
   renderHero(data.profile, data.account, data.transactions, data.notifications);
   renderAlertFeed(buildAlerts(data.profile, data.account, data.transactions, data.notifications, data.settings, data.featureFlags || {}));
+  renderOverviewStage(data.profile, data.account, data.transactions, data.notifications, data.featureFlags || {});
+  renderOverviewStats(data.account, data.transactions, data.notifications);
+  renderOpsStream(
+    "dashboard-stream",
+    buildDashboardStream(data.profile, data.account, data.transactions, data.notifications, data.settings, data.featureFlags || {}),
+    "No account activity has been recorded yet."
+  );
   renderHealthGrid(data.profile, data.account, data.transactions, data.notifications, data.settings, data.featureFlags || {});
   renderAccount(data.account, data.transactions, data.notifications);
   renderTransactions(data.transactions);
@@ -544,6 +736,14 @@ loginForm.addEventListener("submit", async (event) => {
 });
 
 refreshButton.addEventListener("click", async () => {
+  try {
+    await loadDashboard();
+  } catch (error) {
+    setStatus(loadStatus, error.message || "Unable to refresh dashboard.", true);
+  }
+});
+
+overviewRefreshButton?.addEventListener("click", async () => {
   try {
     await loadDashboard();
   } catch (error) {

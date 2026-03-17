@@ -140,7 +140,7 @@
     </header>
 
     <main class="portal-main portal-main-command">
-      <section class="hero-strip hero-strip-command layer-2">
+      <section class="hero-strip hero-strip-command layer-2 hidden">
         <div class="hero-command-copy">
           <p class="eyebrow">Partner network command</p>
           <h2>Bird&rsquo;s-eye control for agents, volume, commissions, and integrations.</h2>
@@ -174,7 +174,7 @@
         </div>
       </section>
 
-      <div class="alert-feed" id="partner-alert-feed" aria-live="polite">
+      <div class="alert-feed hidden" id="partner-alert-feed-legacy" aria-live="polite">
         <article class="alert-card skeleton-card">
           <strong>Loading network guidance</strong>
           <p>Checking partner status, agent health, limits, and integration activity.</p>
@@ -208,6 +208,141 @@
       </nav>
 
       <section class="tab-panel active" data-page="overview">
+        <section class="ops-overview">
+          <div class="ops-rail">
+            <div class="ops-rail-copy">
+              <span class="ops-rail-kicker">Operational insights</span>
+              <strong>Live partner network state</strong>
+            </div>
+            <button class="ops-rail-action" id="partner-rail-refresh" type="button">Refresh</button>
+          </div>
+
+          <div class="alert-feed ops-alert-stack" id="partner-alert-feed" aria-live="polite">
+            <article class="alert-card skeleton-card">
+              <strong>Loading network guidance</strong>
+              <p>Checking partner status, agent health, limits, and integration activity.</p>
+            </article>
+          </div>
+
+          <div class="ops-grid">
+            <article class="ops-card ops-card-square" id="partner-ops-stage-card">
+              <div class="ops-card-header">
+                <div class="ops-card-title">
+                  <div class="ops-icon-box" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <circle cx="6" cy="7" r="2"></circle>
+                      <circle cx="18" cy="6" r="2"></circle>
+                      <circle cx="17" cy="18" r="2"></circle>
+                      <circle cx="7" cy="17" r="2"></circle>
+                      <path d="M8 8.5l8-1.5M16.5 8l-1 8M8.5 15.5l7 1"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="ops-card-kicker">Live network nodes</span>
+                    <h3>Fleet visibility</h3>
+                  </div>
+                </div>
+                <span class="ops-badge ops-badge-success">Real-time</span>
+              </div>
+
+              <div class="ops-stage" id="partner-overview-topology">
+                <div class="ops-stage-grid" aria-hidden="true">
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d="M0 20 Q 25 25 50 20 T 100 25" stroke="white" fill="none" stroke-width="0.12"></path>
+                    <path d="M0 50 Q 25 45 50 50 T 100 45" stroke="white" fill="none" stroke-width="0.12"></path>
+                    <path d="M0 80 Q 25 85 50 80 T 100 85" stroke="white" fill="none" stroke-width="0.12"></path>
+                  </svg>
+                </div>
+                <div class="ops-stage-legend">
+                  <span><i class="ops-dot ops-dot-active"></i>High volume</span>
+                  <span><i class="ops-dot ops-dot-danger"></i>Threshold</span>
+                </div>
+                <div class="ops-stage-controls">
+                  <button class="ops-stage-button" id="partner-stage-zoom-in" type="button" aria-label="Zoom in">+</button>
+                  <button class="ops-stage-button" id="partner-stage-zoom-out" type="button" aria-label="Zoom out">-</button>
+                </div>
+              </div>
+
+              <div class="ops-stage-footer">
+                <div class="ops-stage-stat">
+                  <span>Coverage</span>
+                  <strong id="partner-stage-coverage">0%</strong>
+                </div>
+                <div class="ops-stage-stat">
+                  <span>Avg Vol</span>
+                  <strong id="partner-stage-volume">NGN 0</strong>
+                </div>
+                <div class="ops-stage-stat">
+                  <span>Active</span>
+                  <strong id="partner-stage-active">0/0</strong>
+                </div>
+              </div>
+            </article>
+
+            <div class="ops-pair-grid">
+              <article class="ops-card ops-stat-card">
+                <div class="ops-stat-head">
+                  <div class="ops-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M3 12h4l3-8 4 16 3-8h4"></path>
+                    </svg>
+                  </div>
+                  <span class="ops-badge" id="partner-velocity-badge">Live</span>
+                </div>
+                <div class="ops-stat-body">
+                  <span class="ops-stat-kicker">Network volume</span>
+                  <strong id="partner-velocity-value">NGN 0</strong>
+                  <small id="partner-velocity-copy">Completed volume from real partner transactions.</small>
+                </div>
+              </article>
+
+              <article class="ops-card ops-stat-card ops-stat-card-accent">
+                <div class="ops-stat-head">
+                  <div class="ops-stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9.5" cy="7" r="3"></circle>
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 4.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="ops-stat-body">
+                  <span class="ops-stat-kicker">Active fleet</span>
+                  <strong id="partner-fleet-value">0</strong>
+                  <div class="ops-avatar-strip" id="partner-fleet-strip">
+                    <span class="ops-avatar-dot"></span>
+                  </div>
+                  <small id="partner-fleet-copy">Real partner agents currently available for operations.</small>
+                </div>
+              </article>
+            </div>
+
+            <article class="ops-card ops-stream-card">
+              <div class="ops-card-header">
+                <div class="ops-card-title">
+                  <div class="ops-icon-box" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M4 17V7"></path>
+                      <path d="M10 17V11"></path>
+                      <path d="M16 17V5"></path>
+                      <path d="M22 17V9"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <span class="ops-card-kicker">Operational stream</span>
+                    <h3>Latest activity</h3>
+                  </div>
+                </div>
+              </div>
+              <div class="ops-stream-list" id="partner-overview-stream">
+                <div class="empty-state">No activity stream available yet.</div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="overview-legacy hidden">
         <article class="panel-card intent-card layer-3">
           <div class="section-heading">
             <div>
@@ -308,6 +443,7 @@
               <div class="empty-state">Loading transaction activity.</div>
             </div>
           </article>
+        </div>
         </div>
       </section>
 
