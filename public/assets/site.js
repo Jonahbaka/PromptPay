@@ -86,9 +86,9 @@ function shouldRedirectAfterAuth(user) {
 }
 
 function renderLoggedOut() {
-  sessionTitle.textContent = "Choose your PromptPay workspace";
+  sessionTitle.textContent = "Choose your PromptPay access point";
   sessionCopy.textContent =
-    "Open the user app for wallet and airtime, or sign in to partner and admin portals for network operations.";
+    "Use the PromptPay app for airtime, data, balance, and transactions, or enter the partner and admin workspaces.";
   sessionActions.innerHTML = `
     <button class="button button-primary" type="button" data-open-auth="signin">Sign In</button>
     <button class="button button-secondary" type="button" data-open-auth="register">Start Network</button>
@@ -103,10 +103,10 @@ function renderLoggedOut() {
 function renderLoggedIn(user) {
   sessionTitle.textContent = `Welcome back, ${user.displayName || user.email}`;
   const isUser = user.role === USER_ROLE;
-  const primaryLabel = isUser ? "Open App" : "Open Portal";
+  const primaryLabel = isUser ? "Open App" : "Open Workspace";
   sessionCopy.textContent = isUser
     ? "Your PromptPay app is ready for wallet balance, airtime, data, transactions, and installable mobile access."
-    : "Your operator portal is ready for network operations, partner controls, and administrative workflows.";
+    : "Your workspace is ready for agent networks, partner controls, provider monitoring, and administrative workflows.";
   sessionActions.innerHTML = `
     <a class="button button-primary" href="${getConsoleHref(user)}">${primaryLabel}</a>
     <button class="button button-secondary" type="button" id="logout-button">Log Out</button>
@@ -295,6 +295,15 @@ function setupMenu() {
   });
 }
 
+function setupHeaderState() {
+  if (!header) return;
+  const syncHeader = () => {
+    header.classList.toggle("is-scrolled", window.scrollY > 12);
+  };
+  syncHeader();
+  window.addEventListener("scroll", syncHeader, { passive: true });
+}
+
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   const register = () => navigator.serviceWorker.register("/sw.js").catch(() => {});
@@ -309,6 +318,7 @@ bindAuthTriggers();
 bindTestAccessTriggers();
 setupDialogDismissal();
 setupMenu();
+setupHeaderState();
 document.getElementById("signin-submit").addEventListener("click", handleSignIn);
 document.getElementById("register-submit").addEventListener("click", handleRegister);
 authTabs.forEach((tab) => tab.addEventListener("click", () => setTab(tab.dataset.authTab)));
