@@ -54,7 +54,7 @@
   </section>
 
   <div class="portal-shell hidden" id="admin-shell">
-    <header class="portal-topbar">
+    <header class="portal-topbar portal-topbar-command">
       <div class="topbar-brand">
         <div class="brand-mark" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -69,8 +69,17 @@
           <span>Owner portal</span>
         </div>
       </div>
+
+      <div class="runtime-cluster" aria-live="polite">
+        <span class="runtime-dot"></span>
+        <div>
+          <small id="admin-runtime-status">Live platform state</small>
+          <strong id="admin-runtime-time">--:--</strong>
+        </div>
+      </div>
+
       <div class="topbar-actions">
-        <div class="session-pill">
+        <div class="session-pill session-pill-strong">
           <strong id="admin-name">Owner</strong>
           <span>Full platform access</span>
         </div>
@@ -81,24 +90,66 @@
     </header>
 
     <main class="portal-main">
-      <section class="hero-strip layer-2">
-        <div>
+      <section class="hero-strip hero-strip-command layer-2">
+        <div class="hero-command-copy">
           <p class="eyebrow">Platform control layer</p>
-          <h2>Users, partners, logs, and feature controls.</h2>
+          <h2>Users, partners, logs, and feature controls in one immersive command surface.</h2>
           <p class="muted">
             Admin actions in this portal are backed by real database updates only. There are no fabricated users,
             metrics, or status changes.
           </p>
+          <div class="hero-chip-row">
+            <span class="hero-chip" id="admin-live-users">Users: 0</span>
+            <span class="hero-chip" id="admin-live-partners">Partners: 0</span>
+            <span class="hero-chip" id="admin-live-volume">Volume: NGN 0</span>
+          </div>
+        </div>
+
+        <div class="hero-command-stack">
+          <article class="signal-card">
+            <span>Control queue</span>
+            <strong id="admin-signal-queue">0 items</strong>
+            <small id="admin-signal-queue-copy">Pending and restricted entities only.</small>
+          </article>
+          <article class="signal-card">
+            <span>Audit stream</span>
+            <strong id="admin-signal-audit">No recent audit activity</strong>
+            <small id="admin-signal-audit-copy">Read directly from the audit trail table.</small>
+          </article>
+          <article class="signal-card">
+            <span>Feature state</span>
+            <strong id="admin-signal-flags">0 enabled</strong>
+            <small id="admin-signal-flags-copy">Backed by the feature_flags table only.</small>
+          </article>
         </div>
       </section>
 
+      <div class="alert-feed" id="admin-alert-feed" aria-live="polite">
+        <article class="alert-card skeleton-card">
+          <strong>Loading control guidance</strong>
+          <p>Checking partner queue, restricted accounts, audit activity, and feature state.</p>
+        </article>
+      </div>
+
       <div class="status-text" id="admin-load-status" aria-live="polite"></div>
 
-      <nav class="tabbar" aria-label="Admin sections">
-        <button class="tab-button active" type="button" data-page="overview">Overview</button>
-        <button class="tab-button" type="button" data-page="users">Users</button>
-        <button class="tab-button" type="button" data-page="partners">Partners</button>
-        <button class="tab-button" type="button" data-page="flags">Feature Flags</button>
+      <nav class="tabbar tabbar-primary" aria-label="Admin sections">
+        <button class="tab-button active" type="button" data-page="overview">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg></span>
+          <span class="tab-label">Overview</span>
+        </button>
+        <button class="tab-button" type="button" data-page="users">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path><circle cx="9.5" cy="7" r="3"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 4.13a4 4 0 0 1 0 7.75"></path></svg></span>
+          <span class="tab-label">Users</span>
+        </button>
+        <button class="tab-button" type="button" data-page="partners">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="2"></circle><circle cx="18" cy="7" r="2"></circle><circle cx="18" cy="17" r="2"></circle><path d="M8 12h8M16.7 8.4 8 11.1M16.7 15.6 8 12.9"></path></svg></span>
+          <span class="tab-label">Partners</span>
+        </button>
+        <button class="tab-button" type="button" data-page="flags">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
+          <span class="tab-label">Feature Flags</span>
+        </button>
       </nav>
 
       <section class="tab-panel active" data-page="overview">
@@ -142,6 +193,23 @@
         </div>
 
         <div class="portal-bento admin-bento">
+          <article class="panel-card bento-card" id="admin-command-card">
+            <div class="section-heading">
+              <div>
+                <h3>Platform posture</h3>
+                <p>Real queue, audit, and platform access signals.</p>
+              </div>
+              <button class="button button-secondary button-small" type="button" data-switch-page="flags">Open</button>
+            </div>
+            <div class="mini-stat-grid" id="admin-health-grid">
+              <article class="mini-stat-card">
+                <span>Pending partners</span>
+                <strong>0</strong>
+                <small>Checking real tenant status.</small>
+              </article>
+            </div>
+          </article>
+
           <article class="panel-card bento-card" id="admin-queue-card">
             <div class="section-heading">
               <div>
@@ -257,6 +325,27 @@
         </article>
       </section>
     </main>
+
+    <nav class="portal-dock" aria-label="Admin quick navigation">
+      <div class="portal-dock-shell">
+        <button class="tab-button active" type="button" data-page="overview">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg></span>
+          <span class="tab-label">Overview</span>
+        </button>
+        <button class="tab-button" type="button" data-page="users">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path><circle cx="9.5" cy="7" r="3"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 4.13a4 4 0 0 1 0 7.75"></path></svg></span>
+          <span class="tab-label">Users</span>
+        </button>
+        <button class="tab-button" type="button" data-page="partners">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="12" r="2"></circle><circle cx="18" cy="7" r="2"></circle><circle cx="18" cy="17" r="2"></circle><path d="M8 12h8M16.7 8.4 8 11.1M16.7 15.6 8 12.9"></path></svg></span>
+          <span class="tab-label">Partners</span>
+        </button>
+        <button class="tab-button" type="button" data-page="flags">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
+          <span class="tab-label">Flags</span>
+        </button>
+      </div>
+    </nav>
   </div>
 
   <script type="module" src="/assets/admin-portal.js"></script>

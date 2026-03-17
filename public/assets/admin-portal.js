@@ -27,10 +27,13 @@ const tabPanels = [...document.querySelectorAll(".tab-panel")];
 const contextActions = document.getElementById("admin-context-actions");
 const contextTitle = document.getElementById("admin-context-title");
 const contextCopy = document.getElementById("admin-context-copy");
+const runtimeLabel = document.getElementById("admin-runtime-status");
+const runtimeTime = document.getElementById("admin-runtime-time");
 
 let sessionToken = null;
 let currentUserSearch = "";
 let currentPage = "overview";
+let clockTimer = null;
 const state = {
   summary: null,
   activity: null,
@@ -54,6 +57,10 @@ function routeIfWrongRole(user) {
 }
 
 function showAuth() {
+  if (clockTimer) {
+    window.clearInterval(clockTimer);
+    clockTimer = null;
+  }
   authView.classList.remove("hidden");
   shell.classList.add("hidden");
 }
@@ -76,11 +83,128 @@ function statusTone(value) {
   return "status-danger";
 }
 
+function alertTone(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (["success", "active"].includes(normalized)) return "alert-active";
+  if (["warning", "pending"].includes(normalized)) return "alert-warning";
+  return "alert-danger";
+}
+
+function startRuntimeClock() {
+  const update = () => {
+    runtimeTime.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+  update();
+  if (clockTimer) window.clearInterval(clockTimer);
+  clockTimer = window.setInterval(update, 30000);
+}
+
 function renderMetrics(metrics) {
   document.getElementById("metric-users").textContent = formatNumber(metrics.users.total || 0);
   document.getElementById("metric-partners").textContent = formatNumber(metrics.partners.total || 0);
   document.getElementById("metric-volume").textContent = formatCurrency(metrics.transactions.volume || 0, "NGN");
   document.getElementById("metric-audit").textContent = formatNumber(metrics.audit.totalEntries || 0);
+}
+
+function buildAlerts(metrics, activity, flags) {
+  const alerts = [];
+  const pendingQueue = Number(metrics.partners.pending || 0);
+  const restrictedUsers = Number(metrics.users.suspended || 0) + Number(metrics.users.deactivated || 0);
+  const suspendedPartners = Number(metrics.partners.suspended || 0);
+  const disabledFlags = flags.filter((flag) => Number(flag.enabled || 0) !== 1);
+
+  if (pendingQueue > 0) {
+    alerts.push({ tone: "warning", title: `${formatNumber(pendingQueue)} pending partner request${pendingQueue === 1 ? "" : "s"}`, copy: "Approved onboarding is waiting for owner review." });
+  }
+  if (restrictedUsers > 0) {
+    alerts.push({ tone: "danger", title: "Restricted user accounts need review", copy: `${formatNumber(restrictedUsers)} user account${restrictedUsers === 1 ? "" : "s are"} suspended or deactivated.` });
+  }
+  if (suspendedPartners > 0) {
+    alerts.push({ tone: "warning", title: "Suspended partner tenants detected", copy: `${formatNumber(suspendedPartners)} partner tenant${suspendedPartners === 1 ? "" : "s are"} currently suspended.` });
+  }
+  if (Number(metrics.api.activeKeys || 0) === 0) {
+    alerts.push({ tone: "warning", title: "No active developer keys", copy: "Platform integrations are not connected through any active key right now." });
+  }
+  if (disabledFlags.length > 0) {
+    alerts.push({ tone: "warning", title: `${formatNumber(disabledFlags.length)} feature flag${disabledFlags.length === 1 ? " is" : "s are"} disabled`, copy: "Live platform capability is being shaped by current flag state." });
+  }
+  if (!alerts.length && activity.length > 0) {
+    alerts.push({ tone: "success", title: "Platform control state is stable", copy: "The current queue, flags, and audit stream do not show immediate blockers." });
+  }
+  if (!alerts.length) {
+    alerts.push({ tone: "pending", title: "No platform activity yet", copy: "Real queue and audit signals will appear here as the platform is used." });
+  }
+  return alerts.slice(0, 4);
+}
+
+function renderAlertFeed(alerts) {
+  const feed = document.getElementById("admin-alert-feed");
+  feed.innerHTML = alerts.map((alert) => `
+    <article class="alert-card ${alertTone(alert.tone)}">
+      <div class="alert-stripe"></div>
+      <div>
+        <strong>${escapeHtml(alert.title)}</strong>
+        <p>${escapeHtml(alert.copy)}</p>
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderHero(metrics, activity, flags) {
+  const queueCount = Number(metrics.partners.pending || 0) + Number(metrics.partners.suspended || 0) + Number(metrics.users.suspended || 0) + Number(metrics.users.deactivated || 0);
+  const enabledFlags = flags.filter((flag) => Number(flag.enabled || 0) === 1);
+  const lastAudit = activity[activity.length - 1];
+
+  document.getElementById("admin-live-users").textContent = `Users: ${formatNumber(metrics.users.total || 0)}`;
+  document.getElementById("admin-live-partners").textContent = `Partners: ${formatNumber(metrics.partners.total || 0)}`;
+  document.getElementById("admin-live-volume").textContent = `Volume: ${formatCurrency(metrics.transactions.volume || 0, "NGN")}`;
+  document.getElementById("admin-signal-queue").textContent = `${formatNumber(queueCount)} item${queueCount === 1 ? "" : "s"}`;
+  document.getElementById("admin-signal-audit").textContent = lastAudit?.timestamp ? formatDate(lastAudit.timestamp) : "No recent audit activity";
+  document.getElementById("admin-signal-flags").textContent = `${formatNumber(enabledFlags.length)} enabled`;
+  document.getElementById("admin-signal-queue-copy").textContent = queueCount > 0
+    ? "Pending partner and restricted account states need owner attention."
+    : "No pending or restricted control items are currently queued.";
+  document.getElementById("admin-signal-audit-copy").textContent = lastAudit?.timestamp
+    ? `${String(lastAudit.action || "Recent activity")} was the latest recorded admin-relevant event.`
+    : "The audit trail has not recorded owner-visible activity yet.";
+  document.getElementById("admin-signal-flags-copy").textContent = `${formatNumber(enabledFlags.length)} of ${formatNumber(flags.length)} stored flags are enabled.`;
+  runtimeLabel.textContent = queueCount > 0
+    ? `${formatNumber(queueCount)} control item${queueCount === 1 ? "" : "s"} need review`
+    : `${formatNumber(metrics.users.active || 0)} active users / ${formatNumber(metrics.partners.active || 0)} active partners`;
+}
+
+function renderHealthGrid(metrics, activity, flags) {
+  const enabledFlags = flags.filter((flag) => Number(flag.enabled || 0) === 1);
+  const lastAudit = activity[activity.length - 1];
+  const items = [
+    {
+      label: "Active users",
+      value: `${formatNumber(metrics.users.active || 0)} / ${formatNumber(metrics.users.total || 0)}`,
+      copy: "Current active user records."
+    },
+    {
+      label: "Partner queue",
+      value: formatNumber((metrics.partners.pending || 0) + (metrics.partners.suspended || 0)),
+      copy: "Pending and suspended partner tenants."
+    },
+    {
+      label: "API keys",
+      value: formatNumber(metrics.api.activeKeys || 0),
+      copy: `${formatNumber(metrics.api.requestsToday || 0)} requests logged today.`
+    },
+    {
+      label: "Last audit",
+      value: lastAudit?.timestamp ? formatDate(lastAudit.timestamp) : "No entries",
+      copy: `${formatNumber(enabledFlags.length)} of ${formatNumber(flags.length)} flags enabled.`
+    }
+  ];
+  document.getElementById("admin-health-grid").innerHTML = items.map((item) => `
+    <article class="mini-stat-card">
+      <span>${escapeHtml(item.label)}</span>
+      <strong>${escapeHtml(item.value)}</strong>
+      <small>${escapeHtml(item.copy)}</small>
+    </article>
+  `).join("");
 }
 
 function renderQueue(metrics) {
@@ -185,10 +309,10 @@ function renderActivity(entries) {
 
   tbody.innerHTML = entries.map((entry) => `
     <tr>
-      <td>${escapeHtml(formatDate(entry.timestamp))}</td>
-      <td>${escapeHtml(entry.actor || "-")}</td>
-      <td>${escapeHtml(entry.action || "-")}</td>
-      <td>${escapeHtml(entry.target || "-")}</td>
+      <td data-label="Time">${escapeHtml(formatDate(entry.timestamp))}</td>
+      <td data-label="Actor">${escapeHtml(entry.actor || "-")}</td>
+      <td data-label="Action">${escapeHtml(entry.action || "-")}</td>
+      <td data-label="Target">${escapeHtml(entry.target || "-")}</td>
     </tr>
   `).join("");
 }
@@ -213,12 +337,12 @@ function renderUsers(users) {
 
     return `
       <tr>
-        <td>${escapeHtml(user.display_name || "-")}<br><span class="muted">${escapeHtml(user.email || "-")}</span></td>
-        <td>${escapeHtml(user.role || "-")}</td>
-        <td><span class="status-chip ${statusTone(user.status)}">${escapeHtml(user.status || "unknown")}</span></td>
-        <td>${escapeHtml(user.tenant_display_name || "-")}</td>
-        <td>${escapeHtml(user.last_login_at ? formatDate(user.last_login_at) : "Never")}</td>
-        <td>${controls}</td>
+        <td data-label="User">${escapeHtml(user.display_name || "-")}<br><span class="muted">${escapeHtml(user.email || "-")}</span></td>
+        <td data-label="Role">${escapeHtml(user.role || "-")}</td>
+        <td data-label="Status"><span class="status-chip ${statusTone(user.status)}">${escapeHtml(user.status || "unknown")}</span></td>
+        <td data-label="Tenant">${escapeHtml(user.tenant_display_name || "-")}</td>
+        <td data-label="Last login">${escapeHtml(user.last_login_at ? formatDate(user.last_login_at) : "Never")}</td>
+        <td data-label="Controls">${controls}</td>
       </tr>
     `;
   }).join("");
@@ -240,12 +364,12 @@ function renderPartners(partners) {
 
   tbody.innerHTML = partners.map((partner) => `
     <tr>
-      <td>${escapeHtml(partner.display_name || "-")}<br><span class="muted">${escapeHtml(partner.contact_email || "-")}</span></td>
-      <td><span class="status-chip ${statusTone(partner.status)}">${escapeHtml(partner.status || "unknown")}</span></td>
-      <td>${escapeHtml(partner.tier || "-")}</td>
-      <td>${escapeHtml(formatNumber(partner.user_count || 0))}</td>
-      <td>${escapeHtml(formatCurrency(partner.transaction_volume || 0, "NGN"))}</td>
-      <td>
+      <td data-label="Partner">${escapeHtml(partner.display_name || "-")}<br><span class="muted">${escapeHtml(partner.contact_email || "-")}</span></td>
+      <td data-label="Status"><span class="status-chip ${statusTone(partner.status)}">${escapeHtml(partner.status || "unknown")}</span></td>
+      <td data-label="Tier">${escapeHtml(partner.tier || "-")}</td>
+      <td data-label="Users">${escapeHtml(formatNumber(partner.user_count || 0))}</td>
+      <td data-label="Volume">${escapeHtml(formatCurrency(partner.transaction_volume || 0, "NGN"))}</td>
+      <td data-label="Controls">
         <div class="inline-controls">
           <button class="button button-secondary button-small" type="button" data-partner-status="${escapeHtml(partner.id)}:active">Activate</button>
           <button class="button button-secondary button-small" type="button" data-partner-status="${escapeHtml(partner.id)}:suspended">Suspend</button>
@@ -292,27 +416,33 @@ function renderFlags(flags) {
   });
 }
 
-async function loadOverview(force = false) {
-  if (!force && state.summary && state.activity) {
-    renderMetrics(state.summary.metrics);
-    renderQueue(state.summary.metrics);
-    renderContext(state.summary.metrics);
-    renderActivity(state.activity.entries || []);
-    return;
-  }
-
-  setStatus(loadStatus, "Loading admin portal...");
-  const [summary, activity] = await Promise.all([
-    authJson("/api/admin/portal/summary", sessionToken),
-    authJson("/api/admin/portal/activity", sessionToken)
-  ]);
-
-  state.summary = summary;
-  state.activity = activity;
+function renderOverviewSurface(summary, activity, flags) {
   renderMetrics(summary.metrics);
   renderQueue(summary.metrics);
   renderContext(summary.metrics);
   renderActivity(activity.entries || []);
+  renderHero(summary.metrics, activity.entries || [], flags.flags || []);
+  renderAlertFeed(buildAlerts(summary.metrics, activity.entries || [], flags.flags || []));
+  renderHealthGrid(summary.metrics, activity.entries || [], flags.flags || []);
+}
+
+async function loadOverview(force = false) {
+  if (!force && state.summary && state.activity && state.flags) {
+    renderOverviewSurface(state.summary, state.activity, state.flags);
+    return;
+  }
+
+  setStatus(loadStatus, "Loading admin portal...");
+  const [summary, activity, flags] = await Promise.all([
+    authJson("/api/admin/portal/summary", sessionToken),
+    authJson("/api/admin/portal/activity", sessionToken),
+    authJson("/api/admin/portal/feature-flags", sessionToken)
+  ]);
+
+  state.summary = summary;
+  state.activity = activity;
+  state.flags = flags;
+  renderOverviewSurface(summary, activity, flags);
   setStatus(loadStatus, "");
 }
 
@@ -403,6 +533,7 @@ async function handleLoginRequest(requestPromise) {
   sessionToken = payload.token;
   document.getElementById("admin-name").textContent = payload.user.displayName || payload.user.email;
   showShell();
+  startRuntimeClock();
   await loadOverview(true);
 }
 
@@ -422,6 +553,7 @@ async function hydrate() {
     sessionToken = token;
     document.getElementById("admin-name").textContent = user.displayName || user.email;
     showShell();
+    startRuntimeClock();
     await loadOverview(true);
   } catch {
     clearSession();
@@ -456,6 +588,7 @@ refreshButton.addEventListener("click", async () => {
   try {
     state.summary = null;
     state.activity = null;
+    state.flags = null;
     if (currentPage === "users") state.users = null;
     if (currentPage === "partners") state.partners = null;
     if (currentPage === "flags") state.flags = null;
@@ -485,6 +618,10 @@ userSearchForm.addEventListener("submit", async (event) => {
   currentUserSearch = document.getElementById("user-search-input").value.trim();
   state.users = null;
   await loadUsers(true);
+});
+
+document.querySelectorAll("[data-switch-page]").forEach((button) => {
+  button.addEventListener("click", () => activatePage(button.getAttribute("data-switch-page")));
 });
 
 wireNavigation(tabButtons, tabPanels, async (page) => {

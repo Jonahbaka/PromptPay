@@ -133,7 +133,7 @@ export function wireNavigation(items, sections, onChange) {
   items.forEach((item) => {
     item.addEventListener("click", () => {
       const page = item.dataset.page;
-      items.forEach((node) => node.classList.toggle("active", node === item));
+      items.forEach((node) => node.classList.toggle("active", node.dataset.page === page));
       sections.forEach((section) => section.classList.toggle("active", section.dataset.page === page));
       onChange?.(page);
     });

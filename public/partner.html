@@ -26,12 +26,12 @@
         </div>
         <div>
           <p class="eyebrow">PromptPay Partner Portal</p>
-          <h1>Operate an agent network on PromptPay.</h1>
+          <h1>Operate your agent network from one command surface.</h1>
         </div>
       </div>
       <p class="auth-copy">
         Sign in as an approved partner administrator or submit your organization for onboarding.
-        PromptPay does not hold customer funds. This portal is for software, operations, and observability only.
+        PromptPay does not hold customer funds. This portal is for software, operations, observability, and partner controls only.
       </p>
 
       <div class="auth-tabs" role="tablist" aria-label="Partner access modes">
@@ -104,7 +104,7 @@
   </section>
 
   <div class="portal-shell hidden" id="partner-shell">
-    <header class="portal-topbar">
+    <header class="portal-topbar portal-topbar-command">
       <div class="topbar-brand">
         <div class="brand-mark" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -116,11 +116,20 @@
         </div>
         <div>
           <strong>PromptPay</strong>
-          <span>Partner portal</span>
+          <span>Partner command center</span>
         </div>
       </div>
+
+      <div class="runtime-cluster" aria-live="polite">
+        <span class="runtime-dot"></span>
+        <div>
+          <small id="partner-runtime-status">Live network state</small>
+          <strong id="partner-runtime-time">--:--</strong>
+        </div>
+      </div>
+
       <div class="topbar-actions">
-        <div class="session-pill">
+        <div class="session-pill session-pill-strong">
           <strong id="partner-name">Partner</strong>
           <span id="partner-meta">-</span>
         </div>
@@ -130,29 +139,72 @@
       </div>
     </header>
 
-    <main class="portal-main">
-      <section class="hero-strip layer-2">
-        <div>
-          <p class="eyebrow">Partner operations</p>
-          <h2>Agent networks, transaction visibility, and integration state.</h2>
+    <main class="portal-main portal-main-command">
+      <section class="hero-strip hero-strip-command layer-2">
+        <div class="hero-command-copy">
+          <p class="eyebrow">Partner network command</p>
+          <h2>Bird&rsquo;s-eye control for agents, volume, commissions, and integrations.</h2>
           <p class="muted">
-            All figures below come from real PromptPay tables. If there is no activity yet, the portal will show clear empty states instead of placeholder metrics.
+            PromptPay renders this workspace from live tenants, agents, POS transactions, developer keys, and API logs only.
+            When there is no activity, the portal stays explicit about that state instead of guessing.
           </p>
+          <div class="hero-chip-row">
+            <span class="hero-chip" id="partner-live-volume">Volume: NGN 0</span>
+            <span class="hero-chip" id="partner-live-activity">Transactions: 0</span>
+            <span class="hero-chip" id="partner-live-users">Active team: 0</span>
+          </div>
         </div>
-        <div class="hero-meta">
-          <span class="badge" id="partner-status-badge">Status</span>
-          <span class="badge badge-outline" id="partner-tier-badge">Tier</span>
+
+        <div class="hero-command-stack">
+          <article class="signal-card">
+            <span>Partner status</span>
+            <strong id="signal-status">-</strong>
+            <small id="signal-status-copy">Pulled from the tenants table.</small>
+          </article>
+          <article class="signal-card">
+            <span>API connectivity</span>
+            <strong id="signal-api">Not Connected</strong>
+            <small id="signal-api-copy">Real developer keys and API logs only.</small>
+          </article>
+          <article class="signal-card">
+            <span>Latest activity</span>
+            <strong id="signal-activity">No recent activity</strong>
+            <small id="signal-activity-copy">Based on partner transaction and API records.</small>
+          </article>
         </div>
       </section>
+
+      <div class="alert-feed" id="partner-alert-feed" aria-live="polite">
+        <article class="alert-card skeleton-card">
+          <strong>Loading network guidance</strong>
+          <p>Checking partner status, agent health, limits, and integration activity.</p>
+        </article>
+      </div>
 
       <div class="status-text" id="partner-load-status" aria-live="polite"></div>
       <div class="inline-note hidden" id="partner-status-banner"></div>
 
-      <nav class="tabbar" aria-label="Partner sections">
-        <button class="tab-button active" type="button" data-page="overview">Overview</button>
-        <button class="tab-button" type="button" data-page="agents">Agents</button>
-        <button class="tab-button" type="button" data-page="integrations">Integrations</button>
-        <button class="tab-button" type="button" data-page="branding">Branding</button>
+      <nav class="tabbar tabbar-primary" aria-label="Partner sections">
+        <button class="tab-button active" type="button" data-page="overview">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg></span>
+          <span class="tab-label">Overview</span>
+        </button>
+        <button class="tab-button" type="button" data-page="network">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="7" r="2"></circle><circle cx="18" cy="6" r="2"></circle><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="17" r="2"></circle><path d="M8 8.5l8-1.5M16.5 8l-1 8M8.5 15.5l7 1"></path></svg></span>
+          <span class="tab-label">Network</span>
+        </button>
+        <button class="tab-button" type="button" data-page="agents">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path><circle cx="9.5" cy="7" r="3"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 4.13a4 4 0 0 1 0 7.75"></path></svg></span>
+          <span class="tab-label">Agents</span>
+        </button>
+        <button class="tab-button" type="button" data-page="integrations">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 9h8"></path><path d="M8 15h5"></path><path d="M4 5h16v14H4z"></path></svg></span>
+          <span class="tab-label">Integrations</span>
+        </button>
+        <button class="tab-button" type="button" data-page="branding">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 4v10l-7 4-7-4V7z"></path><path d="M12 7v10"></path><path d="M5 9l7 4 7-4"></path></svg></span>
+          <span class="tab-label">Branding</span>
+        </button>
       </nav>
 
       <section class="tab-panel active" data-page="overview">
@@ -160,14 +212,14 @@
           <div class="section-heading">
             <div>
               <h3 id="partner-context-title">Preparing network context</h3>
-              <p id="partner-context-copy">PromptPay will prioritize the next real operational action based on your status, network activity, and integrations.</p>
+              <p id="partner-context-copy">PromptPay prioritizes the next real operational action using live partner status, activity, and integration signals.</p>
             </div>
             <span class="surface-tag">Operational guidance</span>
           </div>
           <div class="action-grid" id="partner-context-actions">
             <article class="action-card skeleton-card">
               <strong>Loading actions</strong>
-              <p>Checking partner status, agent coverage, and live integrations.</p>
+              <p>Checking partner status, agent coverage, pending activity, and API readiness.</p>
             </article>
           </div>
         </article>
@@ -195,7 +247,7 @@
           </article>
         </div>
 
-        <div class="portal-bento partner-bento">
+        <div class="portal-bento partner-overview-bento">
           <article class="panel-card bento-card" id="partner-summary-card">
             <div class="section-heading">
               <div>
@@ -209,6 +261,23 @@
               <div><dt>Created</dt><dd>-</dd></div>
               <div><dt>Activated</dt><dd>-</dd></div>
             </dl>
+          </article>
+
+          <article class="panel-card bento-card" id="partner-command-card">
+            <div class="section-heading">
+              <div>
+                <h3>Network posture</h3>
+                <p>Live signals from agents, users, transactions, and daily utilization.</p>
+              </div>
+              <button class="button button-secondary button-small" type="button" data-switch-page="network">Open</button>
+            </div>
+            <div class="mini-stat-grid" id="partner-health-grid">
+              <article class="mini-stat-card">
+                <span>Active agents</span>
+                <strong>0</strong>
+                <small>No agent data yet.</small>
+              </article>
+            </div>
           </article>
 
           <article class="panel-card bento-card" id="partner-integrations-card">
@@ -233,6 +302,7 @@
                 <h3>Recent transaction activity</h3>
                 <p>Latest recorded POS transactions, if any exist.</p>
               </div>
+              <button class="button button-secondary button-small" type="button" data-switch-page="network">Inspect network</button>
             </div>
             <div class="stack-list" id="partner-transactions">
               <div class="empty-state">Loading transaction activity.</div>
@@ -241,37 +311,124 @@
         </div>
       </section>
 
-      <section class="tab-panel" data-page="agents">
-        <article class="panel-card bento-card" id="partner-agents-card">
-          <div class="section-heading">
-            <div>
-              <h3>Agents</h3>
-              <p>Agents are loaded from the real pos_agents table.</p>
+      <section class="tab-panel" data-page="network">
+        <div class="portal-bento partner-network-bento">
+          <article class="panel-card bento-card bento-wide" id="partner-network-card">
+            <div class="section-heading">
+              <div>
+                <h3>Network matrix</h3>
+                <p>Agent status, utilization, and volume from real partner records.</p>
+              </div>
+              <span class="surface-tag">Bird&rsquo;s-eye view</span>
             </div>
-          </div>
-          <div class="table-shell">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Agent</th>
-                  <th>Code</th>
-                  <th>Status</th>
-                  <th>Tier</th>
-                  <th>Transactions</th>
-                  <th>Volume</th>
-                </tr>
-              </thead>
-              <tbody id="agent-table">
-                <tr><td colspan="6" class="empty-state">Loading agents.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </article>
+            <div class="network-topology" id="partner-network-topology">
+              <div class="empty-state">Loading live topology.</div>
+            </div>
+            <div class="network-node-grid" id="partner-network-matrix">
+              <div class="empty-state">Loading network matrix.</div>
+            </div>
+          </article>
+
+          <article class="panel-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Volume trend</h3>
+                <p>Completed transaction volume over the last 14 days.</p>
+              </div>
+            </div>
+            <div id="partner-daily-bars" class="spark-chart-shell">
+              <div class="empty-state">No trend data yet.</div>
+            </div>
+            <p class="chart-caption" id="partner-daily-caption">Real data appears after transactions are recorded.</p>
+          </article>
+
+          <article class="panel-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Product mix</h3>
+                <p>Share of real completed partner transactions by type.</p>
+              </div>
+            </div>
+            <div class="mix-list" id="partner-product-mix">
+              <div class="empty-state">No product mix data yet.</div>
+            </div>
+          </article>
+
+          <article class="panel-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Top agents</h3>
+                <p>Ranked by recorded transaction volume.</p>
+              </div>
+            </div>
+            <div class="stack-list compact-stack" id="partner-top-agents">
+              <div class="empty-state">Loading agent performance.</div>
+            </div>
+          </article>
+
+          <article class="panel-card bento-card bento-wide">
+            <div class="section-heading">
+              <div>
+                <h3>Operational stream</h3>
+                <p>Latest real transaction and integration activity.</p>
+              </div>
+            </div>
+            <div class="stream-list" id="partner-stream">
+              <div class="empty-state">No activity stream available yet.</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-page="agents">
+        <div class="portal-bento partner-agents-bento">
+          <article class="panel-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Agent highlights</h3>
+                <p>Live counts from the partner network.</p>
+              </div>
+            </div>
+            <div class="mini-stat-grid" id="partner-agent-highlights">
+              <article class="mini-stat-card">
+                <span>Agents</span>
+                <strong>0</strong>
+                <small>No agent data yet.</small>
+              </article>
+            </div>
+          </article>
+
+          <article class="panel-card bento-card bento-wide" id="partner-agents-card">
+            <div class="section-heading">
+              <div>
+                <h3>Agents</h3>
+                <p>Agents are loaded from the real pos_agents table.</p>
+              </div>
+            </div>
+            <div class="table-shell">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Code</th>
+                    <th>Status</th>
+                    <th>Tier</th>
+                    <th>Transactions</th>
+                    <th>Volume</th>
+                  </tr>
+                </thead>
+                <tbody id="agent-table">
+                  <tr><td colspan="6" class="empty-state">Loading agents.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section class="tab-panel" data-page="integrations">
         <div class="portal-bento integrations-bento">
-          <article class="panel-card bento-card">
+          <article class="panel-card bento-card" id="partner-api-callout">
             <div class="section-heading">
               <div>
                 <h3>API integration status</h3>
@@ -323,6 +480,31 @@
         </article>
       </section>
     </main>
+
+    <nav class="portal-dock" aria-label="Partner quick navigation">
+      <div class="portal-dock-shell">
+        <button class="tab-button active" type="button" data-page="overview">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg></span>
+          <span class="tab-label">Overview</span>
+        </button>
+        <button class="tab-button" type="button" data-page="network">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="7" r="2"></circle><circle cx="18" cy="6" r="2"></circle><circle cx="17" cy="18" r="2"></circle><circle cx="7" cy="17" r="2"></circle><path d="M8 8.5l8-1.5M16.5 8l-1 8M8.5 15.5l7 1"></path></svg></span>
+          <span class="tab-label">Network</span>
+        </button>
+        <button class="tab-button" type="button" data-page="agents">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path><circle cx="9.5" cy="7" r="3"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 4.13a4 4 0 0 1 0 7.75"></path></svg></span>
+          <span class="tab-label">Agents</span>
+        </button>
+        <button class="tab-button" type="button" data-page="integrations">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 9h8"></path><path d="M8 15h5"></path><path d="M4 5h16v14H4z"></path></svg></span>
+          <span class="tab-label">API</span>
+        </button>
+        <button class="tab-button" type="button" data-page="branding">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 4v10l-7 4-7-4V7z"></path><path d="M12 7v10"></path><path d="M5 9l7 4 7-4"></path></svg></span>
+          <span class="tab-label">Brand</span>
+        </button>
+      </div>
+    </nav>
   </div>
 
   <script type="module" src="/assets/partner-portal.js"></script>

@@ -31,7 +31,10 @@ const tabPanels = [...document.querySelectorAll(".tab-panel")];
 const contextActions = document.getElementById("context-actions");
 const contextTitle = document.getElementById("dashboard-context-title");
 const contextCopy = document.getElementById("dashboard-context-copy");
+const runtimeLabel = document.getElementById("dashboard-runtime-status");
+const runtimeTime = document.getElementById("dashboard-runtime-time");
 const overviewCards = {
+  command: document.getElementById("dashboard-command-card"),
   profile: document.getElementById("profile-card"),
   account: document.getElementById("account-card"),
   notifications: document.getElementById("notifications-preview-card"),
@@ -40,6 +43,7 @@ const overviewCards = {
 
 let sessionToken = null;
 let currentPage = "overview";
+let clockTimer = null;
 
 function setStatus(node, message, isError = false) {
   if (!node) return;
@@ -56,6 +60,10 @@ function routeIfWrongRole(user) {
 }
 
 function showAuth() {
+  if (clockTimer) {
+    window.clearInterval(clockTimer);
+    clockTimer = null;
+  }
   authView.classList.remove("hidden");
   shell.classList.add("hidden");
 }
@@ -78,26 +86,51 @@ function statusTone(value) {
   return "status-danger";
 }
 
-function applyBadge(id, label, outlined = false) {
-  const node = document.getElementById(id);
-  if (!node) return;
-  node.textContent = label;
-  node.className = outlined
-    ? `badge badge-outline ${statusTone(label)}`
-    : `badge ${statusTone(label)}`;
+function alertTone(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (["success", "active"].includes(normalized)) return "alert-active";
+  if (["warning", "pending"].includes(normalized)) return "alert-warning";
+  return "alert-danger";
 }
 
 function isProfileComplete(profile) {
   return Boolean(profile.displayName && profile.phoneNumber && profile.country);
 }
 
+function profileFieldCount(profile) {
+  return [
+    profile.displayName,
+    profile.email,
+    profile.phoneNumber,
+    profile.country
+  ].filter(Boolean).length;
+}
+
+function lastActivityTimestamp(account, transactions, notifications) {
+  return [
+    account.lastLoginAt,
+    transactions[0]?.createdAt,
+    notifications[0]?.createdAt
+  ].filter(Boolean).sort((left, right) => String(right).localeCompare(String(left)))[0] || null;
+}
+
+function startRuntimeClock() {
+  const update = () => {
+    runtimeTime.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+  update();
+  if (clockTimer) window.clearInterval(clockTimer);
+  clockTimer = window.setInterval(update, 30000);
+}
+
 function sortOverviewCards(profile, account, transactions, notifications) {
   const unreadCount = notifications.filter((item) => item.status !== "read").length;
   const priorities = new Map([
-    ["profile", isProfileComplete(profile) ? 3 : 1],
-    ["account", String(account.status || "").toLowerCase() === "active" ? 4 : 2],
-    ["notifications", unreadCount > 0 ? 2 : 5],
-    ["transactions", transactions.length > 0 ? 1 : 4]
+    ["command", !isProfileComplete(profile) || unreadCount > 0 ? 1 : 3],
+    ["profile", isProfileComplete(profile) ? 4 : 2],
+    ["account", String(account.status || "").toLowerCase() === "active" ? 5 : 2],
+    ["notifications", unreadCount > 0 ? 2 : 4],
+    ["transactions", transactions.length > 0 ? 1 : 5]
   ]);
 
   Object.entries(overviewCards).forEach(([key, node]) => {
@@ -105,9 +138,116 @@ function sortOverviewCards(profile, account, transactions, notifications) {
   });
 }
 
-function renderProfile(profile) {
+function buildAlerts(profile, account, transactions, notifications, settings, featureFlags) {
+  const alerts = [];
+  const unreadCount = notifications.filter((item) => item.status !== "read").length;
+
+  if (!isProfileComplete(profile)) {
+    alerts.push({ tone: "warning", title: "Profile needs completion", copy: "Add phone number and country so your account context is fully usable." });
+  }
+  if (String(account.kycStatus || "").toLowerCase() !== "verified") {
+    alerts.push({ tone: "warning", title: "KYC is not fully verified", copy: "Your current KYC status is limiting future product access." });
+  }
+  if (unreadCount > 0) {
+    alerts.push({ tone: "warning", title: `${formatNumber(unreadCount)} unread notification${unreadCount === 1 ? "" : "s"}`, copy: "New account notices are available for review." });
+  }
+  if (!transactions.length) {
+    alerts.push({ tone: "pending", title: "No transaction history yet", copy: "This workspace stays explicit until real wallet or POS records exist." });
+  }
+  if (featureFlags["dashboard.services"] === false) {
+    alerts.push({ tone: "warning", title: "Service surfaces are restricted", copy: "The services section is currently disabled by platform feature flags." });
+  }
+  if (settings.notificationEnabled === false) {
+    alerts.push({ tone: "warning", title: "Notifications are muted", copy: "PromptPay is not sending in-app notices while notifications are disabled." });
+  }
+  if (!alerts.length) {
+    alerts.push({ tone: "success", title: "Account state is healthy", copy: "Profile, readiness, and recent account signals do not show blockers right now." });
+  }
+  return alerts.slice(0, 4);
+}
+
+function renderAlertFeed(alerts) {
+  const feed = document.getElementById("dashboard-alert-feed");
+  feed.innerHTML = alerts.map((alert) => `
+    <article class="alert-card ${alertTone(alert.tone)}">
+      <div class="alert-stripe"></div>
+      <div>
+        <strong>${escapeHtml(alert.title)}</strong>
+        <p>${escapeHtml(alert.copy)}</p>
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderHero(profile, account, transactions, notifications) {
+  const unreadCount = notifications.filter((item) => item.status !== "read").length;
+  const recentActivity = lastActivityTimestamp(account, transactions, notifications);
+  const profileReady = isProfileComplete(profile);
+  const status = String(account.status || "-");
+  const kyc = String(account.kycStatus || "none");
+
   document.getElementById("user-name").textContent = profile.displayName || profile.email;
   document.getElementById("user-email").textContent = profile.email;
+  document.getElementById("user-live-state").textContent = `Account: ${status}`;
+  document.getElementById("user-live-notices").textContent = `Unread: ${formatNumber(unreadCount)}`;
+  document.getElementById("user-live-activity").textContent = `Transactions: ${formatNumber(transactions.length)}`;
+  document.getElementById("dashboard-signal-status").textContent = status;
+  document.getElementById("dashboard-signal-kyc").textContent = `Tier ${account.kycTier ?? 0} / ${kyc}`;
+  document.getElementById("dashboard-signal-activity").textContent = recentActivity ? relativeTime(recentActivity) : "No recent activity";
+  document.getElementById("dashboard-signal-status-copy").textContent = String(account.status || "").toLowerCase() === "active"
+    ? "This account is active in the users table."
+    : "This account needs attention before live services can expand.";
+  document.getElementById("dashboard-signal-kyc-copy").textContent = String(account.kycStatus || "").toLowerCase() === "verified"
+    ? "KYC fields show the account is verified."
+    : "KYC still needs review before future service unlocks.";
+  document.getElementById("dashboard-signal-activity-copy").textContent = recentActivity
+    ? "Pulled from the latest login, transaction, or notification timestamp."
+    : "No account activity has been recorded yet.";
+  runtimeLabel.textContent = profileReady
+    ? (String(account.status || "").toLowerCase() === "active" ? "Account ready for activity" : "Account needs review")
+    : "Profile details still incomplete";
+}
+
+function renderHealthGrid(profile, account, transactions, notifications, settings, featureFlags) {
+  const unreadCount = notifications.filter((item) => item.status !== "read").length;
+  const enabledTabs = [
+    featureFlags["dashboard.services"] !== false,
+    featureFlags["dashboard.notifications"] !== false,
+    featureFlags["dashboard.settings"] !== false
+  ].filter(Boolean).length;
+  const recentActivity = lastActivityTimestamp(account, transactions, notifications);
+  const items = [
+    {
+      label: "Profile fields",
+      value: `${formatNumber(profileFieldCount(profile))} / 4`,
+      copy: "Name, email, phone, and country."
+    },
+    {
+      label: "Unread notices",
+      value: formatNumber(unreadCount),
+      copy: unreadCount > 0 ? "Review unread account notices." : "No unread notices right now."
+    },
+    {
+      label: "Notifications",
+      value: settings.notificationEnabled === false ? "Muted" : "Live",
+      copy: settings.notificationEnabled === false ? "In-app notices are disabled in preferences." : `Timezone ${settings.timezone || "UTC"}.`
+    },
+    {
+      label: "Portal modules",
+      value: `${formatNumber(enabledTabs)} / 3`,
+      copy: recentActivity ? `Latest activity ${relativeTime(recentActivity)}.` : "No recent records yet."
+    }
+  ];
+  document.getElementById("dashboard-health-grid").innerHTML = items.map((item) => `
+    <article class="mini-stat-card">
+      <span>${escapeHtml(item.label)}</span>
+      <strong>${escapeHtml(item.value)}</strong>
+      <small>${escapeHtml(item.copy)}</small>
+    </article>
+  `).join("");
+}
+
+function renderProfile(profile) {
   document.getElementById("profile-completeness").textContent = isProfileComplete(profile) ? "Complete" : "Needs update";
   document.getElementById("profile-summary").innerHTML = `
     <div><dt>Name</dt><dd>${escapeHtml(profile.displayName || "-")}</dd></div>
@@ -122,8 +262,6 @@ function renderProfile(profile) {
 }
 
 function renderAccount(account, transactions, notifications) {
-  applyBadge("account-status", String(account.status || "unknown"));
-  applyBadge("account-kyc", `KYC ${account.kycStatus || "none"}`, true);
   document.getElementById("metric-account-status").textContent = String(account.status || "-");
   document.getElementById("metric-transaction-count").textContent = formatNumber(transactions.length);
   document.getElementById("metric-notification-count").textContent = formatNumber(
@@ -154,12 +292,12 @@ function renderTransactions(transactions) {
   tbody.innerHTML = transactions
     .map((item) => `
       <tr>
-        <td>${escapeHtml(formatDate(item.createdAt))}</td>
-        <td>${escapeHtml(item.source)}</td>
-        <td>${escapeHtml(item.type)}</td>
-        <td>${escapeHtml(item.description || "-")}</td>
-        <td><span class="status-chip ${statusTone(item.status)}">${escapeHtml(item.status)}</span></td>
-        <td>${item.currency ? escapeHtml(formatCurrency(item.amount, item.currency)) : escapeHtml(formatNumber(item.amount || 0))}</td>
+        <td data-label="Time">${escapeHtml(formatDate(item.createdAt))}</td>
+        <td data-label="Source">${escapeHtml(item.source)}</td>
+        <td data-label="Type">${escapeHtml(item.type)}</td>
+        <td data-label="Description">${escapeHtml(item.description || "-")}</td>
+        <td data-label="Status"><span class="status-chip ${statusTone(item.status)}">${escapeHtml(item.status)}</span></td>
+        <td data-label="Amount">${item.currency ? escapeHtml(formatCurrency(item.amount, item.currency)) : escapeHtml(formatNumber(item.amount || 0))}</td>
       </tr>
     `)
     .join("");
@@ -323,8 +461,9 @@ function applyFeatureFlags(flags) {
     ["dashboard.settings", "settings"]
   ].forEach(([flagKey, page]) => {
     const enabled = flags[flagKey] !== false;
-    document.querySelector(`.tab-button[data-page="${page}"]`)?.classList.toggle("hidden", !enabled);
-    document.querySelector(`.tab-panel[data-page="${page}"]`)?.classList.toggle("hidden", !enabled);
+    document.querySelectorAll(`.tab-button[data-page="${page}"]`).forEach((node) => node.classList.toggle("hidden", !enabled));
+    document.querySelectorAll(`.tab-panel[data-page="${page}"]`).forEach((node) => node.classList.toggle("hidden", !enabled));
+    document.querySelectorAll(`[data-switch-page="${page}"]`).forEach((node) => node.classList.toggle("hidden", !enabled));
     if (!enabled && currentPage === page) {
       activatePage("overview");
     }
@@ -335,6 +474,9 @@ async function loadDashboard() {
   setStatus(loadStatus, "Loading dashboard...");
   const data = await authJson("/api/dashboard/summary", sessionToken);
   renderProfile(data.profile);
+  renderHero(data.profile, data.account, data.transactions, data.notifications);
+  renderAlertFeed(buildAlerts(data.profile, data.account, data.transactions, data.notifications, data.settings, data.featureFlags || {}));
+  renderHealthGrid(data.profile, data.account, data.transactions, data.notifications, data.settings, data.featureFlags || {});
   renderAccount(data.account, data.transactions, data.notifications);
   renderTransactions(data.transactions);
   renderNotificationCards(data.notifications);
@@ -351,6 +493,7 @@ async function handleLoginRequest(requestPromise) {
   if (routeIfWrongRole(payload.user)) return;
   sessionToken = payload.token;
   showShell();
+  startRuntimeClock();
   await loadDashboard();
 }
 
@@ -369,6 +512,7 @@ async function hydrate() {
     if (routeIfWrongRole(user)) return;
     sessionToken = token;
     showShell();
+    startRuntimeClock();
     await loadDashboard();
   } catch {
     clearSession();

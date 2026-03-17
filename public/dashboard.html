@@ -60,7 +60,7 @@
   </section>
 
   <div class="portal-shell hidden" id="dashboard-shell">
-    <header class="portal-topbar">
+    <header class="portal-topbar portal-topbar-command">
       <div class="topbar-brand">
         <div class="brand-mark" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -75,8 +75,17 @@
           <span>End-user dashboard</span>
         </div>
       </div>
+
+      <div class="runtime-cluster" aria-live="polite">
+        <span class="runtime-dot"></span>
+        <div>
+          <small id="dashboard-runtime-status">Live account state</small>
+          <strong id="dashboard-runtime-time">--:--</strong>
+        </div>
+      </div>
+
       <div class="topbar-actions">
-        <div class="session-pill">
+        <div class="session-pill session-pill-strong">
           <strong id="user-name">PromptPay User</strong>
           <span id="user-email">user@promptpay.com</span>
         </div>
@@ -87,28 +96,66 @@
     </header>
 
     <main class="portal-main">
-      <section class="hero-strip layer-2">
-        <div>
+      <section class="hero-strip hero-strip-command layer-2">
+        <div class="hero-command-copy">
           <p class="eyebrow">User workspace</p>
-          <h2>Real account context, zero fake balances.</h2>
+          <h2>Real account context with a premium mobile control surface.</h2>
           <p class="muted">
             PromptPay only renders real user records, real notifications, and real transaction history.
             Services without live integrations stay disabled and clearly marked.
           </p>
+          <div class="hero-chip-row">
+            <span class="hero-chip" id="user-live-state">Account: -</span>
+            <span class="hero-chip" id="user-live-notices">Unread: 0</span>
+            <span class="hero-chip" id="user-live-activity">Transactions: 0</span>
+          </div>
         </div>
-        <div class="hero-meta">
-          <span class="badge" id="account-status">Status</span>
-          <span class="badge badge-outline" id="account-kyc">KYC</span>
+
+        <div class="hero-command-stack">
+          <article class="signal-card">
+            <span>Account status</span>
+            <strong id="dashboard-signal-status">-</strong>
+            <small id="dashboard-signal-status-copy">Pulled from the users table only.</small>
+          </article>
+          <article class="signal-card">
+            <span>KYC posture</span>
+            <strong id="dashboard-signal-kyc">-</strong>
+            <small id="dashboard-signal-kyc-copy">Based on the real KYC fields in your account.</small>
+          </article>
+          <article class="signal-card">
+            <span>Latest activity</span>
+            <strong id="dashboard-signal-activity">No recent activity</strong>
+            <small id="dashboard-signal-activity-copy">Transaction and notification timestamps only.</small>
+          </article>
         </div>
       </section>
 
+      <div class="alert-feed" id="dashboard-alert-feed" aria-live="polite">
+        <article class="alert-card skeleton-card">
+          <strong>Loading account guidance</strong>
+          <p>Checking profile completeness, unread notifications, transactions, and service state.</p>
+        </article>
+      </div>
+
       <div class="status-text" id="dashboard-load-status" aria-live="polite"></div>
 
-      <nav class="tabbar" aria-label="Dashboard sections">
-        <button class="tab-button active" type="button" data-page="overview">Overview</button>
-        <button class="tab-button" type="button" data-page="services">Services</button>
-        <button class="tab-button" type="button" data-page="notifications">Notifications</button>
-        <button class="tab-button" type="button" data-page="settings">Settings</button>
+      <nav class="tabbar tabbar-primary" aria-label="Dashboard sections">
+        <button class="tab-button active" type="button" data-page="overview">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg></span>
+          <span class="tab-label">Overview</span>
+        </button>
+        <button class="tab-button" type="button" data-page="services">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg></span>
+          <span class="tab-label">Services</span>
+        </button>
+        <button class="tab-button" type="button" data-page="notifications">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path><path d="M10 17a2 2 0 0 0 4 0"></path></svg></span>
+          <span class="tab-label">Notifications</span>
+        </button>
+        <button class="tab-button" type="button" data-page="settings">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
+          <span class="tab-label">Settings</span>
+        </button>
       </nav>
 
       <section class="tab-panel active" data-page="overview">
@@ -152,6 +199,23 @@
         </div>
 
         <div class="portal-bento dashboard-bento">
+          <article class="panel-card bento-card" id="dashboard-command-card">
+            <div class="section-heading">
+              <div>
+                <h3>Account posture</h3>
+                <p>Live signals from profile, notifications, settings, and activity.</p>
+              </div>
+              <button class="button button-secondary button-small" type="button" data-switch-page="settings">Open</button>
+            </div>
+            <div class="mini-stat-grid" id="dashboard-health-grid">
+              <article class="mini-stat-card">
+                <span>Profile fields</span>
+                <strong>0 / 4</strong>
+                <small>Checking account completeness.</small>
+              </article>
+            </div>
+          </article>
+
           <article class="panel-card bento-card" id="profile-card">
             <div class="section-heading">
               <div>
@@ -342,6 +406,27 @@
         </div>
       </section>
     </main>
+
+    <nav class="portal-dock" aria-label="Dashboard quick navigation">
+      <div class="portal-dock-shell">
+        <button class="tab-button active" type="button" data-page="overview">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg></span>
+          <span class="tab-label">Overview</span>
+        </button>
+        <button class="tab-button" type="button" data-page="services">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg></span>
+          <span class="tab-label">Services</span>
+        </button>
+        <button class="tab-button" type="button" data-page="notifications">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path><path d="M10 17a2 2 0 0 0 4 0"></path></svg></span>
+          <span class="tab-label">Notices</span>
+        </button>
+        <button class="tab-button" type="button" data-page="settings">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
+          <span class="tab-label">Settings</span>
+        </button>
+      </div>
+    </nav>
   </div>
 
   <script type="module" src="/assets/dashboard.js"></script>
