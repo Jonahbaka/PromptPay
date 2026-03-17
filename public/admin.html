@@ -3,507 +3,262 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#04060d">
-  <title>PromptPay Admin | Network Operations</title>
+  <meta name="theme-color" content="#050914">
+  <title>PromptPay Admin Portal</title>
   <meta
     name="description"
-    content="PromptPay owner console for agent network operations, provider health, transaction intelligence, governance, and payment infrastructure analytics."
+    content="PromptPay owner portal for real users, partners, system metrics, audit logs, status controls, and feature flags."
   >
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
-  <link rel="stylesheet" href="/assets/console.css">
+  <link rel="stylesheet" href="/assets/portal.css">
 </head>
-<body>
-  <section class="console-auth" id="auth-view">
+<body class="portal-body">
+  <section class="portal-auth" id="auth-view">
     <div class="auth-card">
       <div class="brand-row">
-        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M14 14h7v7h-7z"></path>
+          </svg>
+        </div>
         <div>
-          <p class="eyebrow">Owner Access</p>
-          <h1>Run payment networks from one control plane.</h1>
+          <p class="eyebrow">PromptPay Admin</p>
+          <h1>Owner access to the real platform control layer.</h1>
         </div>
       </div>
-      <p>
-        This console is reserved for PromptPay operators managing agent onboarding, provider health,
-        commission integrity, transaction visibility, and governance controls.
+      <p class="auth-copy">
+        This portal is restricted to the PromptPay owner account. Data shown here is queried from real users,
+        tenants, transactions, audit entries, and feature flags.
       </p>
-      <form id="login-form" class="auth-panel active" novalidate>
+      <form id="login-form" class="stack-form" novalidate>
         <div class="field-grid">
-          <div class="field full">
-            <label for="auth-email">Work email</label>
-            <input id="auth-email" name="email" type="email" autocomplete="username" required>
-          </div>
-          <div class="field full">
-            <label for="auth-password">Password</label>
-            <input id="auth-password" name="password" type="password" autocomplete="current-password" required>
-          </div>
+          <label class="field full">
+            <span>Work email</span>
+            <input id="login-email" type="email" autocomplete="username" required>
+          </label>
+          <label class="field full">
+            <span>Password</span>
+            <input id="login-password" type="password" autocomplete="current-password" required>
+          </label>
         </div>
-        <div class="notice">
-          PromptPay does not hold customer funds. This workspace is for orchestration, observability,
-          and controls across licensed payment rails.
-        </div>
-        <div class="notice warning">
-          Test access is enabled in this environment. Use the seeded owner account if you only need to review the portal.
-        </div>
-        <div class="form-status" id="auth-status" aria-live="polite"></div>
-        <div class="footer-actions">
+        <div class="status-text" id="auth-status" aria-live="polite"></div>
+        <div class="button-row">
           <button class="button button-primary" id="login-submit" type="submit">Sign In</button>
-          <button class="button button-secondary" id="test-admin-access" type="button">Use Test Admin</button>
           <a class="button button-secondary" href="/">Back to site</a>
         </div>
       </form>
     </div>
   </section>
 
-  <div class="console-shell hidden" id="console-app">
-    <aside class="console-sidebar" aria-label="Admin navigation">
-      <div class="sidebar-header">
-        <div class="brand-row">
-          <span class="brand-mark" aria-hidden="true"></span>
-          <div>
-            <strong>PromptPay Admin</strong>
-            <span>AgentOS control surface for licensed payment infrastructure</span>
-          </div>
+  <div class="portal-shell hidden" id="admin-shell">
+    <header class="portal-topbar">
+      <div class="topbar-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M14 14h7v7h-7z"></path>
+          </svg>
+        </div>
+        <div>
+          <strong>PromptPay</strong>
+          <span>Owner portal</span>
         </div>
       </div>
-
-      <nav class="nav-list" aria-label="Owner sections">
-        <button class="nav-item active" type="button" data-page="overview">Overview</button>
-        <button class="nav-item" type="button" data-page="network">Network</button>
-        <button class="nav-item" type="button" data-page="intelligence">Intelligence</button>
-        <button class="nav-item" type="button" data-page="governance">Governance</button>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div>
-          <strong id="admin-user">Owner session</strong>
-          <span id="admin-meta">Verifying access</span>
+      <div class="topbar-actions">
+        <div class="session-pill">
+          <strong id="admin-name">Owner</strong>
+          <span>Full platform access</span>
         </div>
-        <div id="sidebar-context" class="helper-text">Loading environment state.</div>
-        <button class="button button-secondary" id="logout-button" type="button">Sign Out</button>
+        <a class="button button-secondary" href="/">Homepage</a>
+        <button class="button button-secondary" id="admin-refresh" type="button">Refresh</button>
+        <button class="button button-secondary" id="admin-logout" type="button">Sign Out</button>
       </div>
-    </aside>
+    </header>
 
-    <main class="console-main">
-      <header class="page-header">
+    <main class="portal-main">
+      <section class="hero-strip layer-2">
         <div>
-          <p class="eyebrow">Payment Network Operations</p>
-          <h1>Run the infrastructure layer.</h1>
-          <p>
-            Coordinate agent onboarding, provider health, commissions, float exposure, analytics, and governance
-            from one operator-grade workspace.
+          <p class="eyebrow">Platform control layer</p>
+          <h2>Users, partners, logs, and feature controls.</h2>
+          <p class="muted">
+            Admin actions in this portal are backed by real database updates only. There are no fabricated users,
+            metrics, or status changes.
           </p>
         </div>
-        <div class="stack-tight">
-          <span class="status-chip success" id="shell-status">Live</span>
-          <button class="button button-secondary" id="refresh-data" type="button">Refresh data</button>
-        </div>
-      </header>
-
-      <div class="form-status" id="load-status" aria-live="polite"></div>
-      <section class="console-story-grid" aria-label="Owner control layers">
-        <article class="story-card">
-          <span>01</span>
-          <strong>Agent management</strong>
-          <p>Control onboarding, activation, territory assignment, and field-network readiness at scale.</p>
-        </article>
-        <article class="story-card">
-          <span>02</span>
-          <strong>Commission integrity</strong>
-          <p>Trace commission events, review variance, and keep payout-ready records auditable.</p>
-        </article>
-        <article class="story-card">
-          <span>03</span>
-          <strong>Provider orchestration</strong>
-          <p>Observe rail uptime, circuit state, webhook health, and operational dependencies in one place.</p>
-        </article>
-        <article class="story-card">
-          <span>04</span>
-          <strong>Compliance-safe model</strong>
-          <p>PromptPay orchestrates licensed rails and does not hold customer funds or settlement balances.</p>
-        </article>
-      </section>
-      <div class="compliance-banner">
-        Software layer only: PromptPay handles orchestration, observability, controls, and growth on top of licensed providers.
-      </div>
-
-      <section class="page active" data-page="overview">
-        <div class="metric-grid">
-          <article class="metric-card">
-            <h3>Platform uptime</h3>
-            <strong id="metric-uptime">-</strong>
-            <small>Gateway runtime and orchestration availability.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Total network volume</h3>
-            <strong id="metric-volume">-</strong>
-            <small>Fee ledger volume across active payment operations.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Net platform revenue</h3>
-            <strong id="metric-revenue">-</strong>
-            <small>Observed fee income from the current analytics window.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Audit entries</h3>
-            <strong id="metric-audit">-</strong>
-            <small>Cryptographic audit trail coverage across sensitive actions.</small>
-          </article>
-        </div>
-
-        <div class="page-grid">
-          <div class="section-stack">
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Provider health</h2>
-                  <p>Licensed provider connectivity, circuit state, and failure exposure.</p>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Provider</th>
-                      <th>Status</th>
-                      <th>Breaker</th>
-                      <th>Failures</th>
-                    </tr>
-                  </thead>
-                  <tbody id="providers-table">
-                    <tr><td colspan="4" class="empty-state">Loading provider health.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
-
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Recent audit trail</h2>
-                  <p>Latest operator actions and compliance-relevant events.</p>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Time</th>
-                      <th>Actor</th>
-                      <th>Action</th>
-                      <th>Target</th>
-                    </tr>
-                  </thead>
-                  <tbody id="audit-table">
-                    <tr><td colspan="4" class="empty-state">Loading audit entries.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
-          </div>
-
-          <div class="section-stack">
-            <article class="status-card">
-              <div class="section-title">
-                <div>
-                  <h2>Operational status</h2>
-                  <p>Core runtime, channels, memory, and audit integrity.</p>
-                </div>
-              </div>
-              <div id="overview-status" class="kv-list">
-                <div class="empty-state">Loading operational status.</div>
-              </div>
-            </article>
-
-            <article class="note-card">
-              <div class="section-title">
-                <div>
-                  <h2>Operator brief</h2>
-                  <p>High-signal insights and platform notes.</p>
-                </div>
-              </div>
-              <div id="overview-insights" class="list">
-                <div class="empty-state">Loading insights.</div>
-              </div>
-            </article>
-          </div>
-        </div>
       </section>
 
-      <section class="page" data-page="network">
-        <div class="metric-grid">
-          <article class="metric-card">
-            <h3>Active field agents</h3>
-            <strong id="network-agents">-</strong>
-            <small>Active agent accounts currently available on the network.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Total float visibility</h3>
-            <strong id="network-float">-</strong>
-            <small>Observed float balances across agent accounts.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Commission tracked</h3>
-            <strong id="network-commissions">-</strong>
-            <small>Commissions earned across the active field network.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Transactions today</h3>
-            <strong id="network-transactions">-</strong>
-            <small>Transaction count registered by agent operations today.</small>
-          </article>
-        </div>
+      <div class="status-text" id="admin-load-status" aria-live="polite"></div>
 
-        <div class="page-grid">
-          <div class="section-stack">
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Agent roster</h2>
-                  <p>Float, commission, and territory coverage for active operators.</p>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Agent</th>
-                      <th>Territory</th>
-                      <th>Float</th>
-                      <th>Commission</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody id="agents-table">
-                    <tr><td colspan="5" class="empty-state">Loading network roster.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
+      <nav class="tabbar" aria-label="Admin sections">
+        <button class="tab-button active" type="button" data-page="overview">Overview</button>
+        <button class="tab-button" type="button" data-page="users">Users</button>
+        <button class="tab-button" type="button" data-page="partners">Partners</button>
+        <button class="tab-button" type="button" data-page="flags">Feature Flags</button>
+      </nav>
 
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Partner rankings</h2>
-                  <p>Platform volume leaders and partners needing operator attention.</p>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Partner</th>
-                      <th>Volume</th>
-                      <th>Revenue</th>
-                      <th>Transactions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="partners-table">
-                    <tr><td colspan="4" class="empty-state">Loading partner rankings.</td></tr>
-                  </tbody>
-                </table>
-              </div>
+      <section class="tab-panel active" data-page="overview">
+        <article class="panel-card intent-card layer-3">
+          <div class="section-heading">
+            <div>
+              <h3 id="admin-context-title">Preparing control priorities</h3>
+              <p id="admin-context-copy">PromptPay will elevate the next real operational review based on platform activity, partner status, and feature state.</p>
+            </div>
+            <span class="surface-tag">Control guidance</span>
+          </div>
+          <div class="action-grid" id="admin-context-actions">
+            <article class="action-card skeleton-card">
+              <strong>Loading actions</strong>
+              <p>Checking user health, partner queue, and recent platform activity.</p>
             </article>
           </div>
+        </article>
 
-          <div class="section-stack">
-            <article class="status-card">
-              <div class="section-title">
-                <div>
-                  <h2>Coverage and orchestration</h2>
-                  <p>Territory concentration, role coverage, and agent infrastructure inventory.</p>
-                </div>
-              </div>
-              <div id="coverage-list" class="list">
-                <div class="empty-state">Loading coverage summary.</div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="page" data-page="intelligence">
-        <div class="metric-grid">
+        <div class="metrics-grid compact-metrics">
           <article class="metric-card">
-            <h3>Total transactions</h3>
-            <strong id="intel-transactions">-</strong>
-            <small>Processed fee-ledger transactions in the observed data set.</small>
+            <span>Total users</span>
+            <strong id="metric-users">0</strong>
+            <small>All real user records.</small>
           </article>
           <article class="metric-card">
-            <h3>Active users</h3>
-            <strong id="intel-active-users">-</strong>
-            <small>Users active within the last 30 days.</small>
+            <span>Total partners</span>
+            <strong id="metric-partners">0</strong>
+            <small>All real tenant records.</small>
           </article>
           <article class="metric-card">
-            <h3>Active partners</h3>
-            <strong id="intel-partners">-</strong>
-            <small>Partner networks contributing current payment activity.</small>
+            <span>POS volume</span>
+            <strong id="metric-volume">NGN 0</strong>
+            <small>Completed POS volume only.</small>
           </article>
           <article class="metric-card">
-            <h3>30 day growth</h3>
-            <strong id="intel-growth">-</strong>
-            <small>Volume growth compared with the prior 30 day window.</small>
+            <span>Audit entries</span>
+            <strong id="metric-audit">0</strong>
+            <small>Entries in the audit trail table.</small>
           </article>
         </div>
 
-        <div class="section-stack">
-          <article class="data-card">
-            <div class="section-title">
+        <div class="portal-bento admin-bento">
+          <article class="panel-card bento-card" id="admin-queue-card">
+            <div class="section-heading">
               <div>
-                <h2>Signal deck</h2>
-                <p>Sparklines for volume, revenue, transactions, and active user acquisition.</p>
+                <h3>Platform queue</h3>
+                <p>Pending and suspended items from real system records.</p>
               </div>
             </div>
-            <div class="metric-grid" id="trend-cards">
-              <div class="empty-state">Loading trend signals.</div>
+            <dl class="detail-list" id="admin-queue-summary">
+              <div><dt>Pending partners</dt><dd>0</dd></div>
+              <div><dt>Suspended partners</dt><dd>0</dd></div>
+              <div><dt>Suspended users</dt><dd>0</dd></div>
+              <div><dt>Disabled users</dt><dd>0</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel-card bento-card bento-wide" id="admin-activity-card">
+            <div class="section-heading">
+              <div>
+                <h3>Platform activity logs</h3>
+                <p>Recent records from the audit trail table.</p>
+              </div>
+            </div>
+            <div class="table-shell">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Target</th>
+                  </tr>
+                </thead>
+                <tbody id="activity-list">
+                  <tr><td colspan="4" class="empty-state">Loading activity logs.</td></tr>
+                </tbody>
+              </table>
             </div>
           </article>
-        </div>
-
-        <div class="page-grid">
-          <div class="section-stack">
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>AI insights</h2>
-                  <p>Platform-generated signals covering growth, risk, and anomalies.</p>
-                </div>
-              </div>
-              <div id="insight-list" class="list">
-                <div class="empty-state">Loading intelligence feed.</div>
-              </div>
-            </article>
-          </div>
-
-          <div class="section-stack">
-            <article class="chart-card">
-              <div class="section-title">
-                <div>
-                  <h2>Cash flow projection</h2>
-                  <p>Projected inflow, outflow, and balance across the next operating window.</p>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Period</th>
-                      <th>Inflow</th>
-                      <th>Outflow</th>
-                      <th>Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody id="cashflow-table">
-                    <tr><td colspan="4" class="empty-state">Loading cash flow projection.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
-          </div>
         </div>
       </section>
 
-      <section class="page" data-page="governance">
-        <div class="metric-grid">
-          <article class="metric-card">
-            <h3>Total partners</h3>
-            <strong id="gov-partners">-</strong>
-            <small>Registered partner organizations in the platform.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Pending approvals</h3>
-            <strong id="gov-pending">-</strong>
-            <small>Partnerships awaiting review or activation.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Platform fee</h3>
-            <strong id="gov-platform-fee">-</strong>
-            <small>Current POS platform fee configuration.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Config surfaces</h3>
-            <strong id="gov-config">-</strong>
-            <small>Masked configuration sections available for review.</small>
-          </article>
-        </div>
-
-        <div class="page-grid">
-          <div class="section-stack">
-            <article class="config-card">
-              <div class="section-title">
-                <div>
-                  <h2>POS fee governance</h2>
-                  <p>Adjust operator margin settings without touching consumer-facing flows.</p>
-                </div>
-              </div>
-              <form id="settings-form" class="auth-panel active" novalidate>
-                <div class="field-grid">
-                  <div class="field">
-                    <label for="platform-fee-input">Platform fee percent</label>
-                    <input id="platform-fee-input" type="number" min="0" max="25" step="0.1">
-                  </div>
-                </div>
-                <div class="form-status" id="settings-status" aria-live="polite"></div>
-                <div class="footer-actions">
-                  <button class="button button-primary" id="settings-submit" type="submit">Save fee</button>
-                </div>
-              </form>
-            </article>
-
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Role catalog</h2>
-                  <p>RBAC inventory for administrative access and delegated operations.</p>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Role</th>
-                      <th>Level</th>
-                      <th>Permissions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="roles-table">
-                    <tr><td colspan="3" class="empty-state">Loading role catalog.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
+      <section class="tab-panel" data-page="users">
+        <article class="panel-card bento-card">
+          <div class="section-heading">
+            <div>
+              <h3>Users</h3>
+              <p>Search and manage real user records.</p>
+            </div>
+            <form id="user-search-form" class="inline-form">
+              <input id="user-search-input" type="search" placeholder="Search email or name">
+              <button class="button button-secondary" type="submit">Search</button>
+            </form>
           </div>
-
-          <div class="section-stack">
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Masked configuration</h2>
-                  <p>Environment-driven settings rendered safely for operator review.</p>
-                </div>
-              </div>
-              <div id="config-list" class="list">
-                <div class="empty-state">Loading configuration summary.</div>
-              </div>
-            </article>
-
-            <article class="note-card">
-              <div class="section-title">
-                <div>
-                  <h2>Compliance note</h2>
-                  <p>Controls and architecture constraints for the operator surface.</p>
-                </div>
-              </div>
-              <div id="governance-note" class="helper-text">
-                PromptPay is the software layer for orchestration, analytics, agent operations, and network
-                growth. It must not be presented as a holder of customer funds.
-              </div>
-            </article>
+          <div class="table-shell">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Tenant</th>
+                  <th>Last login</th>
+                  <th>Controls</th>
+                </tr>
+              </thead>
+              <tbody id="users-table">
+                <tr><td colspan="6" class="empty-state">Loading users.</td></tr>
+              </tbody>
+            </table>
           </div>
-        </div>
+        </article>
+      </section>
+
+      <section class="tab-panel" data-page="partners">
+        <article class="panel-card bento-card">
+          <div class="section-heading">
+            <div>
+              <h3>Partners</h3>
+              <p>Real partner tenants with transaction volume and status controls.</p>
+            </div>
+          </div>
+          <div class="table-shell">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Partner</th>
+                  <th>Status</th>
+                  <th>Tier</th>
+                  <th>Users</th>
+                  <th>Volume</th>
+                  <th>Controls</th>
+                </tr>
+              </thead>
+              <tbody id="partners-table">
+                <tr><td colspan="6" class="empty-state">Loading partners.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="tab-panel" data-page="flags">
+        <article class="panel-card bento-card">
+          <div class="section-heading">
+            <div>
+              <h3>Feature flags</h3>
+              <p>Toggle only the real flags stored in the feature_flags table.</p>
+            </div>
+          </div>
+          <div class="stack-list" id="feature-flags">
+            <div class="empty-state">Loading feature flags.</div>
+          </div>
+        </article>
       </section>
     </main>
   </div>
 
-  <script type="module" src="/assets/admin-console.js"></script>
+  <script type="module" src="/assets/admin-portal.js"></script>
 </body>
 </html>

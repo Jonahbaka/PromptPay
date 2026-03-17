@@ -443,8 +443,11 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
     const start = Date.now();
     const isSandbox = (req as unknown as Record<string, unknown>).isSandbox;
     if (isSandbox) {
-      res.json({ balance: 1000.00, currency: 'USD', sandbox: true });
-      logApiRequest(req, 200, start);
+      res.status(503).json({
+        error: 'Sandbox wallet balance is not available. Integration required.',
+        code: 'sandbox_unavailable',
+      });
+      logApiRequest(req, 503, start, 'Sandbox unavailable');
       return;
     }
 
@@ -460,14 +463,11 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
     const start = Date.now();
     const isSandbox = (req as unknown as Record<string, unknown>).isSandbox;
     if (isSandbox) {
-      res.json({
-        transactions: [
-          { id: 'txn_test_1', type: 'credit', amount: 50.00, currency: 'USD', description: 'Test deposit', created_at: new Date().toISOString() },
-          { id: 'txn_test_2', type: 'debit', amount: 10.00, currency: 'USD', description: 'Test purchase', created_at: new Date().toISOString() },
-        ],
-        sandbox: true,
+      res.status(503).json({
+        error: 'Sandbox transaction history is not available. Integration required.',
+        code: 'sandbox_unavailable',
       });
-      logApiRequest(req, 200, start);
+      logApiRequest(req, 503, start, 'Sandbox unavailable');
       return;
     }
 
@@ -497,14 +497,11 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
     }
 
     if (isSandbox) {
-      res.json({
-        id: `air_test_${randomBytes(8).toString('hex')}`,
-        phone, amount, country: country || 'NG',
-        status: 'completed',
-        sandbox: true,
-        message: 'Sandbox: airtime simulated successfully',
+      res.status(503).json({
+        error: 'Sandbox airtime send is not available. Integration required.',
+        code: 'sandbox_unavailable',
       });
-      logApiRequest(req, 200, start);
+      logApiRequest(req, 503, start, 'Sandbox unavailable');
       return;
     }
 
@@ -563,7 +560,7 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
       authentication: {
         type: 'API Key',
         header: 'X-API-Key',
-        format: 'upp_live_xxx (production) or upp_test_xxx (sandbox)',
+        format: 'upp_live_xxx (production). upp_test_xxx is reserved for future sandbox support.',
       },
       endpoints: [
         { method: 'GET', path: '/api/v1/me', description: 'Get API key info and usage' },
@@ -575,7 +572,7 @@ export function createDeveloperRoutes(deps: DeveloperRouteDependencies): Router 
         { method: 'GET', path: '/api/v1/calls/rates', description: 'Get call rates', query: { country: 'optional (default: NG)' } },
       ],
       sandbox: {
-        description: 'Use test keys (upp_test_xxx) for sandbox mode. All operations are simulated with mock data.',
+        description: 'Sandbox support is coming soon. PromptPay does not return simulated balances, transactions, or airtime results.',
         testKey: 'Generate at https://www.upromptpay.com → Developer Portal',
       },
       rateLimit: {

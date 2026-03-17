@@ -39,15 +39,19 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   // Block direct access to .html files
   app.get('/admin.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/partner.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
+  app.get('/dashboard.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/app.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
   app.get('/careers.html', (_req: Request, res: Response) => { res.status(404).send('Not found'); });
 
-  // Serve admin dashboard at clean URL (keep legacy secret path too)
+  // Serve admin dashboard at clean URL and keep legacy aliases working
   const secretAdminPath = `/${CONFIG.admin.secretPath}`;
   const noCache = { 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache' };
-  app.get('/secure/admin', (_req: Request, res: Response) => {
+  app.get('/admin', (_req: Request, res: Response) => {
     res.set(noCache);
     res.sendFile(path.join(publicDir, 'admin.html'));
+  });
+  app.get('/secure/admin', (_req: Request, res: Response) => {
+    res.redirect(302, '/admin');
   });
   app.get(secretAdminPath, (_req: Request, res: Response) => {
     res.set(noCache);
@@ -55,18 +59,24 @@ export function createGateway(deps: GatewayDependencies): { app: express.Applica
   });
 
   // Serve partner portal
-  app.get('/secure/partners', (_req: Request, res: Response) => {
+  app.get('/partner', (_req: Request, res: Response) => {
     res.set(noCache);
     res.sendFile(path.join(publicDir, 'partner.html'));
   });
+  app.get('/secure/partners', (_req: Request, res: Response) => {
+    res.redirect(302, '/partner');
+  });
   app.get('/partners', (_req: Request, res: Response) => {
-    res.redirect(301, '/secure/partners');
+    res.redirect(302, '/partner');
   });
 
-  // Serve user app shell
-  app.get('/app', (_req: Request, res: Response) => {
+  // Serve end-user dashboard and keep the legacy /app alias alive
+  app.get('/dashboard', (_req: Request, res: Response) => {
     res.set(noCache);
-    res.sendFile(path.join(publicDir, 'app.html'));
+    res.sendFile(path.join(publicDir, 'dashboard.html'));
+  });
+  app.get('/app', (_req: Request, res: Response) => {
+    res.redirect(302, '/dashboard');
   });
 
   // Public careers landing page is intentionally disabled until it reflects real openings.

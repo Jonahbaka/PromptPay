@@ -44,6 +44,80 @@ export function createPartnerRoutes(deps: PartnerRouteDependencies): Router {
   const router = Router();
   const db = deps.memory.getDb();
 
+  function getTenantUserIds(tenantId: string): string[] {
+    return (db.prepare('SELECT id FROM users WHERE tenant_id = ?').all(tenantId) as Array<{ id: string }>)
+      .map((row) => row.id);
+  }
+
+  function getTenantAgentSummary(tenantId: string): { totalAgents: number; activeAgents: number } {
+    return db.prepare(`
+      SELECT
+        COUNT(*) as totalAgents,
+        COUNT(CASE WHEN pa.status = 'active' THEN 1 END) as activeAgents
+      FROM pos_agents pa
+      JOIN users u ON u.id = pa.user_id
+      WHERE u.tenant_id = ?
+    `).get(tenantId) as { totalAgents: number; activeAgents: number };
+  }
+
+  function getTenantTransactionSummary(tenantId: string): {
+    totalTransactions: number;
+    completedTransactions: number;
+    pendingTransactions: number;
+    totalVolume: number;
+    completedVolume: number;
+    totalAgentCommission: number;
+    totalPlatformFee: number;
+    lastTransactionAt: string | null;
+  } {
+    return db.prepare(`
+      SELECT
+        COUNT(*) as totalTransactions,
+        COUNT(CASE WHEN pt.status = 'completed' THEN 1 END) as completedTransactions,
+        COUNT(CASE WHEN pt.status = 'pending' THEN 1 END) as pendingTransactions,
+        COALESCE(SUM(pt.face_value), 0) as totalVolume,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.face_value END), 0) as completedVolume,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.agent_profit END), 0) as totalAgentCommission,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.platform_fee END), 0) as totalPlatformFee,
+        MAX(pt.created_at) as lastTransactionAt
+      FROM pos_transactions pt
+      JOIN users u ON u.id = pt.agent_user_id
+      WHERE u.tenant_id = ?
+    `).get(tenantId) as {
+      totalTransactions: number;
+      completedTransactions: number;
+      pendingTransactions: number;
+      totalVolume: number;
+      completedVolume: number;
+      totalAgentCommission: number;
+      totalPlatformFee: number;
+      lastTransactionAt: string | null;
+    };
+  }
+
+  function getTenantApiUsage(tenantId: string): {
+    totalCalls: number;
+    todayCalls: number;
+    activeKeys: number;
+    lastRequestAt: string | null;
+  } {
+    return db.prepare(`
+      SELECT
+        COALESCE((SELECT COUNT(*) FROM developer_api_logs dal JOIN users du ON du.id = dal.user_id WHERE du.tenant_id = ?), 0) as totalCalls,
+        COALESCE((SELECT SUM(dk.requests_today) FROM developer_keys dk JOIN users du ON du.id = dk.user_id WHERE du.tenant_id = ?), 0) as todayCalls,
+        COALESCE((SELECT COUNT(*) FROM developer_keys dk JOIN users du ON du.id = dk.user_id WHERE du.tenant_id = ? AND dk.status = 'active'), 0) as activeKeys,
+        (SELECT MAX(dal.created_at) FROM developer_api_logs dal JOIN users du ON du.id = dal.user_id WHERE du.tenant_id = ?) as lastRequestAt
+      FROM users u
+      WHERE u.tenant_id = ?
+      LIMIT 1
+    `).get(tenantId, tenantId, tenantId, tenantId, tenantId) as {
+      totalCalls: number;
+      todayCalls: number;
+      activeKeys: number;
+      lastRequestAt: string | null;
+    };
+  }
+
   // ── Ensure partner_documents table exists ──
   db.exec(`
     CREATE TABLE IF NOT EXISTS partner_documents (
@@ -172,8 +246,11 @@ export function createPartnerRoutes(deps: PartnerRouteDependencies): Router {
     const tenantId = req.auth!.tenantId;
     if (!tenantId) { res.status(400).json({ error: 'No tenant associated' }); return; }
 
-    const userIds = (db.prepare('SELECT id FROM users WHERE tenant_id = ?').all(tenantId) as Array<{ id: string }>).map(r => r.id);
+    const userIds = getTenantUserIds(tenantId);
     const hookStats = getPartnerHookStats(userIds);
+    const txSummary = getTenantTransactionSummary(tenantId);
+    const agentSummary = getTenantAgentSummary(tenantId);
+    const apiUsage = getTenantApiUsage(tenantId);
 
     // User growth
     const totalUsers = userIds.length;
@@ -184,33 +261,52 @@ export function createPartnerRoutes(deps: PartnerRouteDependencies): Router {
       ? (db.prepare(`SELECT COUNT(*) as c FROM users WHERE tenant_id = ? AND created_at >= datetime('now', 'start of month')`).get(tenantId) as { c: number }).c
       : 0;
 
-    // Transaction volume (if users exist)
-    let transactionVolume = 0;
-    let transactionCount = 0;
-    let revenueShare = 0;
-    if (userIds.length > 0) {
-      const placeholders = userIds.map(() => '?').join(',');
-      const txStats = db.prepare(`
-        SELECT COALESCE(SUM(amount), 0) as volume, COUNT(*) as count
-        FROM transactions WHERE user_id IN (${placeholders}) AND status = 'completed'
-      `).get(...userIds) as { volume: number; count: number };
-      transactionVolume = txStats.volume;
-      transactionCount = txStats.count;
-
-      const partner = db.prepare('SELECT tier FROM tenants WHERE id = ?').get(tenantId) as { tier: string };
-      const cut = TIER_LIMITS[partner.tier]?.transactionCut || 1.5;
-      revenueShare = transactionVolume * (cut / 100);
-    }
-
     res.json({
       ...hookStats,
       totalUsers,
       activeUsers,
       newUsersThisMonth,
-      transactionVolume,
-      transactionCount,
-      revenueShare,
+      agentCount: agentSummary.totalAgents,
+      activeAgents: agentSummary.activeAgents,
+      transactionVolume: txSummary.completedVolume,
+      transactionCount: txSummary.completedTransactions,
+      pendingTransactions: txSummary.pendingTransactions,
+      commissionSummary: {
+        agentPayouts: txSummary.totalAgentCommission,
+        promptPayShare: txSummary.totalPlatformFee,
+      },
+      apiStatus: apiUsage.activeKeys > 0 ? 'Connected' : 'Not Connected',
+      lastTransactionAt: txSummary.lastTransactionAt,
     });
+  });
+
+  router.get('/api/partners/me/agents', authenticate, requireRole('partner_admin'), (req: Request, res: Response) => {
+    const tenantId = req.auth!.tenantId;
+    if (!tenantId) { res.status(400).json({ error: 'No tenant associated' }); return; }
+
+    const agents = db.prepare(`
+      SELECT
+        pa.id,
+        pa.agent_code,
+        pa.display_name,
+        pa.phone,
+        pa.tier,
+        pa.daily_limit,
+        pa.daily_used,
+        pa.total_transactions,
+        pa.total_volume,
+        pa.status,
+        pa.created_at,
+        u.id as user_id,
+        u.email,
+        u.last_login_at
+      FROM pos_agents pa
+      JOIN users u ON u.id = pa.user_id
+      WHERE u.tenant_id = ?
+      ORDER BY pa.created_at DESC
+    `).all(tenantId) as Array<Record<string, unknown>>;
+
+    res.json({ agents, total: agents.length });
   });
 
   // ── Partner Users List ──
@@ -247,22 +343,37 @@ export function createPartnerRoutes(deps: PartnerRouteDependencies): Router {
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const offset = Number(req.query.offset) || 0;
 
-    const userIds = (db.prepare('SELECT id FROM users WHERE tenant_id = ?').all(tenantId) as Array<{ id: string }>).map(r => r.id);
-    if (userIds.length === 0) {
-      res.json({ transactions: [], total: 0 });
-      return;
-    }
-
-    const placeholders = userIds.map(() => '?').join(',');
     const transactions = db.prepare(`
-      SELECT t.*, u.email, u.display_name
-      FROM transactions t
-      JOIN users u ON u.id = t.user_id
-      WHERE t.user_id IN (${placeholders})
-      ORDER BY t.created_at DESC LIMIT ? OFFSET ?
-    `).all(...userIds, limit, offset) as Array<Record<string, unknown>>;
+      SELECT
+        pt.id,
+        pt.product_type,
+        pt.face_value,
+        pt.cost_price,
+        pt.agent_profit,
+        pt.platform_fee,
+        pt.currency,
+        pt.country,
+        pt.customer_phone,
+        pt.carrier,
+        pt.status,
+        pt.created_at,
+        pt.completed_at,
+        u.id as agent_user_id,
+        u.email as agent_email,
+        u.display_name as agent_name
+      FROM pos_transactions pt
+      JOIN users u ON u.id = pt.agent_user_id
+      WHERE u.tenant_id = ?
+      ORDER BY pt.created_at DESC
+      LIMIT ? OFFSET ?
+    `).all(tenantId, limit, offset) as Array<Record<string, unknown>>;
 
-    const total = (db.prepare(`SELECT COUNT(*) as c FROM transactions WHERE user_id IN (${placeholders})`).get(...userIds) as { c: number }).c;
+    const total = (db.prepare(`
+      SELECT COUNT(*) as c
+      FROM pos_transactions pt
+      JOIN users u ON u.id = pt.agent_user_id
+      WHERE u.tenant_id = ?
+    `).get(tenantId) as { c: number }).c;
 
     res.json({ transactions, total, limit, offset });
   });
@@ -275,29 +386,41 @@ export function createPartnerRoutes(deps: PartnerRouteDependencies): Router {
     const days = Math.min(Number(req.query.days) || 30, 90);
     const since = new Date(Date.now() - days * 86400000).toISOString();
 
-    const userIds = (db.prepare('SELECT id FROM users WHERE tenant_id = ?').all(tenantId) as Array<{ id: string }>).map(r => r.id);
-    if (userIds.length === 0) {
-      res.json({ daily: [], byType: [], total: 0, period: `${days} days` });
-      return;
-    }
-
-    const placeholders = userIds.map(() => '?').join(',');
-
     const daily = db.prepare(`
-      SELECT DATE(created_at) as date, COALESCE(SUM(amount), 0) as volume, COUNT(*) as count
-      FROM transactions WHERE user_id IN (${placeholders}) AND created_at >= ? AND status = 'completed'
-      GROUP BY DATE(created_at) ORDER BY date DESC
-    `).all(...userIds, since) as Array<Record<string, unknown>>;
+      SELECT
+        DATE(pt.created_at) as date,
+        COUNT(*) as transactionCount,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.face_value END), 0) as volume,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.agent_profit END), 0) as agentCommission,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.platform_fee END), 0) as platformFee
+      FROM pos_transactions pt
+      JOIN users u ON u.id = pt.agent_user_id
+      WHERE u.tenant_id = ? AND pt.created_at >= ?
+      GROUP BY DATE(pt.created_at)
+      ORDER BY date DESC
+    `).all(tenantId, since) as Array<Record<string, unknown>>;
 
     const byType = db.prepare(`
-      SELECT type, COALESCE(SUM(amount), 0) as volume, COUNT(*) as count
-      FROM transactions WHERE user_id IN (${placeholders}) AND created_at >= ? AND status = 'completed'
-      GROUP BY type ORDER BY volume DESC
-    `).all(...userIds, since) as Array<Record<string, unknown>>;
+      SELECT
+        pt.product_type as type,
+        COUNT(*) as transactionCount,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.face_value END), 0) as volume,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.platform_fee END), 0) as platformFee
+      FROM pos_transactions pt
+      JOIN users u ON u.id = pt.agent_user_id
+      WHERE u.tenant_id = ? AND pt.created_at >= ?
+      GROUP BY pt.product_type
+      ORDER BY volume DESC
+    `).all(tenantId, since) as Array<Record<string, unknown>>;
 
-    const total = daily.reduce((sum, d) => sum + (d.volume as number), 0);
+    const totals = daily.reduce<{ volume: number; agentCommission: number; platformFee: number }>((acc, row) => {
+      acc.volume += Number(row.volume || 0);
+      acc.agentCommission += Number(row.agentCommission || 0);
+      acc.platformFee += Number(row.platformFee || 0);
+      return acc;
+    }, { volume: 0, agentCommission: 0, platformFee: 0 });
 
-    res.json({ daily, byType, total, period: `${days} days` });
+    res.json({ daily, byType, totals, period: `${days} days` });
   });
 
   // ── Partner API Usage ──
@@ -322,7 +445,83 @@ export function createPartnerRoutes(deps: PartnerRouteDependencies): Router {
       ? (db.prepare(`SELECT COUNT(*) as c FROM developer_api_logs WHERE user_id IN (${placeholders})`).get(...userIds) as { c: number }).c
       : 0;
 
-    res.json({ totalCalls: totalLogs, todayCalls, keys });
+    const lastRequestAt = userIds.length > 0
+      ? (db.prepare(`SELECT MAX(created_at) as lastRequestAt FROM developer_api_logs WHERE user_id IN (${placeholders})`).get(...userIds) as { lastRequestAt: string | null }).lastRequestAt
+      : null;
+
+    res.json({
+      totalCalls: totalLogs,
+      todayCalls,
+      keys,
+      status: keys.length > 0 ? 'Connected' : 'Not Connected',
+      activeKeys: keys.filter((key) => key.status === 'active').length,
+      lastRequestAt,
+    });
+  });
+
+  router.get('/api/partners/me/dashboard', authenticate, requireRole('partner_admin'), (req: Request, res: Response) => {
+    const tenantId = req.auth!.tenantId;
+    if (!tenantId) { res.status(400).json({ error: 'No tenant associated' }); return; }
+
+    const partner = db.prepare('SELECT * FROM tenants WHERE id = ?').get(tenantId) as Record<string, unknown> | undefined;
+    if (!partner) { res.status(404).json({ error: 'Partner not found' }); return; }
+
+    const userIds = getTenantUserIds(tenantId);
+    const agentSummary = getTenantAgentSummary(tenantId);
+    const transactionSummary = getTenantTransactionSummary(tenantId);
+    const apiUsage = getTenantApiUsage(tenantId);
+
+    const agents = db.prepare(`
+      SELECT
+        pa.id,
+        pa.agent_code,
+        pa.display_name,
+        pa.phone,
+        pa.tier,
+        pa.total_transactions,
+        pa.total_volume,
+        pa.status,
+        u.email
+      FROM pos_agents pa
+      JOIN users u ON u.id = pa.user_id
+      WHERE u.tenant_id = ?
+      ORDER BY pa.created_at DESC
+      LIMIT 20
+    `).all(tenantId) as Array<Record<string, unknown>>;
+
+    res.json({
+      partner: {
+        id: partner.id,
+        name: partner.name,
+        slug: partner.slug,
+        displayName: partner.display_name,
+        contactEmail: partner.contact_email,
+        contactPhone: partner.contact_phone,
+        status: partner.status,
+        tier: partner.tier,
+        createdAt: partner.created_at,
+        activatedAt: partner.activated_at,
+        config: JSON.parse(String(partner.config || '{}')),
+      },
+      network: {
+        totalUsers: userIds.length,
+        totalAgents: agentSummary.totalAgents,
+        activeAgents: agentSummary.activeAgents,
+      },
+      transactions: transactionSummary,
+      commissionSummary: {
+        agentPayouts: transactionSummary.totalAgentCommission,
+        promptPayShare: transactionSummary.totalPlatformFee,
+      },
+      apiIntegration: {
+        status: apiUsage.activeKeys > 0 ? 'Connected' : 'Not Connected',
+        activeKeys: apiUsage.activeKeys,
+        totalCalls: apiUsage.totalCalls,
+        todayCalls: apiUsage.todayCalls,
+        lastRequestAt: apiUsage.lastRequestAt,
+      },
+      agents,
+    });
   });
 
   // ── Tier Info (public) ──

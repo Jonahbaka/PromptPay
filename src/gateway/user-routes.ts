@@ -6,7 +6,7 @@
 import { Router, type Request, type Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { hashPassword, verifyPassword, createToken } from '../auth/tokens.js';
-import { authenticate } from '../auth/middleware.js';
+import { authenticate, requireRole } from '../auth/middleware.js';
 import { CONFIG } from '../core/config.js';
 import type { MemoryStore } from '../memory/store.js';
 import type { LoggerHandle, CommunicationChannel } from '../core/types.js';
@@ -45,22 +45,6 @@ type AuthUserRecord = {
   role: string;
   status: string;
 };
-
-const PUBLIC_TEST_ACCESS_ENABLED = process.env.PUBLIC_TEST_ACCESS_ENABLED === 'true';
-const PUBLIC_TEST_ACCESS_ACCOUNTS = {
-  owner: {
-    email: process.env.PUBLIC_TEST_OWNER_EMAIL || process.env.OWNER_EMAIL || CONFIG.auth.ownerEmail,
-    role: 'owner',
-  },
-  partner: {
-    email: process.env.PUBLIC_TEST_PARTNER_EMAIL || 'iamjonah.baka@gmail.com',
-    role: 'partner_admin',
-  },
-  user: {
-    email: process.env.PUBLIC_TEST_USER_EMAIL || 'jonahbaka00@gmail.com',
-    role: 'user',
-  },
-} as const;
 
 export function createUserRoutes(deps: UserRouteDependencies): Router {
   const router = Router();
@@ -183,49 +167,6 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
       const msg = err instanceof Error ? err.message : String(err);
       deps.logger.error(`Login error: ${msg}`);
       res.status(500).json({ error: 'Login failed' });
-    }
-  });
-
-  // Test access for seeded demo accounts. Intended only for explicit test environments.
-  router.post('/api/auth/test-access', (req: Request, res: Response) => {
-    try {
-      if (!PUBLIC_TEST_ACCESS_ENABLED) {
-        res.status(404).json({ error: 'Test access is not enabled' });
-        return;
-      }
-
-      const requested = String(req.body?.account || '').trim().toLowerCase() as keyof typeof PUBLIC_TEST_ACCESS_ACCOUNTS;
-      const account = PUBLIC_TEST_ACCESS_ACCOUNTS[requested];
-      if (!account) {
-        res.status(400).json({ error: 'Invalid test account' });
-        return;
-      }
-
-      const user = db.prepare(
-        'SELECT id, tenant_id, email, display_name, country, role, status FROM users WHERE email = ?'
-      ).get(account.email) as AuthUserRecord | undefined;
-
-      if (!user) {
-        res.status(404).json({ error: 'Test account not found' });
-        return;
-      }
-
-      if (user.status !== 'active') {
-        res.status(403).json({ error: 'Test account is ' + user.status });
-        return;
-      }
-
-      if (user.role !== account.role) {
-        res.status(409).json({ error: 'Test account role mismatch' });
-        return;
-      }
-
-      deps.logger.info(`Test access login: ${account.email}`, { role: user.role });
-      res.json(finalizeAuth(user));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      deps.logger.error(`Test access error: ${msg}`);
-      res.status(500).json({ error: 'Test access failed' });
     }
   });
 
@@ -389,6 +330,219 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
   });
 
   // ── Set API Key ──
+  router.get('/api/dashboard/summary', authenticate, requireRole('user'), (req: Request, res: Response) => {
+    const userId = req.auth!.userId;
+
+    const user = db.prepare(`
+      SELECT
+        id,
+        email,
+        display_name,
+        country,
+        phone_number,
+        role,
+        status,
+        last_login_at,
+        created_at,
+        COALESCE(kyc_tier, 0) as kyc_tier,
+        COALESCE(kyc_status, 'none') as kyc_status
+      FROM users
+      WHERE id = ?
+    `).get(userId) as Record<string, unknown> | undefined;
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const settings = db.prepare(`
+      SELECT preferred_channels, notification_enabled, language, timezone
+      FROM user_settings
+      WHERE user_id = ?
+    `).get(userId) as Record<string, unknown> | undefined;
+
+    const notifications = db.prepare(`
+      SELECT id, title, body, status, created_at, read_at
+      FROM user_notifications
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      LIMIT 20
+    `).all(userId) as Array<Record<string, unknown>>;
+
+    const walletCurrency = (db.prepare(`
+      SELECT currency
+      FROM user_wallets
+      WHERE user_id = ?
+    `).get(userId) as { currency?: string } | undefined)?.currency || null;
+
+    const walletTransactions = db.prepare(`
+      SELECT id, type, amount, description, created_at
+      FROM wallet_transactions
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      LIMIT 12
+    `).all(userId) as Array<Record<string, unknown>>;
+
+    const posTransactions = db.prepare(`
+      SELECT id, product_type, face_value, customer_phone, carrier, status, currency, created_at
+      FROM pos_transactions
+      WHERE agent_user_id = ?
+      ORDER BY created_at DESC
+      LIMIT 12
+    `).all(userId) as Array<Record<string, unknown>>;
+
+    const transactions = [
+      ...walletTransactions.map((row) => ({
+        id: row.id,
+        source: 'wallet',
+        type: row.type,
+        amount: row.amount,
+        currency: walletCurrency,
+        description: row.description || 'Wallet activity',
+        status: 'recorded',
+        createdAt: row.created_at,
+      })),
+      ...posTransactions.map((row) => ({
+        id: row.id,
+        source: 'pos',
+        type: row.product_type,
+        amount: row.face_value,
+        currency: row.currency || null,
+        description: `${String(row.product_type || '').toUpperCase()} ${row.customer_phone || ''}`.trim(),
+        status: row.status,
+        carrier: row.carrier,
+        createdAt: row.created_at,
+      })),
+    ]
+      .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+      .slice(0, 20);
+
+    const featureRows = db.prepare(`
+      SELECT key, enabled
+      FROM feature_flags
+      WHERE key IN ('dashboard.services', 'dashboard.notifications', 'dashboard.settings')
+      ORDER BY key
+    `).all() as Array<{ key: string; enabled: number }>;
+
+    const featureFlags = featureRows.reduce<Record<string, boolean>>((acc, row) => {
+      acc[row.key] = row.enabled === 1;
+      return acc;
+    }, {});
+
+    res.json({
+      profile: {
+        id: user.id,
+        displayName: user.display_name,
+        email: user.email,
+        phoneNumber: user.phone_number || '',
+        country: user.country || '',
+      },
+      account: {
+        role: user.role,
+        status: user.status,
+        kycStatus: user.kyc_status,
+        kycTier: user.kyc_tier,
+        createdAt: user.created_at,
+        lastLoginAt: user.last_login_at,
+      },
+      settings: {
+        preferredChannels: (String(settings?.preferred_channels || '')).split(',').filter(Boolean),
+        notificationEnabled: settings?.notification_enabled === 1,
+        language: settings?.language || 'en',
+        timezone: settings?.timezone || 'UTC',
+      },
+      transactions,
+      notifications: notifications.map((row) => ({
+        id: row.id,
+        title: row.title,
+        body: row.body,
+        status: row.status,
+        createdAt: row.created_at,
+        readAt: row.read_at,
+      })),
+      featureFlags,
+    });
+  });
+
+  router.put('/api/dashboard/profile', authenticate, requireRole('user'), (req: Request, res: Response) => {
+    const { displayName, phoneNumber, country } = req.body as {
+      displayName?: string;
+      phoneNumber?: string;
+      country?: string;
+    };
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+    const now = new Date().toISOString();
+
+    if (displayName !== undefined) {
+      const value = String(displayName).trim();
+      if (!value) {
+        res.status(400).json({ error: 'displayName cannot be empty' });
+        return;
+      }
+      updates.push('display_name = ?');
+      params.push(value);
+    }
+
+    if (phoneNumber !== undefined) {
+      const value = String(phoneNumber).trim();
+      if (value.length > 32) {
+        res.status(400).json({ error: 'phoneNumber is too long' });
+        return;
+      }
+      updates.push('phone_number = ?');
+      params.push(value || null);
+    }
+
+    if (country !== undefined) {
+      updates.push('country = ?');
+      params.push(String(country).trim());
+    }
+
+    if (updates.length === 0) {
+      res.status(400).json({ error: 'No profile fields provided' });
+      return;
+    }
+
+    updates.push('updated_at = ?');
+    params.push(now, req.auth!.userId);
+    db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
+
+    const profile = db.prepare(`
+      SELECT display_name, email, phone_number, country
+      FROM users
+      WHERE id = ?
+    `).get(req.auth!.userId) as Record<string, unknown>;
+
+    res.json({
+      success: true,
+      profile: {
+        displayName: profile.display_name,
+        email: profile.email,
+        phoneNumber: profile.phone_number || '',
+        country: profile.country || '',
+      },
+    });
+  });
+
+  router.post('/api/dashboard/notifications/:id/read', authenticate, requireRole('user'), (req: Request, res: Response) => {
+    const notificationId = String(req.params.id);
+    const now = new Date().toISOString();
+    const result = db.prepare(`
+      UPDATE user_notifications
+      SET status = 'read', read_at = ?
+      WHERE id = ? AND user_id = ?
+    `).run(now, notificationId, req.auth!.userId);
+
+    if (result.changes === 0) {
+      res.status(404).json({ error: 'Notification not found' });
+      return;
+    }
+
+    res.json({ success: true });
+  });
+
   router.put('/api/user/settings/api-key', authenticate, (req: Request, res: Response) => {
     const { apiKey, provider } = req.body;
     if (!apiKey) {

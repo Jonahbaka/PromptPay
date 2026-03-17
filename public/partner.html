@@ -3,535 +3,328 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#04060d">
-  <title>PromptPay Partner | Agent Network Portal</title>
+  <meta name="theme-color" content="#050914">
+  <title>PromptPay Partner Portal</title>
   <meta
     name="description"
-    content="PromptPay partner portal for onboarding, transaction visibility, revenue monitoring, API usage, and branding controls across payment agent networks."
+    content="PromptPay partner portal for real onboarding, agent visibility, transaction volume, commission summary, and API integration status."
   >
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
-  <link rel="stylesheet" href="/assets/console.css">
+  <link rel="stylesheet" href="/assets/portal.css">
 </head>
-<body>
-  <section class="console-auth" id="auth-view">
-    <div class="auth-card">
+<body class="portal-body">
+  <section class="portal-auth" id="auth-view">
+    <div class="auth-card auth-card-wide">
       <div class="brand-row">
-        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M14 14h7v7h-7z"></path>
+          </svg>
+        </div>
         <div>
-          <p class="eyebrow">Partner Access</p>
-          <h1>Launch and scale your agent network from one control surface.</h1>
+          <p class="eyebrow">PromptPay Partner Portal</p>
+          <h1>Operate an agent network on PromptPay.</h1>
         </div>
       </div>
-      <p>
-        Sign in to an approved partner environment or submit your organization for rollout review on PromptPay's
-        payment orchestration infrastructure.
+      <p class="auth-copy">
+        Sign in as an approved partner administrator or submit your organization for onboarding.
+        PromptPay does not hold customer funds. This portal is for software, operations, and observability only.
       </p>
 
       <div class="auth-tabs" role="tablist" aria-label="Partner access modes">
-        <button class="auth-tab active" type="button" role="tab" data-auth-tab="signin" aria-selected="true">Sign In</button>
-        <button class="auth-tab" type="button" role="tab" data-auth-tab="apply" aria-selected="false">Apply</button>
+        <button class="auth-tab active" type="button" data-auth-tab="signin">Sign In</button>
+        <button class="auth-tab" type="button" data-auth-tab="apply">Apply</button>
       </div>
 
       <form id="login-form" class="auth-panel active" data-auth-panel="signin" novalidate>
         <div class="field-grid">
-          <div class="field full">
-            <label for="login-email">Work email</label>
-            <input id="login-email" name="email" type="email" autocomplete="username" required>
-          </div>
-          <div class="field full">
-            <label for="login-password">Password</label>
-            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
-          </div>
+          <label class="field full">
+            <span>Work email</span>
+            <input id="login-email" type="email" autocomplete="username" required>
+          </label>
+          <label class="field full">
+            <span>Password</span>
+            <input id="login-password" type="password" autocomplete="current-password" required>
+          </label>
         </div>
-        <div class="notice">
-          PromptPay does not hold customer funds. The partner portal is for orchestration, analytics,
-          and network controls on top of licensed providers.
-        </div>
-        <div class="notice warning">
-          Test access is enabled in this environment. Use the seeded partner account if you only need to review the portal.
-        </div>
-        <div class="form-status" id="login-status" aria-live="polite"></div>
-        <div class="footer-actions">
+        <div class="status-text" id="login-status" aria-live="polite"></div>
+        <div class="button-row">
           <button class="button button-primary" id="login-submit" type="submit">Sign In</button>
-          <button class="button button-secondary" id="test-partner-access" type="button">Use Test Partner</button>
           <a class="button button-secondary" href="/">Back to site</a>
         </div>
       </form>
 
       <form id="apply-form" class="auth-panel" data-auth-panel="apply" novalidate>
-        <div class="apply-grid">
-          <div class="field">
-            <label for="apply-name">Organization legal name</label>
-            <input id="apply-name" name="name" type="text" required>
-          </div>
-          <div class="field">
-            <label for="apply-display-name">Operating display name</label>
-            <input id="apply-display-name" name="displayName" type="text">
-          </div>
-          <div class="field">
-            <label for="apply-email">Contact email</label>
-            <input id="apply-email" name="contactEmail" type="email" required>
-          </div>
-          <div class="field">
-            <label for="apply-phone">Contact phone</label>
-            <input id="apply-phone" name="contactPhone" type="tel">
-          </div>
-          <div class="field">
-            <label for="apply-website">Website</label>
-            <input id="apply-website" name="website" type="url" placeholder="https://">
-          </div>
-          <div class="field">
-            <label for="apply-tier">Preferred tier</label>
-            <select id="apply-tier" name="tier">
+        <div class="field-grid">
+          <label class="field">
+            <span>Organization name</span>
+            <input id="apply-name" type="text" required>
+          </label>
+          <label class="field">
+            <span>Display name</span>
+            <input id="apply-display-name" type="text">
+          </label>
+          <label class="field">
+            <span>Contact email</span>
+            <input id="apply-email" type="email" required>
+          </label>
+          <label class="field">
+            <span>Contact phone</span>
+            <input id="apply-phone" type="tel">
+          </label>
+          <label class="field">
+            <span>Website</span>
+            <input id="apply-website" type="url" placeholder="https://">
+          </label>
+          <label class="field">
+            <span>Preferred tier</span>
+            <select id="apply-tier">
               <option value="standard">Standard</option>
               <option value="professional">Professional</option>
               <option value="enterprise">Enterprise</option>
             </select>
-          </div>
-          <div class="field full">
-            <label for="apply-description">Network overview</label>
-            <textarea id="apply-description" name="description" placeholder="Describe your field team, payment footprint, and rollout goals."></textarea>
-          </div>
+          </label>
+          <label class="field full">
+            <span>Network overview</span>
+            <textarea id="apply-description" rows="4" placeholder="Describe your network footprint, rollout plan, and integration requirements."></textarea>
+          </label>
         </div>
-
-        <div class="status-card">
-          <div class="section-title">
-            <div>
-              <h2>Tier summary</h2>
-              <p>Current package limits for operator rollouts and API usage.</p>
-            </div>
-          </div>
-          <div id="tier-summary" class="list">
-            <div class="empty-state">Loading package details.</div>
-          </div>
+        <div class="inline-note">
+          This form creates a real pending partner application in the tenants table. Branding and API connectivity are configured after approval.
         </div>
-
-        <div class="data-card">
-          <div class="section-title">
-            <div>
-              <h2>Compliance documents</h2>
-              <p>Upload only the documents available now. Keep the combined upload under 4.5MB in this public flow.</p>
-            </div>
-          </div>
-          <div class="doc-grid">
-            <div class="doc-item">
-              <strong>CBN license or approval in principle</strong>
-              <div class="helper-text">Required for regulated Nigerian operators.</div>
-              <input id="doc-cbn" type="file" accept=".pdf,.jpg,.jpeg,.png" data-doc-type="cbn">
-            </div>
-            <div class="doc-item">
-              <strong>CAC certificate of incorporation</strong>
-              <div class="helper-text">Corporate registration evidence.</div>
-              <input id="doc-cac" type="file" accept=".pdf,.jpg,.jpeg,.png" data-doc-type="cac">
-            </div>
-            <div class="doc-item">
-              <strong>CAC Form 1.1</strong>
-              <div class="helper-text">Directors and shareholders disclosure.</div>
-              <input id="doc-cac11" type="file" accept=".pdf,.jpg,.jpeg,.png" data-doc-type="cac11">
-            </div>
-            <div class="doc-item">
-              <strong>TIN certificate</strong>
-              <div class="helper-text">Tax registration document.</div>
-              <input id="doc-tin" type="file" accept=".pdf,.jpg,.jpeg,.png" data-doc-type="tin">
-            </div>
-            <div class="doc-item">
-              <strong>SCUML certificate</strong>
-              <div class="helper-text">Optional if applicable to your institution.</div>
-              <input id="doc-scuml" type="file" accept=".pdf,.jpg,.jpeg,.png" data-doc-type="scuml">
-            </div>
-            <div class="doc-item">
-              <strong>Authorized signatory ID</strong>
-              <div class="helper-text">Government-issued identification.</div>
-              <input id="doc-signatory" type="file" accept=".pdf,.jpg,.jpeg,.png" data-doc-type="signatory">
-            </div>
-          </div>
-        </div>
-
-        <div class="form-status" id="apply-status" aria-live="polite"></div>
-        <div class="footer-actions">
-          <button class="button button-primary" id="apply-submit" type="submit">Submit Application</button>
+        <div class="status-text" id="apply-status" aria-live="polite"></div>
+        <div class="button-row">
+          <button class="button button-primary" id="apply-submit" type="submit">Submit application</button>
         </div>
       </form>
     </div>
   </section>
 
-  <div class="console-shell hidden" id="console-app">
-    <aside class="console-sidebar" aria-label="Partner navigation">
-      <div class="sidebar-header">
-        <div class="brand-row">
-          <span class="brand-mark" aria-hidden="true"></span>
-          <div>
-            <strong>PromptPay Partner</strong>
-            <span>AgentOS workspace for approved partner operators</span>
-          </div>
+  <div class="portal-shell hidden" id="partner-shell">
+    <header class="portal-topbar">
+      <div class="topbar-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M14 14h7v7h-7z"></path>
+          </svg>
+        </div>
+        <div>
+          <strong>PromptPay</strong>
+          <span>Partner portal</span>
         </div>
       </div>
-
-      <nav class="nav-list" aria-label="Partner sections">
-        <button class="nav-item active" type="button" data-page="overview">Overview</button>
-        <button class="nav-item" type="button" data-page="revenue">Revenue</button>
-        <button class="nav-item" type="button" data-page="developers">Developers</button>
-        <button class="nav-item" type="button" data-page="branding">Branding</button>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div>
-          <strong id="partner-user">Partner session</strong>
-          <span id="partner-meta">Verifying access</span>
+      <div class="topbar-actions">
+        <div class="session-pill">
+          <strong id="partner-name">Partner</strong>
+          <span id="partner-meta">-</span>
         </div>
-        <div id="partner-context" class="helper-text">Loading network profile.</div>
+        <a class="button button-secondary" href="/">Homepage</a>
+        <button class="button button-secondary" id="partner-refresh" type="button">Refresh</button>
         <button class="button button-secondary" id="partner-logout" type="button">Sign Out</button>
       </div>
-    </aside>
+    </header>
 
-    <main class="console-main">
-      <header class="page-header">
+    <main class="portal-main">
+      <section class="hero-strip layer-2">
         <div>
-          <p class="eyebrow">Partner Operator Console</p>
-          <h1>Operate your rollout on licensed infrastructure.</h1>
-          <p>
-            Track transactions, revenue share, API usage, onboarding progress, branding, and field rollout
-            from a single fast control surface.
+          <p class="eyebrow">Partner operations</p>
+          <h2>Agent networks, transaction visibility, and integration state.</h2>
+          <p class="muted">
+            All figures below come from real PromptPay tables. If there is no activity yet, the portal will show clear empty states instead of placeholder metrics.
           </p>
         </div>
-        <div class="stack-tight">
-          <span class="status-chip success" id="partner-shell-status">Live</span>
-          <button class="button button-secondary" id="partner-refresh" type="button">Refresh data</button>
-        </div>
-      </header>
-
-      <div class="form-status" id="partner-load-status" aria-live="polite"></div>
-      <section class="console-story-grid" aria-label="Partner operation layers">
-        <article class="story-card">
-          <span>01</span>
-          <strong>Rollout operations</strong>
-          <p>Stand up territories, onboard operators, and manage network rollout quality without consumer clutter.</p>
-        </article>
-        <article class="story-card">
-          <span>02</span>
-          <strong>Revenue and commissions</strong>
-          <p>Observe volume, revenue share, and payout signals across partner-controlled payment activity.</p>
-        </article>
-        <article class="story-card">
-          <span>03</span>
-          <strong>Developer infrastructure</strong>
-          <p>Issue keys, inspect usage, and wire API events into your own operational systems.</p>
-        </article>
-        <article class="story-card">
-          <span>04</span>
-          <strong>Compliance boundary</strong>
-          <p>PromptPay provides orchestration and observability on licensed rails. It does not hold customer funds.</p>
-        </article>
-      </section>
-      <div class="compliance-banner">
-        PromptPay sits above licensed providers as the orchestration layer for network growth, observability, and operator controls.
-      </div>
-
-      <section class="page active" data-page="overview">
-        <div class="metric-grid">
-          <article class="metric-card">
-            <h3>Total operators</h3>
-            <strong id="partner-users">-</strong>
-            <small>Users provisioned inside this partner environment.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Active last 7 days</h3>
-            <strong id="partner-active">-</strong>
-            <small>Recently active operators inside the partner network.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Transaction volume</h3>
-            <strong id="partner-volume">-</strong>
-            <small>Observed transaction volume tied to this partner footprint.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Revenue share</h3>
-            <strong id="partner-revenue">-</strong>
-            <small>Estimated partner revenue share based on configured tier cut.</small>
-          </article>
-        </div>
-
-        <div class="page-grid">
-          <div class="section-stack">
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Network summary</h2>
-                  <p>Current partner status, limits, pricing, and rollout metadata.</p>
-                </div>
-              </div>
-              <div id="partner-summary" class="list">
-                <div class="empty-state">Loading partner summary.</div>
-              </div>
-            </article>
-
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Recent transactions</h2>
-                  <p>Latest transaction activity routed through the partner environment.</p>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Customer</th>
-                      <th>Type</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody id="partner-transactions-table">
-                    <tr><td colspan="5" class="empty-state">Loading transactions.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
-          </div>
-
-          <div class="section-stack">
-            <article class="status-card">
-              <div class="section-title">
-                <div>
-                  <h2>Activity signals</h2>
-                  <p>Quick operational cues for growth, usage, and configuration.</p>
-                </div>
-              </div>
-              <div id="partner-activity-list" class="list">
-                <div class="empty-state">Loading activity signals.</div>
-              </div>
-            </article>
-
-            <article class="note-card">
-              <div class="section-title">
-                <div>
-                  <h2>Insights</h2>
-                  <p>Partner-scoped analytics and anomaly detection.</p>
-                </div>
-              </div>
-              <div id="partner-insights" class="list">
-                <div class="empty-state">Loading insights.</div>
-              </div>
-            </article>
-          </div>
+        <div class="hero-meta">
+          <span class="badge" id="partner-status-badge">Status</span>
+          <span class="badge badge-outline" id="partner-tier-badge">Tier</span>
         </div>
       </section>
 
-      <section class="page" data-page="revenue">
-        <div class="metric-grid">
-          <article class="metric-card">
-            <h3>Transaction count</h3>
-            <strong id="partner-transactions-count">-</strong>
-            <small>Completed transactions attributed to this partner.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Average ticket size</h3>
-            <strong id="partner-ticket-size">-</strong>
-            <small>Average value per completed transaction.</small>
-          </article>
-          <article class="metric-card">
-            <h3>30 day growth</h3>
-            <strong id="partner-growth">-</strong>
-            <small>Partner volume change against the prior 30 day period.</small>
-          </article>
-          <article class="metric-card">
-            <h3>New users this month</h3>
-            <strong id="partner-new-users">-</strong>
-            <small>Fresh operator signups this calendar month.</small>
-          </article>
-        </div>
+      <div class="status-text" id="partner-load-status" aria-live="polite"></div>
+      <div class="inline-note hidden" id="partner-status-banner"></div>
 
-        <article class="data-card">
-          <div class="section-title">
+      <nav class="tabbar" aria-label="Partner sections">
+        <button class="tab-button active" type="button" data-page="overview">Overview</button>
+        <button class="tab-button" type="button" data-page="agents">Agents</button>
+        <button class="tab-button" type="button" data-page="integrations">Integrations</button>
+        <button class="tab-button" type="button" data-page="branding">Branding</button>
+      </nav>
+
+      <section class="tab-panel active" data-page="overview">
+        <article class="panel-card intent-card layer-3">
+          <div class="section-heading">
             <div>
-              <h2>Trend deck</h2>
-              <p>Volume, revenue, transactions, and operator growth across recent activity.</p>
+              <h3 id="partner-context-title">Preparing network context</h3>
+              <p id="partner-context-copy">PromptPay will prioritize the next real operational action based on your status, network activity, and integrations.</p>
+            </div>
+            <span class="surface-tag">Operational guidance</span>
+          </div>
+          <div class="action-grid" id="partner-context-actions">
+            <article class="action-card skeleton-card">
+              <strong>Loading actions</strong>
+              <p>Checking partner status, agent coverage, and live integrations.</p>
+            </article>
+          </div>
+        </article>
+
+        <div class="metrics-grid compact-metrics">
+          <article class="metric-card">
+            <span>Partner status</span>
+            <strong id="metric-status">-</strong>
+            <small>From the tenants table.</small>
+          </article>
+          <article class="metric-card">
+            <span>Total agents</span>
+            <strong id="metric-agents">0</strong>
+            <small>Registered partner agents.</small>
+          </article>
+          <article class="metric-card">
+            <span>Transaction volume</span>
+            <strong id="metric-volume">NGN 0</strong>
+            <small>Completed POS volume only.</small>
+          </article>
+          <article class="metric-card">
+            <span>PromptPay share</span>
+            <strong id="metric-commission">NGN 0</strong>
+            <small>Completed platform fees only.</small>
+          </article>
+        </div>
+
+        <div class="portal-bento partner-bento">
+          <article class="panel-card bento-card" id="partner-summary-card">
+            <div class="section-heading">
+              <div>
+                <h3>Partner summary</h3>
+                <p>Core rollout and contact fields from the tenants table.</p>
+              </div>
+            </div>
+            <dl class="detail-list" id="partner-summary">
+              <div><dt>Name</dt><dd>-</dd></div>
+              <div><dt>Contact</dt><dd>-</dd></div>
+              <div><dt>Created</dt><dd>-</dd></div>
+              <div><dt>Activated</dt><dd>-</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel-card bento-card" id="partner-integrations-card">
+            <div class="section-heading">
+              <div>
+                <h3>Integration status</h3>
+                <p>Developer keys and API activity only.</p>
+              </div>
+              <button class="button button-secondary button-small" type="button" data-switch-page="integrations">Open</button>
+            </div>
+            <dl class="detail-list" id="integration-summary">
+              <div><dt>Status</dt><dd>Not Connected</dd></div>
+              <div><dt>Active keys</dt><dd>0</dd></div>
+              <div><dt>Total calls</dt><dd>0</dd></div>
+              <div><dt>Last request</dt><dd>Not Connected</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel-card bento-card bento-wide" id="partner-transactions-card">
+            <div class="section-heading">
+              <div>
+                <h3>Recent transaction activity</h3>
+                <p>Latest recorded POS transactions, if any exist.</p>
+              </div>
+            </div>
+            <div class="stack-list" id="partner-transactions">
+              <div class="empty-state">Loading transaction activity.</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-page="agents">
+        <article class="panel-card bento-card" id="partner-agents-card">
+          <div class="section-heading">
+            <div>
+              <h3>Agents</h3>
+              <p>Agents are loaded from the real pos_agents table.</p>
             </div>
           </div>
-          <div class="metric-grid" id="partner-trend-cards">
-            <div class="empty-state">Loading partner trends.</div>
+          <div class="table-shell">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Code</th>
+                  <th>Status</th>
+                  <th>Tier</th>
+                  <th>Transactions</th>
+                  <th>Volume</th>
+                </tr>
+              </thead>
+              <tbody id="agent-table">
+                <tr><td colspan="6" class="empty-state">Loading agents.</td></tr>
+              </tbody>
+            </table>
           </div>
         </article>
+      </section>
 
-        <div class="page-grid">
-          <div class="section-stack">
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Revenue by transaction type</h2>
-                  <p>Breakdown of transaction mix and volume by payment operation.</p>
-                </div>
+      <section class="tab-panel" data-page="integrations">
+        <div class="portal-bento integrations-bento">
+          <article class="panel-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>API integration status</h3>
+                <p>Real developer key and API log activity only.</p>
               </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Volume</th>
-                      <th>Transactions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="partner-revenue-types">
-                    <tr><td colspan="3" class="empty-state">Loading revenue mix.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
-          </div>
+            </div>
+            <dl class="detail-list" id="integration-summary-panel">
+              <div><dt>Status</dt><dd>Not Connected</dd></div>
+              <div><dt>Active keys</dt><dd>0</dd></div>
+              <div><dt>Total calls</dt><dd>0</dd></div>
+              <div><dt>Last request</dt><dd>Not Connected</dd></div>
+            </dl>
+          </article>
 
-          <div class="section-stack">
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>Recent operators</h2>
-                  <p>Recently created or active users inside this environment.</p>
-                </div>
+          <article class="panel-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Developer keys</h3>
+                <p>Empty until real keys are issued.</p>
               </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>User</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Last login</th>
-                    </tr>
-                  </thead>
-                  <tbody id="partner-user-table">
-                    <tr><td colspan="4" class="empty-state">Loading users.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
-          </div>
+            </div>
+            <div class="stack-list" id="integration-keys">
+              <div class="empty-state">No developer keys found.</div>
+            </div>
+          </article>
         </div>
       </section>
 
-      <section class="page" data-page="developers">
-        <div class="metric-grid">
-          <article class="metric-card">
-            <h3>Total API calls</h3>
-            <strong id="partner-api-total">-</strong>
-            <small>Observed API log volume for this partner.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Calls today</h3>
-            <strong id="partner-api-today">-</strong>
-            <small>Current-day request activity across issued keys.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Issued keys</h3>
-            <strong id="partner-api-keys">-</strong>
-            <small>Developer keys linked to partner operators.</small>
-          </article>
-          <article class="metric-card">
-            <h3>Current tier</h3>
-            <strong id="partner-tier-name">-</strong>
-            <small>Commercial package currently assigned to this partner.</small>
-          </article>
-        </div>
-
-        <div class="page-grid">
-          <div class="section-stack">
-            <article class="data-card">
-              <div class="section-title">
-                <div>
-                  <h2>API keys</h2>
-                  <p>Key inventory, status, and daily usage levels.</p>
-                </div>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Prefix</th>
-                      <th>Today</th>
-                      <th>Rate limit</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody id="partner-api-table">
-                    <tr><td colspan="5" class="empty-state">Loading API inventory.</td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </article>
+      <section class="tab-panel" data-page="branding">
+        <article class="panel-card placeholder-card bento-card">
+          <div class="section-heading">
+            <div>
+              <h3>Branding</h3>
+              <p>Logo upload UI only</p>
+            </div>
+            <span class="badge badge-outline">Coming Soon</span>
           </div>
-
-          <div class="section-stack">
-            <article class="note-card">
-              <div class="section-title">
-                <div>
-                  <h2>Tier and limits</h2>
-                  <p>Commercial package details, feature flags, and API allowance.</p>
-                </div>
-              </div>
-              <div id="partner-tier-card" class="list">
-                <div class="empty-state">Loading tier details.</div>
-              </div>
-            </article>
+          <p class="muted">
+            This control is intentionally not connected yet. PromptPay will only save branding after the real white-label workflow is finalized.
+          </p>
+          <label class="field full file-field">
+            <span>Logo file</span>
+            <input id="branding-file" type="file" accept="image/*">
+          </label>
+          <div class="branding-preview" id="branding-preview">No file selected.</div>
+          <div class="button-row">
+            <button class="button button-disabled" id="branding-save" type="button" disabled>Coming Soon</button>
           </div>
-        </div>
-      </section>
-
-      <section class="page" data-page="branding">
-        <div id="branding-note" class="notice warning">
-          White-label branding is available only where the assigned tier permits customization.
-        </div>
-
-        <div class="page-grid">
-          <div class="section-stack">
-            <article class="config-card">
-              <div class="section-title">
-                <div>
-                  <h2>Branding controls</h2>
-                  <p>Update display name, logo URL, and primary accent color for approved white-label rollouts.</p>
-                </div>
-              </div>
-              <form id="branding-form" class="auth-panel active" novalidate>
-                <div class="field-grid">
-                  <div class="field full">
-                    <label for="branding-name">Display name</label>
-                    <input id="branding-name" type="text">
-                  </div>
-                  <div class="field full">
-                    <label for="branding-logo">Logo URL</label>
-                    <input id="branding-logo" type="url" placeholder="https://">
-                  </div>
-                  <div class="field">
-                    <label for="branding-color">Primary color</label>
-                    <input id="branding-color" type="text" placeholder="#15b87a">
-                  </div>
-                </div>
-                <div class="form-status" id="branding-status" aria-live="polite"></div>
-                <div class="footer-actions">
-                  <button class="button button-primary" id="branding-submit" type="submit">Save branding</button>
-                </div>
-              </form>
-            </article>
-          </div>
-
-          <div class="section-stack">
-            <article class="note-card">
-              <div class="section-title">
-                <div>
-                  <h2>Preview</h2>
-                  <p>Current presentation for the partner environment.</p>
-                </div>
-              </div>
-              <div id="branding-preview" class="list">
-                <div class="empty-state">Loading branding preview.</div>
-              </div>
-            </article>
-          </div>
-        </div>
+        </article>
       </section>
     </main>
   </div>
 
-  <script type="module" src="/assets/partner-console.js"></script>
+  <script type="module" src="/assets/partner-portal.js"></script>
 </body>
 </html>

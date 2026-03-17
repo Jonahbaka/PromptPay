@@ -1,9 +1,9 @@
 {
   "name": "PromptPay",
   "short_name": "PromptPay",
-  "description": "PromptPay gives users a fast mobile app for wallet balance, airtime, data, and transactions while operators run payment networks on licensed rails.",
-  "start_url": "/app",
-  "id": "/app",
+  "description": "PromptPay provides a real end-user dashboard plus partner and owner portals for agent network operations.",
+  "start_url": "/dashboard",
+  "id": "/dashboard",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
@@ -33,19 +33,19 @@
   ],
   "shortcuts": [
     {
-      "name": "Open App",
-      "short_name": "App",
-      "url": "/app"
+      "name": "Open Dashboard",
+      "short_name": "Dashboard",
+      "url": "/dashboard"
     },
     {
       "name": "Partner Portal",
       "short_name": "Partner",
-      "url": "/secure/partners"
+      "url": "/partner"
     },
     {
       "name": "Admin Portal",
       "short_name": "Admin",
-      "url": "/secure/admin"
+      "url": "/admin"
     }
   ],
   "prefer_related_applications": false,

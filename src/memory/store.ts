@@ -498,6 +498,20 @@ export class MemoryStore extends EventEmitter {
         FOREIGN KEY (user_id) REFERENCES users(id)
       );
 
+      -- ═══ USER NOTIFICATIONS ═══
+      CREATE TABLE IF NOT EXISTS user_notifications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        status TEXT DEFAULT 'unread' CHECK(status IN ('unread', 'read')),
+        created_at TEXT NOT NULL,
+        read_at TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_user_notifications_user ON user_notifications(user_id);
+      CREATE INDEX IF NOT EXISTS idx_user_notifications_created ON user_notifications(created_at);
+
       -- ═══ PUSH SUBSCRIPTIONS ═══
       CREATE TABLE IF NOT EXISTS push_subscriptions (
         user_id TEXT NOT NULL,
@@ -994,6 +1008,22 @@ export class MemoryStore extends EventEmitter {
       INSERT OR IGNORE INTO platform_settings (key, value, updated_at) VALUES ('bill_convenience_fee', '100', datetime('now'));
       INSERT OR IGNORE INTO platform_settings (key, value, updated_at) VALUES ('super_agent_override_pct', '0.15', datetime('now'));
       INSERT OR IGNORE INTO platform_settings (key, value, updated_at) VALUES ('agent_commission_pct', '0.75', datetime('now'));
+
+      -- ═══ FEATURE FLAGS ═══
+      CREATE TABLE IF NOT EXISTS feature_flags (
+        key TEXT PRIMARY KEY,
+        enabled INTEGER NOT NULL DEFAULT 0,
+        description TEXT DEFAULT '',
+        updated_by TEXT,
+        updated_at TEXT NOT NULL
+      );
+      INSERT OR IGNORE INTO feature_flags (key, enabled, description, updated_at) VALUES ('dashboard.services', 1, 'Show the end-user services section.', datetime('now'));
+      INSERT OR IGNORE INTO feature_flags (key, enabled, description, updated_at) VALUES ('dashboard.notifications', 1, 'Show the end-user notifications section.', datetime('now'));
+      INSERT OR IGNORE INTO feature_flags (key, enabled, description, updated_at) VALUES ('dashboard.settings', 1, 'Allow settings edits in the end-user dashboard.', datetime('now'));
+      INSERT OR IGNORE INTO feature_flags (key, enabled, description, updated_at) VALUES ('partner.branding', 1, 'Show the partner branding placeholder module.', datetime('now'));
+      INSERT OR IGNORE INTO feature_flags (key, enabled, description, updated_at) VALUES ('admin.user_controls', 1, 'Allow admin user status changes.', datetime('now'));
+      INSERT OR IGNORE INTO feature_flags (key, enabled, description, updated_at) VALUES ('admin.partner_controls', 1, 'Allow admin partner status changes.', datetime('now'));
+      INSERT OR IGNORE INTO feature_flags (key, enabled, description, updated_at) VALUES ('admin.feature_flags', 1, 'Allow admin feature flag management.', datetime('now'));
 
       -- ═══ BILL PAYMENTS ═══
       CREATE TABLE IF NOT EXISTS bill_payments (

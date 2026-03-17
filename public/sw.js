@@ -1,17 +1,18 @@
-const CACHE_NAME = "promptpay-agentos-v8";
+const CACHE_NAME = "promptpay-portals-v10";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   OFFLINE_URL,
-  "/app",
+  "/dashboard",
+  "/partner",
+  "/admin",
   "/manifest.json",
-  "/assets/app.css",
-  "/assets/app.js",
+  "/assets/portal.css",
+  "/assets/dashboard.js",
+  "/assets/partner-portal.js",
+  "/assets/admin-portal.js",
   "/assets/site.css",
   "/assets/site.js",
-  "/assets/console.css",
   "/assets/console-core.js",
-  "/assets/admin-console.js",
-  "/assets/partner-console.js",
   "/icons/icon-192.png",
   "/icons/icon-512.png"
 ];

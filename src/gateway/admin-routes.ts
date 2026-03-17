@@ -129,8 +129,240 @@ export function createAdminRoutes(deps: AdminDependencies): Router {
   const router = Router();
   const db = deps.memory.getDb();
 
+  function getPortalMetrics(): Record<string, unknown> {
+    const users = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+        COUNT(CASE WHEN status = 'suspended' THEN 1 END) as suspended,
+        COUNT(CASE WHEN status = 'deactivated' THEN 1 END) as deactivated,
+        COUNT(CASE WHEN role = 'user' THEN 1 END) as endUsers,
+        COUNT(CASE WHEN role = 'partner_admin' THEN 1 END) as partnerAdmins
+      FROM users
+    `).get() as Record<string, unknown>;
+
+    const partners = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        COUNT(CASE WHEN status = 'active' THEN 1 END) as active,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
+        COUNT(CASE WHEN status = 'suspended' THEN 1 END) as suspended
+      FROM tenants
+    `).get() as Record<string, unknown>;
+
+    const transactions = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
+        COALESCE(SUM(CASE WHEN status = 'completed' THEN face_value END), 0) as volume,
+        COALESCE(SUM(CASE WHEN status = 'completed' THEN platform_fee END), 0) as platformFees
+      FROM pos_transactions
+    `).get() as Record<string, unknown>;
+
+    const api = db.prepare(`
+      SELECT
+        COUNT(*) as totalKeys,
+        COUNT(CASE WHEN status = 'active' THEN 1 END) as activeKeys,
+        COALESCE(SUM(requests_today), 0) as requestsToday
+      FROM developer_keys
+    `).get() as Record<string, unknown>;
+
+    const audit = db.prepare(`
+      SELECT COUNT(*) as totalEntries, MAX(timestamp) as lastEntryAt
+      FROM audit_trail
+    `).get() as Record<string, unknown>;
+
+    return { users, partners, transactions, api, audit };
+  }
+
   // All admin routes require authentication + owner or partner_admin role
   router.use('/admin', authenticate, requireRole('owner', 'partner_admin'));
+
+  router.get('/api/admin/portal/summary', authenticate, requireRole('owner'), (_req: Request, res: Response) => {
+    res.json({ metrics: getPortalMetrics() });
+  });
+
+  router.get('/api/admin/portal/users', authenticate, requireRole('owner'), (req: Request, res: Response) => {
+    const limit = Math.min(Number(req.query.limit) || 100, 250);
+    const offset = Number(req.query.offset) || 0;
+    const search = String(req.query.search || '').trim();
+
+    let query = `
+      SELECT
+        u.id,
+        u.tenant_id,
+        u.email,
+        u.display_name,
+        u.country,
+        u.phone_number,
+        u.role,
+        u.status,
+        u.last_login_at,
+        u.created_at,
+        t.display_name as tenant_display_name
+      FROM users u
+      LEFT JOIN tenants t ON t.id = u.tenant_id
+    `;
+    const params: unknown[] = [];
+
+    if (search) {
+      query += ' WHERE (u.email LIKE ? OR u.display_name LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    query += ' ORDER BY u.created_at DESC LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const users = db.prepare(query).all(...params) as Array<Record<string, unknown>>;
+    const total = search
+      ? (db.prepare(`
+          SELECT COUNT(*) as c
+          FROM users
+          WHERE email LIKE ? OR display_name LIKE ?
+        `).get(`%${search}%`, `%${search}%`) as { c: number }).c
+      : (db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number }).c;
+
+    res.json({ users, total, limit, offset });
+  });
+
+  router.put('/api/admin/portal/users/:id/status', authenticate, requireRole('owner'), (req: Request, res: Response) => {
+    const userId = String(req.params.id);
+    const status = String(req.body?.status || '').trim();
+    if (!['active', 'suspended', 'deactivated'].includes(status)) {
+      res.status(400).json({ error: 'Invalid status' });
+      return;
+    }
+
+    const target = db.prepare('SELECT id, role, email FROM users WHERE id = ?').get(userId) as {
+      id: string;
+      role: string;
+      email: string;
+    } | undefined;
+
+    if (!target) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    if (target.id === req.auth!.userId || target.role === 'owner') {
+      res.status(403).json({ error: 'Owner accounts cannot be disabled from this portal' });
+      return;
+    }
+
+    db.prepare('UPDATE users SET status = ?, updated_at = ? WHERE id = ?')
+      .run(status, new Date().toISOString(), userId);
+    deps.auditTrail.record('owner', 'user_status_updated', target.email, { userId, status });
+    res.json({ success: true });
+  });
+
+  router.get('/api/admin/portal/partners', authenticate, requireRole('owner'), (_req: Request, res: Response) => {
+    const partners = db.prepare(`
+      SELECT
+        t.id,
+        t.name,
+        t.slug,
+        t.display_name,
+        t.contact_email,
+        t.contact_phone,
+        t.status,
+        t.tier,
+        t.created_at,
+        t.activated_at,
+        COUNT(DISTINCT u.id) as user_count,
+        COUNT(DISTINCT pa.id) as agent_count,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.face_value END), 0) as transaction_volume,
+        COALESCE(SUM(CASE WHEN pt.status = 'completed' THEN pt.platform_fee END), 0) as platform_fee
+      FROM tenants t
+      LEFT JOIN users u ON u.tenant_id = t.id
+      LEFT JOIN pos_agents pa ON pa.user_id = u.id
+      LEFT JOIN pos_transactions pt ON pt.agent_user_id = u.id
+      GROUP BY t.id
+      ORDER BY t.created_at DESC
+    `).all() as Array<Record<string, unknown>>;
+
+    res.json({ partners, total: partners.length });
+  });
+
+  router.put('/api/admin/portal/partners/:id/status', authenticate, requireRole('owner'), (req: Request, res: Response) => {
+    const tenantId = String(req.params.id);
+    const status = String(req.body?.status || '').trim();
+    if (!['pending', 'active', 'suspended', 'deactivated'].includes(status)) {
+      res.status(400).json({ error: 'Invalid status' });
+      return;
+    }
+
+    const partner = db.prepare('SELECT id, display_name FROM tenants WHERE id = ?').get(tenantId) as {
+      id: string;
+      display_name: string;
+    } | undefined;
+
+    if (!partner) {
+      res.status(404).json({ error: 'Partner not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    db.prepare('UPDATE tenants SET status = ?, updated_at = ? WHERE id = ?').run(status, now, tenantId);
+    db.prepare(`
+      UPDATE users
+      SET status = ?, updated_at = ?
+      WHERE tenant_id = ? AND role != 'owner'
+    `).run(status === 'active' ? 'active' : status, now, tenantId);
+
+    deps.auditTrail.record('owner', 'partner_status_updated', partner.display_name, { tenantId, status });
+    res.json({ success: true });
+  });
+
+  router.get('/api/admin/portal/activity', authenticate, requireRole('owner'), (req: Request, res: Response) => {
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    const entries = db.prepare(`
+      SELECT sequence_number, timestamp, actor, action, target, details
+      FROM audit_trail
+      ORDER BY sequence_number DESC
+      LIMIT ?
+    `).all(limit) as Array<Record<string, unknown>>;
+
+    res.json({
+      entries: entries.reverse().map((entry) => ({
+        sequenceNumber: entry.sequence_number,
+        timestamp: entry.timestamp,
+        actor: entry.actor,
+        action: entry.action,
+        target: entry.target,
+        details: JSON.parse(String(entry.details || '{}')),
+      })),
+    });
+  });
+
+  router.get('/api/admin/portal/feature-flags', authenticate, requireRole('owner'), (_req: Request, res: Response) => {
+    const flags = db.prepare(`
+      SELECT key, enabled, description, updated_by, updated_at
+      FROM feature_flags
+      ORDER BY key ASC
+    `).all() as Array<Record<string, unknown>>;
+
+    res.json({ flags });
+  });
+
+  router.put('/api/admin/portal/feature-flags/:key', authenticate, requireRole('owner'), (req: Request, res: Response) => {
+    const key = String(req.params.key);
+    const enabled = req.body?.enabled === true ? 1 : 0;
+    const existing = db.prepare('SELECT key FROM feature_flags WHERE key = ?').get(key) as { key: string } | undefined;
+
+    if (!existing) {
+      res.status(404).json({ error: 'Feature flag not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE feature_flags
+      SET enabled = ?, updated_by = ?, updated_at = ?
+      WHERE key = ?
+    `).run(enabled, req.auth!.userId, now, key);
+    deps.auditTrail.record('owner', 'feature_flag_updated', key, { enabled: enabled === 1 });
+    res.json({ success: true });
+  });
 
   // ═══════════════════════════════════════════════════════
   // 1. GET /admin/dashboard — Full dashboard summary

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050914">
+  <title>PromptPay Dashboard</title>
+  <meta
+    name="description"
+    content="PromptPay end-user dashboard for real profile data, account status, transaction history, notifications, and settings."
+  >
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/assets/portal.css">
+</head>
+<body class="portal-body">
+  <section class="portal-auth" id="auth-view">
+    <div class="auth-card">
+      <div class="brand-row">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M14 14h7v7h-7z"></path>
+          </svg>
+        </div>
+        <div>
+          <p class="eyebrow">PromptPay Dashboard</p>
+          <h1>Sign in to your PromptPay dashboard.</h1>
+        </div>
+      </div>
+      <p class="auth-copy">
+        Access your real PromptPay profile, account status, transaction history, notifications, and settings.
+        Airtime, data, and bills stay disabled until live integrations exist.
+      </p>
+      <form id="login-form" class="stack-form" novalidate>
+        <div class="field-grid">
+          <label class="field full">
+            <span>Email</span>
+            <input id="login-email" type="email" autocomplete="username" required>
+          </label>
+          <label class="field full">
+            <span>Password</span>
+            <input id="login-password" type="password" autocomplete="current-password" required>
+          </label>
+        </div>
+        <div class="status-text" id="auth-status" aria-live="polite"></div>
+        <div class="button-row">
+          <button class="button button-primary" id="login-submit" type="submit">Sign In</button>
+          <a class="button button-secondary" href="/">Back to site</a>
+        </div>
+      </form>
+      <div class="helper-links">
+        <a href="/partner">Partner portal</a>
+        <a href="/admin">Admin portal</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="portal-shell hidden" id="dashboard-shell">
+    <header class="portal-topbar">
+      <div class="topbar-brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M14 14h7v7h-7z"></path>
+          </svg>
+        </div>
+        <div>
+          <strong>PromptPay</strong>
+          <span>End-user dashboard</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="session-pill">
+          <strong id="user-name">PromptPay User</strong>
+          <span id="user-email">user@promptpay.com</span>
+        </div>
+        <a class="button button-secondary" href="/">Homepage</a>
+        <button class="button button-secondary" id="dashboard-refresh" type="button">Refresh</button>
+        <button class="button button-secondary" id="dashboard-logout" type="button">Sign Out</button>
+      </div>
+    </header>
+
+    <main class="portal-main">
+      <section class="hero-strip layer-2">
+        <div>
+          <p class="eyebrow">User workspace</p>
+          <h2>Real account context, zero fake balances.</h2>
+          <p class="muted">
+            PromptPay only renders real user records, real notifications, and real transaction history.
+            Services without live integrations stay disabled and clearly marked.
+          </p>
+        </div>
+        <div class="hero-meta">
+          <span class="badge" id="account-status">Status</span>
+          <span class="badge badge-outline" id="account-kyc">KYC</span>
+        </div>
+      </section>
+
+      <div class="status-text" id="dashboard-load-status" aria-live="polite"></div>
+
+      <nav class="tabbar" aria-label="Dashboard sections">
+        <button class="tab-button active" type="button" data-page="overview">Overview</button>
+        <button class="tab-button" type="button" data-page="services">Services</button>
+        <button class="tab-button" type="button" data-page="notifications">Notifications</button>
+        <button class="tab-button" type="button" data-page="settings">Settings</button>
+      </nav>
+
+      <section class="tab-panel active" data-page="overview">
+        <article class="panel-card intent-card layer-3">
+          <div class="section-heading">
+            <div>
+              <h3 id="dashboard-context-title">Preparing your workspace</h3>
+              <p id="dashboard-context-copy">PromptPay will adapt this space around your real account state and recent activity.</p>
+            </div>
+            <span class="surface-tag">Adaptive actions</span>
+          </div>
+          <div class="action-grid" id="context-actions">
+            <article class="action-card skeleton-card">
+              <strong>Loading actions</strong>
+              <p>Checking your real profile, notifications, and transaction history.</p>
+            </article>
+          </div>
+        </article>
+
+        <div class="metrics-grid compact-metrics">
+          <article class="metric-card">
+            <span>Account status</span>
+            <strong id="metric-account-status">-</strong>
+            <small>From the users table.</small>
+          </article>
+          <article class="metric-card">
+            <span>Transactions</span>
+            <strong id="metric-transaction-count">0</strong>
+            <small>Real records only.</small>
+          </article>
+          <article class="metric-card">
+            <span>Unread notifications</span>
+            <strong id="metric-notification-count">0</strong>
+            <small>Unread items in your account.</small>
+          </article>
+          <article class="metric-card">
+            <span>Last sign in</span>
+            <strong id="metric-last-login">-</strong>
+            <small>Latest successful login time.</small>
+          </article>
+        </div>
+
+        <div class="portal-bento dashboard-bento">
+          <article class="panel-card bento-card" id="profile-card">
+            <div class="section-heading">
+              <div>
+                <h3>Profile</h3>
+                <p>Identity fields from the real user record.</p>
+              </div>
+              <span class="surface-tag" id="profile-completeness">Review</span>
+            </div>
+            <dl class="detail-list" id="profile-summary">
+              <div><dt>Name</dt><dd>-</dd></div>
+              <div><dt>Email</dt><dd>-</dd></div>
+              <div><dt>Phone</dt><dd>-</dd></div>
+              <div><dt>Country</dt><dd>-</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel-card bento-card" id="account-card">
+            <div class="section-heading">
+              <div>
+                <h3>Account readiness</h3>
+                <p>Status, KYC, and lifecycle fields only.</p>
+              </div>
+            </div>
+            <dl class="detail-list" id="account-summary">
+              <div><dt>Status</dt><dd>-</dd></div>
+              <div><dt>KYC status</dt><dd>-</dd></div>
+              <div><dt>KYC tier</dt><dd>-</dd></div>
+              <div><dt>Created</dt><dd>-</dd></div>
+            </dl>
+          </article>
+
+          <article class="panel-card bento-card" id="notifications-preview-card">
+            <div class="section-heading">
+              <div>
+                <h3>Notifications</h3>
+                <p>Unread and recent account notices.</p>
+              </div>
+              <button class="button button-secondary button-small" type="button" data-switch-page="notifications">Open</button>
+            </div>
+            <div class="stack-list compact-stack" id="notification-preview-list">
+              <div class="empty-state">Loading notifications.</div>
+            </div>
+          </article>
+
+          <article class="panel-card bento-card bento-wide" id="transactions-card">
+            <div class="section-heading">
+              <div>
+                <h3>Transaction history</h3>
+                <p>Real wallet and POS records only. Empty if no data exists.</p>
+              </div>
+            </div>
+            <div class="table-shell">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Source</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody id="transaction-list">
+                  <tr><td colspan="6" class="empty-state">Loading transactions.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-page="services">
+        <div class="portal-bento placeholder-bento">
+          <article class="panel-card placeholder-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Airtime</h3>
+                <p>Integration Required</p>
+              </div>
+              <span class="badge badge-outline">Coming Soon</span>
+            </div>
+            <p class="muted">PromptPay will only enable airtime here after a live provider integration is connected.</p>
+            <button class="button button-disabled" type="button" disabled>Coming Soon</button>
+          </article>
+          <article class="panel-card placeholder-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Data</h3>
+                <p>Integration Required</p>
+              </div>
+              <span class="badge badge-outline">Coming Soon</span>
+            </div>
+            <p class="muted">No data bundle purchase flow is active in this portal yet.</p>
+            <button class="button button-disabled" type="button" disabled>Coming Soon</button>
+          </article>
+          <article class="panel-card placeholder-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Bills</h3>
+                <p>Integration Required</p>
+              </div>
+              <span class="badge badge-outline">Coming Soon</span>
+            </div>
+            <p class="muted">Bill payment remains unavailable until a real production integration is ready.</p>
+            <button class="button button-disabled" type="button" disabled>Coming Soon</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-page="notifications">
+        <article class="panel-card bento-card">
+          <div class="section-heading">
+            <div>
+              <h3>Notifications</h3>
+              <p>Read-only account notifications with real read state.</p>
+            </div>
+          </div>
+          <div class="stack-list" id="notification-list">
+            <div class="empty-state">Loading notifications.</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="tab-panel" data-page="settings">
+        <div class="portal-bento settings-bento">
+          <article class="panel-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Profile settings</h3>
+                <p>Update only fields backed by the users table.</p>
+              </div>
+            </div>
+            <form id="profile-form" class="stack-form" novalidate>
+              <div class="field-grid">
+                <label class="field">
+                  <span>Name</span>
+                  <input id="profile-name" type="text" required>
+                </label>
+                <label class="field">
+                  <span>Email</span>
+                  <input id="profile-email" type="email" readonly>
+                </label>
+                <label class="field">
+                  <span>Phone</span>
+                  <input id="profile-phone" type="tel">
+                </label>
+                <label class="field">
+                  <span>Country</span>
+                  <input id="profile-country" type="text">
+                </label>
+              </div>
+              <div class="status-text" id="profile-status" aria-live="polite"></div>
+              <div class="button-row">
+                <button class="button button-primary" id="profile-save" type="submit">Save profile</button>
+              </div>
+            </form>
+          </article>
+
+          <article class="panel-card bento-card">
+            <div class="section-heading">
+              <div>
+                <h3>Preferences</h3>
+                <p>Stored in the user settings table.</p>
+              </div>
+            </div>
+            <form id="settings-form" class="stack-form" novalidate>
+              <div class="field-grid">
+                <label class="field">
+                  <span>Language</span>
+                  <input id="settings-language" type="text">
+                </label>
+                <label class="field">
+                  <span>Timezone</span>
+                  <input id="settings-timezone" type="text">
+                </label>
+                <label class="field checkbox-field full">
+                  <input id="settings-notifications" type="checkbox">
+                  <span>Enable notifications</span>
+                </label>
+              </div>
+              <div class="status-text" id="settings-status" aria-live="polite"></div>
+              <div class="button-row">
+                <button class="button button-primary" id="settings-save" type="submit">Save settings</button>
+              </div>
+            </form>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/assets/dashboard.js"></script>
+</body>
+</html>

@@ -46,27 +46,19 @@ export async function getCurrentUser(token) {
   return authJson("/api/auth/me", token);
 }
 
-export async function requestTestAccess(account) {
-  return requestJson("/api/auth/test-access", {
-    method: "POST",
-    body: JSON.stringify({ account })
-  });
-}
-
 export function consolePathForRole(role) {
-  if (role === "owner") return "/secure/admin";
-  if (role === "partner_admin") return "/secure/partners";
-  return "/";
+  if (role === "owner") return "/admin";
+  if (role === "partner_admin") return "/partner";
+  return "/dashboard";
 }
 
 export function redirectForRole(user, fallback = "/") {
-  const next = consolePathForRole(user.role);
-  window.location.assign(next || fallback);
+  window.location.assign(consolePathForRole(user?.role) || fallback);
 }
 
 export function ensureRole(user, allowedRoles, fallback = "/") {
   if (!allowedRoles.includes(user.role)) {
-    window.location.assign(consolePathForRole(user.role) || fallback);
+    redirectForRole(user, fallback);
     return false;
   }
   return true;
@@ -127,6 +119,27 @@ export function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+export function setLoadingState(button, label, busyLabel) {
+  if (!button) return () => {};
+  button.disabled = true;
+  button.textContent = busyLabel;
+  return () => {
+    button.disabled = false;
+    button.textContent = label;
+  };
+}
+
+export function wireNavigation(items, sections, onChange) {
+  items.forEach((item) => {
+    item.addEventListener("click", () => {
+      const page = item.dataset.page;
+      items.forEach((node) => node.classList.toggle("active", node === item));
+      sections.forEach((section) => section.classList.toggle("active", section.dataset.page === page));
+      onChange?.(page);
+    });
+  });
+}
+
 export function renderSparkBars(values) {
   if (!Array.isArray(values) || values.length === 0) {
     return '<div class="empty-inline">No trend data</div>';
@@ -139,24 +152,11 @@ export function renderSparkBars(values) {
     .join("")}</div>`;
 }
 
-export function wireNavigation(items, sections) {
-  items.forEach((item) => {
-    item.addEventListener("click", () => {
-      const page = item.dataset.page;
-      items.forEach((node) => node.classList.toggle("active", node === item));
-      sections.forEach((section) => section.classList.toggle("active", section.dataset.page === page));
-    });
-  });
-}
-
-export function setLoadingState(button, label, busyLabel) {
-  if (!button) return () => {};
-  button.disabled = true;
-  button.textContent = busyLabel;
-  return () => {
-    button.disabled = false;
-    button.textContent = label;
-  };
+export async function copyText(value) {
+  if (!navigator.clipboard?.writeText) {
+    throw new Error("Clipboard access is not available on this device.");
+  }
+  await navigator.clipboard.writeText(value);
 }
 
 export function readFileAsDataUrl(file) {

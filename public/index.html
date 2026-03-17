@@ -119,7 +119,7 @@
       </nav>
       <div class="header-actions lp-nav-actions">
         <button class="button button-ghost lp-btn-signin" type="button" data-open-auth="signin">Sign In</button>
-        <a class="button button-primary lp-btn-primary" href="mailto:support@upromptpay.com?subject=PromptPay%20Demo">Book Demo</a>
+        <a class="button button-primary lp-btn-primary" href="#demo-request" data-demo-link>Book Demo</a>
       </div>
     </div>
   </header>
@@ -140,7 +140,7 @@
             <span>API-first controls</span>
           </div>
           <div class="hero-actions-row lp-hero-btns">
-            <a class="button button-primary lp-btn-primary" href="mailto:support@upromptpay.com?subject=PromptPay%20Demo">Book Demo</a>
+            <a class="button button-primary lp-btn-primary" href="#demo-request" data-demo-link>Book Demo</a>
             <a class="button button-secondary lp-btn-secondary" href="#platform">View Platform</a>
           </div>
           <ul class="hero-stat-grid" aria-label="Platform highlights">
@@ -584,41 +584,102 @@
           <p class="eyebrow">Access</p>
           <h2>One platform. Three surfaces.</h2>
           <p>
-            PromptPay keeps the user app intact for wallet, airtime, data, transactions, and PWA install,
-            while partner and admin portals handle agent networks, oversight, and provider operations.
+            PromptPay provides a real end-user dashboard, a partner portal for agent operators,
+            and an owner portal for platform oversight.
           </p>
         </div>
         <aside class="surface-card session-card" id="session-card" aria-live="polite">
           <p class="session-kicker">Access</p>
           <h3 id="session-title">Choose your PromptPay access point</h3>
           <p id="session-copy">
-            Use the PromptPay app for airtime, data, balance, and transactions, or enter the partner and admin workspaces.
+            Open the end-user dashboard, the partner portal, or the owner portal from one PromptPay sign-in flow.
           </p>
           <div class="session-actions" id="session-actions">
             <button class="button button-primary" type="button" data-open-auth="signin">Sign In</button>
-            <button class="button button-secondary" type="button" data-open-auth="register">Start Network</button>
+            <button class="button button-secondary" type="button" data-open-auth="register">Create Account</button>
           </div>
         </aside>
         <div class="access-grid" aria-label="Portal directory">
           <article class="access-option">
-            <p class="access-label">PromptPay App</p>
-            <h3>User wallet and airtime</h3>
-            <p>Fast native-style app for wallet balance, airtime, data, transactions, and PWA install.</p>
-            <a class="button button-secondary" href="/app">Open App</a>
+            <p class="access-label">User Dashboard</p>
+            <h3>Profile and activity</h3>
+            <p>Use the end-user dashboard for profile details, account status, transaction history, notifications, and settings.</p>
+            <a class="button button-secondary" href="/dashboard">Open Dashboard</a>
           </article>
           <article class="access-option">
             <p class="access-label">Partner Portal</p>
             <h3>Agent network operations</h3>
             <p>Use the partner workspace for rollout, revenue visibility, API usage, and partner controls.</p>
-            <a class="button button-secondary" href="/secure/partners">Open Partner Portal</a>
+            <a class="button button-secondary" href="/partner">Open Partner Portal</a>
           </article>
           <article class="access-option">
             <p class="access-label">Admin Portal</p>
             <h3>Platform control plane</h3>
             <p>Use the owner console for provider health, governance, analytics, and network-wide oversight.</p>
-            <a class="button button-secondary" href="/secure/admin">Open Admin Portal</a>
+            <a class="button button-secondary" href="/admin">Open Admin Portal</a>
           </article>
         </div>
+      </div>
+    </section>
+    <section class="content-section content-section-alt" id="demo-request">
+      <div class="section-shell demo-request-shell">
+        <div class="section-intro">
+          <p class="eyebrow">Demo Request</p>
+          <h2>Request an operator walkthrough</h2>
+          <p>
+            PromptPay does not run a fake booking flow here. Use this form to generate a real demo brief,
+            copy it, and send it to <strong>support@upromptpay.com</strong>.
+          </p>
+        </div>
+        <article class="surface-card demo-request-card">
+          <form class="demo-form" id="demo-request-form" novalidate>
+            <label>
+              <span>Name</span>
+              <input id="demo-name" type="text" autocomplete="name" required>
+            </label>
+            <label>
+              <span>Company</span>
+              <input id="demo-company" type="text" autocomplete="organization" required>
+            </label>
+            <label>
+              <span>Work email</span>
+              <input id="demo-email" type="email" autocomplete="email" required>
+            </label>
+            <label>
+              <span>Use case</span>
+              <select id="demo-use-case">
+                <option value="super-agent">Super agent network</option>
+                <option value="pos-network">POS network</option>
+                <option value="fintech-platform">Fintech platform</option>
+                <option value="developer-partner">Developer or API partner</option>
+                <option value="enterprise-team">Enterprise field team</option>
+              </select>
+            </label>
+            <label class="demo-notes">
+              <span>What do you need to evaluate?</span>
+              <textarea id="demo-notes" rows="4" placeholder="Share network size, rollout market, compliance needs, or integration questions."></textarea>
+            </label>
+            <div class="session-actions">
+              <button class="button button-primary" id="demo-copy" type="submit">Copy Demo Brief</button>
+              <button class="button button-secondary" id="demo-email-button" type="button">Open Email Client</button>
+            </div>
+            <p class="auth-status" id="demo-request-status" aria-live="polite"></p>
+          </form>
+        </article>
+        <article class="surface-card demo-request-sidecard">
+          <p class="session-kicker">What happens next</p>
+          <h3>Use a real contact path</h3>
+          <p>
+            PromptPay will not simulate scheduling. Copy the request details or open your email client,
+            then send the brief to <strong>support@upromptpay.com</strong>.
+          </p>
+          <div class="chip-row">
+            <span>Agent operations</span>
+            <span>Commissions</span>
+            <span>Observability</span>
+            <span>Licensed rails</span>
+          </div>
+        </article>
       </div>
     </section>
     <section class="final-cta" id="demo">
@@ -631,8 +692,8 @@
           </p>
         </div>
         <div class="hero-actions-row">
-          <a class="button button-primary" href="mailto:support@upromptpay.com?subject=PromptPay%20Demo">Book Demo</a>
-          <button class="button button-secondary" type="button" data-open-auth="register">Start Network</button>
+          <a class="button button-primary" href="#demo-request" data-demo-link>Book Demo</a>
+          <button class="button button-secondary" type="button" data-open-auth="register">Create Account</button>
         </div>
       </div>
     </section>
@@ -657,8 +718,8 @@
         <div class="footer-links lp-footer-links">
           <a href="#product">Product</a>
           <a href="#solutions">Solutions</a>
-          <a href="/app">App</a>
-          <a href="/secure/partners">Partners</a>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/partner">Partners</a>
           <a href="/api/v1/docs">Docs</a>
           <a href="mailto:support@upromptpay.com">Contact</a>
         </div>
@@ -675,8 +736,8 @@
     </div>
   </footer>
   <div class="mobile-actionbar" aria-hidden="false">
-    <a class="button button-primary" href="mailto:support@upromptpay.com?subject=PromptPay%20Demo">Book Demo</a>
-    <button class="button button-secondary" type="button" data-open-auth="register">Start Network</button>
+    <a class="button button-primary" href="#demo-request" data-demo-link>Book Demo</a>
+    <button class="button button-secondary" type="button" data-open-auth="register">Create Account</button>
   </div>
   <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
     <form class="auth-shell" method="dialog">
@@ -684,11 +745,11 @@
       <div class="auth-copy">
         <p class="eyebrow">PromptPay access</p>
         <h2 id="auth-title">Secure access for users and network teams</h2>
-        <p>Sign in to the user app, partner portal, or admin workspace, or create starter access for a new network rollout.</p>
+        <p>Sign in to the user dashboard, partner portal, or admin workspace, or create access for a new network rollout.</p>
       </div>
       <div class="auth-tabs" role="tablist" aria-label="Authentication modes">
         <button class="auth-tab auth-tab-active" type="button" role="tab" aria-selected="true" data-auth-tab="signin">Sign In</button>
-        <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="register">Start Network</button>
+        <button class="auth-tab" type="button" role="tab" aria-selected="false" data-auth-tab="register">Create Account</button>
       </div>
       <section class="auth-panel auth-panel-active" data-auth-panel="signin">
         <label>
@@ -700,12 +761,6 @@
           <input id="signin-password" type="password" autocomplete="current-password" required>
         </label>
         <button class="button button-primary auth-submit" type="button" id="signin-submit">Sign In</button>
-        <p class="auth-test-copy">Test access is enabled for seeded user, admin, and partner accounts.</p>
-        <div class="session-actions test-access-actions" aria-label="Test access shortcuts">
-          <button class="button button-secondary" type="button" data-test-access="user">Test User</button>
-          <button class="button button-secondary" type="button" data-test-access="owner">Test Admin</button>
-          <button class="button button-secondary" type="button" data-test-access="partner">Test Partner</button>
-        </div>
       </section>
       <section class="auth-panel" data-auth-panel="register">
         <label>
