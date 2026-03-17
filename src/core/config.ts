@@ -68,7 +68,7 @@ export const CONFIG = {
   platform: {
     domain: env('DOMAIN', 'upromptpay.com'),
     domainUrl: env('DOMAIN_URL', 'https://www.upromptpay.com'),
-    contactEmail: env('CONTACT_EMAIL', 'info@upromptpay.com'),
+    contactEmail: env('CONTACT_EMAIL', 'support@upromptpay.com'),
     name: 'PromptPay',
     version: '2.1.0',
   },
