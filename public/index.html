@@ -653,6 +653,12 @@
           <input id="signin-password" type="password" autocomplete="current-password" required>
         </label>
         <button class="button button-primary auth-submit" type="button" id="signin-submit">Sign In</button>
+        <p class="auth-test-copy">Test access is enabled for seeded user, admin, and partner accounts.</p>
+        <div class="session-actions test-access-actions" aria-label="Test access shortcuts">
+          <button class="button button-secondary" type="button" data-test-access="user">Test User</button>
+          <button class="button button-secondary" type="button" data-test-access="owner">Test Admin</button>
+          <button class="button button-secondary" type="button" data-test-access="partner">Test Partner</button>
+        </div>
       </section>
       <section class="auth-panel" data-auth-panel="register">
         <label>

@@ -35,9 +35,63 @@ const ALL_CHANNELS: CommunicationChannel[] = [
   'email', 'push',
 ];
 
+type AuthUserRecord = {
+  id: string;
+  tenant_id: string | null;
+  email: string;
+  password_hash?: string;
+  display_name: string;
+  country: string;
+  role: string;
+  status: string;
+};
+
+const PUBLIC_TEST_ACCESS_ENABLED = process.env.PUBLIC_TEST_ACCESS_ENABLED === 'true';
+const PUBLIC_TEST_ACCESS_ACCOUNTS = {
+  owner: {
+    email: process.env.PUBLIC_TEST_OWNER_EMAIL || process.env.OWNER_EMAIL || CONFIG.auth.ownerEmail,
+    role: 'owner',
+  },
+  partner: {
+    email: process.env.PUBLIC_TEST_PARTNER_EMAIL || 'iamjonah.baka@gmail.com',
+    role: 'partner_admin',
+  },
+  user: {
+    email: process.env.PUBLIC_TEST_USER_EMAIL || 'jonahbaka00@gmail.com',
+    role: 'user',
+  },
+} as const;
+
 export function createUserRoutes(deps: UserRouteDependencies): Router {
   const router = Router();
   const db = deps.memory.getDb();
+
+  function finalizeAuth(user: AuthUserRecord): { user: { id: string; email: string; displayName: string; country: string; role: string; tenantId: string | null }; token: string } {
+    db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?')
+      .run(new Date().toISOString(), user.id);
+
+    const permissions = resolveUserPermissions(db, user.id);
+    const token = createToken(
+      user.id,
+      user.tenant_id,
+      user.role as 'owner' | 'partner_admin' | 'user',
+      CONFIG.auth.jwtSecret,
+      CONFIG.auth.tokenExpiryMs,
+      permissions,
+    );
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.display_name,
+        country: user.country || '',
+        role: user.role,
+        tenantId: user.tenant_id,
+      },
+      token,
+    };
+  }
 
   // ── Register ──
   router.post('/api/auth/register', (req: Request, res: Response) => {
@@ -123,37 +177,55 @@ export function createUserRoutes(deps: UserRouteDependencies): Router {
         return;
       }
 
-      // Update last login
-      db.prepare('UPDATE users SET last_login_at = ? WHERE id = ?')
-        .run(new Date().toISOString(), user.id);
-
-      const permissions = resolveUserPermissions(db, user.id);
-      const token = createToken(
-        user.id,
-        user.tenant_id,
-        user.role as 'owner' | 'partner_admin' | 'user',
-        CONFIG.auth.jwtSecret,
-        CONFIG.auth.tokenExpiryMs,
-        permissions,
-      );
-
       deps.logger.info(`User logged in: ${email}`, { role: user.role });
-
-      res.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          displayName: user.display_name,
-          country: user.country || '',
-          role: user.role,
-          tenantId: user.tenant_id,
-        },
-        token,
-      });
+      res.json(finalizeAuth(user));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       deps.logger.error(`Login error: ${msg}`);
       res.status(500).json({ error: 'Login failed' });
+    }
+  });
+
+  // Test access for seeded demo accounts. Intended only for explicit test environments.
+  router.post('/api/auth/test-access', (req: Request, res: Response) => {
+    try {
+      if (!PUBLIC_TEST_ACCESS_ENABLED) {
+        res.status(404).json({ error: 'Test access is not enabled' });
+        return;
+      }
+
+      const requested = String(req.body?.account || '').trim().toLowerCase() as keyof typeof PUBLIC_TEST_ACCESS_ACCOUNTS;
+      const account = PUBLIC_TEST_ACCESS_ACCOUNTS[requested];
+      if (!account) {
+        res.status(400).json({ error: 'Invalid test account' });
+        return;
+      }
+
+      const user = db.prepare(
+        'SELECT id, tenant_id, email, display_name, country, role, status FROM users WHERE email = ?'
+      ).get(account.email) as AuthUserRecord | undefined;
+
+      if (!user) {
+        res.status(404).json({ error: 'Test account not found' });
+        return;
+      }
+
+      if (user.status !== 'active') {
+        res.status(403).json({ error: 'Test account is ' + user.status });
+        return;
+      }
+
+      if (user.role !== account.role) {
+        res.status(409).json({ error: 'Test account role mismatch' });
+        return;
+      }
+
+      deps.logger.info(`Test access login: ${account.email}`, { role: user.role });
+      res.json(finalizeAuth(user));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      deps.logger.error(`Test access error: ${msg}`);
+      res.status(500).json({ error: 'Test access failed' });
     }
   });
 

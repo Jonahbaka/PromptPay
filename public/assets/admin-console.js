@@ -7,6 +7,7 @@ import {
   formatNumber,
   getCurrentUser,
   getStoredToken,
+  requestTestAccess,
   redirectForRole,
   renderSparkBars,
   requestJson,
@@ -21,6 +22,7 @@ const authStatus = document.getElementById("auth-status");
 const authEmail = document.getElementById("auth-email");
 const authPassword = document.getElementById("auth-password");
 const loginSubmit = document.getElementById("login-submit");
+const testAdminAccess = document.getElementById("test-admin-access");
 
 const app = document.getElementById("console-app");
 const shellStatus = document.getElementById("shell-status");
@@ -575,6 +577,21 @@ async function handleLogin(event) {
   }
 }
 
+async function handleTestAccess() {
+  const resetButton = setLoadingState(testAdminAccess, "Use Test Admin", "Opening...");
+  setAuthStatus("Opening test admin access...");
+
+  try {
+    const payload = await requestTestAccess("owner");
+    saveSession(payload.user, payload.token);
+    await bootstrap(payload.token, payload.user);
+  } catch (error) {
+    setAuthStatus(error.message || "Unable to open test admin access.", true);
+  } finally {
+    resetButton();
+  }
+}
+
 async function handleSettingsSubmit(event) {
   event.preventDefault();
   const button = document.getElementById("settings-submit");
@@ -626,6 +643,7 @@ async function hydrate() {
 }
 
 authForm.addEventListener("submit", handleLogin);
+testAdminAccess.addEventListener("click", handleTestAccess);
 document.getElementById("settings-form").addEventListener("submit", handleSettingsSubmit);
 refreshButton.addEventListener("click", () => {
   loadConsole().catch((error) => {

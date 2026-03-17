@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   getStoredToken,
   readFileAsDataUrl,
+  requestTestAccess,
   redirectForRole,
   renderSparkBars,
   requestJson,
@@ -26,6 +27,7 @@ const loginForm = document.getElementById("login-form");
 const loginEmail = document.getElementById("login-email");
 const loginPassword = document.getElementById("login-password");
 const loginSubmit = document.getElementById("login-submit");
+const testPartnerAccess = document.getElementById("test-partner-access");
 const loginStatus = document.getElementById("login-status");
 
 const applyForm = document.getElementById("apply-form");
@@ -585,6 +587,21 @@ async function handleLogin(event) {
   }
 }
 
+async function handleTestAccess() {
+  const resetButton = setLoadingState(testPartnerAccess, "Use Test Partner", "Opening...");
+  setLoginStatus("Opening test partner access...");
+
+  try {
+    const payload = await requestTestAccess("partner");
+    saveSession(payload.user, payload.token);
+    await bootstrap(payload.token, payload.user);
+  } catch (error) {
+    setLoginStatus(error.message || "Unable to open test partner access.", true);
+  } finally {
+    resetButton();
+  }
+}
+
 async function handleApply(event) {
   event.preventDefault();
 
@@ -685,6 +702,7 @@ authTabs.forEach((tab) => {
 });
 applyTier.addEventListener("change", renderTierSummary);
 loginForm.addEventListener("submit", handleLogin);
+testPartnerAccess.addEventListener("click", handleTestAccess);
 applyForm.addEventListener("submit", handleApply);
 brandingForm.addEventListener("submit", handleBrandingSubmit);
 refreshButton.addEventListener("click", () => {

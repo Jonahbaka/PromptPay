@@ -13,6 +13,11 @@ const authPanels = [...document.querySelectorAll("[data-auth-panel]")];
 const STORAGE_TOKEN = "promptpay_token";
 const STORAGE_USER = "promptpay_user";
 const OPERATOR_ROLES = new Set(["owner", "partner_admin"]);
+const TEST_ACCESS_LABELS = {
+  user: "Test User",
+  owner: "Test Admin",
+  partner: "Test Partner"
+};
 
 function setStatus(message, isError = false) {
   authStatus.textContent = message;
@@ -58,6 +63,16 @@ function bindAuthTriggers(scope = document) {
   });
 }
 
+function bindTestAccessTriggers(scope = document) {
+  scope.querySelectorAll("[data-test-access]").forEach((trigger) => {
+    if (trigger.dataset.testAccessBound === "true") return;
+    trigger.dataset.testAccessBound = "true";
+    trigger.addEventListener("click", () => {
+      launchTestAccess(trigger.getAttribute("data-test-access") || "user", trigger);
+    });
+  });
+}
+
 function getConsoleHref(user) {
   if (!user || !user.role) return "/";
   if (user.role === "owner") return "/secure/admin";
@@ -72,12 +87,16 @@ function shouldRedirectAfterAuth(user) {
 function renderLoggedOut() {
   sessionTitle.textContent = "Use your operator credentials";
   sessionCopy.textContent =
-    "Sign in to existing admin or partner environments, or create access to start a new network rollout.";
+    "Sign in to existing admin or partner environments, use the seeded test accounts, or create access to start a new network rollout.";
   sessionActions.innerHTML = `
     <button class="button button-primary" type="button" data-open-auth="signin">Sign In</button>
     <button class="button button-secondary" type="button" data-open-auth="register">Start Network</button>
+    <button class="button button-secondary" type="button" data-test-access="user">Test User</button>
+    <button class="button button-secondary" type="button" data-test-access="owner">Test Admin</button>
+    <button class="button button-secondary" type="button" data-test-access="partner">Test Partner</button>
   `;
   bindAuthTriggers(sessionActions);
+  bindTestAccessTriggers(sessionActions);
 }
 
 function renderLoggedIn(user) {
@@ -111,6 +130,13 @@ async function requestJson(url, options = {}) {
     throw new Error(payload.error || "Request failed");
   }
   return payload;
+}
+
+async function requestTestAccess(account) {
+  return requestJson("/api/auth/test-access", {
+    method: "POST",
+    body: JSON.stringify({ account })
+  });
 }
 
 function persistSession(user, token) {
@@ -152,6 +178,33 @@ async function handleSignIn() {
   } finally {
     button.disabled = false;
     button.textContent = "Sign In";
+  }
+}
+
+async function launchTestAccess(account, button) {
+  const label = TEST_ACCESS_LABELS[account] || "Test Access";
+  const resetButton = button ? (() => {
+    button.disabled = true;
+    const previous = button.textContent;
+    button.textContent = "Signing In...";
+    return () => {
+      button.disabled = false;
+      button.textContent = previous;
+    };
+  })() : null;
+
+  setStatus(`Opening ${label.toLowerCase()}...`);
+
+  try {
+    const payload = await requestTestAccess(account);
+    const redirected = persistSession(payload.user, payload.token);
+    if (redirected) return;
+    hideAuth();
+    document.getElementById("access").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    setStatus(error.message || "Unable to open test access.", true);
+  } finally {
+    resetButton?.();
   }
 }
 
@@ -251,6 +304,7 @@ function registerServiceWorker() {
 }
 
 bindAuthTriggers();
+bindTestAccessTriggers();
 setupDialogDismissal();
 setupMenu();
 document.getElementById("signin-submit").addEventListener("click", handleSignIn);

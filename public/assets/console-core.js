@@ -46,6 +46,13 @@ export async function getCurrentUser(token) {
   return authJson("/api/auth/me", token);
 }
 
+export async function requestTestAccess(account) {
+  return requestJson("/api/auth/test-access", {
+    method: "POST",
+    body: JSON.stringify({ account })
+  });
+}
+
 export function consolePathForRole(role) {
   if (role === "owner") return "/secure/admin";
   if (role === "partner_admin") return "/secure/partners";
