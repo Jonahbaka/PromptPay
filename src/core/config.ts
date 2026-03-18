@@ -14,6 +14,68 @@ function env(key: string, fallback?: string): string {
   return v || fallback || '';
 }
 
+function parseJsonEnv<T>(key: string, fallback: T): T {
+  const raw = process.env[key];
+  if (!raw) return fallback;
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+interface OpenClawMcpServerConfig {
+  name: string;
+  url: string;
+  enabled: boolean;
+  bearerToken?: string;
+  headers?: Record<string, string>;
+}
+
+function buildDefaultMcpServers(): OpenClawMcpServerConfig[] {
+  const servers: OpenClawMcpServerConfig[] = [];
+
+  const openAIDocsUrl = process.env.OPENCLAW_MCP_OPENAI_DOCS_URL || 'https://developers.openai.com/mcp';
+  if (openAIDocsUrl) {
+    servers.push({
+      name: 'openai_docs',
+      url: openAIDocsUrl,
+      enabled: env('OPENCLAW_MCP_OPENAI_DOCS_ENABLED', 'true') === 'true',
+    });
+  }
+
+  const promptPayUrl = process.env.OPENCLAW_MCP_PROMPTPAY_URL || '';
+  if (promptPayUrl) {
+    servers.push({
+      name: 'promptpay_business',
+      url: promptPayUrl,
+      enabled: env('OPENCLAW_MCP_PROMPTPAY_ENABLED', 'true') === 'true',
+      bearerToken: process.env.OPENCLAW_MCP_PROMPTPAY_TOKEN || '',
+    });
+  }
+
+  const doctaRxUrl = process.env.OPENCLAW_MCP_DOCTARX_URL || '';
+  if (doctaRxUrl) {
+    servers.push({
+      name: 'doctarx_business',
+      url: doctaRxUrl,
+      enabled: env('OPENCLAW_MCP_DOCTARX_ENABLED', 'true') === 'true',
+      bearerToken: process.env.OPENCLAW_MCP_DOCTARX_TOKEN || '',
+    });
+  }
+
+  return servers;
+}
+
+function buildMcpServers(): OpenClawMcpServerConfig[] {
+  const fromJson = parseJsonEnv<OpenClawMcpServerConfig[]>('OPENCLAW_MCP_SERVERS_JSON', []);
+  if (Array.isArray(fromJson) && fromJson.length > 0) {
+    return fromJson.filter(server => server?.name && server?.url);
+  }
+  return buildDefaultMcpServers();
+}
+
 export const CONFIG = {
   // ── AI Models ──
   anthropic: {
@@ -35,6 +97,14 @@ export const CONFIG = {
     temperature: 0.3,
   },
 
+  kimi: {
+    baseUrl: env('KIMI_BASE_URL', 'https://api.moonshot.ai/v1'),
+    apiKey: env('KIMI_API_KEY', ''),
+    model: env('KIMI_MODEL', 'moonshot/kimi-k2.5'),
+    maxTokens: parseInt(env('KIMI_MAX_TOKENS', '16384')),
+    temperature: parseFloat(env('KIMI_TEMPERATURE', '0.25')),
+  },
+
   // ── Model Routing ──
   modelRouting: {
     defaultProvider: env('MODEL_DEFAULT_PROVIDER', 'ollama') as 'ollama' | 'anthropic',
@@ -43,6 +113,23 @@ export const CONFIG = {
     maxHistoryTokens: parseInt(env('MODEL_MAX_HISTORY_TOKENS', '4000')),
     maxHistoryMessages: parseInt(env('MODEL_MAX_HISTORY_MESSAGES', '10')),
     structuredOutputEnabled: env('MODEL_STRUCTURED_OUTPUT', 'true') === 'true',
+  },
+
+  openclaw: {
+    primaryProvider: env('OPENCLAW_PRIMARY_PROVIDER', 'kimi') as 'kimi' | 'ollama' | 'anthropic',
+    fallbackProvider: env('OPENCLAW_FALLBACK_PROVIDER', 'ollama') as 'kimi' | 'ollama' | 'anthropic',
+    maxIterations: parseInt(env('OPENCLAW_MAX_ITERATIONS', '8')),
+    maxToolCallsPerTurn: parseInt(env('OPENCLAW_MAX_TOOL_CALLS', '12')),
+    parallelToolCalls: env('OPENCLAW_PARALLEL_TOOL_CALLS', 'true') === 'true',
+    reasoningMode: env('OPENCLAW_REASONING_MODE', 'agentic'),
+    requireApprovalForMcpWrites: env('OPENCLAW_MCP_APPROVAL_FOR_WRITES', 'true') === 'true',
+  },
+
+  mcp: {
+    enabled: env('OPENCLAW_MCP_ENABLED', 'true') === 'true',
+    protocolVersion: env('OPENCLAW_MCP_PROTOCOL_VERSION', '2025-03-26'),
+    requestTimeoutMs: parseInt(env('OPENCLAW_MCP_TIMEOUT_MS', '20000')),
+    servers: buildMcpServers(),
   },
 
   // ── Rate Limits ──

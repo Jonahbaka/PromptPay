@@ -7,10 +7,13 @@ import type Database from 'better-sqlite3';
 import type { LoggerHandle, MemoryHandle } from '../../core/types.js';
 import type { AuditTrail } from '../../protocols/audit-trail.js';
 import type { Orchestrator } from '../../core/orchestrator.js';
+import type { CircuitBreakerRegistry } from '../../healing/circuit-breaker.js';
+import type { DaemonLoop } from '../../daemon/loop.js';
 import type { TelegramChannel } from '../../channels/telegram.js';
 import type { OpenClawCommand, CommandContext } from './commands.js';
 import { CONFIG } from '../../core/config.js';
 import { PROJECTS, resolveProject, type Project } from './projects.js';
+import { openClawMcp, isSensitiveMcpToolName } from './mcp.js';
 
 // Import all commands
 import { shellCommand } from './commands/shell.js';
@@ -24,6 +27,8 @@ import { fileCommand } from './commands/file.js';
 import { envCommand } from './commands/env.js';
 import { statusCommand } from './commands/status.js';
 import { projectCommand } from './commands/project.js';
+import { mcpCommand } from './commands/mcp.js';
+import { healCommand } from './commands/heal.js';
 import { webFetchCommand, webSearchCommand, youtubeCommand, newsCommand } from './commands/web.js';
 import { apiCallCommand, currencyCommand, cryptoCommand, weatherCommand, whoisCommand, rssCommand, codeExecCommand, downloadCommand, pingCommand } from './commands/intelligence.js';
 
@@ -34,6 +39,8 @@ interface OpenClawDeps {
   db: Database.Database;
   orchestrator: Orchestrator;
   memoryHandle: MemoryHandle;
+  circuitBreakers?: CircuitBreakerRegistry;
+  daemon?: DaemonLoop | null;
 }
 
 interface PendingCommand {
@@ -90,6 +97,21 @@ const TOOLS: ToolDef[] = [
   // ── Code & Compute ──
   { type: 'function', function: { name: 'code', description: 'Execute Node.js code on the server. Has access to fetch, fs, path, crypto, child_process. Returns stdout.', parameters: { type: 'object', properties: { code: { type: 'string', description: 'JavaScript/Node.js code to execute' } }, required: ['code'] } } },
   { type: 'function', function: { name: 'download', description: 'Download a file from any URL to the server (max 50MB)', parameters: { type: 'object', properties: { url: { type: 'string', description: 'URL to download' }, filename: { type: 'string', description: 'Save as filename (optional)' } }, required: ['url'] } } },
+
+  // ── MCP ──
+  { type: 'function', function: { name: 'mcp_servers', description: 'List configured MCP servers available to OpenClaw', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'mcp_tools', description: 'List MCP tools for a configured server', parameters: { type: 'object', properties: { server: { type: 'string', description: 'MCP server name' } }, required: ['server'] } } },
+  { type: 'function', function: { name: 'mcp_resources', description: 'List MCP resources for a configured server', parameters: { type: 'object', properties: { server: { type: 'string', description: 'MCP server name' } }, required: ['server'] } } },
+  { type: 'function', function: { name: 'mcp_prompts', description: 'List MCP prompts for a configured server', parameters: { type: 'object', properties: { server: { type: 'string', description: 'MCP server name' } }, required: ['server'] } } },
+  { type: 'function', function: { name: 'mcp_read_resource', description: 'Read a specific MCP resource by URI', parameters: { type: 'object', properties: { server: { type: 'string', description: 'MCP server name' }, uri: { type: 'string', description: 'Resource URI' } }, required: ['server', 'uri'] } } },
+  { type: 'function', function: { name: 'mcp_get_prompt', description: 'Fetch a named MCP prompt with optional JSON args', parameters: { type: 'object', properties: { server: { type: 'string', description: 'MCP server name' }, name: { type: 'string', description: 'Prompt name' }, args_json: { type: 'string', description: 'Optional JSON object of prompt args' } }, required: ['server', 'name'] } } },
+  { type: 'function', function: { name: 'mcp_call_tool', description: 'Call a non-destructive MCP tool on a configured server', parameters: { type: 'object', properties: { server: { type: 'string', description: 'MCP server name' }, tool: { type: 'string', description: 'Tool name' }, args_json: { type: 'string', description: 'Optional JSON object of tool args' } }, required: ['server', 'tool'] } } },
+
+  // ── Healing ──
+  { type: 'function', function: { name: 'heal_status', description: 'Summarize daemon, orchestrator, and circuit-breaker health', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'heal_breakers', description: 'Inspect current circuit-breaker states', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'heal_jobs', description: 'List self-healing and daemon jobs', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'heal_probe', description: 'Run a safe healing probe and report transitions', parameters: { type: 'object', properties: {} } } },
 
   // ── Memory ──
   { type: 'function', function: { name: 'memory_store', description: 'Store important information to persistent memory (survives restarts)', parameters: { type: 'object', properties: { content: { type: 'string', description: 'Information to remember' }, namespace: { type: 'string', description: 'Category (default: openclaw)' }, importance: { type: 'number', description: '0.0-1.0 (default: 0.5)' } }, required: ['content'] } } },
@@ -174,6 +196,8 @@ export class OpenClawAgent {
   private db: Database.Database;
   private orchestrator: Orchestrator;
   private memoryHandle: MemoryHandle;
+  private circuitBreakers?: CircuitBreakerRegistry;
+  private daemon?: DaemonLoop | null;
   private activeProject: Project = PROJECTS.promptpay;
 
   constructor(deps: OpenClawDeps) {
@@ -183,12 +207,14 @@ export class OpenClawAgent {
     this.db = deps.db;
     this.orchestrator = deps.orchestrator;
     this.memoryHandle = deps.memoryHandle;
+    this.circuitBreakers = deps.circuitBreakers;
+    this.daemon = deps.daemon;
 
     // Register all commands
     const allCommands = [
       shellCommand, logsCommand, pm2Command, deployCommand,
       githubCommand, adminCommand, healthCommand, fileCommand,
-      envCommand, statusCommand, projectCommand,
+      envCommand, statusCommand, projectCommand, mcpCommand, healCommand,
       webFetchCommand, webSearchCommand, youtubeCommand, newsCommand,
       apiCallCommand, currencyCommand, cryptoCommand, weatherCommand,
       whoisCommand, rssCommand, codeExecCommand, downloadCommand, pingCommand,
@@ -261,6 +287,17 @@ export class OpenClawAgent {
         this.pending = { command, args, chatId, timestamp: Date.now() };
         await this.sendMessage(chatId,
           `*[${this.activeProject.name}] Dangerous:* \`/pm2 ${action}\` will affect ${this.activeProject.pm2Name}.\nSend /confirm to proceed or /cancel to abort.`
+        );
+        return;
+      }
+    }
+
+    if (command.name === 'heal') {
+      const action = args.trim().split(/\s+/)[0]?.toLowerCase() || '';
+      if (['run', 'reset'].includes(action)) {
+        this.pending = { command, args, chatId, timestamp: Date.now() };
+        await this.sendMessage(chatId,
+          `*[${this.activeProject.name}] Recovery action:* \`/heal ${args}\`\nSend /confirm to proceed or /cancel to abort.`
         );
         return;
       }
@@ -361,11 +398,11 @@ export class OpenClawAgent {
       ...this.history,
     ];
 
-    const MAX_ITERATIONS = 8;
+    const MAX_ITERATIONS = CONFIG.openclaw.maxIterations;
     let toolsUsed = 0;
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
-      const response = await this.callKimi(messages);
+      const response = await this.callAgentModel(messages);
 
       // If model wants to call tools
       if (response.finish_reason === 'tool_calls' && response.tool_calls?.length) {
@@ -430,7 +467,7 @@ export class OpenClawAgent {
         role: 'user',
         content: 'You have gathered enough information. Now synthesize everything and give me a final, concise answer. Do NOT call any more tools.',
       });
-      const finalRes = await this.callKimiNoTools(messages);
+      const finalRes = await this.callAgentModelNoTools(messages);
       const reply = finalRes || 'Could not generate a response. Try a simpler request.';
       this.history.push({ role: 'assistant', content: reply });
       await this.sendMessage(chatId, reply);
@@ -449,53 +486,18 @@ export class OpenClawAgent {
 
   // ── Kimi K2.5 API call (OpenAI-compatible with tools) ──────
 
-  private async callKimi(messages: ChatMessage[]): Promise<KimiResponse> {
-    const res = await fetch(`${CONFIG.ollama.baseUrl}/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${CONFIG.ollama.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: CONFIG.ollama.model,
-        messages,
-        tools: TOOLS,
-        max_tokens: CONFIG.ollama.maxTokens,
-        temperature: 0.4,
-      }),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      this.logger.error(`OpenClaw Kimi error: ${res.status} ${errText.slice(0, 300)}`);
-      throw new Error(`AI error (${res.status})`);
+  private async callAgentModel(messages: ChatMessage[]): Promise<KimiResponse> {
+    try {
+      return await this.callOpenAICompatibleModel(CONFIG.openclaw.primaryProvider, messages, true);
+    } catch (err) {
+      this.logger.warn(`OpenClaw primary model failed: ${err instanceof Error ? err.message : String(err)}`);
+      return this.callOpenAICompatibleModel(CONFIG.openclaw.fallbackProvider, messages, true);
     }
-
-    const data = await res.json() as {
-      choices: Array<{
-        message: { content: string | null; tool_calls?: ToolCall[] };
-        finish_reason: string;
-      }>;
-      usage?: { total_tokens: number };
-    };
-
-    const choice = data.choices?.[0];
-    if (!choice) throw new Error('No response from AI model');
-
-    if (data.usage?.total_tokens) {
-      this.logger.info(`OpenClaw tokens: ${data.usage.total_tokens}`);
-    }
-
-    return {
-      content: choice.message?.content || null,
-      finish_reason: choice.finish_reason || 'stop',
-      tool_calls: choice.message?.tool_calls || undefined,
-    };
   }
 
   // ── Kimi call WITHOUT tools (forces text response) ─────────
 
-  private async callKimiNoTools(messages: ChatMessage[]): Promise<string> {
+  private async callAgentModelNoTools(messages: ChatMessage[]): Promise<string> {
     // Strip tool_calls from messages to avoid confusing the model
     const cleanMessages = messages.map(m => {
       if (m.tool_calls) {
@@ -506,6 +508,13 @@ export class OpenClawAgent {
       }
       return { role: m.role, content: m.content };
     });
+
+    try {
+      return await this.callOpenAICompatibleModelNoTools(CONFIG.openclaw.primaryProvider, cleanMessages);
+    } catch (err) {
+      this.logger.warn(`OpenClaw primary no-tools model failed: ${err instanceof Error ? err.message : String(err)}`);
+      return this.callOpenAICompatibleModelNoTools(CONFIG.openclaw.fallbackProvider, cleanMessages);
+    }
 
     const res = await fetch(`${CONFIG.ollama.baseUrl}/v1/chat/completions`, {
       method: 'POST',
@@ -536,6 +545,112 @@ export class OpenClawAgent {
   }
 
   // ── Tool execution router ──────────────────────────────────
+
+  private getProviderConfig(provider: 'kimi' | 'ollama' | 'anthropic'): {
+    baseUrl: string;
+    apiKey: string;
+    model: string;
+    maxTokens: number;
+    temperature: number;
+  } {
+    if (provider === 'kimi') return CONFIG.kimi;
+    if (provider === 'anthropic') {
+      return {
+        baseUrl: CONFIG.ollama.baseUrl,
+        apiKey: CONFIG.ollama.apiKey,
+        model: CONFIG.anthropic.adminModel,
+        maxTokens: CONFIG.anthropic.maxTokens,
+        temperature: CONFIG.anthropic.temperature,
+      };
+    }
+    return CONFIG.ollama;
+  }
+
+  private async callOpenAICompatibleModel(
+    provider: 'kimi' | 'ollama' | 'anthropic',
+    messages: ChatMessage[],
+    withTools: boolean,
+  ): Promise<KimiResponse> {
+    const providerConfig = this.getProviderConfig(provider);
+    const res = await fetch(this.getChatCompletionsUrl(providerConfig.baseUrl), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${providerConfig.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: providerConfig.model,
+        messages,
+        ...(withTools ? { tools: TOOLS, parallel_tool_calls: CONFIG.openclaw.parallelToolCalls } : {}),
+        max_tokens: providerConfig.maxTokens,
+        temperature: providerConfig.temperature,
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      this.logger.error(`OpenClaw model error [${provider}]: ${res.status} ${errText.slice(0, 300)}`);
+      throw new Error(`${provider} AI error (${res.status})`);
+    }
+
+    const data = await res.json() as {
+      choices: Array<{
+        message: { content: string | null; tool_calls?: ToolCall[] };
+        finish_reason: string;
+      }>;
+      usage?: { total_tokens: number };
+    };
+
+    const choice = data.choices?.[0];
+    if (!choice) throw new Error('No response from AI model');
+
+    if (data.usage?.total_tokens) {
+      this.logger.info(`OpenClaw tokens [${provider}]: ${data.usage.total_tokens}`);
+    }
+
+    return {
+      content: choice.message?.content || null,
+      finish_reason: choice.finish_reason || 'stop',
+      tool_calls: choice.message?.tool_calls || undefined,
+    };
+  }
+
+  private async callOpenAICompatibleModelNoTools(
+    provider: 'kimi' | 'ollama' | 'anthropic',
+    messages: Array<{ role: string; content: string }>,
+  ): Promise<string> {
+    const providerConfig = this.getProviderConfig(provider);
+    const res = await fetch(this.getChatCompletionsUrl(providerConfig.baseUrl), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${providerConfig.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: providerConfig.model,
+        messages,
+        max_tokens: providerConfig.maxTokens,
+        temperature: providerConfig.temperature,
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      this.logger.error(`OpenClaw no-tools model error [${provider}]: ${res.status} ${errText.slice(0, 300)}`);
+      throw new Error(`${provider} AI error (${res.status})`);
+    }
+
+    const data = await res.json() as {
+      choices: Array<{ message: { content: string | null } }>;
+    };
+
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  private getChatCompletionsUrl(baseUrl: string): string {
+    const trimmed = baseUrl.replace(/\/+$/, '');
+    return trimmed.endsWith('/v1') ? `${trimmed}/chat/completions` : `${trimmed}/v1/chat/completions`;
+  }
 
   private async executeTool(name: string, argsJson: string, chatId: string): Promise<string> {
     let args: Record<string, unknown>;
@@ -631,6 +746,36 @@ export class OpenClawAgent {
         const fname = args.filename ? ` ${String(args.filename)}` : '';
         return (await downloadCommand.execute(`${url}${fname}`, ctx)).output;
       }
+      case 'mcp_servers':
+        return openClawMcp.listServers().map(server => `${server.name}: ${server.url}`).join('\n') || 'No MCP servers configured.';
+      case 'mcp_tools':
+        return JSON.stringify(await openClawMcp.listTools(String(args.server || '')), null, 2);
+      case 'mcp_resources':
+        return JSON.stringify(await openClawMcp.listResources(String(args.server || '')), null, 2);
+      case 'mcp_prompts':
+        return JSON.stringify(await openClawMcp.listPrompts(String(args.server || '')), null, 2);
+      case 'mcp_read_resource':
+        return JSON.stringify(await openClawMcp.readResource(String(args.server || ''), String(args.uri || '')), null, 2);
+      case 'mcp_get_prompt': {
+        const promptArgs = args.args_json ? JSON.parse(String(args.args_json)) as Record<string, unknown> : {};
+        return JSON.stringify(await openClawMcp.getPrompt(String(args.server || ''), String(args.name || ''), promptArgs), null, 2);
+      }
+      case 'mcp_call_tool': {
+        const tool = String(args.tool || '');
+        if (CONFIG.openclaw.requireApprovalForMcpWrites && isSensitiveMcpToolName(tool)) {
+          return `BLOCKED: MCP tool "${tool}" looks write-capable. Use a guarded manual path instead.`;
+        }
+        const toolArgs = args.args_json ? JSON.parse(String(args.args_json)) as Record<string, unknown> : {};
+        return JSON.stringify(await openClawMcp.callTool(String(args.server || ''), tool, toolArgs), null, 2);
+      }
+      case 'heal_status':
+        return (await healCommand.execute('status', ctx)).output;
+      case 'heal_breakers':
+        return (await healCommand.execute('breakers', ctx)).output;
+      case 'heal_jobs':
+        return (await healCommand.execute('jobs', ctx)).output;
+      case 'heal_probe':
+        return (await healCommand.execute('probe', ctx)).output;
 
       // ── Memory ──
       case 'memory_store': {
@@ -670,6 +815,8 @@ export class OpenClawAgent {
       auditTrail: this.auditTrail,
       orchestrator: this.orchestrator,
       activeProject: this.activeProject,
+      circuitBreakers: this.circuitBreakers,
+      daemon: this.daemon,
       sendMessage: (text: string) => this.sendMessage(chatId, text),
     };
   }

@@ -7,6 +7,8 @@ import type Database from 'better-sqlite3';
 import type { LoggerHandle } from '../../core/types.js';
 import type { AuditTrail } from '../../protocols/audit-trail.js';
 import type { Orchestrator } from '../../core/orchestrator.js';
+import type { CircuitBreakerRegistry } from '../../healing/circuit-breaker.js';
+import type { DaemonLoop } from '../../daemon/loop.js';
 import type { Project } from './projects.js';
 
 export interface CommandContext {
@@ -17,6 +19,8 @@ export interface CommandContext {
   auditTrail: AuditTrail;
   orchestrator: Orchestrator;
   activeProject: Project;
+  circuitBreakers?: CircuitBreakerRegistry;
+  daemon?: DaemonLoop | null;
   sendMessage: (text: string) => Promise<void>;
 }
 
