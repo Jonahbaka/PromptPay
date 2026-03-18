@@ -1,4 +1,4 @@
-const CACHE_NAME = "promptpay-portals-v14";
+const CACHE_NAME = "promptpay-portals-v16";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   OFFLINE_URL,

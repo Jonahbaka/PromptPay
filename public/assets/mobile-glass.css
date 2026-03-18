@@ -447,7 +447,7 @@
 
   body.classic-home .pillar-card p {
     font-size: 12px !important;
-    color: rgba(255, 255, 255, 0.70) !important;
+    color: rgba(255, 255, 255, 0.60) !important;
     line-height: 1.4 !important;
     font-weight: 500 !important;
     margin: 0 !important;
@@ -455,6 +455,42 @@
     -webkit-line-clamp: 2 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
+  }
+
+  /* ── iOS-style Pillar Icon Boxes ── */
+  body.classic-home .pillar-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  body.classic-home .pillar-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  body.classic-home .pillar-icon-blue {
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: white;
+  }
+
+  body.classic-home .pillar-icon-green {
+    background: linear-gradient(135deg, #059669, #34d399);
+    color: white;
+  }
+
+  body.classic-home .pillar-icon-amber {
+    background: linear-gradient(135deg, #d97706, #fbbf24);
+    color: white;
+  }
+
+  body.classic-home .pillar-icon-rose {
+    background: linear-gradient(135deg, #e11d48, #fb7185);
+    color: white;
   }
 
   /* ══════════════════════════════════════
@@ -848,71 +884,174 @@
   }
 
   /* ══════════════════════════════════════
-     AUTH DIALOG — glassmorphic
+     AUTH DIALOG — glassmorphic, properly aligned
      ══════════════════════════════════════ */
   body.classic-home .auth-dialog {
     border-radius: 2rem !important;
-    background: rgba(5, 5, 7, 0.96) !important;
+    background: rgba(10, 10, 14, 0.97) !important;
     border: 1px solid rgba(255, 255, 255, 0.10) !important;
     backdrop-filter: blur(40px) !important;
-    max-width: calc(100% - 32px) !important;
+    -webkit-backdrop-filter: blur(40px) !important;
+    max-width: calc(100% - 40px) !important;
     width: 100% !important;
-    padding: 24px 20px !important;
+    padding: 28px 24px !important;
+    margin: auto !important;
   }
 
   body.classic-home .auth-dialog .auth-shell {
     background: transparent !important;
     padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  body.classic-home .auth-dialog .dialog-close {
+    position: absolute !important;
+    top: 16px !important;
+    right: 16px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    color: rgba(255, 255, 255, 0.50) !important;
+    font-size: 0 !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: grid !important;
+    place-items: center !important;
+    cursor: pointer !important;
+  }
+
+  body.classic-home .auth-dialog .dialog-close::after {
+    content: "✕" !important;
+    font-size: 14px !important;
+  }
+
+  body.classic-home .auth-dialog .auth-copy {
+    text-align: center !important;
+    margin-bottom: 20px !important;
+  }
+
+  body.classic-home .auth-dialog .auth-copy .eyebrow {
+    color: #818cf8 !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 6px !important;
   }
 
   body.classic-home .auth-dialog .auth-copy h2 {
-    font-size: 1.125rem !important;
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
     color: white !important;
+    letter-spacing: -0.02em !important;
+    margin: 0 0 6px !important;
+    line-height: 1.2 !important;
   }
 
   body.classic-home .auth-dialog .auth-copy > p {
     font-size: 12px !important;
-    color: rgba(255, 255, 255, 0.50) !important;
+    color: rgba(255, 255, 255, 0.40) !important;
+    margin: 0 !important;
+  }
+
+  body.classic-home .auth-dialog .auth-tabs {
+    display: flex !important;
+    gap: 8px !important;
+    margin: 0 0 20px !important;
+    justify-content: center !important;
   }
 
   body.classic-home .auth-dialog .auth-tab {
     border-radius: 999px !important;
-    padding: 10px 16px !important;
+    padding: 10px 20px !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     background: rgba(255, 255, 255, 0.04) !important;
-    color: rgba(255, 255, 255, 0.40) !important;
+    color: rgba(255, 255, 255, 0.35) !important;
     font-size: 12px !important;
     font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 200ms ease !important;
   }
 
   body.classic-home .auth-dialog .auth-tab.auth-tab-active {
     color: #818cf8 !important;
-    border-color: rgba(99, 102, 241, 0.25) !important;
-    background: rgba(99, 102, 241, 0.10) !important;
+    border-color: rgba(99, 102, 241, 0.30) !important;
+    background: rgba(99, 102, 241, 0.12) !important;
   }
 
-  body.classic-home .auth-dialog input {
+  body.classic-home .auth-dialog .auth-panel {
+    gap: 14px !important;
+  }
+
+  body.classic-home .auth-dialog .auth-panel-active {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  body.classic-home .auth-dialog .auth-panel label {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  body.classic-home .auth-dialog .auth-panel label span {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  body.classic-home .auth-dialog .auth-panel input {
+    width: 100% !important;
+    min-height: 48px !important;
     border-radius: 14px !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     background: rgba(255, 255, 255, 0.04) !important;
-    padding: 14px 16px !important;
+    padding: 0 16px !important;
     color: white !important;
-    font-size: 14px !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    outline: none !important;
+    transition: border-color 200ms ease !important;
+    box-sizing: border-box !important;
   }
 
-  body.classic-home .auth-dialog input:focus {
+  body.classic-home .auth-dialog .auth-panel input:focus {
     border-color: rgba(99, 102, 241, 0.50) !important;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10) !important;
   }
 
-  body.classic-home .auth-submit {
+  body.classic-home .auth-dialog .auth-panel input::placeholder {
+    color: rgba(255, 255, 255, 0.20) !important;
+  }
+
+  body.classic-home .auth-dialog .auth-submit {
     background: linear-gradient(135deg, #6366f1, #818cf8) !important;
     color: white !important;
     border: none !important;
     border-radius: 14px !important;
     min-height: 48px !important;
     font-weight: 700 !important;
+    font-size: 14px !important;
     width: 100% !important;
+    cursor: pointer !important;
+    margin-top: 4px !important;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25) !important;
+    transition: transform 150ms ease, box-shadow 150ms ease !important;
+  }
+
+  body.classic-home .auth-dialog .auth-submit:active {
+    transform: scale(0.97) !important;
+  }
+
+  body.classic-home .auth-dialog .auth-status {
+    text-align: center !important;
+    font-size: 12px !important;
+    margin-top: 12px !important;
   }
 }
 
