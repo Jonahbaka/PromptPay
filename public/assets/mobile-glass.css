@@ -163,34 +163,46 @@
     50% { opacity: 0.5; box-shadow: 0 0 4px #10b981; }
   }
 
+  /* ── Use Inter/system font for modern feel ── */
+  body.classic-home,
+  body.classic-home * {
+    font-family: "Inter", "SF Pro Display", "Segoe UI Variable", system-ui, -apple-system, sans-serif !important;
+    -webkit-font-smoothing: antialiased !important;
+  }
+
   /* ── Main content: single column, mobile-first ── */
-  #main-content {
-    position: relative;
-    z-index: 10;
-    padding: 0 24px;
-    max-width: 512px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding-bottom: 128px;
+  body.classic-home #main-content {
+    position: relative !important;
+    z-index: 10 !important;
+    padding: 0 24px !important;
+    max-width: 512px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    padding-bottom: 128px !important;
   }
 
   /* ── GlassCard Base ── */
   .glass-card,
-  .hero-section.lp-hero,
-  .content-section,
-  .trust-section,
-  .final-cta {
-    position: relative;
-    overflow: hidden;
-    border-radius: 2.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    padding: 24px;
-    transition: all 500ms ease;
+  body.classic-home .hero-section.lp-hero,
+  body.classic-home .content-section,
+  body.classic-home .content-section-alt,
+  body.classic-home .trust-section,
+  body.classic-home .final-cta {
+    position: relative !important;
+    overflow: hidden !important;
+    border-radius: 2.5rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(40px) !important;
+    -webkit-backdrop-filter: blur(40px) !important;
+    padding: 24px !important;
+    transition: all 500ms ease !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: auto !important;
+    box-shadow: none !important;
   }
 
   .glass-card:hover,
@@ -222,22 +234,23 @@
   }
 
   /* ── Hero Section ── */
-  .hero-section.lp-hero {
-    margin: 0;
-    padding: 24px;
+  body.classic-home .hero-section.lp-hero {
+    margin: 0 !important;
+    padding: 24px !important;
   }
 
-  .lp-hero-glow {
-    display: none;
+  body.classic-home .lp-hero-glow {
+    display: none !important;
   }
 
-  .hero-shell.lp-hero-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    max-width: none;
-    margin: 0;
-    padding: 0;
+  body.classic-home .hero-shell.lp-hero-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    grid-template-columns: none !important;
   }
 
   .hero-copy {
@@ -507,11 +520,11 @@
     padding: 24px;
   }
 
-  .content-section .section-shell,
-  .content-section-alt .section-shell {
-    max-width: none;
-    padding: 0;
-    margin: 0;
+  body.classic-home .content-section .section-shell,
+  body.classic-home .content-section-alt .section-shell {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .section-intro {
@@ -544,10 +557,10 @@
   }
 
   /* ── Pillar Cards (Product section) ── */
-  .pillar-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+  body.classic-home .pillar-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
   }
 
   .pillar-card {
@@ -669,10 +682,10 @@
   }
 
   /* ── Solution Cards ── */
-  .solution-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+  body.classic-home .solution-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
   }
 
   .solution-card {
