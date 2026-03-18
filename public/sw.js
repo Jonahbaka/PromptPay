@@ -1,4 +1,4 @@
-const CACHE_NAME = "promptpay-portals-v18";
+const CACHE_NAME = "promptpay-portals-v20";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   OFFLINE_URL,
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   "/assets/admin-portal.js",
   "/assets/site.css",
   "/assets/mobile-glass.css",
+  "/assets/dashboard-mobile.css",
   "/assets/site.js",
   "/assets/console-core.js",
   "/icons/icon-192.png",

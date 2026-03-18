@@ -1,0 +1,236 @@
+/* ═══════════════════════════════════════════
+   DASHBOARD MOBILE GLASSMORPHIC OVERRIDE
+   Applies the AgentOS design to portal pages
+   ═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ── Force glassmorphic base on all portal pages ── */
+body.portal-body {
+  background: #050507 !important;
+  font-family: "Inter", "SF Pro Display", system-ui, -apple-system, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+}
+
+body.portal-body::before,
+body.portal-body::after {
+  background:
+    radial-gradient(ellipse 60% 60% at -10% -20%, rgba(99, 102, 241, 0.10), transparent),
+    radial-gradient(ellipse 40% 40% at 110% 110%, rgba(16, 185, 129, 0.05), transparent) !important;
+}
+
+/* ── Auth card glassmorphic ── */
+body.portal-body .auth-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: blur(40px) !important;
+}
+
+body.portal-body .brand-mark {
+  background: linear-gradient(135deg, #4f46e5, #818cf8) !important;
+  border: none !important;
+  box-shadow: 0 0 20px rgba(79, 70, 229, 0.4) !important;
+}
+
+body.portal-body .eyebrow {
+  color: #818cf8 !important;
+}
+
+body.portal-body .button-primary {
+  background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.25) !important;
+}
+
+body.portal-body .button-secondary {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: white !important;
+}
+
+body.portal-body .field input,
+body.portal-body .field select,
+body.portal-body .field textarea {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+body.portal-body .field input:focus,
+body.portal-body .field select:focus,
+body.portal-body .field textarea:focus {
+  border-color: rgba(99, 102, 241, 0.50) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+}
+
+/* ── Topbar glassmorphic ── */
+body.portal-body .portal-topbar-command .brand-mark {
+  background: linear-gradient(135deg, #4f46e5, #818cf8) !important;
+  border: none !important;
+  box-shadow: 0 0 20px rgba(79, 70, 229, 0.4) !important;
+}
+
+body.portal-body .runtime-dot {
+  background: #10b981 !important;
+  box-shadow: 0 0 8px #10b981 !important;
+  animation: portal-pulse 2s ease-in-out infinite !important;
+}
+
+@keyframes portal-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+body.portal-body .runtime-cluster small {
+  color: #10b981 !important;
+  font-weight: 800 !important;
+}
+
+/* ── Cards glassmorphic ── */
+body.portal-body .ops-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: blur(40px) !important;
+}
+
+body.portal-body .ops-card:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.portal-body .ops-icon-box {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #818cf8 !important;
+}
+
+body.portal-body .ops-badge {
+  border-color: rgba(99, 102, 241, 0.25) !important;
+  background: rgba(99, 102, 241, 0.15) !important;
+  color: #a5b4fc !important;
+}
+
+body.portal-body .ops-badge-success {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #6ee7b7 !important;
+}
+
+body.portal-body .ops-card-kicker,
+body.portal-body .ops-stat-kicker,
+body.portal-body .ops-rail-kicker {
+  color: #818cf8 !important;
+}
+
+body.portal-body .ops-stage {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+body.portal-body .ops-stage-footer {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+body.portal-body .ops-stream-tag {
+  color: #818cf8 !important;
+}
+
+/* ── Alert cards ── */
+body.portal-body .alert-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 1.25rem !important;
+}
+
+body.portal-body .alert-active .alert-stripe {
+  background: #818cf8 !important;
+}
+
+/* ── Panel cards ── */
+body.portal-body .panel-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: blur(40px) !important;
+}
+
+/* ── Session pill ── */
+body.portal-body .session-pill {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── Dock glassmorphic ── */
+body.portal-body .portal-dock-shell {
+  background: rgba(0, 0, 0, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: blur(48px) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+}
+
+body.portal-body .portal-dock .tab-button {
+  border: none !important;
+  background: none !important;
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+body.portal-body .portal-dock .tab-button:hover {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.40) !important;
+  transform: none !important;
+}
+
+body.portal-body .portal-dock .tab-button.active {
+  color: #818cf8 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+body.portal-body .portal-dock .tab-button.active .tab-glyph {
+  transform: scale(1.15);
+}
+
+/* ── Tab bar glassmorphic ── */
+body.portal-body .tab-button.active {
+  color: #818cf8 !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
+  background: rgba(99, 102, 241, 0.10) !important;
+}
+
+/* ── Empty state ── */
+body.portal-body .empty-state {
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+/* ── Detail list borders ── */
+body.portal-body .detail-list div {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ── Mobile drawer glassmorphic ── */
+body.portal-body .mobile-drawer-panel {
+  background: rgba(10, 10, 14, 0.97) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.10) !important;
+  backdrop-filter: blur(40px) !important;
+}
+
+body.portal-body .mobile-drawer-session {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ── Mobile menu toggle ── */
+body.portal-body .mobile-menu-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}

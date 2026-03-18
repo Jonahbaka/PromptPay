@@ -3,38 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#050914">
+  <meta name="theme-color" content="#050507">
   <title>PromptPay Dashboard</title>
-  <meta
-    name="description"
-    content="PromptPay end-user dashboard for real profile data, account status, transaction history, notifications, and settings."
-  >
+  <meta name="description" content="PromptPay agent dashboard — transactions, commissions, wallet, and network operations.">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/portal.css">
+  <link rel="stylesheet" href="/assets/dashboard-mobile.css">
 </head>
 <body class="portal-body">
+  <!-- ═══ AUTH VIEW ═══ -->
   <section class="portal-auth" id="auth-view">
     <div class="auth-card">
       <div class="brand-row">
         <div class="brand-mark" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-            <path d="M14 14h7v7h-7z"></path>
+          <svg width="24" height="24" viewBox="0 0 40 40" fill="none">
+            <rect x="4" y="4" width="10" height="10" rx="2" fill="currentColor" opacity="0.3"/><rect x="6" y="6" width="6" height="6" rx="1" fill="currentColor"/><rect x="7.5" y="7.5" width="3" height="3" fill="#050507"/>
+            <rect x="26" y="4" width="10" height="10" rx="2" fill="currentColor" opacity="0.3"/><rect x="28" y="28" width="6" height="6" rx="1" fill="currentColor"/><rect x="29.5" y="29.5" width="3" height="3" fill="#050507"/>
+            <rect x="4" y="26" width="10" height="10" rx="2" fill="currentColor" opacity="0.3"/><rect x="6" y="28" width="6" height="6" rx="1" fill="currentColor"/><rect x="7.5" y="29.5" width="3" height="3" fill="#050507"/>
+            <path d="M2 20 L10 20 L13 12 L17 28 L21 16 L24 24 L27 20 L38 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="20" cy="20" r="2.5" fill="currentColor"/>
           </svg>
         </div>
         <div>
           <p class="eyebrow">PromptPay Dashboard</p>
-          <h1>Sign in to your PromptPay dashboard.</h1>
+          <h1>Sign in to your account</h1>
         </div>
       </div>
-      <p class="auth-copy">
-        Access your real PromptPay profile, account status, transaction history, notifications, and settings.
-        Airtime, data, and bills stay disabled until live integrations exist.
-      </p>
       <form id="login-form" class="stack-form" novalidate>
         <div class="field-grid">
           <label class="field full">
@@ -52,41 +51,39 @@
           <a class="button button-secondary" href="/">Back to site</a>
         </div>
       </form>
-      <div class="helper-links"></div>
     </div>
   </section>
 
+  <!-- ═══ MAIN DASHBOARD SHELL ═══ -->
   <div class="portal-shell hidden" id="dashboard-shell">
+
+    <!-- ── App Bar ── -->
     <header class="portal-topbar portal-topbar-command">
       <div class="topbar-brand">
         <div class="brand-mark" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-            <path d="M14 14h7v7h-7z"></path>
+          <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+            <rect x="4" y="4" width="10" height="10" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="6" y="6" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="7.5" width="3" height="3" fill="rgba(99,102,241,0.8)"/>
+            <rect x="26" y="4" width="10" height="10" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="28" y="28" width="6" height="6" rx="1" fill="white"/><rect x="29.5" y="29.5" width="3" height="3" fill="rgba(99,102,241,0.8)"/>
+            <rect x="4" y="26" width="10" height="10" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="6" y="28" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="29.5" width="3" height="3" fill="rgba(99,102,241,0.8)"/>
+            <path d="M2 20 L10 20 L13 12 L17 28 L21 16 L24 24 L27 20 L38 20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="20" cy="20" r="2.5" fill="white"/>
           </svg>
         </div>
         <div>
+          <div class="runtime-cluster">
+            <span class="runtime-dot"></span>
+            <small id="dashboard-runtime-status">Network Online</small>
+          </div>
           <strong>PromptPay</strong>
-          <span>End-user dashboard</span>
-        </div>
-      </div>
-
-      <div class="runtime-cluster" aria-live="polite">
-        <span class="runtime-dot"></span>
-        <div>
-          <small id="dashboard-runtime-status">Live account state</small>
-          <strong id="dashboard-runtime-time">--:--</strong>
         </div>
       </div>
 
       <div class="topbar-actions">
         <div class="session-pill session-pill-strong">
-          <strong id="user-name">PromptPay User</strong>
-          <span id="user-email">user@promptpay.com</span>
+          <strong id="user-name">User</strong>
+          <span id="user-email">-</span>
         </div>
-        <a class="button button-secondary" href="/">Homepage</a>
+        <a class="button button-secondary" href="/">Home</a>
         <button class="button button-secondary" id="dashboard-refresh" type="button">Refresh</button>
         <button class="button button-secondary" id="dashboard-logout" type="button">Sign Out</button>
       </div>
@@ -96,13 +93,14 @@
       </button>
     </header>
 
+    <!-- ── Mobile Drawer ── -->
     <div class="mobile-actions-drawer" id="mobile-drawer">
       <div class="mobile-drawer-backdrop" data-drawer-close></div>
       <div class="mobile-drawer-panel">
         <div class="mobile-drawer-handle"></div>
         <div class="mobile-drawer-session">
-          <strong id="drawer-user-name">PromptPay User</strong>
-          <span id="drawer-user-email">user@promptpay.com</span>
+          <strong id="drawer-user-name">User</strong>
+          <span id="drawer-user-email">-</span>
         </div>
         <div class="mobile-drawer-actions">
           <a class="button button-secondary" href="/">Homepage</a>
@@ -112,379 +110,328 @@
       </div>
     </div>
 
+    <!-- ═══ MAIN CONTENT ═══ -->
     <main class="portal-main">
-      <section class="hero-strip hero-strip-command layer-2 hidden">
-        <div class="hero-command-copy">
-          <p class="eyebrow">User workspace</p>
-          <h2>Real account context with a premium mobile control surface.</h2>
-          <p class="muted">
-            PromptPay only renders real user records, real notifications, and real transaction history.
-            Services without live integrations stay disabled and clearly marked.
-          </p>
-          <div class="hero-chip-row">
-            <span class="hero-chip" id="user-live-state">Account: -</span>
-            <span class="hero-chip" id="user-live-notices">Unread: 0</span>
-            <span class="hero-chip" id="user-live-activity">Transactions: 0</span>
-          </div>
-        </div>
-
-        <div class="hero-command-stack">
-          <article class="signal-card">
-            <span>Account status</span>
-            <strong id="dashboard-signal-status">-</strong>
-            <small id="dashboard-signal-status-copy">Pulled from the users table only.</small>
-          </article>
-          <article class="signal-card">
-            <span>KYC posture</span>
-            <strong id="dashboard-signal-kyc">-</strong>
-            <small id="dashboard-signal-kyc-copy">Based on the real KYC fields in your account.</small>
-          </article>
-          <article class="signal-card">
-            <span>Latest activity</span>
-            <strong id="dashboard-signal-activity">No recent activity</strong>
-            <small id="dashboard-signal-activity-copy">Transaction and notification timestamps only.</small>
-          </article>
-        </div>
-      </section>
-
-      <div class="alert-feed hidden" id="dashboard-alert-feed-legacy" aria-live="polite">
-        <article class="alert-card skeleton-card">
-          <strong>Loading account guidance</strong>
-          <p>Checking profile completeness, unread notifications, transactions, and service state.</p>
-        </article>
-      </div>
-
       <div class="status-text" id="dashboard-load-status" aria-live="polite"></div>
 
+      <!-- ── Tab Bar (desktop) ── -->
       <nav class="tabbar tabbar-primary" aria-label="Dashboard sections">
         <button class="tab-button active" type="button" data-page="overview">
-          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg></span>
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></span>
           <span class="tab-label">Overview</span>
         </button>
         <button class="tab-button" type="button" data-page="services">
-          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg></span>
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
           <span class="tab-label">Services</span>
         </button>
-        <button class="tab-button" type="button" data-page="notifications">
-          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path><path d="M10 17a2 2 0 0 0 4 0"></path></svg></span>
-          <span class="tab-label">Notifications</span>
+        <button class="tab-button" type="button" data-page="transactions">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+          <span class="tab-label">Transactions</span>
         </button>
         <button class="tab-button" type="button" data-page="settings">
-          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
-          <span class="tab-label">Settings</span>
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <span class="tab-label">Profile</span>
         </button>
       </nav>
 
+      <!-- ═══ TAB: OVERVIEW ═══ -->
       <section class="tab-panel active" data-page="overview">
         <section class="ops-overview">
           <div class="ops-rail">
             <div class="ops-rail-copy">
-              <span class="ops-rail-kicker">Operational insights</span>
-              <strong>Live account state</strong>
+              <span class="ops-rail-kicker">Dashboard</span>
+              <strong>Account Overview</strong>
             </div>
             <button class="ops-rail-action" id="dashboard-rail-refresh" type="button">Refresh</button>
           </div>
 
+          <!-- AI Insight Banner -->
           <div class="alert-feed ops-alert-stack" id="dashboard-alert-feed" aria-live="polite">
-            <article class="alert-card skeleton-card">
-              <strong>Loading account guidance</strong>
-              <p>Checking profile completeness, unread notifications, transactions, and service state.</p>
+            <article class="alert-card alert-active">
+              <div class="alert-stripe"></div>
+              <div>
+                <strong>Welcome to PromptPay</strong>
+                <p>Your agent network control center. Complete your profile to unlock all features.</p>
+              </div>
             </article>
           </div>
 
           <div class="ops-grid">
+            <!-- Wallet / Balance Card -->
             <article class="ops-card ops-card-square" id="dashboard-stage-card">
               <div class="ops-card-header">
                 <div class="ops-card-title">
                   <div class="ops-icon-box" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                      <path d="M8 9h8"></path>
-                      <path d="M8 15h5"></path>
-                      <path d="M4 5h16v14H4z"></path>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                   </div>
                   <div>
-                    <span class="ops-card-kicker">Account matrix</span>
-                    <h3>Readiness surface</h3>
+                    <span class="ops-card-kicker">Wallet Balance</span>
+                    <h3 id="dashboard-wallet-balance">₦0.00</h3>
                   </div>
                 </div>
-                <span class="ops-badge" id="dashboard-stage-badge">Live</span>
+                <span class="ops-badge ops-badge-success" id="dashboard-stage-badge">Active</span>
               </div>
 
               <div class="ops-stage ops-stage-generic" id="dashboard-stage">
                 <div class="ops-stage-grid" aria-hidden="true">
                   <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path d="M0 20 Q 25 25 50 20 T 100 25" stroke="white" fill="none" stroke-width="0.12"></path>
-                    <path d="M0 50 Q 25 45 50 50 T 100 45" stroke="white" fill="none" stroke-width="0.12"></path>
-                    <path d="M0 80 Q 25 85 50 80 T 100 85" stroke="white" fill="none" stroke-width="0.12"></path>
+                    <path d="M0 50 Q10 30 20 50 T40 50 T60 50 T80 50 T100 50" stroke="rgba(99,102,241,0.3)" fill="none" stroke-width="0.3"/>
+                    <path d="M0 50 Q10 35 20 45 T40 55 T60 40 T80 55 T100 45" stroke="rgba(52,211,153,0.4)" fill="none" stroke-width="0.2"/>
                   </svg>
                 </div>
               </div>
 
               <div class="ops-stage-footer">
                 <div class="ops-stage-stat">
-                  <span>Profile</span>
-                  <strong id="dashboard-stage-profile">0 / 4</strong>
+                  <span>Today</span>
+                  <strong id="dashboard-stage-today">₦0</strong>
                 </div>
                 <div class="ops-stage-stat">
-                  <span>Modules</span>
-                  <strong id="dashboard-stage-modules">0 / 3</strong>
+                  <span>Commission</span>
+                  <strong id="dashboard-stage-commission">₦0</strong>
                 </div>
                 <div class="ops-stage-stat">
-                  <span>Last</span>
-                  <strong id="dashboard-stage-last">No activity</strong>
+                  <span>Transactions</span>
+                  <strong id="dashboard-stage-tx-count">0</strong>
                 </div>
               </div>
             </article>
 
+            <!-- Quick Stats -->
             <div class="ops-pair-grid">
               <article class="ops-card ops-stat-card">
                 <div class="ops-stat-head">
                   <div class="ops-stat-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                      <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path>
-                      <path d="M10 17a2 2 0 0 0 4 0"></path>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
                   </div>
-                  <span class="ops-badge" id="dashboard-primary-badge">0</span>
+                  <span class="ops-badge" id="dashboard-primary-badge">Live</span>
                 </div>
                 <div class="ops-stat-body">
-                  <span class="ops-stat-kicker">Unread notices</span>
-                  <strong id="dashboard-primary-value">0</strong>
-                  <small id="dashboard-primary-copy">Real unread notification count.</small>
+                  <span class="ops-stat-kicker">Total Volume</span>
+                  <strong id="dashboard-primary-value">₦0</strong>
+                  <small id="dashboard-primary-copy">All-time transaction volume</small>
                 </div>
               </article>
 
               <article class="ops-card ops-stat-card ops-stat-card-accent">
                 <div class="ops-stat-head">
                   <div class="ops-stat-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                      <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                   </div>
                 </div>
                 <div class="ops-stat-body">
-                  <span class="ops-stat-kicker">Activity status</span>
-                  <strong id="dashboard-secondary-value">No data</strong>
-                  <small id="dashboard-secondary-copy">Transactions and services stay explicit until live data exists.</small>
+                  <span class="ops-stat-kicker">Network Status</span>
+                  <strong id="dashboard-secondary-value">Active</strong>
+                  <small id="dashboard-secondary-copy">Account verified and operational</small>
                 </div>
               </article>
             </div>
 
+            <!-- Recent Activity Stream -->
             <article class="ops-card ops-stream-card">
               <div class="ops-card-header">
                 <div class="ops-card-title">
                   <div class="ops-icon-box" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                      <path d="M4 17V7"></path>
-                      <path d="M10 17V11"></path>
-                      <path d="M16 17V5"></path>
-                      <path d="M22 17V9"></path>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17V7"/><path d="M10 17V11"/><path d="M16 17V5"/><path d="M22 17V9"/></svg>
                   </div>
                   <div>
-                    <span class="ops-card-kicker">Operational stream</span>
-                    <h3>Latest activity</h3>
+                    <span class="ops-card-kicker">Activity Stream</span>
+                    <h3>Recent Transactions</h3>
                   </div>
                 </div>
               </div>
               <div class="ops-stream-list" id="dashboard-stream">
-                <div class="empty-state">No activity stream available yet.</div>
+                <div class="empty-state">No transactions yet. Use Services to get started.</div>
               </div>
             </article>
           </div>
         </section>
+      </section>
 
-        <div class="overview-legacy hidden">
-        <article class="panel-card intent-card layer-3">
-          <div class="section-heading">
-            <div>
-              <h3 id="dashboard-context-title">Preparing your workspace</h3>
-              <p id="dashboard-context-copy">PromptPay will adapt this space around your real account state and recent activity.</p>
+      <!-- ═══ TAB: SERVICES ═══ -->
+      <section class="tab-panel" data-page="services">
+        <div class="ops-overview">
+          <div class="ops-rail">
+            <div class="ops-rail-copy">
+              <span class="ops-rail-kicker">Financial Services</span>
+              <strong>Send, Pay, and Operate</strong>
             </div>
-            <span class="surface-tag">Adaptive actions</span>
           </div>
-          <div class="action-grid" id="context-actions">
-            <article class="action-card skeleton-card">
-              <strong>Loading actions</strong>
-              <p>Checking your real profile, notifications, and transaction history.</p>
+
+          <!-- Quick Actions Grid -->
+          <div class="ops-pair-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <article class="ops-card" style="padding: 16px; text-align: center; min-height: auto;">
+              <div class="ops-icon-box" style="margin: 0 auto 8px; background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(52,211,153,0.1)); border-color: rgba(16,185,129,0.2);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9z"/></svg>
+              </div>
+              <span class="ops-stat-kicker">Transfer</span>
+            </article>
+            <article class="ops-card" style="padding: 16px; text-align: center; min-height: auto;">
+              <div class="ops-icon-box" style="margin: 0 auto 8px; background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(129,140,248,0.1)); border-color: rgba(99,102,241,0.2);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <span class="ops-stat-kicker">Airtime</span>
+            </article>
+            <article class="ops-card" style="padding: 16px; text-align: center; min-height: auto;">
+              <div class="ops-icon-box" style="margin: 0 auto 8px; background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.1)); border-color: rgba(251,191,36,0.2);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="1.8"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+              </div>
+              <span class="ops-stat-kicker">Data</span>
+            </article>
+            <article class="ops-card" style="padding: 16px; text-align: center; min-height: auto;">
+              <div class="ops-icon-box" style="margin: 0 auto 8px; background: linear-gradient(135deg, rgba(244,63,94,0.2), rgba(251,113,133,0.1)); border-color: rgba(244,63,94,0.2);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <span class="ops-stat-kicker">Bills</span>
             </article>
           </div>
-        </article>
 
-        <div class="metrics-grid compact-metrics">
-          <article class="metric-card">
-            <span>Account status</span>
-            <strong id="metric-account-status">-</strong>
-            <small>From the users table.</small>
-          </article>
-          <article class="metric-card">
-            <span>Transactions</span>
-            <strong id="metric-transaction-count">0</strong>
-            <small>Real records only.</small>
-          </article>
-          <article class="metric-card">
-            <span>Unread notifications</span>
-            <strong id="metric-notification-count">0</strong>
-            <small>Unread items in your account.</small>
-          </article>
-          <article class="metric-card">
-            <span>Last sign in</span>
-            <strong id="metric-last-login">-</strong>
-            <small>Latest successful login time.</small>
-          </article>
-        </div>
-
-        <div class="portal-bento dashboard-bento">
-          <article class="panel-card bento-card" id="dashboard-command-card">
-            <div class="section-heading">
-              <div>
-                <h3>Account posture</h3>
-                <p>Live signals from profile, notifications, settings, and activity.</p>
+          <!-- POS / Agent Services -->
+          <article class="ops-card ops-stream-card">
+            <div class="ops-card-header">
+              <div class="ops-card-title">
+                <div class="ops-icon-box" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                </div>
+                <div>
+                  <span class="ops-card-kicker">Agent Operations</span>
+                  <h3>POS &amp; Cash Services</h3>
+                </div>
               </div>
-              <button class="button button-secondary button-small" type="button" data-switch-page="settings">Open</button>
+              <span class="ops-badge ops-badge-success">Available</span>
             </div>
-            <div class="mini-stat-grid" id="dashboard-health-grid">
-              <article class="mini-stat-card">
-                <span>Profile fields</span>
-                <strong>0 / 4</strong>
-                <small>Checking account completeness.</small>
-              </article>
-            </div>
-          </article>
-
-          <article class="panel-card bento-card" id="profile-card">
-            <div class="section-heading">
-              <div>
-                <h3>Profile</h3>
-                <p>Identity fields from the real user record.</p>
+            <div class="ops-stream-list">
+              <div class="ops-stream-item">
+                <div class="ops-stream-main">
+                  <div class="ops-stream-pulse" style="background: #34d399;"></div>
+                  <div class="ops-stream-copy">
+                    <div class="ops-stream-head">
+                      <span class="ops-stream-tag">Cash-In</span>
+                      <span class="ops-stream-meta">Moniepoint</span>
+                    </div>
+                    <p>Accept cash deposits from customers via POS terminal</p>
+                  </div>
+                </div>
               </div>
-              <span class="surface-tag" id="profile-completeness">Review</span>
-            </div>
-            <dl class="detail-list" id="profile-summary">
-              <div><dt>Name</dt><dd>-</dd></div>
-              <div><dt>Email</dt><dd>-</dd></div>
-              <div><dt>Phone</dt><dd>-</dd></div>
-              <div><dt>Country</dt><dd>-</dd></div>
-            </dl>
-          </article>
-
-          <article class="panel-card bento-card" id="account-card">
-            <div class="section-heading">
-              <div>
-                <h3>Account readiness</h3>
-                <p>Status, KYC, and lifecycle fields only.</p>
+              <div class="ops-stream-item">
+                <div class="ops-stream-main">
+                  <div class="ops-stream-pulse" style="background: #818cf8;"></div>
+                  <div class="ops-stream-copy">
+                    <div class="ops-stream-head">
+                      <span class="ops-stream-tag">Cash-Out</span>
+                      <span class="ops-stream-meta">Moniepoint</span>
+                    </div>
+                    <p>Process cash withdrawals for customers at your location</p>
+                  </div>
+                </div>
+              </div>
+              <div class="ops-stream-item">
+                <div class="ops-stream-main">
+                  <div class="ops-stream-pulse" style="background: #fbbf24;"></div>
+                  <div class="ops-stream-copy">
+                    <div class="ops-stream-head">
+                      <span class="ops-stream-tag">Collections</span>
+                      <span class="ops-stream-meta">Paystack</span>
+                    </div>
+                    <p>Generate payment links and collect payments digitally</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <dl class="detail-list" id="account-summary">
-              <div><dt>Status</dt><dd>-</dd></div>
-              <div><dt>KYC status</dt><dd>-</dd></div>
-              <div><dt>KYC tier</dt><dd>-</dd></div>
-              <div><dt>Created</dt><dd>-</dd></div>
-            </dl>
-          </article>
-
-          <article class="panel-card bento-card" id="notifications-preview-card">
-            <div class="section-heading">
-              <div>
-                <h3>Notifications</h3>
-                <p>Unread and recent account notices.</p>
-              </div>
-              <button class="button button-secondary button-small" type="button" data-switch-page="notifications">Open</button>
-            </div>
-            <div class="stack-list compact-stack" id="notification-preview-list">
-              <div class="empty-state">Loading notifications.</div>
-            </div>
-          </article>
-
-          <article class="panel-card bento-card bento-wide" id="transactions-card">
-            <div class="section-heading">
-              <div>
-                <h3>Transaction history</h3>
-                <p>Real wallet and POS records only. Empty if no data exists.</p>
-              </div>
-            </div>
-            <div class="table-shell">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Source</th>
-                    <th>Type</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Amount</th>
-                  </tr>
-                </thead>
-                <tbody id="transaction-list">
-                  <tr><td colspan="6" class="empty-state">Loading transactions.</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </article>
-        </div>
-        </div>
-      </section>
-
-      <section class="tab-panel" data-page="services">
-        <div class="portal-bento placeholder-bento">
-          <article class="panel-card placeholder-card bento-card">
-            <div class="section-heading">
-              <div>
-                <h3>Airtime</h3>
-                <p>Integration Required</p>
-              </div>
-              <span class="badge badge-outline">Coming Soon</span>
-            </div>
-            <p class="muted">PromptPay will only enable airtime here after a live provider integration is connected.</p>
-            <button class="button button-disabled" type="button" disabled>Coming Soon</button>
-          </article>
-          <article class="panel-card placeholder-card bento-card">
-            <div class="section-heading">
-              <div>
-                <h3>Data</h3>
-                <p>Integration Required</p>
-              </div>
-              <span class="badge badge-outline">Coming Soon</span>
-            </div>
-            <p class="muted">No data bundle purchase flow is active in this portal yet.</p>
-            <button class="button button-disabled" type="button" disabled>Coming Soon</button>
-          </article>
-          <article class="panel-card placeholder-card bento-card">
-            <div class="section-heading">
-              <div>
-                <h3>Bills</h3>
-                <p>Integration Required</p>
-              </div>
-              <span class="badge badge-outline">Coming Soon</span>
-            </div>
-            <p class="muted">Bill payment remains unavailable until a real production integration is ready.</p>
-            <button class="button button-disabled" type="button" disabled>Coming Soon</button>
           </article>
         </div>
       </section>
 
-      <section class="tab-panel" data-page="notifications">
-        <article class="panel-card bento-card">
-          <div class="section-heading">
-            <div>
-              <h3>Notifications</h3>
-              <p>Read-only account notifications with real read state.</p>
+      <!-- ═══ TAB: TRANSACTIONS ═══ -->
+      <section class="tab-panel" data-page="transactions">
+        <div class="ops-overview">
+          <div class="ops-rail">
+            <div class="ops-rail-copy">
+              <span class="ops-rail-kicker">Financial Activity</span>
+              <strong>Transaction History</strong>
             </div>
           </div>
-          <div class="stack-list" id="notification-list">
-            <div class="empty-state">Loading notifications.</div>
+
+          <!-- Commission Summary -->
+          <div class="ops-pair-grid">
+            <article class="ops-card ops-stat-card">
+              <div class="ops-stat-head">
+                <div class="ops-stat-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                </div>
+                <span class="ops-badge ops-badge-success">Earned</span>
+              </div>
+              <div class="ops-stat-body">
+                <span class="ops-stat-kicker">Total Commission</span>
+                <strong id="tx-total-commission">₦0</strong>
+                <small>Your earnings from all transactions</small>
+              </div>
+            </article>
+            <article class="ops-card ops-stat-card">
+              <div class="ops-stat-head">
+                <div class="ops-stat-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+              </div>
+              <div class="ops-stat-body">
+                <span class="ops-stat-kicker">Pending Payout</span>
+                <strong id="tx-pending-payout">₦0</strong>
+                <small>Awaiting settlement cycle</small>
+              </div>
+            </article>
           </div>
-        </article>
+
+          <!-- Transaction List -->
+          <article class="ops-card ops-stream-card">
+            <div class="ops-card-header">
+              <div class="ops-card-title">
+                <div class="ops-icon-box" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17V7"/><path d="M10 17V11"/><path d="M16 17V5"/><path d="M22 17V9"/></svg>
+                </div>
+                <div>
+                  <span class="ops-card-kicker">Ledger</span>
+                  <h3>All Transactions</h3>
+                </div>
+              </div>
+            </div>
+            <div class="ops-stream-list" id="tx-full-list">
+              <div class="empty-state">No transactions recorded yet.</div>
+            </div>
+          </article>
+        </div>
       </section>
 
+      <!-- ═══ TAB: PROFILE / SETTINGS ═══ -->
       <section class="tab-panel" data-page="settings">
-        <div class="portal-bento settings-bento">
-          <article class="panel-card bento-card">
-            <div class="section-heading">
-              <div>
-                <h3>Profile settings</h3>
-                <p>Update only fields backed by the users table.</p>
+        <div class="ops-overview">
+          <div class="ops-rail">
+            <div class="ops-rail-copy">
+              <span class="ops-rail-kicker">Account</span>
+              <strong>Profile &amp; Settings</strong>
+            </div>
+          </div>
+
+          <!-- Profile Card -->
+          <article class="ops-card" style="text-align: center; padding: 32px 24px;">
+            <div style="width: 72px; height: 72px; border-radius: 1.5rem; background: linear-gradient(135deg, #4f46e5, #818cf8); margin: 0 auto 16px; display: grid; place-items: center;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 id="profile-display-name" style="font-size: 1.25rem; margin: 0 0 4px;">-</h3>
+            <p id="profile-display-email" style="color: rgba(255,255,255,0.4); font-size: 0.8rem; margin: 0 0 12px;">-</p>
+            <span class="ops-badge ops-badge-success" id="profile-kyc-badge">Active</span>
+          </article>
+
+          <!-- Profile Form -->
+          <article class="ops-card">
+            <div class="ops-card-header" style="padding: 0 0 16px;">
+              <div class="ops-card-title">
+                <div class="ops-icon-box" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <div>
+                  <span class="ops-card-kicker">Profile Details</span>
+                  <h3>Edit Information</h3>
+                </div>
               </div>
             </div>
             <form id="profile-form" class="stack-form" novalidate>
@@ -513,25 +460,31 @@
             </form>
           </article>
 
-          <article class="panel-card bento-card">
-            <div class="section-heading">
-              <div>
-                <h3>Preferences</h3>
-                <p>Stored in the user settings table.</p>
+          <!-- Preferences -->
+          <article class="ops-card">
+            <div class="ops-card-header" style="padding: 0 0 16px;">
+              <div class="ops-card-title">
+                <div class="ops-icon-box" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M1 14h6"/><path d="M9 8h6"/><path d="M17 16h6"/></svg>
+                </div>
+                <div>
+                  <span class="ops-card-kicker">Preferences</span>
+                  <h3>App Settings</h3>
+                </div>
               </div>
             </div>
             <form id="settings-form" class="stack-form" novalidate>
               <div class="field-grid">
                 <label class="field">
                   <span>Language</span>
-                  <input id="settings-language" type="text">
+                  <input id="settings-language" type="text" value="English">
                 </label>
                 <label class="field">
                   <span>Timezone</span>
-                  <input id="settings-timezone" type="text">
+                  <input id="settings-timezone" type="text" value="Africa/Lagos">
                 </label>
                 <label class="field checkbox-field full">
-                  <input id="settings-notifications" type="checkbox">
+                  <input id="settings-notifications" type="checkbox" checked>
                   <span>Enable notifications</span>
                 </label>
               </div>
@@ -545,23 +498,24 @@
       </section>
     </main>
 
-    <nav class="portal-dock" aria-label="Dashboard quick navigation">
+    <!-- ── Bottom Dock ── -->
+    <nav class="portal-dock" aria-label="Dashboard navigation">
       <div class="portal-dock-shell">
         <button class="tab-button active" type="button" data-page="overview">
-          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg></span>
-          <span class="tab-label">Overview</span>
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg></span>
+          <span class="tab-label">Home</span>
         </button>
         <button class="tab-button" type="button" data-page="services">
-          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg></span>
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
           <span class="tab-label">Services</span>
         </button>
-        <button class="tab-button" type="button" data-page="notifications">
-          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path><path d="M10 17a2 2 0 0 0 4 0"></path></svg></span>
-          <span class="tab-label">Notices</span>
+        <button class="tab-button" type="button" data-page="transactions">
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></span>
+          <span class="tab-label">Activity</span>
         </button>
         <button class="tab-button" type="button" data-page="settings">
-          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21v-7"></path><path d="M4 10V3"></path><path d="M12 21v-9"></path><path d="M12 8V3"></path><path d="M20 21v-5"></path><path d="M20 12V3"></path><path d="M1 14h6"></path><path d="M9 8h6"></path><path d="M17 16h6"></path></svg></span>
-          <span class="tab-label">Settings</span>
+          <span class="tab-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <span class="tab-label">Profile</span>
         </button>
       </div>
     </nav>
