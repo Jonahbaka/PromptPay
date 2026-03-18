@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PromptPay">
-  <title>PromptPay | AgentOS for Payment Networks</title>
+  <title>PromptPay | Super Agent Infrastructure</title>
   <meta
     name="description"
     content="PromptPay is the operating system for payment agent networks. Orchestrate agent onboarding, commissions, transaction observability, and licensed rail integrations across Africa."
@@ -92,12 +92,18 @@
   <header class="mobile-app-bar" aria-label="Mobile app bar">
     <div class="app-brand">
       <div class="app-brand-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+        <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
+          <rect x="4" y="4" width="10" height="10" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="6" y="6" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="7.5" width="3" height="3" fill="rgba(99,102,241,0.8)"/>
+          <rect x="26" y="4" width="10" height="10" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="28" y="28" width="6" height="6" rx="1" fill="white"/><rect x="29.5" y="29.5" width="3" height="3" fill="rgba(99,102,241,0.8)"/>
+          <rect x="4" y="26" width="10" height="10" rx="2" fill="rgba(255,255,255,0.15)"/><rect x="6" y="28" width="6" height="6" rx="1" fill="white"/><rect x="7.5" y="29.5" width="3" height="3" fill="rgba(99,102,241,0.8)"/>
+          <path d="M2 20 L10 20 L13 12 L17 28 L21 16 L24 24 L27 20 L38 20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="20" cy="20" r="2.5" fill="white"/>
+        </svg>
       </div>
       <div class="app-brand-copy">
         <div class="runtime-line">
           <span class="runtime-dot"></span>
-          <span class="runtime-label">Live Platform</span>
+          <span class="runtime-label">Network Online</span>
         </div>
         <h1 class="app-title">PromptPay</h1>
       </div>
@@ -154,7 +160,7 @@
       </nav>
       <div class="header-actions lp-nav-actions">
         <button class="button button-ghost lp-btn-signin" type="button" data-open-auth="signin">Sign In</button>
-        <a class="button button-primary lp-btn-primary" href="#demo-request" data-demo-link>Book Demo</a>
+        <button class="button button-primary lp-btn-primary" type="button" data-open-auth="register">Get Started</button>
       </div>
     </div>
   </header>
@@ -163,10 +169,10 @@
       <div class="lp-hero-glow"></div>
       <div class="hero-shell lp-hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow">AgentOS for payment networks</p>
-          <h1>The Operating System for <span class="lp-holo-text">Payment Networks</span></h1>
+          <p class="eyebrow">Super Agent Infrastructure</p>
+          <h1>Run Your <span class="lp-holo-text">Agent Network</span></h1>
           <p class="hero-text lp-hero-desc">
-            Orchestrate agents, commissions, and transactions on licensed infrastructure.
+            Agents, commissions, POS, and transactions — one control surface.
           </p>
           <div class="hero-signal-row" aria-label="Platform signals">
             <span>Licensed rails</span>
@@ -174,8 +180,8 @@
             <span>API-first controls</span>
           </div>
           <div class="hero-actions-row lp-hero-btns">
-            <a class="button button-primary lp-btn-primary" href="#demo-request" data-demo-link>Book Demo</a>
-            <a class="button button-secondary lp-btn-secondary" href="#platform">View Platform</a>
+            <button class="button button-primary lp-btn-primary" type="button" data-open-auth="register">Get Started</button>
+            <button class="button button-secondary lp-btn-secondary" type="button" data-open-auth="signin">Sign In</button>
           </div>
           <ul class="hero-stat-grid" aria-label="Platform highlights">
             <li>
@@ -730,13 +736,13 @@
       <div class="section-shell final-cta-shell">
         <div>
           <p class="eyebrow">Final CTA</p>
-          <h2>Build the Future of Agent Banking Infrastructure</h2>
+          <h2>Start Operating Your Agent Network</h2>
           <p>
             Launch a cleaner operator surface for agent onboarding, payment orchestration, commissions, and network scale.
           </p>
         </div>
         <div class="hero-actions-row">
-          <a class="button button-primary" href="#demo-request" data-demo-link>Book Demo</a>
+          <a class="button button-primary" href="#" data-open-auth="register">Get Started</a>
           <button class="button button-secondary" type="button" data-open-auth="register">Create Account</button>
         </div>
       </div>
@@ -780,8 +786,8 @@
     </div>
   </footer>
   <div class="mobile-actionbar" aria-hidden="false">
-    <a class="button button-primary" href="#demo-request" data-demo-link>Book Demo</a>
-    <button class="button button-secondary" type="button" data-open-auth="register">Create Account</button>
+    <button class="button button-primary" type="button" data-open-auth="register">Get Started</button>
+    <button class="button button-secondary" type="button" data-open-auth="signin">Sign In</button>
   </div>
   <dialog class="auth-dialog" id="auth-dialog" aria-labelledby="auth-title">
     <form class="auth-shell" method="dialog">
