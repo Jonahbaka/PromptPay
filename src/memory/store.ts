@@ -1189,6 +1189,433 @@ export class MemoryStore extends EventEmitter {
     try {
       this.db.exec(`ALTER TABLE users ADD COLUMN profile_picture TEXT DEFAULT NULL`);
     } catch { /* column already exists */ }
+
+    // ═══ FINTECH CORE v2 TABLES ═══
+    this.db.exec(`
+      -- ═══════════════════════════════════════════════════
+      -- 1. PROVIDER PLUGIN SYSTEM
+      -- ═══════════════════════════════════════════════════
+
+      -- Provider registry
+      CREATE TABLE IF NOT EXISTS providers (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        slug TEXT UNIQUE NOT NULL,
+        display_name TEXT NOT NULL,
+        provider_type TEXT NOT NULL CHECK(provider_type IN ('digital_rails','super_agent','airtime_data','bill_pay','kyc','settlement')),
+        base_url TEXT,
+        capabilities TEXT NOT NULL DEFAULT '[]',
+        health_status TEXT NOT NULL DEFAULT 'unknown' CHECK(health_status IN ('healthy','degraded','down','unknown')),
+        config TEXT NOT NULL DEFAULT '{}',
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      -- Provider accounts linked to tenants/agents
+      CREATE TABLE IF NOT EXISTS provider_accounts (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        provider_id TEXT NOT NULL REFERENCES providers(id),
+        tenant_id TEXT REFERENCES tenants(id),
+        agent_id TEXT,
+        account_reference TEXT,
+        credentials_encrypted TEXT,
+        status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','suspended','pending','revoked')),
+        metadata TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS provider_health_logs (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        provider_id TEXT NOT NULL REFERENCES providers(id),
+        status TEXT NOT NULL,
+        latency_ms INTEGER,
+        error_message TEXT,
+        checked_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      -- ═══════════════════════════════════════════════════
+      -- 2. ROUTING ENGINE
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS routing_rules (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        name TEXT NOT NULL,
+        priority INTEGER NOT NULL DEFAULT 100,
+        transaction_type TEXT,
+        product_type TEXT,
+        tenant_id TEXT REFERENCES tenants(id),
+        region TEXT,
+        provider_id TEXT NOT NULL REFERENCES providers(id),
+        fallback_provider_id TEXT REFERENCES providers(id),
+        weight INTEGER NOT NULL DEFAULT 100,
+        conditions TEXT NOT NULL DEFAULT '{}',
+        is_active INTEGER NOT NULL DEFAULT 1,
+        effective_from TEXT NOT NULL DEFAULT (datetime('now')),
+        effective_to TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS routing_decisions (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        transaction_id TEXT,
+        rule_id TEXT REFERENCES routing_rules(id),
+        provider_id TEXT NOT NULL REFERENCES providers(id),
+        fallback_used INTEGER NOT NULL DEFAULT 0,
+        decision_reason TEXT,
+        latency_ms INTEGER,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      -- ═══════════════════════════════════════════════════
+      -- 3. TRANSACTION LIFECYCLE ENGINE
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS transactions (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        external_id TEXT,
+        tenant_id TEXT REFERENCES tenants(id),
+        user_id TEXT REFERENCES users(id),
+        agent_id TEXT,
+        provider_id TEXT REFERENCES providers(id),
+        transaction_type TEXT NOT NULL CHECK(transaction_type IN ('cash_in','cash_out','transfer','airtime','data','bill_pay','collection','payout','reversal','adjustment')),
+        product_type TEXT,
+        amount_minor INTEGER NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'NGN',
+        customer_fee_minor INTEGER NOT NULL DEFAULT 0,
+        provider_fee_minor INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'initiated' CHECK(status IN ('initiated','queued_offline','pending_provider','processing','provider_confirmed','failed','reversed','adjusted','reconciled','settled','paid_out')),
+        idempotency_key TEXT UNIQUE,
+        metadata TEXT NOT NULL DEFAULT '{}',
+        initiated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        completed_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_transactions_agent ON transactions(agent_id);
+      CREATE INDEX IF NOT EXISTS idx_transactions_tenant ON transactions(tenant_id);
+      CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
+      CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(transaction_type);
+      CREATE INDEX IF NOT EXISTS idx_transactions_idempotency ON transactions(idempotency_key);
+
+      CREATE TABLE IF NOT EXISTS transaction_state_history (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        transaction_id TEXT NOT NULL REFERENCES transactions(id),
+        from_status TEXT,
+        to_status TEXT NOT NULL,
+        actor TEXT,
+        source TEXT,
+        reason TEXT,
+        metadata TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_tx_state_history_tx ON transaction_state_history(transaction_id);
+
+      CREATE TABLE IF NOT EXISTS transaction_line_items (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        transaction_id TEXT NOT NULL REFERENCES transactions(id),
+        line_type TEXT NOT NULL CHECK(line_type IN ('gross_amount','customer_fee','provider_fee','platform_share','agent_share','supervisor_share','tenant_share','regional_share','reserve_holdback','adjustment')),
+        amount_minor INTEGER NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'NGN',
+        description TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_tx_line_items_tx ON transaction_line_items(transaction_id);
+
+      CREATE TABLE IF NOT EXISTS webhook_events (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        provider_id TEXT REFERENCES providers(id),
+        event_type TEXT NOT NULL,
+        external_event_id TEXT,
+        payload TEXT NOT NULL,
+        signature_valid INTEGER,
+        processing_status TEXT NOT NULL DEFAULT 'received' CHECK(processing_status IN ('received','processing','processed','failed','duplicate')),
+        idempotency_key TEXT UNIQUE,
+        error_message TEXT,
+        received_at TEXT NOT NULL DEFAULT (datetime('now')),
+        processed_at TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_webhook_events_provider ON webhook_events(provider_id);
+      CREATE INDEX IF NOT EXISTS idx_webhook_events_idempotency ON webhook_events(idempotency_key);
+
+      -- ═══════════════════════════════════════════════════
+      -- 4. COMMISSION & REVENUE ENGINE
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS commission_rules (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        name TEXT NOT NULL,
+        priority INTEGER NOT NULL DEFAULT 100,
+        scope_type TEXT NOT NULL CHECK(scope_type IN ('system','provider','product','tenant','region','supervisor','agent')),
+        scope_id TEXT,
+        transaction_type TEXT,
+        product_type TEXT,
+        provider_id TEXT REFERENCES providers(id),
+        platform_share_bps INTEGER NOT NULL DEFAULT 2000,
+        agent_share_bps INTEGER NOT NULL DEFAULT 6000,
+        supervisor_share_bps INTEGER NOT NULL DEFAULT 1000,
+        tenant_share_bps INTEGER NOT NULL DEFAULT 1000,
+        regional_share_bps INTEGER NOT NULL DEFAULT 0,
+        reserve_holdback_bps INTEGER NOT NULL DEFAULT 0,
+        min_net_revenue_minor INTEGER DEFAULT 0,
+        cap_amount_minor INTEGER,
+        floor_amount_minor INTEGER,
+        flat_fee_minor INTEGER DEFAULT 0,
+        payout_delay_hours INTEGER DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        effective_from TEXT NOT NULL DEFAULT (datetime('now')),
+        effective_to TEXT,
+        version INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_commission_rules_scope ON commission_rules(scope_type, scope_id);
+      CREATE INDEX IF NOT EXISTS idx_commission_rules_priority ON commission_rules(priority);
+
+      CREATE TABLE IF NOT EXISTS commission_rule_versions (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        rule_id TEXT NOT NULL REFERENCES commission_rules(id),
+        version INTEGER NOT NULL,
+        snapshot TEXT NOT NULL,
+        changed_by TEXT,
+        change_reason TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS commission_results (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        transaction_id TEXT NOT NULL REFERENCES transactions(id),
+        rule_id TEXT REFERENCES commission_rules(id),
+        rule_version INTEGER,
+        gross_amount_minor INTEGER NOT NULL,
+        provider_fee_minor INTEGER NOT NULL DEFAULT 0,
+        distributable_pool_minor INTEGER NOT NULL,
+        platform_share_minor INTEGER NOT NULL DEFAULT 0,
+        agent_share_minor INTEGER NOT NULL DEFAULT 0,
+        supervisor_share_minor INTEGER NOT NULL DEFAULT 0,
+        tenant_share_minor INTEGER NOT NULL DEFAULT 0,
+        regional_share_minor INTEGER NOT NULL DEFAULT 0,
+        reserve_holdback_minor INTEGER NOT NULL DEFAULT 0,
+        adjustment_minor INTEGER NOT NULL DEFAULT 0,
+        currency TEXT NOT NULL DEFAULT 'NGN',
+        certainty TEXT NOT NULL DEFAULT 'estimated' CHECK(certainty IN ('estimated','provider_reported','reconciled','adjusted','approved_for_payout','paid_out')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_commission_results_tx ON commission_results(transaction_id);
+      CREATE INDEX IF NOT EXISTS idx_commission_results_certainty ON commission_results(certainty);
+
+      -- ═══════════════════════════════════════════════════
+      -- 5. NON-CUSTODIAL INTERNAL LEDGER (Double-Entry)
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS ledger_account_types (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        normal_balance TEXT NOT NULL CHECK(normal_balance IN ('debit','credit')),
+        category TEXT NOT NULL CHECK(category IN ('asset','liability','equity','revenue','expense')),
+        description TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS ledger_accounts (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        account_type_id TEXT NOT NULL REFERENCES ledger_account_types(id),
+        owner_type TEXT NOT NULL CHECK(owner_type IN ('platform','tenant','agent','supervisor','provider','reserve','suspense')),
+        owner_id TEXT,
+        name TEXT NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'NGN',
+        balance_minor INTEGER NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_ledger_accounts_owner ON ledger_accounts(owner_type, owner_id);
+
+      CREATE TABLE IF NOT EXISTS ledger_journals (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        reference_type TEXT NOT NULL CHECK(reference_type IN ('transaction','settlement','payout','adjustment','reversal','opening_balance')),
+        reference_id TEXT NOT NULL,
+        description TEXT,
+        posted_at TEXT NOT NULL DEFAULT (datetime('now')),
+        posted_by TEXT,
+        is_reversed INTEGER NOT NULL DEFAULT 0,
+        reversal_of TEXT REFERENCES ledger_journals(id),
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_ledger_journals_ref ON ledger_journals(reference_type, reference_id);
+
+      CREATE TABLE IF NOT EXISTS ledger_entries (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        journal_id TEXT NOT NULL REFERENCES ledger_journals(id),
+        account_id TEXT NOT NULL REFERENCES ledger_accounts(id),
+        entry_type TEXT NOT NULL CHECK(entry_type IN ('debit','credit')),
+        amount_minor INTEGER NOT NULL CHECK(amount_minor > 0),
+        currency TEXT NOT NULL DEFAULT 'NGN',
+        running_balance_minor INTEGER,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_ledger_entries_journal ON ledger_entries(journal_id);
+      CREATE INDEX IF NOT EXISTS idx_ledger_entries_account ON ledger_entries(account_id);
+
+      -- ═══════════════════════════════════════════════════
+      -- 6. RECONCILIATION & SETTLEMENT
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS reconciliation_runs (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        provider_id TEXT NOT NULL REFERENCES providers(id),
+        period_start TEXT NOT NULL,
+        period_end TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','in_progress','completed','failed')),
+        total_internal INTEGER NOT NULL DEFAULT 0,
+        total_provider INTEGER NOT NULL DEFAULT 0,
+        matched INTEGER NOT NULL DEFAULT 0,
+        mismatched INTEGER NOT NULL DEFAULT 0,
+        missing_internal INTEGER NOT NULL DEFAULT 0,
+        missing_provider INTEGER NOT NULL DEFAULT 0,
+        started_at TEXT,
+        completed_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS reconciliation_items (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        run_id TEXT NOT NULL REFERENCES reconciliation_runs(id),
+        transaction_id TEXT REFERENCES transactions(id),
+        external_reference TEXT,
+        match_status TEXT NOT NULL CHECK(match_status IN ('matched','amount_mismatch','missing_internal','missing_provider','status_mismatch')),
+        internal_amount_minor INTEGER,
+        provider_amount_minor INTEGER,
+        difference_minor INTEGER,
+        resolution TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS settlement_batches (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        provider_id TEXT REFERENCES providers(id),
+        tenant_id TEXT REFERENCES tenants(id),
+        period_start TEXT NOT NULL,
+        period_end TEXT NOT NULL,
+        total_amount_minor INTEGER NOT NULL DEFAULT 0,
+        transaction_count INTEGER NOT NULL DEFAULT 0,
+        currency TEXT NOT NULL DEFAULT 'NGN',
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','processing','settled','failed','disputed')),
+        external_reference TEXT,
+        settled_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS payout_records (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        payee_type TEXT NOT NULL CHECK(payee_type IN ('agent','supervisor','tenant','platform')),
+        payee_id TEXT NOT NULL,
+        amount_minor INTEGER NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'NGN',
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','processing','completed','failed','reversed')),
+        payout_method TEXT,
+        external_reference TEXT,
+        approved_by TEXT,
+        approved_at TEXT,
+        paid_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_payout_records_payee ON payout_records(payee_type, payee_id);
+      CREATE INDEX IF NOT EXISTS idx_payout_records_status ON payout_records(status);
+
+      -- ═══════════════════════════════════════════════════
+      -- 7. KYC & COMPLIANCE ABSTRACTION
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS compliance_profiles (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        user_id TEXT REFERENCES users(id),
+        agent_id TEXT,
+        kyc_status TEXT NOT NULL DEFAULT 'not_started' CHECK(kyc_status IN ('not_started','pending','verified_tier_1','verified_tier_2','verified_tier_3','rejected','suspended','restricted')),
+        kyc_provider TEXT,
+        provider_reference TEXT,
+        verification_level INTEGER NOT NULL DEFAULT 0,
+        eligible_products TEXT NOT NULL DEFAULT '[]',
+        last_verified_at TEXT,
+        metadata TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS compliance_status_history (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        profile_id TEXT NOT NULL REFERENCES compliance_profiles(id),
+        from_status TEXT,
+        to_status TEXT NOT NULL,
+        changed_by TEXT,
+        reason TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS config_change_logs (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        entity_type TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        field_name TEXT NOT NULL,
+        old_value TEXT,
+        new_value TEXT,
+        changed_by TEXT,
+        reason TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      -- ═══════════════════════════════════════════════════
+      -- 8. DEVICE MANAGEMENT
+      -- ═══════════════════════════════════════════════════
+
+      CREATE TABLE IF NOT EXISTS device_models (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        name TEXT NOT NULL,
+        manufacturer TEXT,
+        model_number TEXT,
+        device_type TEXT NOT NULL DEFAULT 'pos' CHECK(device_type IN ('pos','mpos','phone','tablet')),
+        retail_price_minor INTEGER,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS devices (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        model_id TEXT REFERENCES device_models(id),
+        serial_number TEXT UNIQUE,
+        provider_id TEXT REFERENCES providers(id),
+        status TEXT NOT NULL DEFAULT 'in_stock' CHECK(status IN ('in_stock','assigned','active','damaged','lost','recovered','decommissioned')),
+        metadata TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      CREATE TABLE IF NOT EXISTS device_assignments (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+        device_id TEXT NOT NULL REFERENCES devices(id),
+        agent_id TEXT NOT NULL,
+        tenant_id TEXT REFERENCES tenants(id),
+        assigned_at TEXT NOT NULL DEFAULT (datetime('now')),
+        returned_at TEXT,
+        deposit_amount_minor INTEGER DEFAULT 0,
+        deposit_status TEXT DEFAULT 'pending' CHECK(deposit_status IN ('pending','paid','waived','refunded')),
+        financing_terms TEXT DEFAULT '{}',
+        status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','returned','lost','damaged'))
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_device_assignments_agent ON device_assignments(agent_id);
+    `);
   }
 
   getDb(): Database.Database {
