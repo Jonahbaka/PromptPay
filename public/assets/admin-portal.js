@@ -11,7 +11,8 @@ import {
   requestJson,
   saveSession,
   setLoadingState,
-  wireNavigation
+  wireNavigation,
+  wireMobileDrawer
 } from "./console-core.js";
 
 const authView = document.getElementById("auth-view");
@@ -69,6 +70,7 @@ function showAuth() {
 function showShell() {
   authView.classList.add("hidden");
   shell.classList.remove("hidden");
+  wireMobileDrawer();
 }
 
 function activatePage(page) {
@@ -695,6 +697,8 @@ async function handleLoginRequest(requestPromise) {
   if (routeIfWrongRole(payload.user)) return;
   sessionToken = payload.token;
   document.getElementById("admin-name").textContent = payload.user.displayName || payload.user.email;
+  const dn = document.getElementById("drawer-admin-name");
+  if (dn) dn.textContent = payload.user.displayName || payload.user.email;
   showShell();
   startRuntimeClock();
   await loadOverview(true);
@@ -715,6 +719,8 @@ async function hydrate() {
     if (routeIfWrongRole(user)) return;
     sessionToken = token;
     document.getElementById("admin-name").textContent = user.displayName || user.email;
+    const dn2 = document.getElementById("drawer-admin-name");
+    if (dn2) dn2.textContent = user.displayName || user.email;
     showShell();
     startRuntimeClock();
     await loadOverview(true);

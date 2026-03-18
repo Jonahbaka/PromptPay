@@ -167,3 +167,53 @@ export function readFileAsDataUrl(file) {
     reader.readAsDataURL(file);
   });
 }
+
+/* ─── Mobile Drawer ─── */
+
+export function wireMobileDrawer() {
+  const drawer = document.getElementById("mobile-drawer");
+  if (!drawer) return;
+
+  const toggle = document.querySelector("[data-drawer-toggle]");
+  const closeBtn = drawer.querySelector("[data-drawer-close]");
+
+  function openDrawer() {
+    drawer.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  toggle?.addEventListener("click", openDrawer);
+  closeBtn?.addEventListener("click", closeDrawer);
+
+  // Close on escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && drawer.classList.contains("open")) closeDrawer();
+  });
+
+  // Wire drawer action buttons to their desktop counterparts
+  const drawerRefresh = drawer.querySelector("#drawer-refresh");
+  const drawerLogout = drawer.querySelector("#drawer-logout");
+
+  if (drawerRefresh) {
+    drawerRefresh.addEventListener("click", () => {
+      closeDrawer();
+      const desktopRefresh = document.querySelector("[id$='-refresh']:not(#drawer-refresh)");
+      desktopRefresh?.click();
+    });
+  }
+
+  if (drawerLogout) {
+    drawerLogout.addEventListener("click", () => {
+      closeDrawer();
+      const desktopLogout = document.querySelector("[id$='-logout']:not(#drawer-logout)");
+      desktopLogout?.click();
+    });
+  }
+
+  return { openDrawer, closeDrawer };
+}

@@ -13,7 +13,8 @@ import {
   requestJson,
   saveSession,
   setLoadingState,
-  wireNavigation
+  wireNavigation,
+  wireMobileDrawer
 } from "./console-core.js";
 
 const authView = document.getElementById("auth-view");
@@ -77,6 +78,7 @@ function showAuth() {
 function showShell() {
   authView.classList.add("hidden");
   shell.classList.remove("hidden");
+  wireMobileDrawer();
 }
 
 function setAuthTab(mode) {
@@ -412,6 +414,10 @@ function renderHero(partner, stats, apiUsage, agents) {
   const recentActivity = stats.lastTransactionAt || apiUsage.lastRequestAt || null;
   document.getElementById("partner-name").textContent = partner.displayName || partner.name;
   document.getElementById("partner-meta").textContent = `${partner.contactEmail || "No contact email"} / ${partner.tier || "standard"}`;
+  const drawerName = document.getElementById("drawer-partner-name");
+  const drawerMeta = document.getElementById("drawer-partner-meta");
+  if (drawerName) drawerName.textContent = partner.displayName || partner.name;
+  if (drawerMeta) drawerMeta.textContent = `${partner.contactEmail || "No contact email"} / ${partner.tier || "standard"}`;
   document.getElementById("partner-live-volume").textContent = `Volume: ${formatCurrency(stats.transactionVolume || 0, "NGN")}`;
   document.getElementById("partner-live-activity").textContent = `Transactions: ${formatNumber(stats.transactionCount || 0)}`;
   document.getElementById("partner-live-users").textContent = `Active team: ${formatNumber(stats.activeUsers || 0)}`;

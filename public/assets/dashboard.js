@@ -12,7 +12,8 @@ import {
   requestJson,
   saveSession,
   setLoadingState,
-  wireNavigation
+  wireNavigation,
+  wireMobileDrawer
 } from "./console-core.js";
 
 const authView = document.getElementById("auth-view");
@@ -72,6 +73,7 @@ function showAuth() {
 function showShell() {
   authView.classList.add("hidden");
   shell.classList.remove("hidden");
+  wireMobileDrawer();
 }
 
 function activatePage(page) {
@@ -299,6 +301,10 @@ function renderHero(profile, account, transactions, notifications) {
 
   document.getElementById("user-name").textContent = profile.displayName || profile.email;
   document.getElementById("user-email").textContent = profile.email;
+  const drawerName = document.getElementById("drawer-user-name");
+  const drawerEmail = document.getElementById("drawer-user-email");
+  if (drawerName) drawerName.textContent = profile.displayName || profile.email;
+  if (drawerEmail) drawerEmail.textContent = profile.email;
   document.getElementById("user-live-state").textContent = `Account: ${status}`;
   document.getElementById("user-live-notices").textContent = `Unread: ${formatNumber(unreadCount)}`;
   document.getElementById("user-live-activity").textContent = `Transactions: ${formatNumber(transactions.length)}`;

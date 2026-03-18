@@ -2098,6 +2098,581 @@ h3 {
   }
 }
 
+/* ─── Mobile Menu Drawer ─── */
+
+.mobile-menu-toggle {
+  display: none;
+  appearance: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  cursor: pointer;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.mobile-menu-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mobile-actions-drawer {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 280ms ease, visibility 280ms ease;
+}
+
+.mobile-actions-drawer.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.mobile-drawer-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 80vh;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  border-radius: 28px 28px 0 0;
+  background:
+    linear-gradient(180deg, rgba(12, 18, 32, 0.96), rgba(5, 9, 20, 0.98));
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(28px);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.6);
+  transform: translateY(100%);
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  overflow-y: auto;
+}
+
+.mobile-actions-drawer.open .mobile-drawer-panel {
+  transform: translateY(0);
+}
+
+.mobile-drawer-handle {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.mobile-drawer-session {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mobile-drawer-session strong {
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.mobile-drawer-session span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.mobile-drawer-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-drawer-actions .button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border-radius: 18px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+/* ─── Enhanced Dock: Active Tab Glow ─── */
+
+.portal-dock .tab-button {
+  position: relative;
+  overflow: visible;
+}
+
+.portal-dock .tab-button.active::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(99, 102, 241, 0.22);
+  filter: blur(12px);
+  z-index: -1;
+}
+
+.portal-dock .tab-button .tab-label {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 280ms cubic-bezier(0.32, 0.72, 0, 1), opacity 180ms ease;
+}
+
+.portal-dock .tab-button.active .tab-label {
+  max-width: 5rem;
+  opacity: 1;
+}
+
+/* ─── Pulse Animation for Runtime Dot ─── */
+
+@keyframes runtime-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 18px rgba(52, 211, 153, 0.8); }
+  50% { opacity: 0.6; box-shadow: 0 0 8px rgba(52, 211, 153, 0.4); }
+}
+
+.runtime-dot {
+  animation: runtime-pulse 2s ease-in-out infinite;
+}
+
+/* ─── Tablet Breakpoint (768px – 1080px) ─── */
+
+@media (min-width: 768px) and (max-width: 1080px) {
+  .portal-shell {
+    width: min(48rem, calc(100% - 32px));
+  }
+
+  .portal-topbar.portal-topbar-command {
+    width: min(46rem, 100%);
+  }
+
+  .portal-main {
+    width: min(46rem, 100%);
+  }
+
+  .partner-network-bento,
+  .partner-agents-bento,
+  .placeholder-bento,
+  .settings-bento,
+  .admin-bento,
+  .dashboard-bento {
+    width: min(46rem, 100%);
+  }
+
+  .portal-bento {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bento-card {
+    grid-column: auto;
+  }
+
+  .bento-wide {
+    grid-column: 1 / -1;
+  }
+
+  .ops-grid {
+    grid-template-columns: minmax(0, 1.45fr) minmax(16rem, 0.85fr);
+  }
+
+  .hero-chip-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mini-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .auth-card-wide {
+    width: min(680px, 100%);
+  }
+}
+
+/* ─── Mobile Enhancements (<760px) ─── */
+
+@media (max-width: 760px) {
+  .mobile-menu-toggle {
+    display: grid;
+  }
+
+  .mobile-actions-drawer {
+    display: block;
+  }
+
+  /* App-like topbar with brand + status + hamburger */
+  .portal-topbar.portal-topbar-command {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .portal-topbar-command .topbar-brand {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .portal-topbar-command .topbar-brand strong {
+    font-size: 1.5rem;
+  }
+
+  .portal-topbar-command .topbar-brand span {
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+  }
+
+  .portal-topbar-command .runtime-cluster {
+    display: none;
+  }
+
+  /* Mobile runtime: compact inline display */
+  .portal-topbar-command .topbar-brand .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  /* Better mobile main padding */
+  .portal-main {
+    padding-top: 14px;
+    gap: 14px;
+  }
+
+  /* Enhanced mobile cards */
+  .ops-card {
+    border-radius: 1.8rem;
+    padding: 18px;
+  }
+
+  .ops-card-square {
+    padding: 0;
+  }
+
+  .ops-card-header {
+    padding: 18px 18px 0;
+  }
+
+  .ops-stage {
+    margin: 14px;
+    min-height: 14rem;
+    border-radius: 1.5rem;
+  }
+
+  .ops-stat-card {
+    min-height: 9rem;
+  }
+
+  /* Better mobile auth */
+  .portal-auth {
+    padding: 16px 0;
+    align-items: flex-start;
+    padding-top: calc(48px + env(safe-area-inset-top, 0px));
+  }
+
+  .auth-card,
+  .auth-card-wide {
+    padding: 24px 20px;
+    border-radius: 24px;
+  }
+
+  .auth-card .brand-mark,
+  .auth-card-wide .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+
+  .auth-card h1,
+  .auth-card-wide h1 {
+    font-size: 1.3rem;
+  }
+
+  .auth-copy {
+    font-size: 0.88rem;
+  }
+
+  /* Full width fields on mobile */
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 1rem;
+    min-height: 48px;
+  }
+
+  /* Better mobile buttons */
+  .button {
+    min-height: 48px;
+    padding: 13px 20px;
+    font-size: 0.92rem;
+  }
+
+  .button-row {
+    flex-direction: column;
+  }
+
+  .button-row .button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Mobile stream items */
+  .ops-stream-item {
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  .ops-stream-copy p {
+    font-size: 0.74rem;
+  }
+
+  /* Better mobile detail lists */
+  .detail-list div {
+    padding-bottom: 10px;
+  }
+
+  /* Mobile alert cards */
+  .alert-card {
+    border-radius: 18px;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .ops-alert-stack {
+    gap: 10px;
+  }
+
+  /* Mobile panel cards */
+  .panel-card {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  /* Better mobile tables (card view) */
+  .table-shell {
+    margin: 0 -4px;
+  }
+
+  .data-table tr {
+    border-radius: 18px;
+    padding: 14px 16px;
+  }
+
+  /* Mobile placeholder cards */
+  .placeholder-card {
+    min-height: 180px;
+  }
+
+  /* Better mobile settings forms */
+  .settings-bento,
+  .integrations-bento {
+    gap: 14px;
+  }
+
+  /* Dock: slightly tighter on small mobile */
+  .portal-dock {
+    width: min(92vw, 26rem);
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .portal-dock-shell {
+    padding: 8px;
+    gap: 4px;
+    border-radius: 2rem;
+  }
+
+  .portal-dock .tab-button {
+    min-height: 52px;
+    padding: 8px 6px;
+    border-radius: 1.25rem;
+    font-size: 0.7rem;
+  }
+
+  .portal-dock .tab-button .tab-glyph {
+    width: 22px;
+    height: 22px;
+  }
+
+  .portal-dock .tab-button .tab-glyph svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* ─── Small Mobile (<400px) ─── */
+
+@media (max-width: 400px) {
+  .portal-shell {
+    width: calc(100% - 16px);
+  }
+
+  .portal-topbar-command .topbar-brand strong {
+    font-size: 1.3rem;
+  }
+
+  .auth-card h1,
+  .auth-card-wide h1 {
+    font-size: 1.15rem;
+  }
+
+  .ops-card {
+    border-radius: 1.4rem;
+    padding: 14px;
+  }
+
+  .ops-card-header {
+    padding: 14px 14px 0;
+  }
+
+  .ops-stage {
+    margin: 10px;
+    min-height: 12rem;
+    border-radius: 1.2rem;
+  }
+
+  .ops-stat-card {
+    min-height: 8rem;
+  }
+
+  .ops-stat-body strong {
+    font-size: 1.1rem;
+  }
+
+  .ops-pair-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-stage-footer {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .portal-dock {
+    width: calc(100% - 20px);
+  }
+
+  .portal-dock .tab-button .tab-label {
+    display: none;
+  }
+
+  .portal-dock .tab-button.active .tab-label {
+    display: none;
+  }
+
+  .mobile-drawer-panel {
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ─── Landscape Mobile ─── */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .portal-dock {
+    bottom: 8px;
+  }
+
+  .portal-dock-shell {
+    padding: 6px;
+  }
+
+  .portal-dock .tab-button {
+    min-height: 44px;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .ops-stage {
+    min-height: 10rem;
+  }
+
+  .portal-main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ─── Touch device hover prevention ─── */
+
+@media (hover: none) and (pointer: coarse) {
+  .ops-card:hover::before {
+    opacity: 0;
+  }
+
+  .panel-card:hover,
+  .metric-card:hover,
+  .signal-card:hover,
+  .mini-stat-card:hover,
+  .node-card:hover,
+  .mix-item:hover,
+  .stream-item:hover,
+  .alert-card:hover {
+    transform: none;
+    border-color: rgba(148, 163, 184, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 48px rgba(2, 8, 23, 0.28);
+  }
+
+  .action-card:hover {
+    transform: none;
+    border-color: rgba(148, 163, 184, 0.14);
+  }
+}
+
+/* ─── Active press states for touch ─── */
+
+@media (pointer: coarse) {
+  .ops-card:active {
+    transform: scale(0.98);
+    transition-duration: 80ms;
+  }
+
+  .portal-dock .tab-button:active {
+    transform: scale(0.92);
+    transition-duration: 80ms;
+  }
+
+  .button:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 80ms;
+  }
+
+  .alert-card:active {
+    transform: scale(0.98);
+    transition-duration: 80ms;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

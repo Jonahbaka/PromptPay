@@ -137,7 +137,27 @@
         <button class="button button-secondary" id="partner-refresh" type="button">Refresh</button>
         <button class="button button-secondary" id="partner-logout" type="button">Sign Out</button>
       </div>
+
+      <button class="mobile-menu-toggle" type="button" aria-label="Open menu" data-drawer-toggle>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
     </header>
+
+    <div class="mobile-actions-drawer" id="mobile-drawer">
+      <div class="mobile-drawer-backdrop" data-drawer-close></div>
+      <div class="mobile-drawer-panel">
+        <div class="mobile-drawer-handle"></div>
+        <div class="mobile-drawer-session">
+          <strong id="drawer-partner-name">Partner</strong>
+          <span id="drawer-partner-meta">-</span>
+        </div>
+        <div class="mobile-drawer-actions">
+          <a class="button button-secondary" href="/">Homepage</a>
+          <button class="button button-secondary" id="drawer-refresh" type="button">Refresh</button>
+          <button class="button button-primary" id="drawer-logout" type="button">Sign Out</button>
+        </div>
+      </div>
+    </div>
 
     <main class="portal-main portal-main-command">
       <section class="hero-strip hero-strip-command layer-2 hidden">
