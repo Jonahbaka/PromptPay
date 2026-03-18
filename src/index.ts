@@ -33,6 +33,8 @@ import { OpenClawAgent } from './agents/openclaw/index.js';
 import { isPrimaryWorker, getWorkerId, signalReady } from './core/cluster.js';
 import type { ChannelMessage } from './core/types.js';
 import { HoldemService } from './lounge/holdem-service.js';
+import { initFintechCore } from './fintech/init.js';
+import { createFintechRoutes } from './gateway/fintech-routes.js';
 
 // Import agentic agent tools (primary)
 import { shoppingTools } from './agents/shopping/index.js';
@@ -120,6 +122,15 @@ async function main(): Promise<void> {
   channelManager.register(pushChannel);
   await channelManager.startAll();
 
+  // ── 7c. Fintech Core ──
+  const fintechCore = initFintechCore(db, {
+    PAYSTACK_SECRET_KEY: CONFIG.paystack.secretKey,
+    FLUTTERWAVE_SECRET_KEY: process.env.FLUTTERWAVE_SECRET_KEY || '',
+    MONIEPOINT_API_KEY: process.env.MONIEPOINT_API_KEY || '',
+    MONIEPOINT_BASE_URL: process.env.MONIEPOINT_BASE_URL || '',
+  });
+  logger.info(`Fintech core initialized (${fintechCore.providers.size} providers)`);
+
   const poker = new HoldemService(memory, logger);
   logger.info('Lounge Holdem service initialized');
 
@@ -195,6 +206,10 @@ async function main(): Promise<void> {
   const analyticsRouter = createAnalyticsRoutes({ memory, logger });
   app.use(analyticsRouter);
 
+  // Fintech routes (transactions, commission, providers, routing, ledger, webhooks)
+  const fintechRouter = createFintechRoutes(fintechCore);
+  app.use(fintechRouter);
+
   // Admin routes (dashboard, hooks, providers, audit)
   const adminRouter = createAdminRoutes({
     orchestrator: orchestrator as unknown as Parameters<typeof createAdminRoutes>[0]['orchestrator'],
@@ -218,8 +233,21 @@ async function main(): Promise<void> {
     logger.info('Telegram polling started (primary worker)');
 
     // OpenClaw agent — owner-only autonomous Telegram AI (agentic with tools)
+    daemon = new DaemonLoop({ orchestrator, db, auditTrail, hookEngine, telegram, feeEngine, logger });
+    daemon.start();
+    logger.info('Daemon loop started (primary worker)');
+
     const openclawMemory = memory.createMemoryHandle('openclaw');
-    openclaw = new OpenClawAgent({ telegram, auditTrail, logger, db, orchestrator, memoryHandle: openclawMemory });
+    openclaw = new OpenClawAgent({
+      telegram,
+      auditTrail,
+      logger,
+      db,
+      orchestrator,
+      memoryHandle: openclawMemory,
+      circuitBreakers,
+      daemon,
+    });
 
     telegram.on('message', async (msg: ChannelMessage) => {
       if (msg.direction !== 'inbound') return;
@@ -240,10 +268,6 @@ async function main(): Promise<void> {
 
       await openclaw!.handleMessage(chatId, username, userText);
     });
-
-    daemon = new DaemonLoop({ orchestrator, db, auditTrail, hookEngine, telegram, feeEngine, logger });
-    daemon.start();
-    logger.info('Daemon loop started (primary worker)');
   } else {
     logger.info(`Worker ${workerId}: skipping Telegram/Daemon/OpenClaw (non-primary)`);
   }
