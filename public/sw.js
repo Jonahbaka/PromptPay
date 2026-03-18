@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   "/assets/partner-portal.js",
   "/assets/admin-portal.js",
   "/assets/site.css",
+  "/assets/mobile-glass.css",
   "/assets/site.js",
   "/assets/console-core.js",
   "/icons/icon-192.png",

@@ -39,6 +39,7 @@
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/assets/mobile-glass.css">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -76,6 +77,37 @@
 </head>
 <body class="classic-home">
   <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <!-- Mobile Immersive Background -->
+  <div class="mobile-bg-layer" aria-hidden="true">
+    <div class="orb-indigo"></div>
+    <div class="orb-emerald"></div>
+    <div class="grid-pattern"></div>
+  </div>
+
+  <!-- Mobile App Bar -->
+  <header class="mobile-app-bar" aria-label="Mobile app bar">
+    <div class="app-brand">
+      <div class="app-brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+      </div>
+      <div class="app-brand-copy">
+        <div class="runtime-line">
+          <span class="runtime-dot"></span>
+          <span class="runtime-label">Live Platform</span>
+        </div>
+        <h1 class="app-title">PromptPay</h1>
+      </div>
+    </div>
+    <div class="app-meta">
+      <div class="meta-icons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="7" width="12" height="10" rx="1"/><line x1="22" y1="11" x2="22" y2="13"/></svg>
+      </div>
+      <span class="app-time" id="mobile-clock">--:--</span>
+    </div>
+  </header>
+
   <header class="site-header lp-nav" data-header>
     <div class="header-shell lp-nav-inner">
       <a class="brand lp-logo" href="#top" aria-label="PromptPay home">
@@ -782,6 +814,49 @@
       <p class="auth-status" id="auth-status" aria-live="polite"></p>
     </form>
   </dialog>
+  <!-- Mobile Spatial Dock -->
+  <nav class="mobile-spatial-dock" aria-label="Mobile navigation">
+    <div class="dock-shell">
+      <a href="#top" class="dock-tab active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span class="dock-label">Home</span>
+      </a>
+      <a href="#product" class="dock-tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        <span class="dock-label">Product</span>
+      </a>
+      <a href="#pricing" class="dock-tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span class="dock-label">Pricing</span>
+      </a>
+      <button class="dock-tab" type="button" data-open-auth="signin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="dock-label">Sign In</span>
+      </button>
+    </div>
+  </nav>
+
   <script type="module" src="/assets/site.js"></script>
+  <script>
+    // Mobile clock
+    (function() {
+      var el = document.getElementById('mobile-clock');
+      if (!el) return;
+      function tick() {
+        el.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      tick();
+      setInterval(tick, 1000);
+
+      // Dock active state on scroll
+      var tabs = document.querySelectorAll('.mobile-spatial-dock .dock-tab');
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          tabs.forEach(function(t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
