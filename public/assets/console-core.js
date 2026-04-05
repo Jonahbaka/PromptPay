@@ -1,5 +1,300 @@
 export const STORAGE_TOKEN = "promptpay_token";
 export const STORAGE_USER = "promptpay_user";
+const INSTALL_DISMISS_KEY = "promptpay_install_dismissed_v22";
+const INSTALL_DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+const PWA_RUNTIME_KEY = "__promptpayPwaRuntime";
+const SW_RELOAD_PREFIX = "promptpay-sw-reloaded:";
+const DEFAULT_THEME_COLOR = "#09121b";
+const DEFAULT_MANIFEST_PATH = "/manifest.json";
+const DEFAULT_APP_ICON = "/icons/icon-192.png";
+
+function isStandaloneMode() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+function wasInstallDismissedRecently() {
+  const dismissedAt = Number(window.localStorage.getItem(INSTALL_DISMISS_KEY) || 0);
+  return Boolean(dismissedAt && Date.now() - dismissedAt < INSTALL_DISMISS_TTL_MS);
+}
+
+function dismissInstallBanner() {
+  window.localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now()));
+  document.querySelector("[data-pwa-install-banner]")?.remove();
+}
+
+function syncDisplayModeState() {
+  const standalone = isStandaloneMode();
+  document.documentElement.classList.toggle("app-standalone", standalone);
+  document.body.classList.toggle("app-standalone", standalone);
+  if (standalone) {
+    document.querySelector("[data-pwa-install-banner]")?.remove();
+  }
+}
+
+function syncConnectivityState() {
+  const offline = !window.navigator.onLine;
+  document.documentElement.classList.toggle("app-offline", offline);
+  document.body.classList.toggle("app-offline", offline);
+}
+
+function removeInstallBanner() {
+  document.querySelector("[data-pwa-install-banner]")?.remove();
+}
+
+function getPwaRuntime() {
+  if (!window[PWA_RUNTIME_KEY]) {
+    window[PWA_RUNTIME_KEY] = {
+      bootstrapped: false,
+      hadControllerAtBoot: Boolean(window.navigator.serviceWorker?.controller),
+      registration: null,
+      registrationPromise: null,
+      swListenersBound: false
+    };
+  }
+
+  return window[PWA_RUNTIME_KEY];
+}
+
+function shouldReloadForVersion(version) {
+  if (!version) return false;
+
+  const storageKey = `${SW_RELOAD_PREFIX}${version}`;
+  if (window.sessionStorage.getItem(storageKey)) {
+    return false;
+  }
+
+  window.sessionStorage.setItem(storageKey, "1");
+  return true;
+}
+
+function ensureHeadNode(selector, tagName, attributes) {
+  const head = document.head || document.getElementsByTagName("head")[0];
+  if (!head) return null;
+
+  let node = head.querySelector(selector);
+  if (!node) {
+    node = document.createElement(tagName);
+    head.appendChild(node);
+  }
+
+  Object.entries(attributes).forEach(([key, value]) => {
+    node.setAttribute(key, value);
+  });
+
+  return node;
+}
+
+function syncSharedPwaHead(options = {}) {
+  const appName = options.appName || "PromptPay";
+  const themeColor = options.themeColor || DEFAULT_THEME_COLOR;
+  const manifestPath = options.manifestPath || DEFAULT_MANIFEST_PATH;
+  const iconPath = options.iconPath || DEFAULT_APP_ICON;
+
+  ensureHeadNode('link[rel="manifest"]', "link", { rel: "manifest", href: manifestPath });
+  ensureHeadNode('meta[name="theme-color"]', "meta", { name: "theme-color", content: themeColor });
+  ensureHeadNode('meta[name="mobile-web-app-capable"]', "meta", {
+    name: "mobile-web-app-capable",
+    content: "yes"
+  });
+  ensureHeadNode('meta[name="apple-mobile-web-app-capable"]', "meta", {
+    name: "apple-mobile-web-app-capable",
+    content: "yes"
+  });
+  ensureHeadNode('meta[name="apple-mobile-web-app-status-bar-style"]', "meta", {
+    name: "apple-mobile-web-app-status-bar-style",
+    content: "black-translucent"
+  });
+  ensureHeadNode('meta[name="apple-mobile-web-app-title"]', "meta", {
+    name: "apple-mobile-web-app-title",
+    content: appName
+  });
+  ensureHeadNode('meta[name="format-detection"]', "meta", {
+    name: "format-detection",
+    content: "telephone=no"
+  });
+  ensureHeadNode('link[rel="apple-touch-icon"]', "link", {
+    rel: "apple-touch-icon",
+    href: iconPath
+  });
+}
+
+function renderInstallBanner({ appName, description, mode, promptEvent }) {
+  removeInstallBanner();
+
+  const banner = document.createElement("aside");
+  banner.className = "portal-install-banner";
+  banner.setAttribute("data-pwa-install-banner", "true");
+  banner.innerHTML = `
+    <div class="portal-install-banner__eyebrow">Install ${escapeHtml(appName)}</div>
+    <p class="portal-install-banner__copy">${escapeHtml(description)}</p>
+    <div class="portal-install-banner__actions">
+      ${
+        mode === "prompt"
+          ? '<button class="button button-primary portal-install-banner__primary" type="button" data-install-action>Install app</button>'
+          : '<span class="portal-install-banner__hint">Tap Share, then Add to Home Screen.</span>'
+      }
+      <button class="button button-secondary portal-install-banner__secondary" type="button" data-dismiss-install>Not now</button>
+    </div>
+  `;
+
+  banner.querySelector("[data-dismiss-install]")?.addEventListener("click", dismissInstallBanner);
+
+  if (mode === "prompt") {
+    banner.querySelector("[data-install-action]")?.addEventListener("click", async () => {
+      if (!promptEvent) return;
+      try {
+        await promptEvent.prompt();
+        const result = await promptEvent.userChoice;
+        if (result?.outcome !== "accepted") {
+          dismissInstallBanner();
+        } else {
+          removeInstallBanner();
+        }
+      } catch {
+        dismissInstallBanner();
+      }
+    });
+  }
+
+  document.body.appendChild(banner);
+}
+
+function registerShellServiceWorker(runtime) {
+  if (!("serviceWorker" in navigator) || runtime.swListenersBound) return;
+
+  runtime.swListenersBound = true;
+
+  const applyWaitingWorker = () => {
+    if (runtime.registration?.waiting && navigator.serviceWorker.controller) {
+      runtime.registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
+  };
+
+  runtime.handleWorkerMessage = (event) => {
+    if (event.data?.type !== "APP_SHELL_ACTIVATED") {
+      return;
+    }
+
+    if (runtime.hadControllerAtBoot && shouldReloadForVersion(event.data.version)) {
+      window.location.reload();
+    }
+  };
+
+  runtime.requestUpdate = () => {
+    runtime.registration?.update().catch(() => {});
+  };
+
+  runtime.handleVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      runtime.requestUpdate();
+    }
+  };
+
+  navigator.serviceWorker.addEventListener("message", runtime.handleWorkerMessage);
+  document.addEventListener("visibilitychange", runtime.handleVisibilityChange);
+  window.addEventListener("online", runtime.requestUpdate);
+
+  const register = async () => {
+    try {
+      if (!runtime.registrationPromise) {
+        runtime.registrationPromise = navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      }
+
+      const registration = await runtime.registrationPromise;
+      runtime.registration = registration;
+
+      if (!runtime.updateListenerBound) {
+        runtime.handleUpdateFound = () => {
+          const installing = registration.installing;
+          if (!installing) return;
+
+          installing.addEventListener("statechange", () => {
+            if (installing.state === "installed") {
+              applyWaitingWorker();
+            }
+          });
+        };
+
+        registration.addEventListener("updatefound", runtime.handleUpdateFound);
+        runtime.updateListenerBound = true;
+      }
+
+      applyWaitingWorker();
+      await registration.update().catch(() => {});
+    } catch {
+      // Service worker setup should not interrupt the live portals.
+    }
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(register, { timeout: 1800 });
+  } else if (document.readyState === "complete") {
+    register();
+  } else {
+    window.addEventListener("load", register, { once: true });
+  }
+}
+
+export function bootstrapPwaShell(options = {}) {
+  if (typeof window === "undefined") return;
+
+  const runtime = getPwaRuntime();
+  syncSharedPwaHead(options);
+
+  if (runtime.bootstrapped) return;
+  runtime.bootstrapped = true;
+
+  const appName = options.appName || "PromptPay";
+  const installDescription =
+    options.installDescription ||
+    "Install PromptPay for faster launch, offline shell caching, and a standalone mobile workspace.";
+  const iosDescription =
+    options.iosDescription ||
+    "Add PromptPay to your home screen from Safari so the dashboard opens like a native app.";
+
+  syncDisplayModeState();
+  syncConnectivityState();
+  registerShellServiceWorker(runtime);
+
+  const displayModeQuery = window.matchMedia("(display-mode: standalone)");
+  const onDisplayModeChange = () => syncDisplayModeState();
+  if (typeof displayModeQuery.addEventListener === "function") {
+    displayModeQuery.addEventListener("change", onDisplayModeChange);
+  } else if (typeof displayModeQuery.addListener === "function") {
+    displayModeQuery.addListener(onDisplayModeChange);
+  }
+  window.addEventListener("online", syncConnectivityState);
+  window.addEventListener("offline", syncConnectivityState);
+
+  if (isStandaloneMode() || wasInstallDismissedRecently()) return;
+
+  const userAgent = window.navigator.userAgent || "";
+  const isIOS = /iphone|ipad|ipod/i.test(userAgent);
+  const isSafari = /safari/i.test(userAgent) && !/crios|fxios|edgios|android/i.test(userAgent);
+
+  if (isIOS && isSafari) {
+    renderInstallBanner({
+      appName,
+      description: iosDescription,
+      mode: "ios"
+    });
+  }
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    renderInstallBanner({
+      appName,
+      description: installDescription,
+      mode: "prompt",
+      promptEvent: event
+    });
+  });
+
+  window.addEventListener("appinstalled", () => {
+    removeInstallBanner();
+    window.localStorage.removeItem(INSTALL_DISMISS_KEY);
+  });
+}
 
 export function getStoredToken() {
   return localStorage.getItem(STORAGE_TOKEN);

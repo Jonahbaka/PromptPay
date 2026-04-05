@@ -201,6 +201,17 @@ export const CONFIG = {
     circuitBreakerCooldownMs: parseInt(env('CIRCUIT_BREAKER_COOLDOWN_MS', '300000')),
   },
 
+  hooks: {
+    streakResetHour: parseInt(env('HOOKS_STREAK_RESET_HOUR', '0')),
+    cashbackMaxDailyUsd: parseFloat(env('HOOKS_CASHBACK_MAX_DAILY_USD', '50')),
+    referralBonusUsd: parseFloat(env('HOOKS_REFERRAL_BONUS_USD', '10')),
+    referralTiers: parseInt(env('HOOKS_REFERRAL_TIERS', '2')),
+    loyaltyPointsPerDollar: parseInt(env('HOOKS_LOYALTY_POINTS_PER_DOLLAR', '10')),
+    insightsFrequency: env('HOOKS_INSIGHTS_FREQUENCY', 'weekly') as 'daily' | 'weekly' | 'monthly',
+    roundUpEnabled: env('HOOKS_ROUND_UP_ENABLED', 'true') === 'true',
+    reminderLeadTimeHours: parseInt(env('HOOKS_REMINDER_LEAD_TIME_HOURS', '24')),
+  },
+
   // ══════════════════════════════════════════════════════════
   // COMMUNICATION CHANNELS (working only)
   // ══════════════════════════════════════════════════════════

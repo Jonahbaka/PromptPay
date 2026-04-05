@@ -12,6 +12,7 @@ import {
   requestJson,
   saveSession,
   setLoadingState,
+  bootstrapPwaShell,
   wireNavigation,
   wireMobileDrawer
 } from "./console-core.js";
@@ -816,5 +817,12 @@ document.querySelectorAll("[data-switch-page]").forEach((button) => {
 
 wireNavigation(tabButtons, tabPanels, (page) => {
   currentPage = page;
+});
+bootstrapPwaShell({
+  appName: "PromptPay",
+  installDescription:
+    "Install PromptPay for a standalone dashboard, faster relaunch, and offline access to the shell while live data reconnects.",
+  iosDescription:
+    "Add PromptPay to your home screen from Safari so this dashboard opens like a native app."
 });
 hydrate();

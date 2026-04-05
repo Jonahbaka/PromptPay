@@ -45,6 +45,9 @@ body {
     linear-gradient(180deg, #04060d 0%, #050914 28%, #070d1b 62%, #04060d 100%);
   color: var(--text);
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
+  overscroll-behavior-y: contain;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -2031,5 +2034,77 @@ body.classic-home .auth-panel input {
   body.classic-home .lp-footer-top,
   body.classic-home .lp-footer-bottom {
     align-items: flex-start;
+  }
+}
+
+.portal-install-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(94px + var(--safe-bottom));
+  z-index: 80;
+  width: min(calc(100vw - 24px), 28rem);
+  display: grid;
+  gap: 0.9rem;
+  transform: translateX(-50%);
+  padding: 1rem;
+  border-radius: 1.4rem;
+  border: 1px solid rgba(130, 149, 214, 0.16);
+  background:
+    linear-gradient(180deg, rgba(8, 13, 24, 0.96), rgba(8, 13, 24, 0.88)),
+    radial-gradient(circle at top left, rgba(105, 164, 255, 0.14), transparent 32%);
+  box-shadow: 0 24px 60px rgba(1, 4, 12, 0.58);
+  backdrop-filter: blur(22px);
+}
+
+.portal-install-banner__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9d88ff;
+}
+
+.portal-install-banner__copy {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.portal-install-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.portal-install-banner__primary,
+.portal-install-banner__secondary,
+.portal-install-banner__hint {
+  min-height: 46px;
+}
+
+.portal-install-banner__hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(130, 149, 214, 0.14);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.app-standalone .site-header {
+  padding-top: calc(1.15rem + var(--safe-top));
+}
+
+@media (min-width: 860px) {
+  .portal-install-banner {
+    left: auto;
+    right: 24px;
+    transform: none;
+    width: min(24rem, calc(100vw - 48px));
+    bottom: 24px;
   }
 }

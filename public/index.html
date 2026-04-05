@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#04060d">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PromptPay">
+  <meta name="format-detection" content="telephone=no">
   <title>PromptPay | Super Agent Infrastructure</title>
   <meta
     name="description"
@@ -685,15 +687,15 @@
           <form class="demo-form" id="demo-request-form" novalidate>
             <label>
               <span>Name</span>
-              <input id="demo-name" type="text" autocomplete="name" required>
+              <input id="demo-name" type="text" autocomplete="name" enterkeyhint="next" required>
             </label>
             <label>
               <span>Company</span>
-              <input id="demo-company" type="text" autocomplete="organization" required>
+              <input id="demo-company" type="text" autocomplete="organization" enterkeyhint="next" required>
             </label>
             <label>
               <span>Work email</span>
-              <input id="demo-email" type="email" autocomplete="email" required>
+              <input id="demo-email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" required>
             </label>
             <label>
               <span>Use case</span>
@@ -804,30 +806,30 @@
       <section class="auth-panel auth-panel-active" data-auth-panel="signin">
         <label>
           <span>Email</span>
-          <input id="signin-email" type="email" autocomplete="email" required>
+          <input id="signin-email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" required>
         </label>
         <label>
           <span>Password</span>
-          <input id="signin-password" type="password" autocomplete="current-password" required>
+          <input id="signin-password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" enterkeyhint="go" required>
         </label>
         <button class="button button-primary auth-submit" type="button" id="signin-submit">Sign In</button>
       </section>
       <section class="auth-panel" data-auth-panel="register">
         <label>
           <span>Team name</span>
-          <input id="register-name" type="text" autocomplete="organization" required>
+          <input id="register-name" type="text" autocomplete="organization" enterkeyhint="next" required>
         </label>
         <label>
           <span>Work email</span>
-          <input id="register-email" type="email" autocomplete="email" required>
+          <input id="register-email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" required>
         </label>
         <label>
           <span>Password</span>
-          <input id="register-password" type="password" autocomplete="new-password" required>
+          <input id="register-password" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" enterkeyhint="next" required>
         </label>
         <label>
           <span>Country</span>
-          <input id="register-country" type="text" autocomplete="country-name" placeholder="Nigeria">
+          <input id="register-country" type="text" autocomplete="country-name" enterkeyhint="done" placeholder="Nigeria">
         </label>
         <button class="button button-primary auth-submit" type="button" id="register-submit">Create Access</button>
       </section>

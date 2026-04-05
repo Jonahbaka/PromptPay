@@ -6,6 +6,7 @@
 import Database from 'better-sqlite3';
 import { v4 as uuid } from 'uuid';
 import type { LoggerHandle } from '../core/types.js';
+import { CONFIG } from '../core/config.js';
 
 export interface TransactionEvent {
   id: string;
@@ -46,7 +47,7 @@ export class CashbackEngine {
       WHERE user_id = ? AND created_at >= ? AND status != 'expired'
     `).get(userId, todayStart) as { total: number };
 
-    const cashbackMaxDaily = 10; // $10 daily cap
+    const cashbackMaxDaily = CONFIG.hooks.cashbackMaxDailyUsd;
     if (dailyTotal.total >= cashbackMaxDaily) {
       return 0; // Daily cap reached
     }

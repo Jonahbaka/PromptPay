@@ -11,6 +11,7 @@ import {
   requestJson,
   saveSession,
   setLoadingState,
+  bootstrapPwaShell,
   wireNavigation,
   wireMobileDrawer
 } from "./console-core.js";
@@ -815,4 +816,11 @@ wireNavigation(tabButtons, tabPanels, async (page) => {
   }
 });
 
+bootstrapPwaShell({
+  appName: "PromptPay",
+  installDescription:
+    "Install PromptPay for a standalone owner console with faster relaunch and offline shell recovery.",
+  iosDescription:
+    "Add PromptPay to your home screen from Safari so the owner console launches like a native app."
+});
 hydrate();

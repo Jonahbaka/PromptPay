@@ -6,6 +6,7 @@
 import Database from 'better-sqlite3';
 import { v4 as uuid } from 'uuid';
 import type { LoggerHandle } from '../core/types.js';
+import { CONFIG } from '../core/config.js';
 
 const TIER_THRESHOLDS = { bronze: 0, silver: 1000, gold: 5000, platinum: 20000 } as const;
 const TIER_DISCOUNTS = { bronze: 0, silver: 0.05, gold: 0.10, platinum: 0.20 } as const;
@@ -34,7 +35,7 @@ export class LoyaltyEngine {
   awardPoints(userId: string, amountUsd: number, txType: string, streakMultiplier = 1.0): number {
     this.ensureAccount(userId);
 
-    const loyaltyPointsPerDollar = 10; // 10 points per dollar
+    const loyaltyPointsPerDollar = CONFIG.hooks.loyaltyPointsPerDollar;
     const basePoints = Math.floor(amountUsd * loyaltyPointsPerDollar);
     const points = Math.floor(basePoints * streakMultiplier);
 

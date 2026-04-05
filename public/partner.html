@@ -4,12 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#050914">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PromptPay">
+  <meta name="format-detection" content="telephone=no">
   <title>PromptPay Partner Portal</title>
   <meta
     name="description"
     content="PromptPay partner portal for real onboarding, agent visibility, transaction volume, commission summary, and API integration status."
   >
+  <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <link rel="stylesheet" href="/assets/portal.css">
   <link rel="stylesheet" href="/assets/dashboard-mobile.css">
 </head>
@@ -44,11 +51,11 @@
         <div class="field-grid">
           <label class="field full">
             <span>Work email</span>
-            <input id="login-email" type="email" autocomplete="username" required>
+            <input id="login-email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" required>
           </label>
           <label class="field full">
             <span>Password</span>
-            <input id="login-password" type="password" autocomplete="current-password" required>
+            <input id="login-password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" enterkeyhint="go" required>
           </label>
         </div>
         <div class="status-text" id="login-status" aria-live="polite"></div>
@@ -62,23 +69,23 @@
         <div class="field-grid">
           <label class="field">
             <span>Organization name</span>
-            <input id="apply-name" type="text" required>
+            <input id="apply-name" type="text" autocomplete="organization" enterkeyhint="next" required>
           </label>
           <label class="field">
             <span>Display name</span>
-            <input id="apply-display-name" type="text">
+            <input id="apply-display-name" type="text" autocomplete="organization-title" enterkeyhint="next">
           </label>
           <label class="field">
             <span>Contact email</span>
-            <input id="apply-email" type="email" required>
+            <input id="apply-email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" required>
           </label>
           <label class="field">
             <span>Contact phone</span>
-            <input id="apply-phone" type="tel">
+            <input id="apply-phone" type="tel" autocomplete="tel" inputmode="tel" enterkeyhint="next">
           </label>
           <label class="field">
             <span>Website</span>
-            <input id="apply-website" type="url" placeholder="https://">
+            <input id="apply-website" type="url" autocomplete="url" inputmode="url" autocapitalize="none" spellcheck="false" enterkeyhint="next" placeholder="https://">
           </label>
           <label class="field">
             <span>Preferred tier</span>

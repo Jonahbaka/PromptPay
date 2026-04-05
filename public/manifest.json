@@ -1,9 +1,9 @@
 {
   "name": "PromptPay",
   "short_name": "PromptPay",
-  "description": "PromptPay provides a real end-user dashboard plus partner and owner portals for agent network operations.",
-  "start_url": "/dashboard",
-  "id": "/dashboard",
+  "description": "PromptPay provides a real end-user dashboard plus partner and owner portals for agent network operations, commissions, and control surfaces.",
+  "start_url": "/?source=pwa",
+  "id": "/?source=pwa",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
@@ -52,5 +52,7 @@
   "related_applications": [],
   "launch_handler": {
     "client_mode": "navigate-existing"
+  },
+  "dir": "ltr",
+  "lang": "en"
   }
-}

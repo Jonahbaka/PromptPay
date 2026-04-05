@@ -1,4 +1,4 @@
-import { copyText } from "./console-core.js";
+import { bootstrapPwaShell, copyText } from "./console-core.js";
 
 const authDialog = document.getElementById("auth-dialog");
 const authStatus = document.getElementById("auth-status");
@@ -328,16 +328,6 @@ function setupDemoForm() {
   });
 }
 
-function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) return;
-  const register = () => navigator.serviceWorker.register("/sw.js").catch(() => {});
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(register, { timeout: 1800 });
-  } else {
-    window.addEventListener("load", register, { once: true });
-  }
-}
-
 bindAuthTriggers();
 bindDemoLinks();
 setupDialogDismissal();
@@ -347,4 +337,10 @@ setupDemoForm();
 document.getElementById("signin-submit").addEventListener("click", handleSignIn);
 document.getElementById("register-submit").addEventListener("click", handleRegister);
 hydrateSession();
-registerServiceWorker();
+bootstrapPwaShell({
+  appName: "PromptPay",
+  installDescription:
+    "Install PromptPay for faster launch, offline shell caching, and one-tap access to the dashboard, partner portal, and admin workspace.",
+  iosDescription:
+    "Add PromptPay to your home screen from Safari so the full platform launches like a native app."
+});

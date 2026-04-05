@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#050507">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PromptPay">
+  <meta name="format-detection" content="telephone=no">
   <title>PromptPay Dashboard</title>
   <meta name="description" content="PromptPay agent dashboard — transactions, commissions, wallet, and network operations.">
   <link rel="manifest" href="/manifest.json">
@@ -38,11 +43,11 @@
         <div class="field-grid">
           <label class="field full">
             <span>Email</span>
-            <input id="login-email" type="email" autocomplete="username" required>
+            <input id="login-email" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" enterkeyhint="next" required>
           </label>
           <label class="field full">
             <span>Password</span>
-            <input id="login-password" type="password" autocomplete="current-password" required>
+            <input id="login-password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" enterkeyhint="go" required>
           </label>
         </div>
         <div class="status-text" id="auth-status" aria-live="polite"></div>
