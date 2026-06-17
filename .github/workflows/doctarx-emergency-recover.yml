@@ -1,0 +1,127 @@
+name: Emergency Recover DoctaRx EC2
+
+on:
+  push:
+    branches:
+      - codex/doctarx-emergency-recover
+    paths:
+      - .github/workflows/doctarx-emergency-recover.yml
+  workflow_dispatch:
+
+concurrency:
+  group: doctarx-emergency-recover
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - name: Recover DoctaRx on shared EC2 host
+        env:
+          EC2_SSH_KEY_B64: ${{ secrets.EC2_SSH_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${EC2_SSH_KEY_B64:-}" ]; then
+            echo "::error::EC2_SSH_KEY_B64 secret is not set in PromptPay."
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          echo "$EC2_SSH_KEY_B64" | tr -d ' \t\n\r' | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          cat > /tmp/doctarx-recover.sh <<'REMOTE'
+          #!/usr/bin/env bash
+          set -Eeuo pipefail
+
+          APP_ROOT=/home/ec2-user/zuma-teledoc
+          VAULT=/home/ec2-user/PromptPay/config/secure/secrets-vault.json
+          LOG=/tmp/doctarx-emergency-recover-$(date -u +%Y%m%dT%H%M%SZ).log
+          exec > >(tee -a "$LOG") 2>&1
+
+          echo "[recover] start $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "[recover] host $(hostname)"
+          echo "[recover] log $LOG"
+
+          if [ -f "$VAULT" ]; then
+            stat -c '[recover] vault present path=%n mode=%a owner=%U group=%G bytes=%s' "$VAULT"
+          else
+            echo "[recover] vault missing path=$VAULT"
+          fi
+
+          cd "$APP_ROOT"
+          echo "[recover] app_root $(pwd)"
+          echo "[recover] git_before $(git rev-parse --short=12 HEAD 2>/dev/null || echo missing)"
+          echo "[recover] build_before $(cat .next/BUILD_ID 2>/dev/null || echo missing)"
+          if [ -f .env ] && grep -q '^DEPLOY_SECRET=' .env; then
+            echo "[recover] deploy_secret present"
+          else
+            echo "[recover] deploy_secret missing"
+          fi
+
+          echo "[recover] pm2_before"
+          pm2 list || true
+          echo "[recover] node_build_processes_before"
+          ps -eo pid,ppid,etime,pcpu,pmem,args | grep -E 'next build|npm run build|node .*next.*build' | grep -v grep || true
+
+          echo "[recover] stop stale build processes"
+          pkill -f 'next build' || true
+          pkill -f 'npm run build' || true
+          pkill -f 'node .*next.*build' || true
+          sleep 3
+
+          echo "[recover] sync origin/main"
+          rm -f .git/index.lock
+          git fetch --prune origin main
+          git reset --hard origin/main
+          git clean -fd -e .env -e .env.* -e global-bundle.pem -e '*.pem'
+          echo "[recover] git_after $(git rev-parse --short=12 HEAD)"
+
+          echo "[recover] install"
+          npm install --include=dev --prefer-offline --no-audit --no-fund
+
+          echo "[recover] migrate"
+          npm run migrate
+          node ng/migrations/migrate.js
+          node ng/scripts/ingest-doctarx-nigeria-pack.js
+
+          echo "[recover] deploy_gate"
+          npm run test:deploy-gate
+
+          echo "[recover] build"
+          rm -rf .turbo .next _next public/_next
+          NODE_OPTIONS="--max-old-space-size=4096" npm run build
+          test -s .next/BUILD_ID
+          ln -sfn .next _next || true
+          rm -rf public/_next || true
+          echo "[recover] build_after $(cat .next/BUILD_ID)"
+
+          echo "[recover] nginx"
+          sudo nginx -t 2>&1 && sudo nginx -s reload 2>&1 || true
+
+          echo "[recover] pm2_reload"
+          pm2 reload ecosystem.config.js --only zuma-teledoc --update-env || pm2 start ecosystem.config.js --only zuma-teledoc --env production
+          pm2 reload ecosystem.config.js --only cronops --update-env || pm2 start ecosystem.config.js --only cronops --env production || true
+          pm2 save
+          pm2 list
+
+          echo "[recover] local_health"
+          for port in 8080 3001; do
+            echo "[recover] checking localhost:$port"
+            curl -sS --max-time 20 "http://localhost:$port/api/health" || true
+            echo
+            curl -sS --max-time 20 "http://localhost:$port/api/ng/health" || true
+            echo
+          done
+
+          echo "[recover] public_health"
+          curl -k -sS --max-time 30 "https://doctarx.com/api/health?recover=$(date +%s)" || true
+          echo
+          curl -k -sS --max-time 30 "https://doctarx.com/api/ng/health?recover=$(date +%s)" || true
+          echo
+          echo "[recover] complete $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          REMOTE
+
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=20 /tmp/doctarx-recover.sh ec2-user@upromptpay.com:/tmp/doctarx-recover.sh
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ServerAliveInterval=30 -o ServerAliveCountMax=4 ec2-user@upromptpay.com 'chmod +x /tmp/doctarx-recover.sh && bash /tmp/doctarx-recover.sh'
